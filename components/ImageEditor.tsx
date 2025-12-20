@@ -817,7 +817,25 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                  <div className="space-y-6 flex-1">
                      <div className="space-y-2">
                         <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">{t('promptLabel')}</label>
-                        <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} className="w-full h-24 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm text-gray-900 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-600 focus:ring-1 focus:ring-amber-500/50 resize-none transition-colors" placeholder={t('editorPromptDesc')}></textarea>
+                        <div className="relative group">
+                            <textarea 
+                                value={prompt} 
+                                onChange={(e) => setPrompt(e.target.value)} 
+                                className="w-full h-24 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-3 pt-3 pb-8 text-sm text-gray-900 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-600 focus:ring-1 focus:ring-amber-500/50 resize-none scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-800 scrollbar-track-transparent transition-colors" 
+                                placeholder={t('editorPromptDesc')}
+                            />
+                            {prompt && (
+                                <button 
+                                    onClick={() => setPrompt('')} 
+                                    className="absolute top-2 right-2 p-1 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                    title={t('clear')}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                </button>
+                            )}
+                        </div>
                      </div>
                      <BatchSelector batchSize={batchSize} onSelect={setBatchSize} label={t('batchSize')} />
                      <SizeSelector selectedSize={size} onSelect={setSize} label={t('resolution')} />
