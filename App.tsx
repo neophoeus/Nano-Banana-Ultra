@@ -582,7 +582,8 @@ const App: React.FC = () => {
 
   const handleEditorGenerate = (editPrompt: string, imageBase64: string, editBatchSize: number, editSize: ImageSize, mode: string, refImages?: string[], targetRatio?: AspectRatio) => {
     // FORCE style to 'None' for editor to ignore homepage selection
-    performGeneration(editPrompt, targetRatio, imageSize, 'None', imageBase64, editBatchSize, editSize, mode, refImages);
+    // Also use editSize as the targetSize (3rd arg) to be explicit
+    performGeneration(editPrompt, targetRatio, editSize, 'None', imageBase64, editBatchSize, undefined, mode, refImages);
   };
 
   // Determine what settings/prompt to display in the main view

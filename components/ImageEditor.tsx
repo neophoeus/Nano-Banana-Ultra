@@ -121,6 +121,11 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
   const [imgElement, setImgElement] = useState<HTMLImageElement | null>(null);
   const [originalDims, setOriginalDims] = useState<{w: number, h: number}>({ w: 0, h: 0 });
   
+  // --- Dynamic Brush Scaling ---
+  // Calculates a multiplier based on image size relative to 1K (1024px).
+  // This ensures a "5px" stroke looks proportionally similar on 4K as it does on 1K.
+  const resolutionScale = Math.max(1, Math.max(originalDims.w, originalDims.h) / 1024);
+
   // --- Viewport State (Global Zoom/Pan) ---
   const [viewport, setViewport] = useState<ViewportState>({ x: 0, y: 0, zoom: 0.5 });
   
@@ -346,7 +351,12 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                   const canvasX = x + originalDims.w / 2;
                   const canvasY = y + originalDims.h / 2;
                   
-                  const currentBrushSize = retouchMode === 'doodle' ? 5 : brushSize; // Fixed size for Doodle
+                  // Scale the brush size relative to image resolution (base 1K)
+                  const baseDoodleSize = 5;
+                  const currentBrushSize = retouchMode === 'doodle' 
+                    ? baseDoodleSize * resolutionScale 
+                    : brushSize * resolutionScale; 
+                  
                   const currentColor = retouchMode === 'doodle' ? doodleColor : '#ff3232';
 
                   const newPath: DrawPath = { points: [{ x: canvasX, y: canvasY }], brushSize: currentBrushSize, color: currentColor };
@@ -643,6 +653,13 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                   }
                   ctx.stroke();
               });
+
+              // Auto-Prompt for Mask
+              if (!finalPrompt || finalPrompt.trim() === "") {
+                  finalPrompt = "Seamlessly inpaint the masked area. Remove masked objects, repair defects, or reconstruct the background to match the surrounding context naturally.";
+              } else {
+                  finalPrompt = `${finalPrompt}, seamlessly match the lighting and texture of the surrounding area.`;
+              }
           } else {
               // Doodle Mode: Image + Doodle + Text (Source Over) -> Img2Img/Inpaint with doodle baked in
               // We draw the original image, then doodles on top.
@@ -669,9 +686,11 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                   ctx.fillText(lbl.text, lbl.x, lbl.y);
               });
 
-              // Auto-Prompt for Doodle if empty
+              // Auto-Prompt for Doodle
               if (!finalPrompt || finalPrompt.trim() === "") {
                   finalPrompt = "Modify image based on the drawn doodles and text annotations. Seamlessly integrate the changes.";
+              } else {
+                  finalPrompt = `${finalPrompt}, strict adherence to the drawn doodle structure and embedded text labels.`;
               }
           }
 
@@ -699,6 +718,11 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
               const defaultReframeInstruction = "High fidelity upscale, sharpen details, improve texture quality, maintain original composition.";
               if (!finalPrompt || finalPrompt.trim() === "") finalPrompt = defaultReframeInstruction;
               else finalPrompt = `${finalPrompt}, ${defaultReframeInstruction}`;
+          } else {
+              // Image is smaller than canvas -> Extrapolate/Outpaint
+              const defaultExtendInstruction = "Extrapolate the surrounding visual context naturally, seamless integration, maintain context and lighting.";
+              if (!finalPrompt || finalPrompt.trim() === "") finalPrompt = defaultExtendInstruction;
+              else finalPrompt = `${finalPrompt}, ${defaultExtendInstruction}`;
           }
       }
 
@@ -1113,8 +1137,8 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                     style={{ 
                         left: cursorPos.x, 
                         top: cursorPos.y, 
-                        width: brushSize * viewport.zoom, 
-                        height: brushSize * viewport.zoom, 
+                        width: (brushSize * resolutionScale) * viewport.zoom, 
+                        height: (brushSize * resolutionScale) * viewport.zoom, 
                         transform: 'translate(-50%, -50%)' 
                     }}
                 />
