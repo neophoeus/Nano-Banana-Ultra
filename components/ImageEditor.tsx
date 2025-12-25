@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import Button from './Button';
 import RatioSelector from './RatioSelector';
@@ -496,7 +495,8 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                   });
 
                   // Draw Text Labels
-                  ctx.font = "bold 34px sans-serif";
+                  const scaledFontSize = Math.max(24, Math.round(32 * resolutionScale));
+                  ctx.font = `bold ${scaledFontSize}px sans-serif`;
                   ctx.textAlign = "left";
                   ctx.textBaseline = "middle";
                   textLabels.forEach(lbl => {
@@ -506,7 +506,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
               }
           }
       }
-  }, [maskPaths, doodlePaths, textLabels, originalDims, mode, retouchMode]);
+  }, [maskPaths, doodlePaths, textLabels, originalDims, mode, retouchMode, resolutionScale]);
 
   // --- Mode Switching & History ---
   const handleSwitchMode = (target: EditMode) => {
@@ -678,7 +678,8 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                   ctx.stroke();
               });
 
-              ctx.font = "bold 34px sans-serif";
+              const scaledFontSize = Math.max(24, Math.round(32 * resolutionScale));
+              ctx.font = `bold ${scaledFontSize}px sans-serif`;
               ctx.textAlign = "left";
               ctx.textBaseline = "middle";
               textLabels.forEach(lbl => {
