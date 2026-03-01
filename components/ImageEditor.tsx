@@ -5,21 +5,24 @@ import RatioSelector from './RatioSelector';
 import SizeSelector from './SizeSelector';
 import BatchSelector from './BatchSelector';
 import ImageUploader from './ImageUploader';
-import { ImageSize, AspectRatio } from '../types';
-import { Language, getTranslation } from '../utils/translations';
-import { ASPECT_RATIOS } from '../constants';
+import ModelSelector from './ModelSelector';
+import { ImageSize, AspectRatio, ImageModel } from '../types';
+import { Language, getTranslation, translations } from '../utils/translations';
+import { ASPECT_RATIOS, MODEL_CAPABILITIES } from '../constants';
 
 interface ImageEditorProps {
     initialImageUrl: string;
     initialPrompt: string;
     initialSize: ImageSize;
-    onGenerate: (prompt: string, imageBase64: string, batchSize: number, size: ImageSize, mode: string, refImages?: string[], targetRatio?: AspectRatio) => void;
+    onGenerate: (prompt: string, imageBase64: string, batchSize: number, size: ImageSize, mode: string, objectImages?: string[], characterImages?: string[], targetRatio?: AspectRatio) => void;
     onCancel: () => void;
     isGenerating: boolean;
     currentLanguage?: Language;
     currentLog?: string;
     error?: string | null;
     onErrorClear?: () => void;
+    imageModel: ImageModel;
+    onModelChange: (model: ImageModel) => void;
 }
 
 type EditMode = 'inpaint' | 'outpaint';
@@ -60,7 +63,9 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     currentLanguage = 'en' as Language,
     currentLog = '',
     error,
-    onErrorClear
+    onErrorClear,
+    imageModel,
+    onModelChange
 }) => {
     const t = (key: string) => getTranslation(currentLanguage, key);
 
@@ -69,11 +74,39 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     const [retouchMode, setRetouchMode] = useState<RetouchMode>('mask'); // Default to Mask (original behavior)
 
     const [prompt, setPrompt] = useState(initialPrompt);
-    const [refImages, setRefImages] = useState<string[]>([]);
+    const [objectImages, setObjectImages] = useState<string[]>([]);
+    const [characterImages, setCharacterImages] = useState<string[]>([]);
     const [ratio, setRatio] = useState<AspectRatio>('1:1');
     const [size, setSize] = useState<ImageSize>(initialSize);
     const [batchSize, setBatchSize] = useState(1);
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
+
+    // Enforce model constraints dynamically
+    useEffect(() => {
+        try {
+            console.log("ImageEditor Mount: ImageModel is", imageModel);
+            const caps = MODEL_CAPABILITIES[imageModel];
+            if (!caps) {
+                console.error("Missing model capabilities for:", imageModel);
+                return;
+            }
+            if (!caps.supportedSizes.includes(size)) {
+                setSize(caps.supportedSizes[0] || '1K');
+            }
+            if (!caps.supportedRatios.includes(ratio)) {
+                setRatio('1:1');
+            }
+            if (objectImages.length > caps.maxObjects) {
+                setObjectImages(prev => prev.slice(0, caps.maxObjects));
+            }
+            if (characterImages.length > caps.maxCharacters) {
+                setCharacterImages(prev => prev.slice(0, caps.maxCharacters));
+            }
+        } catch (err) {
+            console.error("Error in constraints useEffect:", err);
+        }
+    }, [imageModel, size, ratio, objectImages, characterImages]);
+
 
     // --- Image & Canvas Data ---
     const [imgElement, setImgElement] = useState<HTMLImageElement | null>(null);
@@ -172,11 +205,15 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                 const numRatio = w / h;
                 let best = '1:1';
                 let minDiff = Infinity;
-                ASPECT_RATIOS.forEach(r => {
-                    const [rw, rh] = r.value.split(':').map(Number);
-                    const diff = Math.abs(numRatio - (rw / rh));
-                    if (diff < minDiff) { minDiff = diff; best = r.value; }
-                });
+                try {
+                    ASPECT_RATIOS.forEach(r => {
+                        const [rw, rh] = r.value.split(':').map(Number);
+                        const diff = Math.abs(numRatio - (rw / rh));
+                        if (diff < minDiff) { minDiff = diff; best = r.value; }
+                    });
+                } catch (err) {
+                    console.error("Error calculating ASPECT_RATIOS", err);
+                }
                 setRatio(best as AspectRatio);
                 hasInitializedRatio.current = true;
             }
@@ -209,12 +246,18 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     const getFrameDims = useCallback(() => {
         if (mode === 'inpaint') return { w: originalDims.w, h: originalDims.h };
 
-        const [rw, rh] = ratio.split(':').map(Number);
-        const ratioVal = rw / rh;
-        const base = Math.max(originalDims.w, originalDims.h);
+        try {
+            const ratioStr = ratio || '1:1';
+            const [rw, rh] = ratioStr.split(':').map(Number);
+            const ratioVal = rw / rh;
+            const base = Math.max(originalDims.w, originalDims.h);
 
-        if (ratioVal > 1) return { w: base, h: base / ratioVal };
-        return { w: base * ratioVal, h: base };
+            if (ratioVal > 1) return { w: base, h: base / ratioVal };
+            return { w: base * ratioVal, h: base };
+        } catch (err) {
+            console.error("Error in getFrameDims ratio parsing", err, ratio);
+            return { w: 1024, h: 1024 };
+        }
     }, [mode, ratio, originalDims]);
 
     const frameDims = getFrameDims();
@@ -543,7 +586,8 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         if (!keepPrompt) {
             setPrompt(initialPrompt);
         }
-        setRefImages([]);
+        setObjectImages([]);
+        setCharacterImages([]);
 
         if (eventSurfaceRef.current && originalDims.w > 0) {
             const { clientWidth, clientHeight } = eventSurfaceRef.current;
@@ -694,7 +738,8 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
             batchSize,
             size,
             finalModeLabel,
-            refImages,
+            objectImages,
+            characterImages,
             ratio
         );
     };
@@ -823,18 +868,34 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                             </div>
                         </div>
                         <BatchSelector batchSize={batchSize} onSelect={setBatchSize} label={t('batchSize')} />
-                        <SizeSelector selectedSize={size} onSelect={setSize} label={t('resolution')} />
-                        <RatioSelector selectedRatio={ratio} onSelect={setRatio} label={t('aspectRatio')} currentLanguage={currentLanguage} disabled={mode === 'inpaint'} />
+                        <SizeSelector selectedSize={size} onSelect={setSize} label={t('resolution')} supportedSizes={MODEL_CAPABILITIES[imageModel].supportedSizes} currentLanguage={currentLanguage} />
+                        <RatioSelector selectedRatio={ratio} onSelect={setRatio} label={t('aspectRatio')} currentLanguage={currentLanguage} disabled={mode === 'inpaint'} supportedRatios={MODEL_CAPABILITIES[imageModel].supportedRatios} />
+                        <div className="h-px bg-gray-200 dark:bg-gray-800 my-4" />
+                        <ModelSelector selectedModel={imageModel} onSelect={onModelChange} langDict={translations[currentLanguage]} currentLanguage={currentLanguage} />
                         <ImageUploader
-                            images={refImages}
-                            onImagesChange={setRefImages}
-                            maxImages={3}
-                            safeLimit={1}
-                            label={t('refImages')}
+                            images={objectImages}
+                            onImagesChange={setObjectImages}
+                            maxImages={MODEL_CAPABILITIES[imageModel].maxObjects}
+                            safeLimit={Math.floor(MODEL_CAPABILITIES[imageModel].maxObjects / 2)}
+                            label={t('objectRefs')}
                             currentLanguage={currentLanguage}
                             onWarning={(msg) => showToast(msg, 'error')}
-                            limitWarningMsg={t('warningRefLimitEditor')}
+                            limitWarningMsg={t('errorMaxRefs')}
+                            prefixTag="Obj"
                         />
+                        {(MODEL_CAPABILITIES[imageModel].maxCharacters > 0) && (
+                            <ImageUploader
+                                images={characterImages}
+                                onImagesChange={setCharacterImages}
+                                maxImages={MODEL_CAPABILITIES[imageModel].maxCharacters}
+                                safeLimit={Math.floor(MODEL_CAPABILITIES[imageModel].maxCharacters / 2)}
+                                label={t('characterRefs')}
+                                currentLanguage={currentLanguage}
+                                onWarning={(msg) => showToast(msg, 'error')}
+                                limitWarningMsg={t('errorMaxRefs')}
+                                prefixTag="Char"
+                            />
+                        )}
                     </div>
                 </div>
             </div>

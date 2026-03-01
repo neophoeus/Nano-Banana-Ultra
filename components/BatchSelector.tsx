@@ -1,22 +1,25 @@
 
 
 import React from 'react';
+import { Language, getTranslation } from '../utils/translations';
 
 interface BatchSelectorProps {
   batchSize: number;
   onSelect: (size: number) => void;
   disabled?: boolean;
   label?: string;
+  currentLanguage?: Language;
 }
 
-const BatchSelector: React.FC<BatchSelectorProps> = ({ batchSize, onSelect, disabled, label = "Image Count" }) => {
+const BatchSelector: React.FC<BatchSelectorProps> = ({ batchSize, onSelect, disabled, label = "Image Count", currentLanguage = 'en' as Language }) => {
+  const t = (key: string) => getTranslation(currentLanguage, key);
   return (
     <div className={`space-y-2 transition-opacity ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
       <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex justify-between items-center">
-         {label}
-         <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${batchSize > 1 ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 shadow-sm border border-amber-500/30' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}>
-            {batchSize}x
-         </span>
+        {label}
+        <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${batchSize > 1 ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 shadow-sm border border-amber-500/30' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}>
+          {t('qtyX').replace('{0}', String(batchSize))}
+        </span>
       </label>
       <div className="flex bg-gray-100 dark:bg-gray-900/50 p-1 rounded-xl border border-gray-200 dark:border-gray-800 gap-1">
         {[1, 2, 4].map((size) => (
@@ -31,12 +34,12 @@ const BatchSelector: React.FC<BatchSelectorProps> = ({ batchSize, onSelect, disa
               }
             `}
           >
-             {size}
-             {batchSize === size && (
-                 <div className="absolute top-0 right-0 p-0.5">
-                    <div className="w-1 h-1 bg-amber-500 rounded-full animate-pulse shadow-[0_0_5px_rgba(245,158,11,1)]"></div>
-                 </div>
-             )}
+            {size}
+            {batchSize === size && (
+              <div className="absolute top-0 right-0 p-0.5">
+                <div className="w-1 h-1 bg-amber-500 rounded-full animate-pulse shadow-[0_0_5px_rgba(245,158,11,1)]"></div>
+              </div>
+            )}
           </button>
         ))}
       </div>

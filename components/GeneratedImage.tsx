@@ -19,7 +19,8 @@ interface GeneratedImageProps {
     generationMode?: string;
     onEdit?: () => void;
     onGenerate: () => void;
-    onAddToReference?: () => void;
+    onAddToObjectReference?: () => void;
+    onAddToCharacterReference?: () => void;
     onUpload?: () => void;
     onClear?: () => void;
     onSelectImage?: (url: string) => void;
@@ -37,7 +38,8 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
     generationMode = "Text to Image",
     onEdit,
     onGenerate,
-    onAddToReference,
+    onAddToObjectReference,
+    onAddToCharacterReference,
     onUpload,
     onClear,
     onSelectImage,
@@ -46,7 +48,8 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
     currentLog = ''
 }) => {
     const [isHovered, setIsHovered] = useState(false);
-    const [justAddedRef, setJustAddedRef] = useState(false);
+    const [justAddedRefObj, setJustAddedRefObj] = useState(false);
+    const [justAddedRefChar, setJustAddedRefChar] = useState(false);
 
     const t = (key: string) => getTranslation(currentLanguage, key);
 
@@ -69,11 +72,19 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
 
 
 
-    const handleAddToRefClick = () => {
-        if (onAddToReference) {
-            onAddToReference();
-            setJustAddedRef(true);
-            setTimeout(() => setJustAddedRef(false), 2000);
+    const handleAddToObjClick = () => {
+        if (onAddToObjectReference) {
+            onAddToObjectReference();
+            setJustAddedRefObj(true);
+            setTimeout(() => setJustAddedRefObj(false), 2000);
+        }
+    };
+
+    const handleAddToCharClick = () => {
+        if (onAddToCharacterReference) {
+            onAddToCharacterReference();
+            setJustAddedRefChar(true);
+            setTimeout(() => setJustAddedRefChar(false), 2000);
         }
     };
 
@@ -129,22 +140,34 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
                 <div className="flex items-center gap-2 pointer-events-auto animate-[fadeIn_0.2s_ease-out]">
                     {/* Tools Group */}
                     <div className="flex items-center bg-white/90 dark:bg-[#0a0a0a]/90 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg p-1 shadow-xl ring-1 ring-black/5 dark:ring-white/5 gap-0.5 transition-colors">
-                        {onAddToReference && (
-                            <button
-                                onClick={handleAddToRefClick}
-                                className={`p-1.5 rounded-md transition-all ${justAddedRef ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/20' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'}`}
-                                title={t('actionUseRef')}
-                            >
-                                {justAddedRef ? (
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                    </svg>
-                                ) : (
+                        {onAddToObjectReference && (
+                            <div className="relative group/ref flex items-center">
+                                <button
+                                    className="p-1.5 rounded-md transition-all text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10"
+                                    title={t('actionUseRef')}
+                                >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                     </svg>
-                                )}
-                            </button>
+                                </button>
+                                {/* Dropdown Menu for Ref Types */}
+                                <div className="absolute top-full right-0 mt-1 w-28 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl opacity-0 invisible group-hover/ref:opacity-100 group-hover/ref:visible transition-all flex flex-col overflow-hidden">
+                                    <button
+                                        onClick={handleAddToObjClick}
+                                        className={`px-3 py-2 text-xs text-left transition-colors ${justAddedRefObj ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                                    >
+                                        {justAddedRefObj ? t('notificationAddedToRef') : t('objectRefs')}
+                                    </button>
+                                    {onAddToCharacterReference && (
+                                        <button
+                                            onClick={handleAddToCharClick}
+                                            className={`px-3 py-2 text-xs text-left border-t border-gray-100 dark:border-gray-800 transition-colors ${justAddedRefChar ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                                        >
+                                            {justAddedRefChar ? t('notificationAddedToRef') : t('characterRefs')}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
                         )}
 
                         {onEdit && (

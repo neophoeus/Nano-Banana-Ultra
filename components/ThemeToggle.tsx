@@ -1,14 +1,20 @@
 
 import React, { useEffect, useState } from 'react';
+import { Language, getTranslation } from '../utils/translations';
 
-const ThemeToggle: React.FC = () => {
+interface ThemeToggleProps {
+  currentLanguage?: Language;
+}
+
+const ThemeToggle: React.FC<ThemeToggleProps> = ({ currentLanguage = 'en' as Language }) => {
+  const t = (key: string) => getTranslation(currentLanguage, key);
   const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
     // Check local storage or system preference
     const storedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
+
     if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
       setIsDark(true);
       document.documentElement.classList.add('dark');
@@ -35,12 +41,12 @@ const ThemeToggle: React.FC = () => {
       onClick={toggleTheme}
       className={`
         flex items-center justify-center w-10 h-10 rounded-full shadow-lg transition-all duration-300
-        ${isDark 
-            ? 'bg-[#0a0c10]/90 border border-gray-700/50 text-amber-400 hover:bg-gray-800 hover:text-amber-300' 
-            : 'bg-white border border-gray-200 text-amber-600 hover:bg-gray-50 hover:text-amber-700 shadow-amber-500/10'
+        ${isDark
+          ? 'bg-[#0a0c10]/90 border border-gray-700/50 text-amber-400 hover:bg-gray-800 hover:text-amber-300'
+          : 'bg-white border border-gray-200 text-amber-600 hover:bg-gray-50 hover:text-amber-700 shadow-amber-500/10'
         }
       `}
-      title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+      title={isDark ? t('switchLight') : t('switchDark')}
     >
       {isDark ? (
         // Moon Icon

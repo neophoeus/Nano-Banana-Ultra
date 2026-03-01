@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { checkApiKey, promptForApiKey, generateImageWithGemini, enhancePromptWithGemini, generateRandomPrompt, resetAIClient } from './services/geminiService';
-import { AspectRatio, ImageSize, ImageStyle, GeneratedImage as GeneratedImageType } from './types';
+import { AspectRatio, ImageSize, ImageStyle, ImageModel, GeneratedImage as GeneratedImageType } from './types';
 import Button from './components/Button';
 import RatioSelector from './components/RatioSelector';
 import SizeSelector from './components/SizeSelector';
@@ -11,12 +11,13 @@ import HistoryPanel from './components/HistoryPanel';
 import ImageEditor from './components/ImageEditor';
 import ImageUploader from './components/ImageUploader';
 import BatchSelector from './components/BatchSelector';
+import ModelSelector from './components/ModelSelector';
 import LanguageSelector from './components/LanguageSelector';
 import GlobalLogConsole from './components/GlobalLogConsole';
 import ThemeToggle from './components/ThemeToggle';
 import SketchPad from './components/SketchPad';
 import { Language, getTranslation, SUPPORTED_LANGUAGES } from './utils/translations';
-import { ASPECT_RATIOS } from './constants';
+import { ASPECT_RATIOS, MODEL_CAPABILITIES } from './constants';
 import { saveImageToLocal, generateThumbnail, loadFullImage } from './utils/imageSaveUtils';
 import { useImageGeneration } from './hooks/useImageGeneration';
 import { usePromptTools } from './hooks/usePromptTools';
@@ -37,7 +38,8 @@ const App: React.FC = () => {
     const [batchSize, setBatchSize] = useState(1);
 
     // Reference Images (Remix Functionality)
-    const [referenceImages, setReferenceImages] = useState<string[]>([]);
+    const [objectImages, setObjectImages] = useState<string[]>([]);
+    const [characterImages, setCharacterImages] = useState<string[]>([]);
 
     // Sketch Pad State (Renamed from Doodle Board)
     const [isSketchPadOpen, setIsSketchPadOpen] = useState(false);
@@ -60,6 +62,9 @@ const App: React.FC = () => {
         handleClearResults,
         handleClearHistory,
     } = useImageGeneration();
+
+    // Model State
+    const [imageModel, setImageModel] = useState<ImageModel>(displaySettings.model || 'gemini-3.1-flash-image-preview');
 
     // Sidebar State (Default Open)
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -88,10 +93,10 @@ const App: React.FC = () => {
     const [showPromptDropdown, setShowPromptDropdown] = useState<'history' | 'templates' | null>(null);
 
     // F7: Parameter Lock
-    const [lockedParams, setLockedParams] = useState<{ ratio: boolean; size: boolean; style: boolean }>({
-        ratio: false, size: false, style: false
+    const [lockedParams, setLockedParams] = useState<{ ratio: boolean; size: boolean; style: boolean; model: boolean }>({
+        ratio: false, size: false, style: false, model: false
     });
-    const toggleLock = (key: 'ratio' | 'size' | 'style') => setLockedParams(prev => ({ ...prev, [key]: !prev[key] }));
+    const toggleLock = (key: 'ratio' | 'size' | 'style' | 'model') => setLockedParams(prev => ({ ...prev, [key]: !prev[key] }));
 
     // P7-1: Enter to submit toggle
     const [enterToSubmit, setEnterToSubmit] = useState(() => {
@@ -109,6 +114,43 @@ const App: React.FC = () => {
     useEffect(() => {
         hasDataRef.current = history.length > 0 || generatedImageUrls.length > 0;
     }, [history.length, generatedImageUrls.length]);
+
+    // --- Enforce Model Constraints ---
+    useEffect(() => {
+        const caps = MODEL_CAPABILITIES[imageModel];
+        if (caps) {
+            // Check Size
+            if (caps.supportedSizes.length > 0 && !caps.supportedSizes.includes(imageSize)) {
+                // If the selected size is not supported, default to 1K or the closest match
+                const fallbackSize = caps.supportedSizes.includes('1K') ? '1K' : caps.supportedSizes[0];
+                if (!lockedParams.size) setImageSize(fallbackSize);
+            }
+
+            // Check Ratio
+            if (caps.supportedRatios.length > 0 && !caps.supportedRatios.includes(aspectRatio)) {
+                // Default to 1:1 if unsupported
+                const fallbackRatio = caps.supportedRatios.includes('1:1') ? '1:1' : caps.supportedRatios[0];
+                if (!lockedParams.ratio) setAspectRatio(fallbackRatio);
+            }
+
+            // Check Reference Images Count
+            setObjectImages(prevImages => {
+                if (prevImages.length > caps.maxObjects) {
+                    showNotification(`Object images trimmed to ${caps.maxObjects} due to model constraints.`, 'info');
+                    return prevImages.slice(0, caps.maxObjects);
+                }
+                return prevImages;
+            });
+
+            setCharacterImages(prevImages => {
+                if (prevImages.length > caps.maxCharacters) {
+                    showNotification(`Character images trimmed to ${caps.maxCharacters} due to model constraints.`, 'info');
+                    return prevImages.slice(0, caps.maxCharacters);
+                }
+                return prevImages;
+            });
+        }
+    }, [imageModel, imageSize, aspectRatio, lockedParams]);
 
     useEffect(() => {
         // Initial check for API key
@@ -142,15 +184,15 @@ const App: React.FC = () => {
 
     // --- Auto Aspect Ratio Logic ---
     useEffect(() => {
-        // If no images, do nothing (keep user selection)
-        if (referenceImages.length === 0) {
+        // If no images at all, do nothing (keep user selection)
+        if (objectImages.length === 0 && characterImages.length === 0) {
             firstRefImageRef.current = null;
             // If reference images are cleared, reset hasSketch if it was true (safety net)
             if (hasSketch) setHasSketch(false);
             return;
         }
 
-        const firstImage = referenceImages[0];
+        const firstImage = objectImages.length > 0 ? objectImages[0] : characterImages[0];
 
         // Only run if the first image effectively changed
         if (firstImage === firstRefImageRef.current) return;
@@ -182,7 +224,7 @@ const App: React.FC = () => {
             // Optional: Add log but don't show annoying notification popup every time
             addLog(msg);
         };
-    }, [referenceImages, currentLang, hasSketch]);
+    }, [objectImages, characterImages, currentLang, hasSketch]);
 
     // Helper to translate style name
     const getStyleLabel = (style: string) => {
@@ -218,17 +260,32 @@ const App: React.FC = () => {
         apiKeyReady,
         handleApiKeyConnect,
     });
+    const handleAddToCharacterReference = () => {
+        const url = getActiveImageUrl();
+        if (url) {
+            setCharacterImages(prev => {
+                const max = MODEL_CAPABILITIES[imageModel].maxCharacters;
+                if (prev.length >= max) {
+                    showNotification(t('errorMaxRefs'), 'info');
+                    return prev;
+                }
+                return [...prev, url];
+            });
+            showNotification(t('notificationAddedToRef'), 'info');
+        }
+    };
+
     const handleSmartRewrite = () => _smartRewrite(prompt, setPrompt);
     const handleSurpriseMe = () => _surpriseMe(setPrompt);
 
-    const handleAddToReference = () => {
+    const handleAddToObjectReference = () => {
         const activeUrl = getActiveImageUrl();
         if (!activeUrl) return;
-        if (referenceImages.length >= 9) {
+        if (objectImages.length >= MODEL_CAPABILITIES[imageModel].maxObjects) {
             showNotification(t('errorMaxRefs'), 'error');
             return;
         }
-        setReferenceImages(prev => [...prev, activeUrl]);
+        setObjectImages(prev => [...prev, activeUrl]);
         addLog(t('logAddedToRef'));
         showNotification(t('notificationAddedToRef'), 'info');
     };
@@ -237,7 +294,7 @@ const App: React.FC = () => {
 
     const handleOpenSketchPad = () => {
         // If we already have a sketch in references, warn user
-        if (hasSketch && referenceImages.length > 0) {
+        if (hasSketch && objectImages.length > 0) {
             setShowSketchReplaceConfirm(true);
         } else {
             setIsSketchPadOpen(true);
@@ -245,7 +302,7 @@ const App: React.FC = () => {
     };
 
     const handleSketchPadSave = (base64: string) => {
-        let newRefs = [...referenceImages];
+        let newRefs = [...objectImages];
 
         if (hasSketch && newRefs.length > 0) {
             // Scenario: Replace existing sketch at index 0
@@ -254,24 +311,28 @@ const App: React.FC = () => {
             // Scenario: New sketch, insert at top
             newRefs.unshift(base64);
 
-            // Truncate if > 9
-            if (newRefs.length > 9) {
+            // Truncate if > limit
+            if (newRefs.length > MODEL_CAPABILITIES[imageModel].maxObjects) {
                 newRefs.pop();
             }
             setHasSketch(true);
         }
 
-        setReferenceImages(newRefs);
+        setObjectImages(newRefs);
         setIsSketchPadOpen(false);
         showNotification(t('notificationAddedToRef'), 'info');
     };
 
-    const handleRemoveReference = (indexToRemove: number) => {
+    const handleRemoveObjectReference = (indexToRemove: number) => {
         // If removing the first image and it was a sketch, reset the flag
         if (indexToRemove === 0 && hasSketch) {
             setHasSketch(false);
         }
-        setReferenceImages(prev => prev.filter((_, index) => index !== indexToRemove));
+        setObjectImages(prev => prev.filter((_, index) => index !== indexToRemove));
+    };
+
+    const handleRemoveCharacterReference = (indexToRemove: number) => {
+        setCharacterImages(prev => prev.filter((_, index) => index !== indexToRemove));
     };
 
     const handleUploadForEdit = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -339,15 +400,17 @@ const App: React.FC = () => {
         targetRatio: AspectRatio | undefined,
         targetSize: ImageSize,
         targetStyle: ImageStyle,
+        targetModel: ImageModel,
         editingInput?: string,
         customBatchSize?: number,
         customSize?: ImageSize,
         explicitMode?: string,
-        extraRefImages?: string[]
+        extraObjectImages?: string[],
+        extraCharacterImages?: string[]
     ) => {
         // Check if we are in "Style Transfer Mode" (Ref Images + Style Selected)
         // In this mode, we allow empty prompts.
-        const isStyleTransfer = referenceImages.length > 0 && targetStyle !== 'None' && !editingInput;
+        const isStyleTransfer = (objectImages.length > 0 || characterImages.length > 0) && targetStyle !== 'None' && !editingInput;
 
         if (!targetPrompt.trim() && !editingInput && !isStyleTransfer) {
             showNotification(t('errorNoPrompt'), 'error');
@@ -379,14 +442,20 @@ const App: React.FC = () => {
         abortControllerRef.current = controller;
 
 
-        let finalImageInputs: string[] = [];
+        let finalObjectInputs: string[] = [];
+        let finalCharacterInputs: string[] = [];
+
         if (editingInput) {
-            finalImageInputs = [editingInput];
-            if (extraRefImages && extraRefImages.length > 0) {
-                finalImageInputs = [...finalImageInputs, ...extraRefImages];
+            finalObjectInputs = [editingInput];
+            if (extraObjectImages && extraObjectImages.length > 0) {
+                finalObjectInputs = [...finalObjectInputs, ...extraObjectImages];
             }
-        } else if (referenceImages.length > 0) {
-            finalImageInputs = referenceImages;
+            if (extraCharacterImages && extraCharacterImages.length > 0) {
+                finalCharacterInputs = [...extraCharacterImages];
+            }
+        } else {
+            if (objectImages.length > 0) finalObjectInputs = objectImages;
+            if (characterImages.length > 0) finalCharacterInputs = characterImages;
         }
 
         const currentBatchSize = customBatchSize !== undefined ? customBatchSize : batchSize;
@@ -398,7 +467,7 @@ const App: React.FC = () => {
         let currentMode = explicitMode;
         if (!currentMode) {
             if (editingInput) currentMode = "Inpainting";
-            else if (referenceImages.length > 0) currentMode = "Image to Image";
+            else if (objectImages.length > 0 || characterImages.length > 0) currentMode = "Image to Image/Mixing";
             else currentMode = "Text to Image";
         }
         setGenerationMode(currentMode);
@@ -413,7 +482,8 @@ const App: React.FC = () => {
             aspectRatio: effectiveAspectRatio || '1:1',
             size: currentImageSize,
             style: targetStyle,
-            batchSize: currentBatchSize
+            batchSize: currentBatchSize,
+            model: targetModel
         });
 
         try {
@@ -432,7 +502,7 @@ const App: React.FC = () => {
                     mode: currentMode,
                 };
                 // Auto-save full image to local filesystem
-                const prefix = editingInput ? 'gemini-edit' : 'gemini-gen';
+                const prefix = editingInput ? `${targetModel}-edit` : `${targetModel}-gen`;
                 const savedPath = await saveImageToLocal(url, prefix, metadata);
 
                 if (savedPath) {
@@ -454,7 +524,9 @@ const App: React.FC = () => {
                 aspectRatio: effectiveAspectRatio,
                 imageSize: currentImageSize,
                 style: targetStyle,
-                imageInputs: finalImageInputs
+                objectImageInputs: finalObjectInputs,
+                characterImageInputs: finalCharacterInputs,
+                model: targetModel
             }, currentBatchSize, handleImageReceived, handleLogCallback, controller.signal,
                 // F4: Progress callback
                 (completed, total) => setBatchProgress({ completed, total })
@@ -480,6 +552,7 @@ const App: React.FC = () => {
                         aspectRatio: effectiveAspectRatio || '1:1',
                         size: currentImageSize,
                         style: targetStyle,
+                        model: targetModel,
                         createdAt: Date.now(),
                         mode: currentMode,
                         status: res.status,
@@ -524,7 +597,7 @@ const App: React.FC = () => {
                 setApiKeyReady(false);
                 await promptForApiKey();
             } else {
-                // This catch block is for major system failures (e.g. key auth), 
+                // This catch block is for major system failures (e.g. key auth),
                 // individual image failures are handled in the results array above.
                 setError(errorMessage);
                 showNotification(t('statusFailed'), 'error');
@@ -537,7 +610,7 @@ const App: React.FC = () => {
     };
 
     const handleGenerate = () => {
-        performGeneration(prompt, aspectRatio, imageSize, imageStyle);
+        performGeneration(prompt, aspectRatio, imageSize, imageStyle, imageModel);
     };
 
     // F1: Cancel generation
@@ -580,6 +653,7 @@ const App: React.FC = () => {
         if (!lockedParams.ratio) setAspectRatio(item.aspectRatio);
         if (!lockedParams.size) setImageSize(item.size);
         if (!lockedParams.style) setImageStyle(item.style);
+        if (!lockedParams.model) setImageModel(item.model || 'gemini-3.1-flash-image-preview');
 
         // Update Display State to match selected history item
         setDisplaySettings({
@@ -587,6 +661,7 @@ const App: React.FC = () => {
             aspectRatio: item.aspectRatio,
             size: item.size,
             style: item.style,
+            model: item.model || 'gemini-3.1-flash-image-preview',
             batchSize: 1
         });
 
@@ -594,7 +669,8 @@ const App: React.FC = () => {
         const histMode = item.mode || "Text to Image";
         setGenerationMode(histMode);
 
-        setReferenceImages([]); // Reset references for history load
+        setObjectImages([]); // Reset references for history load
+        setCharacterImages([]);
 
         setIsGenerating(false);
     };
@@ -602,18 +678,48 @@ const App: React.FC = () => {
     const handleOpenEditor = () => {
         const activeUrl = getActiveImageUrl();
         if (activeUrl) {
+            console.log("Opening Editor with active URL:", activeUrl);
             setEditingImageSource(activeUrl);
             setIsEditing(true);
-            setError(null); // Clear any previous errors when starting edit from active image
+            setError(null);
         } else {
-            uploadInputRef.current?.click();
+            console.log("Opening Editor via File Upload prompt...");
+            const inputEl = document.getElementById('global-upload-input') as HTMLInputElement;
+            if (inputEl) {
+                inputEl.click();
+            } else if (uploadInputRef.current) {
+                uploadInputRef.current.click();
+            } else {
+                console.error("uploadInputRef and global-upload-input are both missing!");
+            }
         }
     };
 
-    const handleEditorGenerate = (editPrompt: string, imageBase64: string, editBatchSize: number, editSize: ImageSize, mode: string, refImages?: string[], targetRatio?: AspectRatio) => {
+    const handleEditorGenerate = (
+        editPrompt: string,
+        imageBase64: string,
+        editBatchSize: number,
+        editSize: ImageSize,
+        mode: string,
+        objectImages?: string[],
+        characterImages?: string[],
+        targetRatio?: AspectRatio
+    ) => {
         // FORCE style to 'None' for editor to ignore homepage selection
         // Also use editSize as the targetSize (3rd arg) to be explicit
-        performGeneration(editPrompt, targetRatio, editSize, 'None', imageBase64, editBatchSize, undefined, mode, refImages);
+        performGeneration(
+            editPrompt,
+            targetRatio,
+            editSize,
+            'None',
+            imageModel,
+            imageBase64,
+            editBatchSize,
+            undefined,
+            mode,
+            objectImages,
+            characterImages
+        );
     };
 
     // Determine what settings/prompt to display in the main view
@@ -626,12 +732,14 @@ const App: React.FC = () => {
         aspectRatio: displaySettings.aspectRatio,
         size: displaySettings.size,
         style: displaySettings.style,
-        batchSize: displaySettings.batchSize
+        batchSize: displaySettings.batchSize,
+        model: displaySettings.model
     } : {
         aspectRatio: aspectRatio,
         size: imageSize,
         style: imageStyle,
-        batchSize: batchSize
+        batchSize: batchSize,
+        model: imageModel
     };
 
     return (
@@ -643,7 +751,7 @@ const App: React.FC = () => {
                     <GlobalLogConsole logs={logs} isLoading={isGenerating} currentLanguage={currentLang} />
                 </div>
                 <div className="pointer-events-auto flex flex-col gap-2">
-                    <ThemeToggle />
+                    <ThemeToggle currentLanguage={currentLang} />
                     <LanguageSelector currentLanguage={currentLang} onLanguageChange={setCurrentLang} />
                 </div>
             </div>
@@ -705,6 +813,8 @@ const App: React.FC = () => {
                     onSave={handleSketchPadSave}
                     onClose={() => setIsSketchPadOpen(false)}
                     currentLanguage={currentLang}
+                    imageModel={imageModel}
+                    onModelChange={setImageModel}
                 />
             )}
 
@@ -741,6 +851,7 @@ const App: React.FC = () => {
             )}
 
             <input
+                id="global-upload-input"
                 type="file"
                 ref={uploadInputRef}
                 onChange={handleUploadForEdit}
@@ -763,6 +874,8 @@ const App: React.FC = () => {
                     currentLog={logs.length > 0 ? logs[logs.length - 1] : ''}
                     error={error}
                     onErrorClear={() => setError(null)}
+                    imageModel={imageModel}
+                    onModelChange={setImageModel}
                 />
             )}
 
@@ -835,7 +948,7 @@ const App: React.FC = () => {
                                         title={t('clear')}
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                            <path fillRule="evenodd" d="M9 2a1 1 0 01-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                                         </svg>
                                     </button>
                                 )}
@@ -856,7 +969,7 @@ const App: React.FC = () => {
                                     <span>⏎ {t('enterToSend') || 'Enter = Send'}</span>
                                 </button>
                                 {enterToSubmit && (
-                                    <span className="text-[9px] text-gray-400 dark:text-gray-600">Shift+Enter ↵</span>
+                                    <span className="text-[9px] text-gray-400 dark:text-gray-600">{t('shiftEnter')}</span>
                                 )}
                             </div>
 
@@ -869,7 +982,7 @@ const App: React.FC = () => {
                                         : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-amber-300 dark:hover:border-amber-500/50'
                                         }`}
                                 >
-                                    <span>📋</span> {t('templates') || 'Templates'}
+                                    <span>📋</span> {t('templates')}
                                 </button>
                                 <button
                                     onClick={() => setShowPromptDropdown(showPromptDropdown === 'history' ? null : 'history')}
@@ -879,7 +992,7 @@ const App: React.FC = () => {
                                         }`}
                                     disabled={promptHistory.length === 0}
                                 >
-                                    <span>🕒</span> {t('promptHistory') || 'History'} {promptHistory.length > 0 && `(${promptHistory.length})`}
+                                    <span>🕒</span> {t('promptHistory')} {promptHistory.length > 0 && `(${promptHistory.length})`}
                                 </button>
                             </div>
 
@@ -940,7 +1053,6 @@ const App: React.FC = () => {
                                     </svg>
                                     <span>{t('rewrite')}</span>
                                 </button>
-
                                 <button
                                     onClick={handleSurpriseMe}
                                     disabled={isEnhancingPrompt}
@@ -982,22 +1094,40 @@ const App: React.FC = () => {
                             )}
                         </div>
 
-                        {/* Reference Images */}
+                        {/* Reference Images: Objects & Characters */}
                         <div className="animate-[fadeIn_0.3s_ease-out]">
                             <div className="h-px bg-gray-200 dark:bg-gray-800 my-4" />
-                            <ImageUploader
-                                images={referenceImages}
-                                onImagesChange={setReferenceImages}
-                                disabled={isGenerating}
-                                label={t('refImages')}
-                                currentLanguage={currentLang}
-                                onWarning={(msg) => showNotification(msg, 'error')}
-                                maxImages={9}
-                                safeLimit={5}
-                                limitWarningMsg={t('errorMaxRefs')}
-                                onLaunchSketch={handleOpenSketchPad}
-                                onRemove={handleRemoveReference}
-                            />
+                            <div className="space-y-4">
+                                <ImageUploader
+                                    images={objectImages}
+                                    onImagesChange={setObjectImages}
+                                    disabled={isGenerating}
+                                    label={t('objectRefs')}
+                                    currentLanguage={currentLang}
+                                    onWarning={(msg) => showNotification(msg, 'error')}
+                                    maxImages={MODEL_CAPABILITIES[imageModel].maxObjects}
+                                    prefixTag="Obj"
+                                    safeLimit={Math.floor(MODEL_CAPABILITIES[imageModel].maxObjects / 2)}
+                                    limitWarningMsg={t('errorMaxRefs')}
+                                    onLaunchSketch={handleOpenSketchPad}
+                                    onRemove={handleRemoveObjectReference}
+                                />
+                                {(MODEL_CAPABILITIES[imageModel].maxCharacters > 0) && (
+                                    <ImageUploader
+                                        images={characterImages}
+                                        onImagesChange={setCharacterImages}
+                                        disabled={isGenerating}
+                                        label={t('characterRefs')}
+                                        currentLanguage={currentLang}
+                                        onWarning={(msg) => showNotification(msg, 'error')}
+                                        maxImages={MODEL_CAPABILITIES[imageModel].maxCharacters}
+                                        prefixTag="Char"
+                                        safeLimit={Math.floor(MODEL_CAPABILITIES[imageModel].maxCharacters / 2) || 1}
+                                        limitWarningMsg={t('errorMaxRefs')}
+                                        onRemove={handleRemoveCharacterReference}
+                                    />
+                                )}
+                            </div>
                         </div>
 
                         {/* Style Selector - MOVED OUT OF TEXTAREA FOR VISIBILITY */}
@@ -1005,7 +1135,7 @@ const App: React.FC = () => {
                             <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center justify-between">
                                 <span className="flex items-center gap-1.5">
                                     {t('style')}
-                                    <button onClick={() => toggleLock('style')} className={`text-[11px] transition-colors ${lockedParams.style ? 'text-amber-500' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`} title={lockedParams.style ? 'Style locked' : 'Lock style'}>
+                                    <button onClick={() => toggleLock('style')} className={`text-[11px] transition-colors ${lockedParams.style ? 'text-amber-500' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`} title={lockedParams.style ? t('styleLocked') : t('lockStyle')}>
                                         {lockedParams.style ? '🔒' : '🔓'}
                                     </button>
                                 </span>
@@ -1046,11 +1176,49 @@ const App: React.FC = () => {
                         </div>
 
                         <div className="space-y-6 pt-2">
+                            <ModelSelector
+                                selectedModel={imageModel}
+                                onSelect={setImageModel}
+                                label={t('modelSelect')}
+                                disabled={isGenerating || lockedParams.model}
+                                isLocked={lockedParams.model}
+                                onLockToggle={() => toggleLock('model')}
+                                langDict={{
+                                    modelGemini3Pro: t('modelGemini3Pro'),
+                                    modelGemini31Flash: t('modelGemini31Flash'),
+                                    modelGemini25Flash: t('modelGemini25Flash')
+                                }}
+                                currentLanguage={currentLang}
+                            />
                             <div className="grid grid-cols-2 gap-3">
-                                <SizeSelector selectedSize={imageSize} onSelect={setImageSize} label={t('resolution')} disabled={lockedParams.size} isLocked={lockedParams.size} onLockToggle={() => toggleLock('size')} />
-                                <BatchSelector batchSize={batchSize} onSelect={setBatchSize} disabled={isGenerating} label={t('batchSize')} />
+                                <SizeSelector
+                                    selectedSize={imageSize}
+                                    onSelect={setImageSize}
+                                    label={t('resolution')}
+                                    disabled={lockedParams.size || MODEL_CAPABILITIES[imageModel].supportedSizes.length === 0}
+                                    isLocked={lockedParams.size}
+                                    onLockToggle={() => toggleLock('size')}
+                                    supportedSizes={MODEL_CAPABILITIES[imageModel].supportedSizes}
+                                    currentLanguage={currentLang}
+                                />
+                                <BatchSelector
+                                    batchSize={batchSize}
+                                    onSelect={setBatchSize}
+                                    disabled={isGenerating}
+                                    label={t('batchSize')}
+                                    currentLanguage={currentLang}
+                                />
                             </div>
-                            <RatioSelector selectedRatio={aspectRatio} onSelect={setAspectRatio} label={t('aspectRatio')} disabled={lockedParams.ratio} isLocked={lockedParams.ratio} onLockToggle={() => toggleLock('ratio')} currentLanguage={currentLang} />
+                            <RatioSelector
+                                selectedRatio={aspectRatio}
+                                onSelect={setAspectRatio}
+                                label={t('aspectRatio')}
+                                disabled={lockedParams.ratio || MODEL_CAPABILITIES[imageModel].supportedRatios.length === 0}
+                                isLocked={lockedParams.ratio}
+                                onLockToggle={() => toggleLock('ratio')}
+                                supportedRatios={MODEL_CAPABILITIES[imageModel].supportedRatios}
+                                currentLanguage={currentLang}
+                            />
                         </div>
                     </div>
                 </aside>
@@ -1125,18 +1293,21 @@ const App: React.FC = () => {
                                         aspectRatio: displaySettings.aspectRatio,
                                         size: displaySettings.size,
                                         style: displaySettings.style,
+                                        model: displaySettings.model,
                                         batchSize: displaySettings.batchSize
                                     } : {
                                         aspectRatio: aspectRatio,
                                         size: imageSize,
                                         style: imageStyle,
+                                        model: imageModel,
                                         batchSize: batchSize
                                     }}
                                     error={error}
                                     onEdit={generatedImageUrls.length > 0 ? handleOpenEditor : undefined}
                                     onGenerate={handleGenerate}
-                                    onAddToReference={generatedImageUrls.length > 0 ? handleAddToReference : undefined}
-                                    onUpload={() => uploadInputRef.current?.click()}
+                                    onAddToObjectReference={generatedImageUrls.length > 0 ? handleAddToObjectReference : undefined}
+                                    onAddToCharacterReference={(generatedImageUrls.length > 0 && MODEL_CAPABILITIES[imageModel].maxCharacters > 0) ? handleAddToCharacterReference : undefined}
+                                    onUpload={handleOpenEditor}
                                     onClear={handleClearResults}
                                     currentLanguage={currentLang}
                                     currentLog={logs.length > 0 ? logs[logs.length - 1] : ''}
@@ -1173,15 +1344,15 @@ const App: React.FC = () => {
                         </div>
                     </div>
                 </main>
-            </div>
+            </div >
 
             {isSidebarOpen && (
                 <div
-                    className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
+                    className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40" // z-40 to be over z-30
                     onClick={() => setIsSidebarOpen(false)}
                 />
             )}
-        </div>
+        </div >
     );
 };
 

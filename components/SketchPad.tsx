@@ -1,18 +1,21 @@
 
 import React, { useRef, useState, useEffect } from 'react';
-import { Language, getTranslation } from '../utils/translations';
-import { ASPECT_RATIOS } from '../constants';
-import { AspectRatio } from '../types';
+import { Language, getTranslation, translations } from '../utils/translations';
+import { ASPECT_RATIOS, MODEL_CAPABILITIES } from '../constants';
+import { AspectRatio, ImageModel } from '../types';
+import ModelSelector from './ModelSelector';
 
 interface SketchPadProps {
     onSave: (base64: string) => void;
     onClose: () => void;
     currentLanguage?: Language;
+    imageModel: ImageModel;
+    onModelChange: (model: ImageModel) => void;
 }
 
 type ToolType = 'pen' | 'eraser' | 'pan';
 
-const SketchPad: React.FC<SketchPadProps> = ({ onSave, onClose, currentLanguage = 'en' }) => {
+const SketchPad: React.FC<SketchPadProps> = ({ onSave, onClose, currentLanguage = 'en', imageModel, onModelChange }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -356,6 +359,15 @@ const SketchPad: React.FC<SketchPadProps> = ({ onSave, onClose, currentLanguage 
         };
     }, []);
 
+    // Enforce model constraints dynamically
+    useEffect(() => {
+        const supported = MODEL_CAPABILITIES[imageModel].supportedRatios;
+        if (!supported.includes(currentRatio)) {
+            // Force change ratio - safely switches aspect ratio ensuring canvas is adapted correctly
+            applyRatioChange(supported[0]);
+        }
+    }, [imageModel, currentRatio]);
+
     return (
         <div className="fixed inset-0 z-[10001] flex flex-col bg-gray-100 dark:bg-[#050505] animate-[fadeIn_0.2s_ease-out] select-none overflow-hidden">
 
@@ -363,6 +375,11 @@ const SketchPad: React.FC<SketchPadProps> = ({ onSave, onClose, currentLanguage 
             <div className="absolute top-0 left-0 right-0 z-50 flex justify-between items-center p-3 pointer-events-none">
                 {/* Left: Ratio & Clear */}
                 <div className="pointer-events-auto flex gap-2">
+                    {/* Model Selector */}
+                    <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg px-2 flex items-center min-w-[120px]">
+                        <ModelSelector selectedModel={imageModel} onSelect={onModelChange} langDict={translations[currentLanguage]} currentLanguage={currentLanguage} />
+                    </div>
+
                     {/* Ratio Button */}
                     <div className="relative">
                         <button
@@ -374,28 +391,36 @@ const SketchPad: React.FC<SketchPadProps> = ({ onSave, onClose, currentLanguage 
                         </button>
                         {showRatioMenu && (
                             <div className="absolute top-full left-0 mt-2 w-32 bg-white dark:bg-[#161b22] border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden z-[100] max-h-[60vh] overflow-y-auto">
-                                {ASPECT_RATIOS.map((r) => (
-                                    <button
-                                        key={r.value}
-                                        onClick={() => {
-                                            if (currentRatio === r.value) return;
+                                {ASPECT_RATIOS.map((r) => {
+                                    const isSupported = MODEL_CAPABILITIES[imageModel].supportedRatios.includes(r.value);
+                                    return (
+                                        <button
+                                            key={r.value}
+                                            disabled={!isSupported}
+                                            onClick={() => {
+                                                if (!isSupported || currentRatio === r.value) return;
 
-                                            const canvas = canvasRef.current;
-                                            // If canvas has content, warn user
-                                            if (canvas && !checkIfCanvasIsEmpty(canvas)) {
-                                                setPendingRatio(r.value);
-                                                setConfirmAction('change_ratio');
-                                                setShowRatioMenu(false);
-                                            } else {
-                                                // Empty canvas, just switch
-                                                applyRatioChange(r.value);
-                                            }
-                                        }}
-                                        className={`w-full text-left px-3 py-2 text-xs font-bold hover:bg-gray-100 dark:hover:bg-gray-800 ${currentRatio === r.value ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'text-gray-600 dark:text-gray-400'}`}
-                                    >
-                                        {r.value}
-                                    </button>
-                                ))}
+                                                const canvas = canvasRef.current;
+                                                // If canvas has content, warn user
+                                                if (canvas && !checkIfCanvasIsEmpty(canvas)) {
+                                                    setPendingRatio(r.value);
+                                                    setConfirmAction('change_ratio');
+                                                    setShowRatioMenu(false);
+                                                } else {
+                                                    // Empty canvas, just switch
+                                                    applyRatioChange(r.value);
+                                                }
+                                            }}
+                                            className={`w-full text-left px-3 py-2 text-xs font-bold transition-colors ${!isSupported
+                                                ? 'opacity-30 cursor-not-allowed grayscale'
+                                                : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                                                } ${currentRatio === r.value ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20' : (isSupported ? 'text-gray-600 dark:text-gray-400' : 'text-gray-500')}`}
+                                            title={!isSupported ? t('unsupportedModel') : ''}
+                                        >
+                                            {r.value}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -547,7 +572,7 @@ const SketchPad: React.FC<SketchPadProps> = ({ onSave, onClose, currentLanguage 
                             value={color}
                             onChange={(e) => { setColor(e.target.value); setActiveTool('pen'); }}
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                            title="Choose color"
+                            title={t('chooseColor')}
                         />
                     </div>
 

@@ -1,6 +1,6 @@
 import { useState, useCallback, Dispatch, SetStateAction } from 'react';
 import { generateImageWithGemini } from '../services/geminiService';
-import { AspectRatio, ImageSize, ImageStyle, GeneratedImage as GeneratedImageType, GenerateOptions } from '../types';
+import { AspectRatio, ImageSize, ImageStyle, ImageModel, GeneratedImage as GeneratedImageType, GenerateOptions } from '../types';
 import { saveImageToLocal, generateThumbnail } from '../utils/imageSaveUtils';
 
 
@@ -18,6 +18,7 @@ interface GenerationState {
         aspectRatio: AspectRatio;
         size: ImageSize;
         style: ImageStyle;
+        model: ImageModel;
         batchSize: number;
     };
 }
@@ -73,6 +74,7 @@ export function useImageGeneration(): UseImageGenerationReturn {
         aspectRatio: '1:1',
         size: '2K',
         style: 'None',
+        model: 'gemini-3.1-flash-image-preview',
         batchSize: 1
     });
 

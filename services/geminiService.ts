@@ -233,7 +233,8 @@ const generateSingleImage = async (
 ): Promise<string> => {
 
   let finalPrompt = options.prompt;
-  const hasInputImages = options.imageInputs && options.imageInputs.length > 0;
+  const hasInputImages = (options.objectImageInputs && options.objectImageInputs.length > 0) ||
+    (options.characterImageInputs && options.characterImageInputs.length > 0);
 
   // --- PRECISE AUTO-FILLING LOGIC ---
   if (!finalPrompt || finalPrompt.trim() === "") {
@@ -253,20 +254,36 @@ const generateSingleImage = async (
 
   const parts: any[] = [];
 
-  if (hasInputImages) {
-    for (const imgInput of options.imageInputs!) {
+  // Helper to process internal images
+  const pushImagesToParts = (images: string[] | undefined, prefix: string) => {
+    if (!images || images.length === 0) return;
+
+    for (let i = 0; i < images.length; i++) {
+      const imgInput = images[i];
       if (!imgInput) continue;
+
+      // Inject the unique label for each image (e.g. [Obj_1])
+      parts.push({ text: `[${prefix}_${i + 1}]` });
+
       let mimeType = 'image/png';
       const match = imgInput.match(/^data:([^;]+);base64,/);
       if (match && match[1]) mimeType = match[1];
       const base64Data = imgInput.includes('base64,') ? imgInput.split('base64,')[1] : imgInput;
+
       parts.push({ inlineData: { data: base64Data, mimeType: mimeType } });
     }
-  }
+  };
+
+  pushImagesToParts(options.objectImageInputs, "Obj");
+  pushImagesToParts(options.characterImageInputs, "Char");
 
   parts.push({ text: finalPrompt });
 
-  const imageConfig: any = { imageSize: options.imageSize };
+  const imageConfig: any = {};
+
+  if (options.model !== 'gemini-2.5-flash-image') {
+    imageConfig.imageSize = options.imageSize;
+  }
 
   // FIX: Allow all ratios selected by the user to be passed to the API.
   // The API (Gemini 3 Pro Image) supports more than the basic 5 ratios.
@@ -280,12 +297,25 @@ const generateSingleImage = async (
     // F1: Check abort before sending request
     if (abortSignal?.aborted) throw new Error('ABORTED');
 
+    // --- Enable Grounding with Google Search ---
+    const tools: any[] = [];
+    if (options.model === 'gemini-3.1-flash-image-preview') {
+      tools.push({
+        googleSearch: { searchTypes: { webSearch: {}, imageSearch: {} } }
+      });
+    } else if (options.model === 'gemini-3-pro-image-preview') {
+      tools.push({
+        googleSearch: {}
+      });
+    }
+
     const apiCall = ai.models.generateContent({
-      model: 'gemini-3-pro-image-preview',
+      model: options.model,
       contents: { parts: parts },
       config: {
         imageConfig: imageConfig,
-        safetySettings: PERMISSIVE_SAFETY_SETTINGS
+        safetySettings: PERMISSIVE_SAFETY_SETTINGS,
+        ...(tools.length > 0 && { tools })
       },
     });
 

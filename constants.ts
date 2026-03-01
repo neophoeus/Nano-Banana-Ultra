@@ -1,7 +1,9 @@
 
-import { AspectRatio, ImageSize, ImageStyle, ImageStyleCategory } from './types';
+import { AspectRatio, ImageSize, ImageStyle, ImageStyleCategory, ImageModel } from './types';
 
 export const ASPECT_RATIOS: { value: AspectRatio; label: string; iconClass: string }[] = [
+  { value: '1:8', label: 'Skyscraper', iconClass: 'aspect-[1/8]' },
+  { value: '1:4', label: 'Tall', iconClass: 'aspect-[1/4]' },
   { value: '9:16', label: 'Portrait', iconClass: 'aspect-[9/16]' },
   { value: '2:3', label: 'Classic V', iconClass: 'aspect-[2/3]' },
   { value: '3:4', label: 'Vertical', iconClass: 'aspect-[3/4]' },
@@ -12,9 +14,34 @@ export const ASPECT_RATIOS: { value: AspectRatio; label: string; iconClass: stri
   { value: '3:2', label: 'Classic H', iconClass: 'aspect-[3/2]' },
   { value: '16:9', label: 'Widescreen', iconClass: 'aspect-video' },
   { value: '21:9', label: 'Cinematic', iconClass: 'aspect-[21/9]' },
+  { value: '4:1', label: 'Ultra Wide', iconClass: 'aspect-[4/1]' },
+  { value: '8:1', label: 'Panorama', iconClass: 'aspect-[8/1]' },
 ];
 
-export const IMAGE_SIZES: ImageSize[] = ['1K', '2K', '4K'];
+export const IMAGE_SIZES: ImageSize[] = ['0.5K', '1K', '2K', '4K'];
+
+export const IMAGE_MODELS: ImageModel[] = ['gemini-3.1-flash-image-preview', 'gemini-3-pro-image-preview', 'gemini-2.5-flash-image'];
+
+export const MODEL_CAPABILITIES: Record<ImageModel, { supportedSizes: ImageSize[], supportedRatios: AspectRatio[], maxObjects: number, maxCharacters: number }> = {
+  'gemini-3.1-flash-image-preview': {
+    supportedSizes: ['0.5K', '1K', '2K', '4K'],
+    supportedRatios: ['1:1', '16:9', '9:16', '4:3', '3:4', '2:3', '3:2', '21:9', '4:5', '5:4', '1:4', '4:1', '1:8', '8:1'],
+    maxObjects: 10,
+    maxCharacters: 4
+  },
+  'gemini-3-pro-image-preview': {
+    supportedSizes: ['1K', '2K', '4K'],
+    supportedRatios: ['1:1', '16:9', '9:16', '4:3', '3:4', '2:3', '3:2', '21:9', '4:5', '5:4'],
+    maxObjects: 6,
+    maxCharacters: 5
+  },
+  'gemini-2.5-flash-image': {
+    supportedSizes: [], // Doesn't accept size explicitly
+    supportedRatios: ['1:1', '16:9', '9:16', '4:3', '3:4', '2:3', '3:2', '21:9', '4:5', '5:4'],
+    maxObjects: 3, // For 2.5 flash, we just share the pool between objects & characters up to 3
+    maxCharacters: 3
+  }
+};
 
 export const STYLE_CATEGORIES: { id: ImageStyleCategory; label: string }[] = [
   { id: 'All', label: 'All' },
