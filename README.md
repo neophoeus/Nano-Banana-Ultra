@@ -1,4 +1,4 @@
-# Nano Banana Ultra - v2.2 Release 🚀
+# Nano Banana Ultra - v2.3 Release 🚀
 
 *(English follows below)*
 
@@ -54,9 +54,9 @@
 
 ---
 
-# Nano Banana Ultra - v2.2 Release 🚀
+# Nano Banana Ultra - v2.3 Release 🚀
 
-This is the newly rewritten version (v2.2) of the Nano Banana Ultra image generation application. Built on the React ecosystem, it integrates the Google Gemini API to help users generate or edit high-quality images quickly.
+This is the newly rewritten version (v2.3) of the Nano Banana Ultra image generation application. Built on the React ecosystem, it integrates the Google Gemini API to help users generate or edit high-quality images quickly.
 
 ## ✨ Features
 
