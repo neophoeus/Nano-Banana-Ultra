@@ -1,6 +1,65 @@
 # Nano Banana Ultra - v2.3 Release 🚀
 
 <details open>
+<summary><b>🇧 English version</b></summary>
+
+<br>
+
+This is the newly rewritten version (v2.3) of the Nano Banana Ultra image generation application. Built on the React ecosystem, it integrates the Google Gemini API to help users generate or edit high-quality images quickly.
+
+## ✨ Features
+
+- **Text-to-Image**: Generate beautiful images quickly by entering text prompts.
+- **Image-to-Image & Style Transfer**: Upload reference images and combine them with prompts or built-in styles to create entirely new artworks.
+- **Advanced Model Selection**: Switch freely between the latest Gemini image models (Gemini 3.1 Flash, Gemini 3.0 Pro, Gemini 2.5 Flash). The UI smartly adapts and locks unsupported features based on your selection (e.g. tracking specific ratio limits or max object counts).
+- **Interactive Image Editor**: Built-in powerful canvas editor supporting Inpainting and Outpainting! Zoom, pan, and mask specific areas of an image using the brush tool for precise modification, resizing, or detail replacement.
+- **Dual Reference Trays**: Independently configure Characters and Objects schemas, equipped with native HTML5 Drag and Drop ordering for prompt structure matching.
+- **Smart File Naming**: Auto-saving now embeds the generating model's name directly into the filename (e.g., `gemini-3-pro-image-preview-gen_...png`) for easy sorting and management.
+- **Sketch Pad**: Draw rough sketches directly on the canvas to use as a structural reference for image generation.
+- **Smart Prompt Tools**: Includes "Smart Rewrite" and "Surprise Me" features to automatically optimize your drawing prompts using AI.
+- **Permanent Prompt History**: Your prompt history is now automatically saved securely to your local disk, supporting a massive **9,999** record capacity with smart UI rendering to prevent lag.
+- **Batch Generation**: Generate multiple images simultaneously to save waiting time.
+- **Rich Style Library**: Comes with over 40 built-in image styles (e.g., Cyberpunk, Watercolor, Pixel Art, 3D Render, etc.).
+- **I18n & Dark Mode**: Supports multiple interface languages and allows toggling between Light and Dark themes based on your preference.
+- **Mobile Optimized**: Featuring a completely fixed Z-Index hierarchy for sidebars and modals, ensuring a flawless and blur-free experience on mobile and tablet devices.
+
+## 🛠️ Run Locally
+
+**Prerequisites:** Node.js (v18+ recommended)
+
+1. **Install dependencies:**
+
+   ```bash
+   npm install
+   ```
+
+2. **Environment Setup:**
+   - Copy the `.env.example` file and rename it to `.env.local`
+   - Fill in your Gemini API key in the newly created `.env.local` file:
+
+     ```env
+     GEMINI_API_KEY=your_api_key_here
+     ```
+
+   *(Note: `.env.local` is intentionally ignored by Git to keep your API key secure).*
+
+3. **Run the app in Development Mode:**
+
+   ```bash
+   npm run dev
+   ```
+
+4. **Build for Production:**
+
+   ```bash
+   npm run build
+   ```
+
+</details>
+
+---
+
+<details>
 <summary><b>🇹🇼 繁體中文 (Traditional Chinese)</b></summary>
 
 <br>
@@ -50,65 +109,6 @@
    ```
 
 4. **打包正式環境版本 (Build for Production):**
-
-   ```bash
-   npm run build
-   ```
-
-</details>
-
----
-
-<details>
-<summary><b>🇬🇧 English version</b></summary>
-
-<br>
-
-This is the newly rewritten version (v2.3) of the Nano Banana Ultra image generation application. Built on the React ecosystem, it integrates the Google Gemini API to help users generate or edit high-quality images quickly.
-
-## ✨ Features
-
-- **Text-to-Image**: Generate beautiful images quickly by entering text prompts.
-- **Image-to-Image & Style Transfer**: Upload reference images and combine them with prompts or built-in styles to create entirely new artworks.
-- **Advanced Model Selection**: Switch freely between the latest Gemini image models (Gemini 3.1 Flash, Gemini 3.0 Pro, Gemini 2.5 Flash). The UI smartly adapts and locks unsupported features based on your selection (e.g. tracking specific ratio limits or max object counts).
-- **Interactive Image Editor**: Built-in powerful canvas editor supporting Inpainting and Outpainting! Zoom, pan, and mask specific areas of an image using the brush tool for precise modification, resizing, or detail replacement.
-- **Dual Reference Trays**: Independently configure Characters and Objects schemas, equipped with native HTML5 Drag and Drop ordering for prompt structure matching.
-- **Smart File Naming**: Auto-saving now embeds the generating model's name directly into the filename (e.g., `gemini-3-pro-image-preview-gen_...png`) for easy sorting and management.
-- **Sketch Pad**: Draw rough sketches directly on the canvas to use as a structural reference for image generation.
-- **Smart Prompt Tools**: Includes "Smart Rewrite" and "Surprise Me" features to automatically optimize your drawing prompts using AI.
-- **Permanent Prompt History**: Your prompt history is now automatically saved securely to your local disk, supporting a massive **9,999** record capacity with smart UI rendering to prevent lag.
-- **Batch Generation**: Generate multiple images simultaneously to save waiting time.
-- **Rich Style Library**: Comes with over 40 built-in image styles (e.g., Cyberpunk, Watercolor, Pixel Art, 3D Render, etc.).
-- **I18n & Dark Mode**: Supports multiple interface languages and allows toggling between Light and Dark themes based on your preference.
-- **Mobile Optimized**: Featuring a completely fixed Z-Index hierarchy for sidebars and modals, ensuring a flawless and blur-free experience on mobile and tablet devices.
-
-## 🛠️ Run Locally
-
-**Prerequisites:** Node.js (v18+ recommended)
-
-1. **Install dependencies:**
-
-   ```bash
-   npm install
-   ```
-
-2. **Environment Setup:**
-   - Copy the `.env.example` file and rename it to `.env.local`
-   - Fill in your Gemini API key in the newly created `.env.local` file:
-
-     ```env
-     GEMINI_API_KEY=your_api_key_here
-     ```
-
-   *(Note: `.env.local` is intentionally ignored by Git to keep your API key secure).*
-
-3. **Run the app in Development Mode:**
-
-   ```bash
-   npm run dev
-   ```
-
-4. **Build for Production:**
 
    ```bash
    npm run build
