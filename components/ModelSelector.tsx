@@ -8,8 +8,6 @@ interface ModelSelectorProps {
     onSelect: (model: ImageModel) => void;
     label?: string;
     disabled?: boolean;
-    isLocked?: boolean;
-    onLockToggle?: () => void;
     langDict: Record<string, string>;
     currentLanguage?: Language;
 }
@@ -20,7 +18,7 @@ const MODEL_SHORT_NAMES: Record<ImageModel, string> = {
     'gemini-2.5-flash-image': 'Nano Banana',
 };
 
-const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModel, onSelect, label, disabled, isLocked, onLockToggle, langDict, currentLanguage = 'en' as Language }) => {
+const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModel, onSelect, label, disabled, langDict, currentLanguage = 'en' as Language }) => {
     const t = (key: string) => getTranslation(currentLanguage, key);
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -51,11 +49,6 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModel, onSelect, 
         <div className="flex items-center gap-2">
             <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
                 {label || t('modelSelect')}
-                {onLockToggle && (
-                    <button onClick={onLockToggle} className={`text-[11px] transition-colors ${isLocked ? 'text-amber-500' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`} title={isLocked ? t('locked') : t('lock')}>
-                        {isLocked ? '🔒' : '🔓'}
-                    </button>
-                )}
             </label>
             <div ref={dropdownRef} className={`relative flex-1 transition-opacity ${disabled ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                 {/* Trigger — shows short name */}
@@ -82,8 +75,8 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ selectedModel, onSelect, 
                                 type="button"
                                 onClick={() => { onSelect(model); setIsOpen(false); }}
                                 className={`w-full text-left px-3 py-2 text-sm transition-colors ${model === selectedModel
-                                        ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-bold'
-                                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/60'
+                                    ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-bold'
+                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/60'
                                     }`}
                             >
                                 {getModelLabel(model)}

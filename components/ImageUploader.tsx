@@ -56,13 +56,13 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
     // Check if we are already full
     if (remainingSlots <= 0) {
-      onWarning?.(limitWarningMsg || t('errorMaxRefs'));
+      onWarning?.(limitWarningMsg || t('errorMaxRefs').replace('{0}', maxImages.toString()));
       return;
     }
 
     // Check if new files exceed remaining slots
     if (validFiles.length > remainingSlots) {
-      onWarning?.(limitWarningMsg || t('errorMaxRefs'));
+      onWarning?.(limitWarningMsg || t('errorMaxRefs').replace('{0}', maxImages.toString()));
     }
 
     const filesToProcess = validFiles.slice(0, remainingSlots);

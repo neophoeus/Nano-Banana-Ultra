@@ -385,6 +385,7 @@ const SketchPad: React.FC<SketchPadProps> = ({ onSave, onClose, currentLanguage 
                         <button
                             onClick={() => setShowRatioMenu(!showRatioMenu)}
                             className="flex items-center gap-1 px-3 py-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg text-xs font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                            title={t('aspectRatio')}
                         >
                             <span>{currentRatio}</span>
                             <svg className="w-3 h-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
@@ -427,11 +428,11 @@ const SketchPad: React.FC<SketchPadProps> = ({ onSave, onClose, currentLanguage 
 
                     {/* Undo / Redo */}
                     <div className="flex bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg p-0.5">
-                        <button onClick={handleUndo} disabled={historyStep <= 0} className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-30 transition-colors">
+                        <button onClick={handleUndo} disabled={historyStep <= 0} className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-30 transition-colors" title={t('toolUndo')}>
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
                         </button>
                         <div className="w-px bg-gray-200 dark:bg-gray-700 mx-0.5 my-1"></div>
-                        <button onClick={handleRedo} disabled={historyStep >= history.length - 1} className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-30 transition-colors">
+                        <button onClick={handleRedo} disabled={historyStep >= history.length - 1} className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-30 transition-colors" title={t('toolRedo')}>
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" /></svg>
                         </button>
                     </div>
@@ -448,6 +449,7 @@ const SketchPad: React.FC<SketchPadProps> = ({ onSave, onClose, currentLanguage 
                     <button
                         onClick={triggerClose}
                         className="p-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg text-gray-500 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-50 transition-colors"
+                        title={t('sketchExitTitle')}
                     >
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
@@ -524,7 +526,7 @@ const SketchPad: React.FC<SketchPadProps> = ({ onSave, onClose, currentLanguage 
                 <div className="pointer-events-auto bg-white/90 dark:bg-[#161b22]/90 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-2 flex items-center gap-1 overflow-x-auto max-w-full scrollbar-thin">
 
                     {/* Pan Tool (Hand) */}
-                    <button onClick={() => setActiveTool('pan')} className={`p-3 rounded-xl transition-all ${activeTool === 'pan' ? 'bg-amber-500 text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>
+                    <button onClick={() => setActiveTool('pan')} className={`p-3 rounded-xl transition-all ${activeTool === 'pan' ? 'bg-amber-500 text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`} title={t('toolPan')}>
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" /></svg>
                     </button>
 
@@ -585,6 +587,7 @@ const SketchPad: React.FC<SketchPadProps> = ({ onSave, onClose, currentLanguage 
                             value={lineWidth}
                             onChange={(e) => setLineWidth(Number(e.target.value))}
                             className="w-20 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-amber-500 [&::-webkit-slider-thumb]:rounded-full"
+                            title={t('toolSize')}
                         />
                     </div>
 
@@ -620,6 +623,7 @@ const SketchPad: React.FC<SketchPadProps> = ({ onSave, onClose, currentLanguage 
                             onChange={(e) => setTransform(prev => ({ ...prev, scale: Number(e.target.value) }))}
                             className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-32 -rotate-90 origin-center bg-transparent appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-amber-500 [&::-webkit-slider-thumb]:rounded-full"
                             style={{ width: '128px' }}
+                            title={t('toolZoom')}
                         />
                     </div>
                 </div>

@@ -11,23 +11,16 @@ interface SizeSelectorProps {
   onSelect: (size: ImageSize) => void;
   label?: string;
   disabled?: boolean;
-  isLocked?: boolean;
-  onLockToggle?: () => void;
   supportedSizes?: ImageSize[];
   currentLanguage?: Language;
 }
 
-const SizeSelector: React.FC<SizeSelectorProps> = ({ selectedSize, onSelect, label = "Resolution", disabled, isLocked, onLockToggle, supportedSizes, currentLanguage = 'en' as Language }) => {
+const SizeSelector: React.FC<SizeSelectorProps> = ({ selectedSize, onSelect, label = "Resolution", disabled, supportedSizes, currentLanguage = 'en' as Language }) => {
   const t = (key: string) => getTranslation(currentLanguage, key);
   return (
     <div className="flex flex-col gap-2 h-full">
       <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
         {label}
-        {onLockToggle && (
-          <button onClick={onLockToggle} className={`text-[11px] transition-colors ${isLocked ? 'text-amber-500' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`} title={isLocked ? 'Locked' : 'Lock'}>
-            {isLocked ? '🔒' : '🔓'}
-          </button>
-        )}
       </label>
       <div className={`flex bg-gray-100 dark:bg-gray-900/50 p-1 rounded-xl border border-gray-200 dark:border-gray-800 gap-1 mt-auto transition-opacity ${disabled ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
         {IMAGE_SIZES.map((size) => {

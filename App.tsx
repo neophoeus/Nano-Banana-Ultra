@@ -94,12 +94,6 @@ const App: React.FC = () => {
 
     const [showPromptDropdown, setShowPromptDropdown] = useState<'history' | 'templates' | null>(null);
 
-    // F7: Parameter Lock
-    const [lockedParams, setLockedParams] = useState<{ ratio: boolean; size: boolean; style: boolean; model: boolean }>({
-        ratio: false, size: false, style: false, model: false
-    });
-    const toggleLock = (key: 'ratio' | 'size' | 'style' | 'model') => setLockedParams(prev => ({ ...prev, [key]: !prev[key] }));
-
     // P7-1: Enter to submit toggle
     const [enterToSubmit, setEnterToSubmit] = useState(() => {
         const saved = localStorage.getItem('nbu_enterToSubmit');
@@ -151,14 +145,14 @@ const App: React.FC = () => {
             if (caps.supportedSizes.length > 0 && !caps.supportedSizes.includes(imageSize)) {
                 // If the selected size is not supported, default to 1K or the closest match
                 const fallbackSize = caps.supportedSizes.includes('1K') ? '1K' : caps.supportedSizes[0];
-                if (!lockedParams.size) setImageSize(fallbackSize);
+                setImageSize(fallbackSize);
             }
 
             // Check Ratio
             if (caps.supportedRatios.length > 0 && !caps.supportedRatios.includes(aspectRatio)) {
                 // Default to 1:1 if unsupported
                 const fallbackRatio = caps.supportedRatios.includes('1:1') ? '1:1' : caps.supportedRatios[0];
-                if (!lockedParams.ratio) setAspectRatio(fallbackRatio);
+                setAspectRatio(fallbackRatio);
             }
 
             // Check Reference Images Count
@@ -178,7 +172,7 @@ const App: React.FC = () => {
                 return prevImages;
             });
         }
-    }, [imageModel, imageSize, aspectRatio, lockedParams, showNotification]);
+    }, [imageModel, imageSize, aspectRatio, showNotification]);
 
     useEffect(() => {
         // Initial check for API key
@@ -278,7 +272,7 @@ const App: React.FC = () => {
             setCharacterImages(prev => {
                 const max = MODEL_CAPABILITIES[imageModel].maxCharacters;
                 if (prev.length >= max) {
-                    showNotification(t('errorMaxRefs'), 'info');
+                    showNotification(t('errorMaxRefs').replace('{0}', max.toString()), 'info');
                     return prev;
                 }
                 return [...prev, url];
@@ -294,7 +288,7 @@ const App: React.FC = () => {
         const activeUrl = getActiveImageUrl();
         if (!activeUrl) return;
         if (objectImages.length >= MODEL_CAPABILITIES[imageModel].maxObjects) {
-            showNotification(t('errorMaxRefs'), 'error');
+            showNotification(t('errorMaxRefs').replace('{0}', MODEL_CAPABILITIES[imageModel].maxObjects.toString()), 'error');
             return;
         }
         setObjectImages(prev => [...prev, activeUrl]);
@@ -457,11 +451,11 @@ const App: React.FC = () => {
             // F3: Also remove from saved prompt history if deleted from results history
             removePrompt(promptText);
         };
-        // F7: Restore Input State — respect locked parameters
-        if (!lockedParams.ratio) setAspectRatio(item.aspectRatio);
-        if (!lockedParams.size) setImageSize(item.size);
-        if (!lockedParams.style) setImageStyle(item.style);
-        if (!lockedParams.model) setImageModel(item.model || 'gemini-3.1-flash-image-preview');
+        // Restore Input State from history
+        setAspectRatio(item.aspectRatio);
+        setImageSize(item.size);
+        setImageStyle(item.style);
+        setImageModel(item.model || 'gemini-3.1-flash-image-preview');
 
         // Update Display State to match selected history item
         setDisplaySettings({
@@ -555,10 +549,12 @@ const App: React.FC = () => {
         <div className="h-screen w-full bg-gray-50 dark:bg-[#050505] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-50 via-white to-gray-100 dark:from-[#1a1c29] dark:via-[#0f1115] dark:to-black text-gray-900 dark:text-gray-100 font-sans selection:bg-amber-500/30 selection:text-amber-200 relative overflow-hidden flex flex-col transition-colors duration-500">
 
             {/* Floating Controls Container (Log + Lang + Theme) */}
-            <div className="fixed bottom-4 right-4 z-[9999] flex items-end gap-2 pointer-events-none">
-                <div className="pointer-events-auto">
-                    <GlobalLogConsole logs={logs} isLoading={isGenerating} currentLanguage={currentLang} />
-                </div>
+            <div className="fixed bottom-4 right-4 z-[10002] flex items-end gap-2 pointer-events-none">
+                {!isSketchPadOpen && (
+                    <div className="pointer-events-auto">
+                        <GlobalLogConsole logs={logs} isLoading={isGenerating} currentLanguage={currentLang} />
+                    </div>
+                )}
                 <div className="pointer-events-auto flex flex-col gap-2">
                     <ThemeToggle currentLanguage={currentLang} />
                     <LanguageSelector currentLanguage={currentLang} onLanguageChange={setCurrentLang} />
@@ -710,7 +706,7 @@ const App: React.FC = () => {
                     imageStyle={imageStyle} setImageStyle={setImageStyle}
                     aspectRatio={aspectRatio} setAspectRatio={setAspectRatio}
                     batchSize={batchSize} setBatchSize={setBatchSize}
-                    lockedParams={lockedParams} toggleLock={toggleLock}
+
                     isStyleModalOpen={isStyleModalOpen} setIsStyleModalOpen={setIsStyleModalOpen}
                     currentLang={currentLang} t={t} getStyleLabel={getStyleLabel}
                     showNotification={showNotification} handleOpenSketchPad={handleOpenSketchPad}

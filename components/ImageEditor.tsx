@@ -902,7 +902,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                                     label={t('objectRefs')}
                                     currentLanguage={currentLanguage}
                                     onWarning={(msg) => showToast(msg, 'error')}
-                                    limitWarningMsg={t('errorMaxRefs')}
                                     prefixTag="Obj"
                                     hideHeader
                                 />
@@ -915,7 +914,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                                         label={t('characterRefs')}
                                         currentLanguage={currentLanguage}
                                         onWarning={(msg) => showToast(msg, 'error')}
-                                        limitWarningMsg={t('errorMaxRefs')}
                                         prefixTag="Char"
                                         hideHeader
                                     />
@@ -954,7 +952,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                                                 setTextLabels(textLabels.slice(0, -1));
                                             }
                                         }
-                                    }} disabled={retouchMode === 'mask' ? maskPaths.length === 0 : (doodlePaths.length === 0 && textLabels.length === 0)} className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded disabled:opacity-30 transition-colors">
+                                    }} disabled={retouchMode === 'mask' ? maskPaths.length === 0 : (doodlePaths.length === 0 && textLabels.length === 0)} className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded disabled:opacity-30 transition-colors" title={t('toolUndo')}>
                                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
                                     </button>
 
@@ -973,7 +971,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                                             setDoodlePaths([...doodlePaths, pathToRestore]);
                                             setRedoDoodlePaths(redoDoodlePaths.slice(0, -1));
                                         }
-                                    }} disabled={retouchMode === 'mask' ? redoMaskPaths.length === 0 : redoDoodlePaths.length === 0} className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded disabled:opacity-30 transition-colors">
+                                    }} disabled={retouchMode === 'mask' ? redoMaskPaths.length === 0 : redoDoodlePaths.length === 0} className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded disabled:opacity-30 transition-colors" title={t('toolRedo')}>
                                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" /></svg>
                                     </button>
 
@@ -982,8 +980,8 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                                 </>
                             ) : (
                                 <>
-                                    <button onClick={() => fitImageToFrame('contain')} disabled={isGenerating} className="px-2 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors">{t('btnFit')}</button>
-                                    <button onClick={() => fitImageToFrame('cover')} disabled={isGenerating} className="px-2 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors">{t('btnFill')}</button>
+                                    <button onClick={() => fitImageToFrame('contain')} disabled={isGenerating} className="px-2 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors" title={t('btnFit')}>{t('btnFit')}</button>
+                                    <button onClick={() => fitImageToFrame('cover')} disabled={isGenerating} className="px-2 py-1.5 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors" title={t('btnFill')}>{t('btnFill')}</button>
 
                                     <div className="w-px bg-gray-300 dark:bg-gray-700 mx-1"></div>
 
@@ -1009,7 +1007,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                             )}
                         </div>
 
-                        <button onClick={handleExit} disabled={isGenerating} className="pointer-events-auto p-3 bg-red-100 dark:bg-red-900/40 rounded-full border border-red-200 dark:border-red-500/30 hover:bg-red-200 dark:hover:bg-red-900/80 text-red-600 dark:text-red-200 transition-colors shadow-lg disabled:opacity-30">
+                        <button onClick={handleExit} disabled={isGenerating} className="pointer-events-auto p-3 bg-red-100 dark:bg-red-900/40 rounded-full border border-red-200 dark:border-red-500/30 hover:bg-red-200 dark:hover:bg-red-900/80 text-red-600 dark:text-red-200 transition-colors shadow-lg disabled:opacity-30" title={t('sketchExitTitle')}>
                             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </div>
@@ -1052,16 +1050,17 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                                                 <input type="range" min="5" max="200" value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))}
                                                     disabled={isGenerating}
                                                     className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-32 -rotate-90 origin-center bg-transparent appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-amber-500 [&::-webkit-slider-thumb]:rounded-full disabled:opacity-50"
-                                                    style={{ width: '128px' }} />
+                                                    style={{ width: '128px' }}
+                                                    title={t('toolSize')} />
                                             </div>
                                         </>
                                     ) : (
                                         /* Doodle Controls */
                                         <div className="flex flex-col gap-2">
-                                            <button onClick={() => setActiveTool('pen')} className={`p-2 rounded-lg ${activeTool === 'pen' ? 'bg-amber-100 text-amber-600' : 'text-gray-400'}`}>
+                                            <button onClick={() => setActiveTool('pen')} className={`p-2 rounded-lg ${activeTool === 'pen' ? 'bg-amber-100 text-amber-600' : 'text-gray-400'}`} title={t('toolPen')}>
                                                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                             </button>
-                                            <button onClick={() => setActiveTool('text')} className={`p-2 rounded-lg ${activeTool === 'text' ? 'bg-amber-100 text-amber-600' : 'text-gray-400'}`}>
+                                            <button onClick={() => setActiveTool('text')} className={`p-2 rounded-lg ${activeTool === 'text' ? 'bg-amber-100 text-amber-600' : 'text-gray-400'}`} title={t('toolText')}>
                                                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M12 6v13" /></svg>
                                             </button>
                                             <div className="w-full h-px bg-gray-200 dark:bg-gray-700 my-1"></div>
@@ -1101,6 +1100,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                                         disabled={isGenerating}
                                         className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-32 -rotate-90 origin-center bg-transparent appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-blue-500 [&::-webkit-slider-thumb]:rounded-full disabled:opacity-50"
                                         style={{ width: '128px' }}
+                                        title={t('toolZoom')}
                                     />
                                 </div>
                             </div>

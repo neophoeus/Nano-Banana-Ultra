@@ -10,8 +10,6 @@ interface RatioSelectorProps {
   onSelect: (ratio: AspectRatio) => void;
   label?: string;
   disabled?: boolean;
-  isLocked?: boolean;
-  onLockToggle?: () => void;
   currentLanguage?: Language;
   supportedRatios?: AspectRatio[];
 }
@@ -21,8 +19,6 @@ const RatioSelector: React.FC<RatioSelectorProps> = ({
   onSelect,
   label = "Aspect Ratio",
   disabled,
-  isLocked,
-  onLockToggle,
   currentLanguage = 'en' as Language,
   supportedRatios
 }) => {
@@ -67,11 +63,6 @@ const RatioSelector: React.FC<RatioSelectorProps> = ({
     <div className="space-y-2">
       <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
         {label}
-        {onLockToggle && (
-          <button onClick={onLockToggle} className={`text-[11px] transition-colors ${isLocked ? 'text-amber-500' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`} title={isLocked ? t('locked') : t('lock')}>
-            {isLocked ? '🔒' : '🔓'}
-          </button>
-        )}
       </label>
       <div className={`grid grid-cols-7 gap-1.5 transition-opacity ${disabled ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
         {ASPECT_RATIOS.map((ratio) => {

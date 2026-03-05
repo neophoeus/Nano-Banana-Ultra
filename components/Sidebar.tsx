@@ -43,8 +43,7 @@ interface SidebarProps {
     setAspectRatio: (val: AspectRatio) => void;
     batchSize: number;
     setBatchSize: (val: number) => void;
-    lockedParams: { ratio: boolean; size: boolean; style: boolean; model: boolean };
-    toggleLock: (key: 'ratio' | 'size' | 'style' | 'model') => void;
+
     isStyleModalOpen: boolean;
     setIsStyleModalOpen: (val: boolean) => void;
     currentLang: Language;
@@ -75,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
         imageStyle, setImageStyle,
         aspectRatio, setAspectRatio,
         batchSize, setBatchSize,
-        lockedParams, toggleLock,
+
         isStyleModalOpen, setIsStyleModalOpen,
         currentLang, t, getStyleLabel,
         showNotification, handleOpenSketchPad,
@@ -110,9 +109,8 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                         selectedModel={imageModel}
                         onSelect={setImageModel}
                         label={t('modelSelect')}
-                        disabled={isGenerating || lockedParams.model}
-                        isLocked={lockedParams.model}
-                        onLockToggle={() => toggleLock('model')}
+                        disabled={isGenerating}
+
                         langDict={{
                             modelGemini3Pro: t('modelGemini3Pro'),
                             modelGemini31Flash: t('modelGemini31Flash'),
@@ -339,7 +337,6 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                             maxImages={MODEL_CAPABILITIES[imageModel].maxObjects}
                             prefixTag="Obj"
                             safeLimit={Math.floor(MODEL_CAPABILITIES[imageModel].maxObjects / 2)}
-                            limitWarningMsg={t('errorMaxRefs')}
                             onRemove={handleRemoveObjectReference}
                             hideHeader
                         />
@@ -354,7 +351,6 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                                 maxImages={MODEL_CAPABILITIES[imageModel].maxCharacters}
                                 prefixTag="Char"
                                 safeLimit={Math.floor(MODEL_CAPABILITIES[imageModel].maxCharacters / 2) || 1}
-                                limitWarningMsg={t('errorMaxRefs')}
                                 onRemove={handleRemoveCharacterReference}
                                 hideHeader
                             />
@@ -367,11 +363,8 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                     <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center justify-between">
                         <span className="flex items-center gap-1.5">
                             {t('style')}
-                            <button onClick={() => toggleLock('style')} className={`text-[11px] transition-colors ${lockedParams.style ? 'text-amber-500' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`} title={lockedParams.style ? t('styleLocked') : t('lockStyle')}>
-                                {lockedParams.style ? '🔒' : '🔓'}
-                            </button>
                         </span>
-                        {imageStyle !== 'None' && !lockedParams.style && (
+                        {imageStyle !== 'None' && (
                             <button
                                 onClick={() => setImageStyle('None')}
                                 className="text-[10px] text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 font-bold uppercase transition-colors"
@@ -381,10 +374,9 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                         )}
                     </label>
                     <button
-                        onClick={() => !lockedParams.style && setIsStyleModalOpen(true)}
-                        disabled={lockedParams.style}
+                        onClick={() => setIsStyleModalOpen(true)}
+                        disabled={false}
                         className={`w-full flex items-center justify-between p-2 rounded-xl border transition-all duration-300 group
-                            ${lockedParams.style ? 'opacity-50 cursor-not-allowed grayscale' : ''}
                             ${imageStyle !== 'None'
                                 ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-300 dark:border-amber-500/50 shadow-md shadow-amber-500/10'
                                 : 'bg-gray-100 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800 hover:bg-gray-200 dark:hover:bg-gray-800'
@@ -413,9 +405,8 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                                 selectedSize={imageSize}
                                 onSelect={setImageSize}
                                 label={t('resolution')}
-                                disabled={lockedParams.size || MODEL_CAPABILITIES[imageModel].supportedSizes.length === 0}
-                                isLocked={lockedParams.size}
-                                onLockToggle={() => toggleLock('size')}
+                                disabled={MODEL_CAPABILITIES[imageModel].supportedSizes.length === 0}
+
                                 supportedSizes={MODEL_CAPABILITIES[imageModel].supportedSizes}
                                 currentLanguage={currentLang}
                             />
@@ -434,9 +425,8 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                         selectedRatio={aspectRatio}
                         onSelect={setAspectRatio}
                         label={t('aspectRatio')}
-                        disabled={lockedParams.ratio || MODEL_CAPABILITIES[imageModel].supportedRatios.length === 0}
-                        isLocked={lockedParams.ratio}
-                        onLockToggle={() => toggleLock('ratio')}
+                        disabled={MODEL_CAPABILITIES[imageModel].supportedRatios.length === 0}
+
                         supportedRatios={MODEL_CAPABILITIES[imageModel].supportedRatios}
                         currentLanguage={currentLang}
                     />
