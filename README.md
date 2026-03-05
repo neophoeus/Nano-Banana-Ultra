@@ -1,4 +1,4 @@
-# Nano Banana Ultra - v2.4 Release 🚀
+# Nano Banana Ultra - v2.4.1 Release 🚀
 
 <details open>
 <summary><b>🇧 English version</b></summary>
@@ -11,7 +11,8 @@ This is the newly rewritten version (v2.4) of the Nano Banana Ultra image genera
 
 - **Text-to-Image**: Generate beautiful images quickly by entering text prompts.
 - **Image-to-Image & Style Transfer**: Upload reference images and combine them with prompts or built-in styles to create entirely new artworks.
-- **Advanced Model Selection**: Switch freely between the latest Gemini image models (Gemini 3.1 Flash, Gemini 3.0 Pro, Gemini 2.5 Flash). The UI smartly adapts and locks unsupported features based on your selection (e.g. tracking specific ratio limits or max object counts).
+- **Advanced Model Selection**: Switch freely between the latest Gemini image models. UI dynamically adapts based on selection (e.g. tracking specific ratio limits or max object counts).
+- **Global Theme & Language Sync**: SketchPad and ImageEditor now feature synchronized global theme and language controls for a seamless experience. Added consistent hover tooltips across all interactive UI elements.
 - **Interactive Image Editor**: Built-in powerful canvas editor supporting Inpainting and Outpainting! Zoom, pan, and mask specific areas of an image using the brush tool for precise modification. Features a dedicated UI layout and optimized reference image limits specialized for editing tasks.
 - **Dual Reference Trays**: Independently configure Characters and Objects schemas, equipped with native HTML5 Drag and Drop ordering for prompt structure matching.
 - **Smart File Naming**: Auto-saving now embeds the generating model's name directly into the filename (e.g., `gemini-3-pro-image-preview-gen_...png`) for easy sorting and management.
@@ -61,6 +62,7 @@ This is the newly rewritten version (v2.4) of the Nano Banana Ultra image genera
 
 <details>
 <summary><b>🇹🇼 繁體中文 (Traditional Chinese)</b></summary>
+# Nano Banana Ultra - v2.4.1 Release 🚀
 
 <br>
 
@@ -70,7 +72,8 @@ This is the newly rewritten version (v2.4) of the Nano Banana Ultra image genera
 
 - **文字生圖 (Text-to-Image)**：輸入提示詞 (Prompt)，快速生成精美圖片。
 - **圖生圖 / 風格轉換 (Image-to-Image & Style Transfer)**：上傳參考圖片，結合提示詞或內建風格，生成全新面貌的作品。
-- **模型自由切換 (Advanced Model Selection)**：支援最新 Gemini Imagen 視覺模型 (包含 Gemini 3.1 Flash, Gemini 3.0 Pro, Gemini 2.5 Flash 等)，並會根據所選模型動態開關介面功能 (例如各模型支援的參考圖數量上限與輸出比例限制)。
+- **模型需求動態適配 (Advanced Model Selection)**：支援最新 Gemini Imagen 視覺模型，並會根據所選模型動態開關介面功能 (例如各模型支援的參考圖數量上限與輸出比例限制)。
+- **全域佈景切換與語系同步**：手繪板 (SketchPad) 與編輯器 (ImageEditor) 現已與首頁完全同步色彩模式與語系設定。所有互動按鈕與滑桿皆已全面補齊懸停提示 (Tooltips)。
 - **專業影像編輯器 (Interactive Image Editor)**：內建強大的畫布編輯器，支援局部修改 (Inpainting) 與畫面外擴 (Outpainting)！您可以在畫布上自由縮放原圖、使用筆刷塗抹遮罩，精準替換或擴充指定區域的細節。擁有專屬的最佳化操作介面與精準的參考圖數量控制設計。
 - **雙軌參考圖架構 (Dual Reference Trays)**：支援人物與物品獨立配置，並支援 HTML5 原生拖放 (Drag & Drop) 排序功能讓您輕鬆更動提示詞陣列。
 - **智慧檔名系統 (Smart File Naming)**：產生的圖片在存檔時，會自動擷取生成該圖片的 AI 模型名稱作為檔名標籤 (例如：`gemini-3-pro-image-preview-gen_...png`)，便於後續管理與分類。
