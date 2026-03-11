@@ -56,7 +56,7 @@ This is the newly rewritten version (v2.5) of the Nano Banana Ultra image genera
    Open this URL in your browser after the dev server starts:
 
    ```text
-   http://127.0.0.1:3000/api/health
+   http://127.0.0.1:22287/api/health
    ```
 
    A healthy response looks like this:
@@ -145,7 +145,7 @@ This is the newly rewritten version (v2.5) of the Nano Banana Ultra image genera
    開啟下列網址確認後端路由與金鑰狀態：
 
    ```text
-   http://127.0.0.1:3000/api/health
+   http://127.0.0.1:22287/api/health
    ```
 
    正常回應範例：
