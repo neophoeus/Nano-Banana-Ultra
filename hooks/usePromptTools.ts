@@ -1,8 +1,11 @@
-import { useState, useCallback } from 'react';
+import { Dispatch, SetStateAction, useCallback, useMemo, useState } from 'react';
 import { enhancePromptWithGemini, generateRandomPrompt } from '../services/geminiService';
+import { Language, SUPPORTED_LANGUAGES } from '../utils/translations';
 
 interface UsePromptToolsOptions {
-    getLanguageLabel: () => string;
+    currentLanguage: Language;
+    prompt: string;
+    setPrompt: Dispatch<SetStateAction<string>>;
     addLog: (msg: string) => void;
     showNotification: (msg: string, type: 'info' | 'error') => void;
     t: (key: string) => string;
@@ -12,8 +15,8 @@ interface UsePromptToolsOptions {
 
 interface UsePromptToolsReturn {
     isEnhancingPrompt: boolean;
-    handleSmartRewrite: (prompt: string, setPrompt: (p: string) => void) => Promise<void>;
-    handleSurpriseMe: (setPrompt: (p: string) => void) => Promise<void>;
+    handleSmartRewrite: () => Promise<void>;
+    handleSurpriseMe: () => Promise<void>;
 }
 
 /**
@@ -21,7 +24,9 @@ interface UsePromptToolsReturn {
  * Extracts prompt enhancement logic from App.tsx.
  */
 export function usePromptTools({
-    getLanguageLabel,
+    currentLanguage,
+    prompt,
+    setPrompt,
     addLog,
     showNotification,
     t,
@@ -29,8 +34,12 @@ export function usePromptTools({
     handleApiKeyConnect,
 }: UsePromptToolsOptions): UsePromptToolsReturn {
     const [isEnhancingPrompt, setIsEnhancingPrompt] = useState(false);
+    const languageLabel = useMemo(() => {
+        const language = SUPPORTED_LANGUAGES.find((candidate) => candidate.value === currentLanguage);
+        return language ? language.label : 'English';
+    }, [currentLanguage]);
 
-    const handleSmartRewrite = useCallback(async (prompt: string, setPrompt: (p: string) => void) => {
+    const handleSmartRewrite = useCallback(async () => {
         if (!prompt.trim()) {
             showNotification(t('errEnterIdea'), 'error');
             return;
@@ -44,7 +53,7 @@ export function usePromptTools({
 
         setIsEnhancingPrompt(true);
         try {
-            const enhanced = await enhancePromptWithGemini(prompt, getLanguageLabel());
+            const enhanced = await enhancePromptWithGemini(prompt, languageLabel);
             setPrompt(enhanced);
             addLog(t('logRewriteOk'));
         } catch (e) {
@@ -53,9 +62,9 @@ export function usePromptTools({
         } finally {
             setIsEnhancingPrompt(false);
         }
-    }, [apiKeyReady, handleApiKeyConnect, getLanguageLabel, addLog, showNotification, t]);
+    }, [apiKeyReady, handleApiKeyConnect, addLog, languageLabel, prompt, setPrompt, showNotification, t]);
 
-    const handleSurpriseMe = useCallback(async (setPrompt: (p: string) => void) => {
+    const handleSurpriseMe = useCallback(async () => {
         if (!apiKeyReady) {
             const ready = await handleApiKeyConnect();
             if (!ready) {
@@ -64,7 +73,7 @@ export function usePromptTools({
         }
         setIsEnhancingPrompt(true);
         try {
-            const randomPrompt = await generateRandomPrompt(getLanguageLabel());
+            const randomPrompt = await generateRandomPrompt(languageLabel);
             setPrompt(randomPrompt);
             addLog(t('logRandomOk'));
         } catch (e) {
@@ -73,7 +82,7 @@ export function usePromptTools({
         } finally {
             setIsEnhancingPrompt(false);
         }
-    }, [apiKeyReady, handleApiKeyConnect, getLanguageLabel, addLog, t]);
+    }, [apiKeyReady, handleApiKeyConnect, addLog, languageLabel, setPrompt, t]);
 
     return {
         isEnhancingPrompt,

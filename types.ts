@@ -1,48 +1,382 @@
-
-export type AspectRatio = '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | '2:3' | '3:2' | '21:9' | '4:5' | '5:4' | '1:4' | '4:1' | '1:8' | '8:1';
+export type AspectRatio =
+    | '1:1'
+    | '16:9'
+    | '9:16'
+    | '4:3'
+    | '3:4'
+    | '2:3'
+    | '3:2'
+    | '21:9'
+    | '4:5'
+    | '5:4'
+    | '1:4'
+    | '4:1'
+    | '1:8'
+    | '8:1';
 export type ImageSize = '512' | '1K' | '2K' | '4K';
 
 export type ImageStyleCategory = 'All' | 'Photo' | 'Classic' | 'Digital' | 'Stylized' | 'Craft' | 'Design';
 
 export type ImageStyle =
-  // Base
-  'None' |
-  // Photo
-  'Photorealistic' | 'Cinematic' | 'Film Noir' | 'Vintage Polaroid' | 'Macro' | 'Long Exposure' | 'Double Exposure' | 'Tilt-Shift' | 'Knolling' |
-  // Classic
-  'Oil Painting' | 'Watercolor' | 'Pencil Sketch' | 'Ukiyo-e' | 'Ink Wash' | 'Impressionism' | 'Mosaic' | 'Pastel' | 'Art Nouveau' | 'Baroque' | 'Art Deco' |
-  // Digital
-  'Anime' | '3D Render' | 'Cyberpunk' | 'Pixel Art' | 'Low Poly' | 'Vaporwave' | 'Isometric' | 'Vector Art' | 'Glitch Art' | 'Manga' | 'Chibi' |
-  // Stylized
-  'Surrealism' | 'Pop Art' | 'Psychedelic' | 'Gothic' | 'Steampunk' | 'Comic Book' | 'Fantasy Art' | 'Stained Glass' | 'Graffiti' |
-  // Craft
-  'Claymation' | 'Origami' | 'Knitted' | 'Paper Cutout' | 'Wood Carving' | 'Porcelain' | 'Embroidery' | 'Crystal' |
-  // Design
-  'Blueprint' | 'Sticker' | 'Doodle' | 'Neon' | 'Flat Design' | 'Miniature';
+    // Base
+    | 'None'
+    // Photo
+    | 'Photorealistic'
+    | 'Cinematic'
+    | 'Film Noir'
+    | 'Vintage Polaroid'
+    | 'Macro'
+    | 'Long Exposure'
+    | 'Double Exposure'
+    | 'Tilt-Shift'
+    | 'Knolling'
+    // Classic
+    | 'Oil Painting'
+    | 'Watercolor'
+    | 'Pencil Sketch'
+    | 'Ukiyo-e'
+    | 'Ink Wash'
+    | 'Impressionism'
+    | 'Mosaic'
+    | 'Pastel'
+    | 'Art Nouveau'
+    | 'Baroque'
+    | 'Art Deco'
+    // Digital
+    | 'Anime'
+    | '3D Render'
+    | 'Cyberpunk'
+    | 'Pixel Art'
+    | 'Low Poly'
+    | 'Vaporwave'
+    | 'Isometric'
+    | 'Vector Art'
+    | 'Glitch Art'
+    | 'Manga'
+    | 'Chibi'
+    // Stylized
+    | 'Surrealism'
+    | 'Pop Art'
+    | 'Psychedelic'
+    | 'Gothic'
+    | 'Steampunk'
+    | 'Comic Book'
+    | 'Fantasy Art'
+    | 'Stained Glass'
+    | 'Graffiti'
+    // Craft
+    | 'Claymation'
+    | 'Origami'
+    | 'Knitted'
+    | 'Paper Cutout'
+    | 'Wood Carving'
+    | 'Porcelain'
+    | 'Embroidery'
+    | 'Crystal'
+    // Design
+    | 'Blueprint'
+    | 'Sticker'
+    | 'Doodle'
+    | 'Neon'
+    | 'Flat Design'
+    | 'Miniature';
 
 export type ImageModel = 'gemini-3.1-flash-image-preview' | 'gemini-3-pro-image-preview' | 'gemini-2.5-flash-image';
+export type OutputFormat = 'images-only' | 'images-and-text';
+export type ThinkingLevel = 'disabled' | 'minimal' | 'high';
+export type StructuredOutputMode =
+    | 'off'
+    | 'scene-brief'
+    | 'prompt-kit'
+    | 'quality-check'
+    | 'shot-plan'
+    | 'delivery-brief'
+    | 'revision-brief'
+    | 'variation-compare';
+export type GroundingMode = 'off' | 'google-search' | 'image-search' | 'google-search-plus-image-search';
+export type ExecutionMode = 'single-turn' | 'interactive-batch-variants' | 'chat-continuation' | 'queued-batch-job';
+export type StageAssetRole = 'object' | 'character' | 'editor-base' | 'stage-source';
+export type StageAssetOrigin = 'upload' | 'sketch' | 'generated' | 'history' | 'editor';
+export type TurnLineageAction = 'root' | 'continue' | 'branch' | 'editor-follow-up' | 'reopen';
+export type BranchNameOverrides = Record<string, string>;
+export type BranchContinuationSourceByOriginId = Record<string, string>;
+
+export interface ConversationImageAssetReference {
+    savedFilename?: string | null;
+    dataUrl?: string | null;
+    mimeType?: string | null;
+}
+
+export interface ConversationTurnReference {
+    historyId: string;
+    prompt: string;
+    sourceImage: ConversationImageAssetReference | null;
+    outputImage: ConversationImageAssetReference | null;
+    text: string | null;
+    thoughts: string | null;
+    thoughtSignature: string | null;
+}
+
+export interface ConversationRequestContext {
+    conversationId: string;
+    branchOriginId: string;
+    activeSourceHistoryId: string;
+    priorTurns: ConversationTurnReference[];
+}
+
+export interface BranchConversationRecord {
+    conversationId: string;
+    branchOriginId: string;
+    activeSourceHistoryId: string | null;
+    turnIds: string[];
+    startedAt: number;
+    updatedAt: number | null;
+}
+
+export interface WorkspaceConversationState {
+    byBranchOriginId: Record<string, BranchConversationRecord>;
+}
+
+export type QueuedBatchJobState =
+    | 'JOB_STATE_PENDING'
+    | 'JOB_STATE_RUNNING'
+    | 'JOB_STATE_SUCCEEDED'
+    | 'JOB_STATE_FAILED'
+    | 'JOB_STATE_CANCELLED'
+    | 'JOB_STATE_EXPIRED';
+
+export interface QueuedBatchJob {
+    localId: string;
+    name: string;
+    displayName: string;
+    state: QueuedBatchJobState;
+    model: ImageModel;
+    prompt: string;
+    generationMode?: string;
+    aspectRatio: AspectRatio;
+    imageSize: ImageSize;
+    style: ImageStyle;
+    outputFormat: OutputFormat;
+    structuredOutputMode?: StructuredOutputMode;
+    temperature: number;
+    thinkingLevel: ThinkingLevel;
+    includeThoughts: boolean;
+    googleSearch: boolean;
+    imageSearch: boolean;
+    batchSize: number;
+    objectImageCount: number;
+    characterImageCount: number;
+    createdAt: number;
+    updatedAt: number;
+    startedAt: number | null;
+    completedAt: number | null;
+    lastPolledAt: number | null;
+    importedAt: number | null;
+    error: string | null;
+    parentHistoryId?: string | null;
+    rootHistoryId?: string | null;
+    sourceHistoryId?: string | null;
+    lineageAction?: TurnLineageAction;
+    lineageDepth?: number;
+}
+
+export interface StageAsset {
+    id: string;
+    url: string;
+    role: StageAssetRole;
+    origin: StageAssetOrigin;
+    createdAt: number;
+    isSketch?: boolean;
+    sourceHistoryId?: string;
+    lineageAction?: TurnLineageAction;
+}
+
+export interface GroundingMetadata {
+    enabled: boolean;
+    imageSearch?: boolean;
+    webQueries?: string[];
+    imageQueries?: string[];
+    searchEntryPointAvailable?: boolean;
+    searchEntryPointRenderedContent?: string;
+    supports?: Array<{
+        chunkIndices: number[];
+        sourceIndices?: number[];
+        segmentText?: string;
+        sourceTitles?: string[];
+    }>;
+    sources?: Array<{
+        title: string;
+        url: string;
+        imageUrl?: string;
+        sourceType?: 'web' | 'image' | 'context';
+    }>;
+}
+
+export interface GenerationSettings {
+    prompt: string;
+    aspectRatio: AspectRatio;
+    size: ImageSize;
+    style: ImageStyle;
+    model: ImageModel;
+    batchSize: number;
+    outputFormat: OutputFormat;
+    structuredOutputMode?: StructuredOutputMode;
+    temperature: number;
+    thinkingLevel: ThinkingLevel;
+    includeThoughts: boolean;
+    googleSearch: boolean;
+    imageSearch: boolean;
+}
+
+export interface GenerateResponse {
+    imageUrl?: string;
+    text?: string;
+    thoughts?: string;
+    structuredData?: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
+    grounding?: GroundingMetadata;
+    sessionHints?: Record<string, unknown>;
+    conversation?: {
+        used: boolean;
+        conversationId?: string;
+        branchOriginId?: string;
+        activeSourceHistoryId?: string;
+        priorTurnCount?: number;
+        historyLength?: number;
+    };
+}
+
+export interface ResultArtifacts {
+    text: string | null;
+    thoughts: string | null;
+    structuredData?: Record<string, unknown> | null;
+    grounding: GroundingMetadata | null;
+    metadata: Record<string, unknown> | null;
+    sessionHints: Record<string, unknown> | null;
+    historyId: string | null;
+}
+
+export interface PendingProvenanceContext {
+    grounding: GroundingMetadata | null;
+    sessionHints: Record<string, unknown> | null;
+    sourceHistoryId: string | null;
+}
+
+export type SessionContinuitySource = 'generated' | 'history' | 'follow-up';
+export type ProvenanceContinuityMode = 'live' | 'inherited';
+
+export interface WorkspaceBranchState {
+    nameOverrides: BranchNameOverrides;
+    continuationSourceByBranchOriginId: BranchContinuationSourceByOriginId;
+}
+
+export interface WorkspaceViewState {
+    generatedImageUrls: string[];
+    selectedImageIndex: number;
+    selectedHistoryId: string | null;
+}
+
+export interface WorkspaceComposerState {
+    prompt: string;
+    aspectRatio: AspectRatio;
+    imageSize: ImageSize;
+    imageStyle: ImageStyle;
+    imageModel: ImageModel;
+    batchSize: number;
+    outputFormat: OutputFormat;
+    structuredOutputMode?: StructuredOutputMode;
+    temperature: number;
+    thinkingLevel: ThinkingLevel;
+    includeThoughts: boolean;
+    googleSearch: boolean;
+    imageSearch: boolean;
+    generationMode: string;
+    executionMode: ExecutionMode;
+}
+
+export interface WorkspaceSessionState {
+    activeResult: ResultArtifacts | null;
+    continuityGrounding: GroundingMetadata | null;
+    continuitySessionHints: Record<string, unknown> | null;
+    provenanceMode: ProvenanceContinuityMode | null;
+    provenanceSourceHistoryId: string | null;
+    conversationId: string | null;
+    conversationBranchOriginId: string | null;
+    conversationActiveSourceHistoryId: string | null;
+    conversationTurnIds: string[];
+    source: SessionContinuitySource | null;
+    sourceHistoryId: string | null;
+    updatedAt: number | null;
+}
+
+export interface GenerationLineageContext {
+    parentHistoryId: string | null;
+    rootHistoryId: string | null;
+    sourceHistoryId: string | null;
+    lineageAction: TurnLineageAction;
+    lineageDepth: number;
+}
 
 export interface GeneratedImage {
-  id: string;
-  url: string;
-  savedFilename?: string;
-  prompt: string;
-  aspectRatio: AspectRatio;
-  size: ImageSize;
-  style: ImageStyle;
-  model: ImageModel;
-  createdAt: number;
-  mode?: string;
-  status?: 'success' | 'failed';
-  error?: string;
+    id: string;
+    url: string;
+    savedFilename?: string;
+    prompt: string;
+    aspectRatio: AspectRatio;
+    size: ImageSize;
+    style: ImageStyle;
+    model: ImageModel;
+    createdAt: number;
+    mode?: string;
+    executionMode?: ExecutionMode;
+    variantGroupId?: string | null;
+    status?: 'success' | 'failed';
+    error?: string;
+    text?: string;
+    thoughts?: string;
+    structuredData?: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
+    grounding?: GroundingMetadata;
+    sessionHints?: Record<string, unknown>;
+    conversationId?: string | null;
+    conversationBranchOriginId?: string | null;
+    conversationSourceHistoryId?: string | null;
+    conversationTurnIndex?: number | null;
+    parentHistoryId?: string | null;
+    rootHistoryId?: string | null;
+    sourceHistoryId?: string | null;
+    lineageAction?: TurnLineageAction;
+    lineageDepth?: number;
+}
+
+export interface WorkspacePersistenceSnapshot {
+    history: GeneratedImage[];
+    stagedAssets: StageAsset[];
+    workflowLogs: string[];
+    queuedJobs: QueuedBatchJob[];
+    workspaceSession: WorkspaceSessionState;
+    branchState: WorkspaceBranchState;
+    conversationState: WorkspaceConversationState;
+    viewState: WorkspaceViewState;
+    composerState: WorkspaceComposerState;
 }
 
 export interface GenerateOptions {
-  prompt: string;
-  aspectRatio?: AspectRatio;
-  imageSize: ImageSize;
-  style: ImageStyle;
-  model: ImageModel;
-  objectImageInputs?: string[];
-  characterImageInputs?: string[];
+    prompt: string;
+    aspectRatio?: AspectRatio;
+    imageSize: ImageSize;
+    style: ImageStyle;
+    model: ImageModel;
+    editingInput?: string;
+    objectImageInputs?: string[];
+    characterImageInputs?: string[];
+    outputFormat?: OutputFormat;
+    structuredOutputMode?: StructuredOutputMode;
+    temperature?: number;
+    thinkingLevel?: ThinkingLevel;
+    includeThoughts?: boolean;
+    googleSearch?: boolean;
+    imageSearch?: boolean;
+    executionMode?: ExecutionMode;
+    conversationContext?: ConversationRequestContext | null;
 }

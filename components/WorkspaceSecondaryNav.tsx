@@ -1,0 +1,46 @@
+import React from 'react';
+
+export type WorkspaceSecondaryNavItem = {
+    id: string;
+    label: string;
+    onClick: () => void;
+    isActive?: boolean;
+    badge?: string;
+};
+
+type WorkspaceSecondaryNavProps = {
+    items: WorkspaceSecondaryNavItem[];
+    className?: string;
+};
+
+export default function WorkspaceSecondaryNav({ items, className = '' }: WorkspaceSecondaryNavProps) {
+    if (items.length === 0) {
+        return null;
+    }
+
+    const inactiveItemClassName = 'nbu-control-button px-3 py-1.5 text-[11px]';
+    const activeItemClassName =
+        'rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-[11px] font-semibold text-amber-700 transition-colors dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200';
+
+    return (
+        <div
+            className={`inline-flex flex-wrap gap-2 rounded-[22px] border border-gray-200/80 bg-white/72 p-2 shadow-[0_12px_30px_rgba(15,23,42,0.05)] dark:border-gray-800 dark:bg-[#11161f]/82 dark:shadow-none ${className}`.trim()}
+        >
+            {items.map((item) => (
+                <button
+                    key={item.id}
+                    type="button"
+                    onClick={item.onClick}
+                    className={`${item.isActive ? activeItemClassName : inactiveItemClassName}`}
+                >
+                    <span>{item.label}</span>
+                    {item.badge && (
+                        <span className="ml-2 rounded-full bg-black/5 px-1.5 py-0.5 text-[10px] dark:bg-white/10">
+                            {item.badge}
+                        </span>
+                    )}
+                </button>
+            ))}
+        </div>
+    );
+}

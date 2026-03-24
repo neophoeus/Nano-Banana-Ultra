@@ -1,24 +1,17 @@
 import { useState, useCallback, Dispatch, SetStateAction } from 'react';
-import { AspectRatio, ImageSize, ImageStyle, ImageModel, GeneratedImage as GeneratedImageType } from '../types';
-
-
+import { ExecutionMode, GeneratedImage as GeneratedImageType, GenerationSettings } from '../types';
+import { loadWorkspaceSnapshot } from '../utils/workspacePersistence';
 
 interface GenerationState {
     generatedImageUrls: string[];
     selectedImageIndex: number;
     isGenerating: boolean;
     generationMode: string;
+    executionMode: ExecutionMode;
     error: string | null;
     logs: string[];
     history: GeneratedImageType[];
-    displaySettings: {
-        prompt: string;
-        aspectRatio: AspectRatio;
-        size: ImageSize;
-        style: ImageStyle;
-        model: ImageModel;
-        batchSize: number;
-    };
+    displaySettings: GenerationSettings;
 }
 
 interface UseImageGenerationReturn extends GenerationState {
@@ -26,6 +19,7 @@ interface UseImageGenerationReturn extends GenerationState {
     setSelectedImageIndex: Dispatch<SetStateAction<number>>;
     setIsGenerating: Dispatch<SetStateAction<boolean>>;
     setGenerationMode: Dispatch<SetStateAction<string>>;
+    setExecutionMode: Dispatch<SetStateAction<ExecutionMode>>;
     setError: Dispatch<SetStateAction<string | null>>;
     setLogs: Dispatch<SetStateAction<string[]>>;
     setHistory: Dispatch<SetStateAction<GeneratedImageType[]>>;
@@ -41,29 +35,46 @@ interface UseImageGenerationReturn extends GenerationState {
  * Extracts ~200 lines of state + logic from App.tsx.
  */
 export function useImageGeneration(): UseImageGenerationReturn {
-    const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>([]);
-    const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
+    const initialSnapshot = loadWorkspaceSnapshot();
+    const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>(
+        () => initialSnapshot.viewState.generatedImageUrls,
+    );
+    const [selectedImageIndex, setSelectedImageIndex] = useState<number>(
+        () => initialSnapshot.viewState.selectedImageIndex,
+    );
     const [isGenerating, setIsGenerating] = useState(false);
-    const [generationMode, setGenerationMode] = useState<string>("Text to Image");
+    const [generationMode, setGenerationMode] = useState<string>('Text to Image');
+    const [executionMode, setExecutionMode] = useState<ExecutionMode>(
+        () => initialSnapshot.composerState.executionMode,
+    );
     const [error, setError] = useState<string | null>(null);
-    const [logs, setLogs] = useState<string[]>([]);
-    const [history, setHistory] = useState<GeneratedImageType[]>([]);
+    const [logs, setLogs] = useState<string[]>(() => initialSnapshot.workflowLogs);
+    const [history, setHistory] = useState<GeneratedImageType[]>(() => initialSnapshot.history);
     const [displaySettings, setDisplaySettings] = useState<GenerationState['displaySettings']>({
         prompt: '',
         aspectRatio: '1:1',
         size: '2K',
         style: 'None',
         model: 'gemini-3.1-flash-image-preview',
-        batchSize: 1
+        batchSize: 1,
+        outputFormat: 'images-only',
+        temperature: 1,
+        thinkingLevel: 'minimal',
+        includeThoughts: true,
+        googleSearch: false,
+        imageSearch: false,
     });
 
     const addLog = useCallback((message: string) => {
-        const timestamp = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const timestamp = new Date().toLocaleTimeString([], {
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+        });
         const MAX_LOGS = 200;
-        setLogs(prev => [...prev, `[${timestamp}] ${message}`].slice(-MAX_LOGS));
+        setLogs((prev) => [...prev, `[${timestamp}] ${message}`].slice(-MAX_LOGS));
     }, []);
-
-
 
     const getActiveImageUrl = useCallback(() => {
         if (generatedImageUrls.length > 0 && selectedImageIndex < generatedImageUrls.length) {
@@ -91,14 +102,24 @@ export function useImageGeneration(): UseImageGenerationReturn {
     // Instead, only the STATE is encapsulated here.
 
     return {
-        generatedImageUrls, setGeneratedImageUrls,
-        selectedImageIndex, setSelectedImageIndex,
-        isGenerating, setIsGenerating,
-        generationMode, setGenerationMode,
-        error, setError,
-        logs, setLogs,
-        history, setHistory,
-        displaySettings, setDisplaySettings,
+        generatedImageUrls,
+        setGeneratedImageUrls,
+        selectedImageIndex,
+        setSelectedImageIndex,
+        isGenerating,
+        setIsGenerating,
+        generationMode,
+        setGenerationMode,
+        executionMode,
+        setExecutionMode,
+        error,
+        setError,
+        logs,
+        setLogs,
+        history,
+        setHistory,
+        displaySettings,
+        setDisplaySettings,
         addLog,
         getActiveImageUrl,
         handleClearResults,

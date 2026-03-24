@@ -5,6 +5,75 @@
 
 const THUMBNAIL_MAX_DIM = 300; // Max width or height for history thumbnails
 
+export type PreparedImageAsset = {
+    dataUrl: string;
+    wasResized: boolean;
+    width: number;
+    height: number;
+    mimeType: string;
+};
+
+export const readFileAsDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
+        reader.readAsDataURL(file);
+    });
+
+export const normalizeImageDataUrl = (
+    dataUrl: string,
+    mimeType = 'image/png',
+    maxDimension = 4096,
+): Promise<PreparedImageAsset> =>
+    new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => {
+            let width = image.width;
+            let height = image.height;
+            let normalizedDataUrl = dataUrl;
+            let wasResized = false;
+
+            if (width > maxDimension || height > maxDimension) {
+                if (width > height) {
+                    height = Math.round((height * maxDimension) / width);
+                    width = maxDimension;
+                } else {
+                    width = Math.round((width * maxDimension) / height);
+                    height = maxDimension;
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const context = canvas.getContext('2d');
+                if (!context) {
+                    reject(new Error('Failed to create a normalization canvas context.'));
+                    return;
+                }
+
+                context.drawImage(image, 0, 0, width, height);
+                normalizedDataUrl = canvas.toDataURL(mimeType);
+                wasResized = true;
+            }
+
+            resolve({
+                dataUrl: normalizedDataUrl,
+                wasResized,
+                width,
+                height,
+                mimeType,
+            });
+        };
+        image.onerror = () => reject(new Error('Failed to load image for normalization.'));
+        image.src = dataUrl;
+    });
+
+export const prepareImageAssetFromFile = async (file: File, maxDimension = 4096): Promise<PreparedImageAsset> => {
+    const dataUrl = await readFileAsDataUrl(file);
+    return normalizeImageDataUrl(dataUrl, file.type || 'image/png', maxDimension);
+};
+
 /**
  * Save a full-resolution image to the local filesystem via the server endpoint.
  * Optionally saves a JSON sidecar with generation metadata.
@@ -13,13 +82,16 @@ const THUMBNAIL_MAX_DIM = 300; // Max width or height for history thumbnails
 export async function saveImageToLocal(
     dataUrl: string,
     prefix: string = 'gemini',
-    metadata?: Record<string, unknown>
+    metadata?: Record<string, unknown>,
 ): Promise<string | null> {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const ext = dataUrl.startsWith('data:image/png') ? 'png'
-        : dataUrl.startsWith('data:image/jpeg') ? 'jpg'
-            : dataUrl.startsWith('data:image/webp') ? 'webp'
-                : 'png';
+    const ext = dataUrl.startsWith('data:image/png')
+        ? 'png'
+        : dataUrl.startsWith('data:image/jpeg')
+          ? 'jpg'
+          : dataUrl.startsWith('data:image/webp')
+            ? 'webp'
+            : 'png';
     const filename = `${prefix}_${timestamp}_${crypto.randomUUID().slice(0, 8)}.${ext}`;
 
     try {
@@ -77,7 +149,7 @@ export const generateThumbnail = (dataUrl: string): Promise<string> => {
             }
         };
         img.onerror = () => {
-            reject(new Error("Failed to generate thumbnail"));
+            reject(new Error('Failed to generate thumbnail'));
         };
         img.src = dataUrl;
     });

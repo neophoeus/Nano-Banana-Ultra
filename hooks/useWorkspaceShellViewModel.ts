@@ -1,0 +1,196 @@
+import { Dispatch, SetStateAction, useEffect, useMemo } from 'react';
+import { WORKSPACE_SURFACE_Z_INDEX } from '../constants/workspaceOverlays';
+import { GenerationSettings } from '../types';
+import { buildWorkflowTimeline, renderWorkflowMessage, workflowMessageIncludes } from '../utils/workflowTimeline';
+
+type PickerSheet =
+    | 'prompt'
+    | 'history'
+    | 'gallery'
+    | 'templates'
+    | 'styles'
+    | 'model'
+    | 'ratio'
+    | 'size'
+    | 'batch'
+    | 'references'
+    | null;
+
+type UseWorkspaceShellViewModelArgs = {
+    generatedImageCount: number;
+    isGenerating: boolean;
+    displaySettings: GenerationSettings;
+    prompt: string;
+    aspectRatio: GenerationSettings['aspectRatio'];
+    imageSize: GenerationSettings['size'];
+    imageStyle: GenerationSettings['style'];
+    imageModel: GenerationSettings['model'];
+    batchSize: number;
+    outputFormat: GenerationSettings['outputFormat'];
+    structuredOutputMode: GenerationSettings['structuredOutputMode'];
+    temperature: number;
+    thinkingLevel: GenerationSettings['thinkingLevel'];
+    includeThoughts: boolean;
+    googleSearch: boolean;
+    imageSearch: boolean;
+    logs: string[];
+    currentStageSourceHistoryId: string | null;
+    getShortTurnId: (historyId?: string | null) => string;
+    activePickerSheet: PickerSheet;
+    isEditing: boolean;
+    isSketchPadOpen: boolean;
+    objectImageCount: number;
+    characterImageCount: number;
+    setIsSurfaceSharedControlsOpen: Dispatch<SetStateAction<boolean>>;
+    t: (key: string) => string;
+};
+
+export function useWorkspaceShellViewModel({
+    generatedImageCount,
+    isGenerating,
+    displaySettings,
+    prompt,
+    aspectRatio,
+    imageSize,
+    imageStyle,
+    imageModel,
+    batchSize,
+    outputFormat,
+    structuredOutputMode,
+    temperature,
+    thinkingLevel,
+    includeThoughts,
+    googleSearch,
+    imageSearch,
+    logs,
+    currentStageSourceHistoryId,
+    getShortTurnId,
+    activePickerSheet,
+    isEditing,
+    isSketchPadOpen,
+    objectImageCount,
+    characterImageCount,
+    setIsSurfaceSharedControlsOpen,
+    t,
+}: UseWorkspaceShellViewModelArgs) {
+    const viewSettings = useMemo<GenerationSettings>(
+        () =>
+            generatedImageCount > 0 || isGenerating
+                ? displaySettings
+                : {
+                      prompt,
+                      aspectRatio,
+                      size: imageSize,
+                      style: imageStyle,
+                      model: imageModel,
+                      batchSize,
+                      outputFormat,
+                      structuredOutputMode,
+                      temperature,
+                      thinkingLevel,
+                      includeThoughts,
+                      googleSearch,
+                      imageSearch,
+                  },
+        [
+            aspectRatio,
+            batchSize,
+            displaySettings,
+            generatedImageCount,
+            googleSearch,
+            imageModel,
+            imageSearch,
+            imageSize,
+            imageStyle,
+            includeThoughts,
+            isGenerating,
+            outputFormat,
+            prompt,
+            structuredOutputMode,
+            temperature,
+            thinkingLevel,
+        ],
+    );
+
+    const currentStageSourceShortId = currentStageSourceHistoryId ? getShortTurnId(currentStageSourceHistoryId) : null;
+
+    const timelineEntries = useMemo(
+        () =>
+            buildWorkflowTimeline(logs, 8)
+                .reverse()
+                .map((entry) => {
+                    const isCurrentStageSourceEntry = Boolean(
+                        currentStageSourceShortId &&
+                        workflowMessageIncludes(entry.message, currentStageSourceShortId, t),
+                    );
+
+                    return {
+                        ...entry,
+                        displayMessage: renderWorkflowMessage(entry.message, t),
+                        isCurrentStageSourceEntry,
+                    };
+                }),
+        [currentStageSourceShortId, logs, t],
+    );
+
+    const activeSheetTitle = useMemo(() => {
+        switch (activePickerSheet) {
+            case 'prompt':
+                return t('workspaceSheetTitlePrompt');
+            case 'history':
+                return t('workspaceSheetTitleHistory');
+            case 'gallery':
+                return t('workspaceSheetTitleGallery');
+            case 'templates':
+                return t('workspaceSheetTitleTemplates');
+            case 'styles':
+                return t('workspaceSheetTitleStyles');
+            case 'model':
+                return t('workspaceSheetTitleModel');
+            case 'ratio':
+                return t('workspaceSheetTitleRatio');
+            case 'size':
+                return t('workspaceSheetTitleSize');
+            case 'batch':
+                return t('workspaceSheetTitleBatch');
+            case 'references':
+                return t('workspaceSheetTitleReferences');
+            default:
+                return '';
+        }
+    }, [activePickerSheet, t]);
+
+    const isSurfaceWorkspaceOpen = isEditing || isSketchPadOpen;
+    const floatingControlsZIndex = isSketchPadOpen
+        ? WORKSPACE_SURFACE_Z_INDEX.floatingControls.sketch
+        : isEditing
+          ? WORKSPACE_SURFACE_Z_INDEX.floatingControls.editor
+          : WORKSPACE_SURFACE_Z_INDEX.floatingControls.shell;
+    const pickerSheetZIndex = isSketchPadOpen
+        ? WORKSPACE_SURFACE_Z_INDEX.pickerSheet.sketch
+        : isEditing
+          ? WORKSPACE_SURFACE_Z_INDEX.pickerSheet.editor
+          : WORKSPACE_SURFACE_Z_INDEX.pickerSheet.shell;
+    const activeSurfaceSheetLabel = activePickerSheet ? activeSheetTitle : t('workspaceSurfaceReady');
+    const surfacePromptPreview = prompt.trim() ? prompt.trim().slice(0, 64) : t('workspaceSurfacePromptEmpty');
+    const totalReferenceCount = objectImageCount + characterImageCount;
+
+    useEffect(() => {
+        if (!isSurfaceWorkspaceOpen) {
+            setIsSurfaceSharedControlsOpen(false);
+        }
+    }, [isSurfaceWorkspaceOpen, setIsSurfaceSharedControlsOpen]);
+
+    return {
+        viewSettings,
+        currentStageSourceShortId,
+        timelineEntries,
+        activeSheetTitle,
+        isSurfaceWorkspaceOpen,
+        floatingControlsZIndex,
+        pickerSheetZIndex,
+        activeSurfaceSheetLabel,
+        surfacePromptPreview,
+        totalReferenceCount,
+    };
+}

@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface HexagonHUDProps {
@@ -30,7 +29,7 @@ const HexagonHUD: React.FC<HexagonHUDProps> = ({ statusText, progressPercent, lo
         </div>
 
         {/* Status Badge */}
-        <div className="bg-white/80 dark:bg-black/80 backdrop-blur-xl border border-amber-500/30 rounded-2xl px-8 py-4 shadow-[0_0_40px_rgba(0,0,0,0.2)] dark:shadow-[0_0_40px_rgba(0,0,0,0.6)] flex flex-col items-center min-w-[280px] max-w-[400px]">
+        <div className="nbu-overlay-shell flex min-w-[280px] max-w-[400px] flex-col items-center border-amber-500/30 px-8 py-4">
             <span className="text-amber-600 dark:text-amber-400 font-black text-[10px] uppercase tracking-[0.3em] mb-2 animate-pulse flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-amber-500 dark:bg-amber-400 rounded-full"></span>
                 {statusText}

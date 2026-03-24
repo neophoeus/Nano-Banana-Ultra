@@ -1,15 +1,18 @@
-
 import React, { useState } from 'react';
 import Button from './Button';
 import HexagonHUD from './HexagonHUD';
-import { AspectRatio, ImageSize, ImageStyle, ImageModel } from '../types';
+import { AspectRatio, ExecutionMode, ImageSize, ImageStyle, ImageModel } from '../types';
 import { Language, getTranslation } from '../utils/translations';
+import { getExecutionModeLabel } from '../utils/executionMode';
 
 interface GeneratedImageProps {
     imageUrls: string[];
     isLoading: boolean;
     prompt?: string;
     error?: string | null;
+    actualOutputLabel?: string | null;
+    resultStatusSummary?: string | null;
+    resultStatusTone?: 'warning' | 'success' | null;
     settings: {
         aspectRatio: AspectRatio;
         size: ImageSize;
@@ -18,6 +21,7 @@ interface GeneratedImageProps {
         batchSize?: number;
     };
     generationMode?: string;
+    executionMode?: ExecutionMode;
     onEdit?: () => void;
     onGenerate: () => void;
     onAddToObjectReference?: () => void;
@@ -28,6 +32,7 @@ interface GeneratedImageProps {
     selectedImageUrl?: string;
     currentLanguage?: Language;
     currentLog?: string;
+    onOpenViewer?: () => void;
 }
 
 const GeneratedImage: React.FC<GeneratedImageProps> = ({
@@ -35,8 +40,12 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
     isLoading,
     prompt,
     error,
+    actualOutputLabel,
+    resultStatusSummary,
+    resultStatusTone,
     settings,
-    generationMode = "Text to Image",
+    generationMode = 'Text to Image',
+    executionMode = 'single-turn',
     onEdit,
     onGenerate,
     onAddToObjectReference,
@@ -46,11 +55,10 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
     onSelectImage,
     selectedImageUrl,
     currentLanguage = 'en' as Language,
-    currentLog = ''
+    currentLog = '',
+    onOpenViewer,
 }) => {
     const [isHovered, setIsHovered] = useState(false);
-    const [justAddedRefObj, setJustAddedRefObj] = useState(false);
-    const [justAddedRefChar, setJustAddedRefChar] = useState(false);
 
     const t = (key: string) => getTranslation(currentLanguage, key);
 
@@ -71,24 +79,6 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
     // If loading, we are working on the next one (current + 1), capped at total
     const processingIndex = Math.min(currentCount + 1, totalBatch);
 
-
-
-    const handleAddToObjClick = () => {
-        if (onAddToObjectReference) {
-            onAddToObjectReference();
-            setJustAddedRefObj(true);
-            setTimeout(() => setJustAddedRefObj(false), 2000);
-        }
-    };
-
-    const handleAddToCharClick = () => {
-        if (onAddToCharacterReference) {
-            onAddToCharacterReference();
-            setJustAddedRefChar(true);
-            setTimeout(() => setJustAddedRefChar(false), 2000);
-        }
-    };
-
     // Helper for mode colors
     const getModeColor = (mode: string) => {
         // Inpaint / Retouch
@@ -96,7 +86,13 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
             return 'text-pink-600 dark:text-pink-300 border-pink-300 dark:border-pink-500/30 bg-pink-50 dark:bg-pink-500/10 shadow-pink-500/20';
         }
         // Outpaint / Reframe (and catch-all for any legacy upscale labels)
-        if (mode.includes('Outpaint') || mode.includes('Reframe') || mode.includes('Reposition') || mode.includes('Upscale') || mode.includes('Refine')) {
+        if (
+            mode.includes('Outpaint') ||
+            mode.includes('Reframe') ||
+            mode.includes('Reposition') ||
+            mode.includes('Upscale') ||
+            mode.includes('Refine')
+        ) {
             return 'text-blue-600 dark:text-blue-300 border-blue-300 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/10 shadow-blue-500/20';
         }
         return 'text-amber-600 dark:text-amber-300 border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 shadow-amber-500/20';
@@ -107,108 +103,97 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
             return t('modeInpaint');
         }
         // Consolidate all resizing/extending modes to Reframe (Outpaint)
-        if (mode.includes('Outpaint') || mode.includes('Reframe') || mode.includes('Reposition') || mode.includes('Upscale') || mode.includes('Refine')) {
+        if (
+            mode.includes('Outpaint') ||
+            mode.includes('Reframe') ||
+            mode.includes('Reposition') ||
+            mode.includes('Upscale') ||
+            mode.includes('Refine')
+        ) {
             return t('modeOutpaint');
         }
         return mode;
     };
 
+    const resultStatusClassName =
+        resultStatusTone === 'warning'
+            ? 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100'
+            : 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100';
+
     // Unified Control Panel (Info + Actions) - Top Right
     const ControlPanel = () => (
         <div className="absolute top-4 right-4 z-30 flex flex-col items-end gap-2 pointer-events-none transition-opacity duration-300">
-
             {/* Row 1: Metadata Badges */}
-            <div className="flex items-center gap-0.5 bg-white/80 dark:bg-black/60 backdrop-blur-md rounded-lg border border-gray-200 dark:border-white/10 px-3 py-1.5 shadow-xl text-[10px] sm:text-xs font-bold text-gray-700 dark:text-gray-200 ring-1 ring-black/5 dark:ring-white/5 pointer-events-auto cursor-default transition-colors">
+            <div className="nbu-overlay-shell pointer-events-auto flex cursor-default items-center gap-0.5 px-3 py-1.5 text-[10px] font-bold text-gray-700 transition-colors sm:text-xs dark:text-gray-200">
                 <span className="text-amber-600 dark:text-amber-400">{settings.aspectRatio}</span>
                 <span className="mx-1.5 opacity-30">|</span>
                 <span className="text-amber-500 dark:text-amber-200">{settings.size}</span>
+                {actualOutputLabel && (
+                    <>
+                        <span className="mx-1.5 opacity-30">|</span>
+                        <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                            {t('groundingProvenanceInsightActualOutput')}: {actualOutputLabel}
+                        </span>
+                    </>
+                )}
                 {settings.style !== 'None' && (
                     <>
                         <span className="mx-1.5 opacity-30">|</span>
-                        <span className="text-gray-900 dark:text-white opacity-90">{getStyleLabel(settings.style)}</span>
+                        <span className="text-gray-900 dark:text-white opacity-90">
+                            {getStyleLabel(settings.style)}
+                        </span>
                     </>
                 )}
                 {settings.batchSize && settings.batchSize > 1 && (
                     <>
                         <span className="mx-1.5 opacity-30">|</span>
-                        <span className="text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10 px-1 rounded">{settings.batchSize}x</span>
+                        <span className="text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10 px-1 rounded">
+                            {settings.batchSize}x
+                        </span>
                     </>
                 )}
+                <>
+                    <span className="mx-1.5 opacity-30">|</span>
+                    <span className="text-sky-700 dark:text-sky-300">{getExecutionModeLabel(executionMode)}</span>
+                </>
             </div>
 
             {/* Row 2: Actions (Only show if images exist) */}
             {imageUrls.length > 0 && (
                 <div className="flex items-center gap-2 pointer-events-auto animate-[fadeIn_0.2s_ease-out]">
-                    {/* Tools Group */}
-                    <div className="flex items-center bg-white/90 dark:bg-[#0a0a0a]/90 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg p-1 shadow-xl ring-1 ring-black/5 dark:ring-white/5 gap-0.5 transition-colors">
-                        {onAddToObjectReference && (
-                            <div className="relative group/ref flex items-center">
-                                <button
-                                    className="p-1.5 rounded-md transition-all text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10"
-                                    title={t('actionUseRef')}
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                    </svg>
-                                </button>
-                                {/* Dropdown Menu for Ref Types */}
-                                <div className="absolute top-full right-0 mt-1 w-28 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl opacity-0 invisible group-hover/ref:opacity-100 group-hover/ref:visible transition-all flex flex-col overflow-hidden">
-                                    <button
-                                        onClick={handleAddToObjClick}
-                                        className={`px-3 py-2 text-xs text-left transition-colors ${justAddedRefObj ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-                                    >
-                                        {justAddedRefObj ? t('notificationAddedToRef') : t('objectRefs')}
-                                    </button>
-                                    {onAddToCharacterReference && (
-                                        <button
-                                            onClick={handleAddToCharClick}
-                                            className={`px-3 py-2 text-xs text-left border-t border-gray-100 dark:border-gray-800 transition-colors ${justAddedRefChar ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-                                        >
-                                            {justAddedRefChar ? t('notificationAddedToRef') : t('characterRefs')}
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        {onEdit && (
+                    {onClear && (
+                        <div className="nbu-overlay-shell flex items-center gap-0.5 p-1 transition-colors">
                             <button
-                                onClick={onEdit}
-                                className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 rounded-md transition-all"
-                                title={t('actionEdit')}
+                                onClick={onClear}
+                                className="p-1.5 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-all"
+                                title={t('clearResults')}
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-4 w-4"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M6 18L18 6M6 6l12 12"
+                                    />
                                 </svg>
                             </button>
-                        )}
-
-
-                        {onClear && (
-                            <>
-                                <div className="w-px h-4 bg-gray-200 dark:bg-white/10 mx-0.5"></div>
-                                <button
-                                    onClick={onClear}
-                                    className="p-1.5 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-all"
-                                    title={t('clearResults')}
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
     );
 
-
     // --- FULL LOADING SCREEN (0 images yet) ---
     if (showFullLoading) {
         return (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 dark:bg-[#080808] border border-gray-200 dark:border-gray-800 rounded-2xl p-8 relative overflow-hidden group transition-colors">
+            <div className="nbu-stage-surface group relative flex h-full w-full flex-col items-center justify-center p-8">
                 <style>{`
           @keyframes scan {
             0% { top: 0%; opacity: 0; }
@@ -229,7 +214,9 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
 
                 <div className="flex flex-col items-center z-10 scale-100 transition-all duration-500 w-full max-w-md">
                     {/* Mode Badge */}
-                    <div className={`mb-8 px-4 py-1.5 rounded-full border text-xs font-bold uppercase tracking-[0.2em] shadow-lg animate-bounce ${getModeColor(generationMode)}`}>
+                    <div
+                        className={`mb-8 px-4 py-1.5 rounded-full border text-xs font-bold uppercase tracking-[0.2em] shadow-lg animate-bounce ${getModeColor(generationMode)}`}
+                    >
                         {getTranslatedMode(generationMode)}
                     </div>
 
@@ -250,7 +237,7 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
     // --- ERROR STATE (For when a failed history item is selected) ---
     if (error && imageUrls.length === 0) {
         return (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 dark:bg-[#080808] border border-gray-200 dark:border-gray-800 rounded-2xl relative overflow-hidden p-8 transition-colors">
+            <div className="nbu-stage-surface relative flex h-full w-full flex-col items-center justify-center p-8">
                 <ControlPanel />
 
                 {/* Subtle Background Pattern for Errors */}
@@ -261,8 +248,19 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
                     {/* Beautiful Failure Icon */}
                     <div className="relative mb-8">
                         <div className="w-24 h-24 rounded-full bg-red-100 dark:bg-gradient-to-b dark:from-red-900/20 dark:to-transparent border border-red-200 dark:border-red-500/20 flex items-center justify-center shadow-[0_0_40px_rgba(220,38,38,0.1)]">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-red-500 dark:text-red-400 drop-shadow-md" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-10 w-10 text-red-500 dark:text-red-400 drop-shadow-md"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={1.5}
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                                />
                             </svg>
                         </div>
                         {/* Glitch lines */}
@@ -270,7 +268,9 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
                         <div className="absolute -right-4 top-14 w-8 h-px bg-red-400/30"></div>
                     </div>
 
-                    <h3 className="text-xl font-bold text-red-700 dark:text-red-200 mb-2 tracking-tight">{t('statusFailed')}</h3>
+                    <h3 className="text-xl font-bold text-red-700 dark:text-red-200 mb-2 tracking-tight">
+                        {t('statusFailed')}
+                    </h3>
                     <div className="h-px w-12 bg-red-300 dark:bg-red-500/30 mx-auto mb-4"></div>
 
                     <p className="text-sm text-red-800/80 dark:text-red-200/60 leading-relaxed bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-lg p-4 font-mono">
@@ -279,7 +279,11 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
 
                     {onClear && (
                         <div className="mt-8">
-                            <Button onClick={onClear} variant="secondary" className="border-red-300 dark:border-red-900/30 hover:border-red-400 dark:hover:border-red-500/30 text-red-700 dark:text-red-300">
+                            <Button
+                                onClick={onClear}
+                                variant="secondary"
+                                className="border-red-300 dark:border-red-900/30 hover:border-red-400 dark:hover:border-red-500/30 text-red-700 dark:text-red-300"
+                            >
                                 {t('clearResults')}
                             </Button>
                         </div>
@@ -292,17 +296,21 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
     // --- EMPTY STATE ---
     if (!activeImage && !isLoading) {
         return (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 dark:bg-[#080808] border-2 border-dashed border-gray-300 dark:border-gray-800 rounded-2xl text-gray-500 group relative overflow-hidden p-8 transition-colors">
+            <div className="nbu-empty-state-panel group relative flex h-full w-full flex-col items-center justify-center overflow-hidden border-2 border-dashed text-gray-500">
                 <ControlPanel />
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-200/50 dark:to-black/40 pointer-events-none"></div>
 
                 <div className="z-10 flex flex-col items-center text-center px-6">
                     <div className="w-24 h-24 bg-gradient-to-br from-white to-gray-100 dark:from-gray-900 dark:to-black rounded-3xl flex items-center justify-center mb-6 border border-gray-200 dark:border-gray-800 shadow-xl dark:shadow-2xl group-hover:scale-110 group-hover:border-amber-500/40 group-hover:shadow-[0_0_30px_rgba(245,158,11,0.15)] transition-all duration-500 relative">
                         <div className="absolute inset-0 bg-amber-500/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 animate-pulse"></div>
-                        <span className="text-5xl filter grayscale group-hover:grayscale-0 transition-all duration-500 drop-shadow-lg">🍌</span>
+                        <span className="text-5xl filter grayscale group-hover:grayscale-0 transition-all duration-500 drop-shadow-lg">
+                            🍌
+                        </span>
                     </div>
 
-                    <p className="font-extrabold text-2xl text-gray-800 dark:text-gray-200 mb-3 tracking-tight">{t('readyTitle')}</p>
+                    <p className="font-extrabold text-2xl text-gray-800 dark:text-gray-200 mb-3 tracking-tight">
+                        {t('readyTitle')}
+                    </p>
                     <p className="text-sm text-gray-500 max-w-xs text-center mb-8 leading-relaxed font-light">
                         {t('readyDesc')}
                     </p>
@@ -314,8 +322,19 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
                                 variant="secondary"
                                 className="px-6 py-3.5 text-base"
                                 icon={
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-4 w-4"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                                        />
                                     </svg>
                                 }
                             >
@@ -330,10 +349,10 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
 
     // --- MAIN DISPLAY (Result + Partial Loading/Scanning Effect) ---
     return (
-        <div className="w-full h-full flex flex-col bg-white dark:bg-black transition-colors duration-500">
+        <div className="flex h-full w-full flex-col transition-colors duration-500">
             {/* Main Image Display */}
             <div
-                className="relative flex-1 bg-gray-50 dark:bg-[#050505] rounded-2xl overflow-hidden group border border-gray-200 dark:border-gray-800 shadow-2xl transition-colors duration-500"
+                className="nbu-stage-surface relative flex-1 group shadow-2xl"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
             >
@@ -371,7 +390,7 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
                                 logText={currentLog}
                             />
                             <div className="text-center mt-6">
-                                <div className="inline-block px-3 py-1 bg-white/80 dark:bg-black/60 rounded-full border border-gray-200 dark:border-gray-700 text-xs font-mono text-gray-500 dark:text-gray-400">
+                                <div className="nbu-overlay-shell inline-block rounded-full px-3 py-1 text-xs font-mono text-gray-500 dark:text-gray-400">
                                     {t('statusProcessing')} {processingIndex} / {totalBatch}
                                 </div>
                             </div>
@@ -381,21 +400,49 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
 
                 <img
                     src={activeImage}
-                    alt={prompt || "Generated image"}
-                    className="w-full h-full object-contain transition-transform duration-700 ease-out"
+                    alt={prompt || t('stageGeneratedImageAlt')}
+                    className={`w-full h-full object-contain transition-transform duration-700 ease-out ${onOpenViewer ? 'cursor-zoom-in' : ''}`}
                     style={{
                         filter: isLoading ? 'grayscale(30%) contrast(110%)' : 'none',
-                        transform: isLoading ? 'scale(1.02)' : 'scale(1)'
+                        transform: isLoading ? 'scale(1.02)' : 'scale(1)',
+                    }}
+                    onClick={() => {
+                        if (!isLoading) {
+                            onOpenViewer?.();
+                        }
                     }}
                 />
 
+                {onOpenViewer && !isLoading && activeImage && (
+                    <button
+                        data-testid="stage-open-viewer"
+                        onClick={onOpenViewer}
+                        className={`nbu-overlay-shell absolute bottom-4 left-4 rounded-full px-3 py-2 text-xs font-semibold text-gray-700 transition-all dark:text-gray-200 ${isHovered ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+                    >
+                        {t('stageOpenViewer')}
+                    </button>
+                )}
+
                 {/* Top Overlay */}
-                <div className={`absolute top-0 left-0 right-0 pt-16 pb-6 px-6 bg-gradient-to-b from-white/95 via-white/60 dark:from-black/95 dark:via-black/60 to-transparent transition-opacity duration-300 pointer-events-none ${isHovered && !isLoading ? 'opacity-100' : 'opacity-0'}`}>
+                <div
+                    className={`absolute top-0 left-0 right-0 pt-16 pb-6 px-6 bg-gradient-to-b from-white/95 via-white/60 dark:from-black/95 dark:via-black/60 to-transparent transition-opacity duration-300 pointer-events-none ${isHovered && !isLoading ? 'opacity-100' : 'opacity-0'}`}
+                >
                     <p className="text-gray-800 dark:text-gray-200 text-sm font-light italic leading-relaxed drop-shadow-md text-center pt-8 max-w-2xl mx-auto">
                         "{prompt}"
                     </p>
                 </div>
             </div>
+
+            {resultStatusSummary && !isLoading && (
+                <div
+                    className={`mt-3 rounded-2xl border px-4 py-3 text-xs leading-relaxed shadow-sm ${resultStatusClassName}`}
+                >
+                    <span className="mr-2 inline-flex rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-current dark:bg-black/20">
+                        {t('stageGroundingResultStatus')}
+                    </span>
+                    <span>{resultStatusSummary}</span>
+                </div>
+            )}
 
             {/* Thumbnail Strip */}
             {(imageUrls.length > 1 || (isLoading && imageUrls.length > 0)) && (
@@ -406,14 +453,19 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
                             onClick={() => onSelectImage && onSelectImage(url)}
                             className={`
                             relative aspect-square h-full rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 animate-[fadeIn_0.3s_ease-out]
-                            ${activeImage === url
+                            ${
+                                activeImage === url
                                     ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.4)] scale-[0.98]'
                                     : 'border-gray-200 dark:border-gray-800 opacity-60 hover:opacity-100 hover:border-gray-400 dark:hover:border-gray-600'
-                                }
+                            }
                         `}
                         >
-                            <img src={url} alt={`Variation ${idx + 1}`} className="w-full h-full object-cover bg-gray-100 dark:bg-black" />
-                            <div className="absolute top-1 left-1 bg-white/80 dark:bg-black/70 backdrop-blur px-1.5 rounded text-[8px] text-gray-800 dark:text-white font-mono border border-gray-200 dark:border-white/10">
+                            <img
+                                src={url}
+                                alt={`Variation ${idx + 1}`}
+                                className="w-full h-full object-cover bg-gray-100 dark:bg-black"
+                            />
+                            <div className="nbu-overlay-shell absolute top-1 left-1 rounded px-1.5 text-[8px] font-mono text-gray-800 dark:text-white">
                                 #{idx + 1}
                             </div>
                         </button>
