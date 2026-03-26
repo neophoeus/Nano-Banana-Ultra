@@ -98,13 +98,17 @@ Nano Banana Ultra currently supports three Gemini image-model paths, each presen
 
 ## Version Overview
 
+### Latest Release: 3.0.1
+
+Latest release: 3.0.1. See `CHANGELOG.md` for details.
+
 ### 3.x
 
 Version 3.x includes everything from 2.x and turns the app into a continuity-first image workspace rather than a simple generation screen.
 
 New in 3.x:
 
-- a rebuilt workspace shell with clearer ownership across model output, history canvas, context rail, tool surfaces, and composer actions
+- a rebuilt workspace shell with a compact global bar, composer-owned Model/Ratio/Size/Qty controls, a composer Reference Tray strip, image-only side actions, and a context rail grouped into Current Work, Versions, Sources & Citations, and Activity
 - official conversation continuity as a first-class product path across generation, history, replay, restore, and snapshot persistence
 - stronger branch, source-active, open-latest, continue-latest, and lineage-routing semantics across the product
 - preset-based structured outputs with reusable result flows, richer presentation, and prompt append or replace actions
@@ -247,13 +251,17 @@ Nano Banana Ultra 目前支援三條 Gemini 影像模型路徑，並會依模型
 
 ## 版本總覽
 
+### 最新版本：3.0.1
+
+最新版本：3.0.1。詳細內容請見 `CHANGELOG.md`。
+
 ### 3.x
 
 3.x 版本包含 2.x 的全部能力，並把產品從單純的生成工具提升為以延續與工作脈絡為核心的影像工作區。
 
 3.x 新增：
 
-- history-first 工作區 shell，重新整理 output、context、stage、composer 的空間分工
+- 重新整理工作區 shell：保留精簡全域列，把 Model、Ratio、Size、Qty 與 Reference Tray 狀態收斂到 composer，側邊工具只保留影像工具，右側 context rail 分成目前工作、版本、來源與引用、活動
 - 更清楚的 branch、continue、source-active、reopen 語意
 - 可直接驅動下一輪 prompt 的 structured output 重用流程
 - 以摘要優先呈現的 provenance 與 insight 面板，並保留深層 drill-down

@@ -641,6 +641,9 @@ export const de = {
     workspacePickerHistoryLinked: 'mit Verlauf verknupft',
     workspacePickerStageSourceHint:
         'Aktuelle Stufe und erneut aus dem Verlauf geoffnete Bilder speisen jetzt dasselbe Folgequellmodell, das Editor-Aktionen wiederverwenden konnen.',
+    workspaceSideToolTitle: 'Bildwerkzeuge',
+    workspaceSideToolCurrentImage: 'Aktuelles Bild',
+    workspaceSideToolBaseImage: 'Basisbild',
     workspacePickerOpenSketchPad: 'SketchPad offnen',
     workspacePickerUploadBaseImage: 'Basisbild hochladen',
     workspacePickerUseCurrentStageAsEditorBase: 'Aktuelle Stufe als Editor-Basis verwenden',
@@ -880,18 +883,23 @@ export const de = {
     historyBranchContinuationSource: 'Fortsetzungsquelle',
     workspaceCurrentStageSourceNoLinkedHistory:
         'Diese Stage ist derzeit ohne verknupfte Verlaufsrunde zwischengespeichert, daher verwenden Folgeaktionen nur den zwischengespeicherten Bildstatus.',
-    workspaceInsightsReplaySession: 'Wiedergabesitzung',
+    workspaceInsightsReplaySession: 'Sitzung ansehen',
+    workspaceInsightsCurrentImage: 'Aktuelles Bild',
     workspaceInsightsBranchesEmpty:
         'Sobald sich die Sitzung in verschiedene Richtungen aufteilt, werden die Zweige hier gesammelt.',
     workspaceInsightsNoContinuitySignals: 'Noch keine Kontinuitatssignale vorhanden.',
-    workspaceInsightsOfficialConversation: 'Offizielle Unterhaltung',
+    workspaceInsightsOfficialConversation: 'Chat-Verlauf',
     workspaceInsightsConversationTurnPosition: 'Runde {0}',
     workspaceInsightsConversationBranchActiveSource: 'Zweig {0} · aktive Quelle {1}',
-    workspaceInsightsSessionSource: 'Sitzungsquelle',
+    workspaceInsightsSessionSource: 'Diese Sitzung',
     workspaceInsightsSessionStateHint:
-        'Diese Leiste halt die aktive Sitzung, die Zweigherkunft und den Arbeitsablaufkontext sichtbar, wahrend sich die Stage andert.',
-    workspaceInsightsEyebrow: 'Sitzung und Verlaufslinie',
-    workspaceInsightsTitle: 'Kontext, Verzweigungsstatus und Arbeitsablauf',
+        'Auch wenn sich die Ansicht andert, bleiben das aktuelle Ergebnis, gespeicherte Versionen, genutzte Quellen und die letzte Aktivitat hier sichtbar.',
+    workspaceInsightsEyebrow: 'Arbeitsbereich im Blick',
+    workspaceInsightsTitle: 'Aktuelle Arbeit, Versionen, Quellen und Aktivitat',
+    workspaceInsightsCurrentWork: 'Aktuelle Arbeit',
+    workspaceInsightsVersions: 'Versionen',
+    workspaceInsightsSourcesCitations: 'Quellen und Zitate',
+    workspaceInsightsActivity: 'Aktivitat',
     workspaceInsightsModelSettingsTitle: 'Modelleinstellungen',
     workspaceInsightsPhaseLabel: 'Aktiv',
     workspaceInsightsCurrentModel: 'Aktuelles Modell',
@@ -902,9 +910,9 @@ export const de = {
     workspaceInsightsRenameBranch: 'Zweig umbenennen',
     workspaceInsightsStageSourceEmpty:
         'Sobald ein Ergebnis auf die Stage gelegt wird, zeigt diese Karte, ob es aus dem Verlauf, aus einer aktiven Zweigfortsetzung, aus einer Editor-Nachbearbeitung oder aus einer erneut geoffneten Runde stammt.',
-    workspaceInsightsActiveBranch: 'Aktiver Zweig',
+    workspaceInsightsActiveBranch: 'Aktuelle Version',
     workspaceInsightsBranchesCount: '{0} Zweige',
-    workspaceInsightsSessionContinuity: 'Sitzungskontinuitat',
+    workspaceInsightsSessionContinuity: 'Was erhalten bleibt',
     workspaceInsightsLatestResultText: 'Neuester Ergebnistext',
     workspaceInsightsLatestResultTextEmpty:
         'Wenn Bilder und Text aktiv sind, erscheint die Stufenzusammenfassung hier und auch im Viewer.',
@@ -914,17 +922,17 @@ export const de = {
     workspaceViewerStructuredOutputHint:
         'Hier wird dieselbe strukturierte Ausgabe aus der oberen Leiste als vollstandige Inspektionsansicht gezeigt.',
     workspaceInsightsLatestThoughts: 'Neueste Gedanken',
-    workspaceInsightsProvenance: 'Herkunft',
-    workspaceInsightsSessionTurnStack: 'Sitzungsrundenstapel',
+    workspaceInsightsProvenance: 'Quelldetails',
+    workspaceInsightsSessionTurnStack: 'Letzte Zuge',
     workspaceInsightsTurnsCount: '{0} Zuge',
     workspaceInsightsSessionTurnStackEmpty:
         'Neuere erfolgreiche Runden erscheinen hier fur schnelles erneutes Offnen, Fortsetzen oder Verzweigen.',
-    workspaceInsightsLineageMap: 'Herkunftskarte',
+    workspaceInsightsLineageMap: 'Versionskarte',
     workspaceInsightsRootsCount: '{0} Wurzeln',
     workspaceInsightsRoot: 'Wurzel',
     workspaceInsightsLineageEmpty:
         'Sobald mehrere erfolgreiche Runden vorhanden sind, erscheinen ihre Wurzeln und Verzweigungsbeziehungen hier.',
-    workspaceInsightsTimelineTitle: 'Arbeitsablaufprotokoll',
+    workspaceInsightsTimelineTitle: 'Letzte Aktivitat',
     workspaceInsightsTimelineDesc:
         'Anfragen, Ausgaben, Verlaufsschritte und Fehler bleiben hier lesbar, ohne den Arbeitsbereich zu verlassen.',
     workspaceInsightsTimelineEmpty: 'System- und Generierungsnachrichten erscheinen hier, wahrend Sie arbeiten.',

@@ -13,6 +13,16 @@ const baseProps = {
     isEnhancingPrompt: false,
     currentLanguage: 'en' as const,
     imageStyleLabel: 'None',
+    modelLabel: 'Gemini 3.1 Flash',
+    aspectRatio: '1:1' as const,
+    imageSize: '2K' as const,
+    batchSize: 3,
+    hasSizePicker: true,
+    totalReferenceCount: 2,
+    objectCount: 1,
+    characterCount: 1,
+    maxObjects: 4,
+    maxCharacters: 2,
     outputFormat: 'images-only' as const,
     structuredOutputMode: 'off' as const,
     thinkingLevel: 'high' as const,
@@ -42,6 +52,10 @@ const baseProps = {
     onOpenPromptHistory: vi.fn(),
     onOpenTemplates: vi.fn(),
     onOpenStyles: vi.fn(),
+    onOpenModelPicker: vi.fn(),
+    onOpenRatioPicker: vi.fn(),
+    onOpenSizePicker: vi.fn(),
+    onOpenBatchPicker: vi.fn(),
     onOpenReferences: vi.fn(),
     onExportWorkspace: vi.fn(),
     onImportWorkspace: vi.fn(),
@@ -65,7 +79,7 @@ const baseProps = {
 };
 
 describe('ComposerSettingsPanel toolbar layout', () => {
-    it('keeps advanced settings alongside the quick tools while workspace tools stay focused on import/export', () => {
+    it('keeps settings ownership above helper tools and the reference strip below them', () => {
         const markup = renderToStaticMarkup(
             <ComposerSettingsPanel
                 {...baseProps}
@@ -75,8 +89,19 @@ describe('ComposerSettingsPanel toolbar layout', () => {
             />,
         );
 
+        expect(markup).toContain('composer-settings-row');
         expect(markup).toContain('composer-quick-tools');
+        expect(markup).toContain('composer-reference-context-strip');
         expect(markup).toContain('composer-workspace-tools');
+        expect(markup.indexOf('composer-settings-row')).toBeLessThan(markup.indexOf('composer-quick-tools'));
+        expect(markup.indexOf('composer-quick-tools')).toBeLessThan(markup.indexOf('composer-reference-context-strip'));
+        expect(markup).toContain('Model');
+        expect(markup).toContain('Aspect Ratio');
+        expect(markup).toContain('Output Size');
+        expect(markup).toContain('Quantity');
+        expect(markup).toContain('Reference Tray');
+        expect(markup).toContain('Objects 1/4');
+        expect(markup).toContain('Characters 1/2');
         expect(markup).toContain('Advanced settings');
         expect(markup).toContain('Export Workspace');
         expect(markup).toContain('Import Workspace');

@@ -7,9 +7,11 @@ import { STRUCTURED_OUTPUT_FIELD_LABEL_KEYS } from '../utils/structuredOutputPre
 import { getStructuredOutputDefinition } from '../utils/structuredOutputs';
 import { getTranslation, Language } from '../utils/translations';
 import {
+    AspectRatio,
     GeneratedImage,
     GroundingMode,
     ImageModel,
+    ImageSize,
     OutputFormat,
     QueuedBatchJob,
     StageAsset,
@@ -26,6 +28,16 @@ export type ComposerSettingsPanelProps = {
     isEnhancingPrompt: boolean;
     currentLanguage: Language;
     imageStyleLabel: string;
+    modelLabel: string;
+    aspectRatio: AspectRatio;
+    imageSize: ImageSize;
+    batchSize: number;
+    hasSizePicker: boolean;
+    totalReferenceCount: number;
+    objectCount: number;
+    characterCount: number;
+    maxObjects: number;
+    maxCharacters: number;
     outputFormat: OutputFormat;
     structuredOutputMode: StructuredOutputMode;
     thinkingLevel: ThinkingLevel;
@@ -57,6 +69,11 @@ export type ComposerSettingsPanelProps = {
     onOpenPromptHistory: () => void;
     onOpenTemplates: () => void;
     onOpenStyles: () => void;
+    onOpenModelPicker: () => void;
+    onOpenRatioPicker: () => void;
+    onOpenSizePicker: () => void;
+    onOpenBatchPicker: () => void;
+    onOpenReferences: () => void;
     onExportWorkspace: () => void;
     onImportWorkspace: () => void;
     onToggleAdvancedSettings: () => void;
@@ -142,6 +159,16 @@ function ComposerSettingsPanel({
     isEnhancingPrompt,
     currentLanguage,
     imageStyleLabel,
+    modelLabel,
+    aspectRatio,
+    imageSize,
+    batchSize,
+    hasSizePicker,
+    totalReferenceCount,
+    objectCount,
+    characterCount,
+    maxObjects,
+    maxCharacters,
     outputFormat,
     structuredOutputMode,
     thinkingLevel,
@@ -173,6 +200,11 @@ function ComposerSettingsPanel({
     onOpenPromptHistory,
     onOpenTemplates,
     onOpenStyles,
+    onOpenModelPicker,
+    onOpenRatioPicker,
+    onOpenSizePicker,
+    onOpenBatchPicker,
+    onOpenReferences,
     onExportWorkspace,
     onImportWorkspace,
     onToggleAdvancedSettings,
@@ -321,6 +353,8 @@ function ComposerSettingsPanel({
     const toolbarGroupClassName = 'nbu-subpanel flex flex-wrap items-center gap-1.5 p-2 sm:gap-2 sm:p-2.5';
     const toolbarButtonClassName =
         'nbu-control-button px-3 py-1.5 text-[13px] transition-all hover:-translate-y-0.5 hover:shadow-md sm:px-4 sm:py-2 sm:text-sm';
+    const settingsButtonClassName =
+        'nbu-control-button rounded-[22px] px-4 py-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md disabled:hover:translate-y-0 disabled:hover:shadow-none';
     const showGroundingResolutionWarning =
         imageModel === 'gemini-3.1-flash-image-preview' &&
         (groundingMode === 'image-search' || groundingMode === 'google-search-plus-image-search');
@@ -342,7 +376,55 @@ function ComposerSettingsPanel({
 
     return (
         <section className="nbu-shell-panel nbu-shell-surface-composer-dock shrink-0 p-4 md:p-5">
-            <div className="mb-4 flex flex-wrap items-start gap-3">
+            <div data-testid="composer-settings-row" className="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                <button
+                    type="button"
+                    data-testid="composer-settings-model"
+                    onClick={onOpenModelPicker}
+                    className={settingsButtonClassName}
+                >
+                    <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                        {t('modelSelect')}
+                    </div>
+                    <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{modelLabel}</div>
+                </button>
+                <button
+                    type="button"
+                    data-testid="composer-settings-ratio"
+                    onClick={onOpenRatioPicker}
+                    className={settingsButtonClassName}
+                >
+                    <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                        {t('aspectRatio')}
+                    </div>
+                    <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{aspectRatio}</div>
+                </button>
+                <button
+                    type="button"
+                    data-testid="composer-settings-size"
+                    onClick={onOpenSizePicker}
+                    disabled={!hasSizePicker}
+                    className={settingsButtonClassName}
+                >
+                    <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                        {t('workspaceSheetTitleSize')}
+                    </div>
+                    <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{imageSize}</div>
+                </button>
+                <button
+                    type="button"
+                    data-testid="composer-settings-qty"
+                    onClick={onOpenBatchPicker}
+                    className={settingsButtonClassName}
+                >
+                    <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                        {t('batchSize')}
+                    </div>
+                    <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{batchSize}</div>
+                </button>
+            </div>
+
+            <div className="mb-3 flex flex-wrap items-start gap-3">
                 <div data-testid="composer-quick-tools" className={`${toolbarGroupClassName} flex-1`}>
                     <button
                         onClick={onSurpriseMe}
@@ -387,6 +469,33 @@ function ComposerSettingsPanel({
                     <button onClick={onImportWorkspace} className={toolbarButtonClassName}>
                         {t('composerToolbarImportWorkspace')}
                     </button>
+                </div>
+            </div>
+
+            <div
+                data-testid="composer-reference-context-strip"
+                className="nbu-inline-panel mb-4 flex flex-wrap items-center justify-between gap-3 px-3 py-3"
+            >
+                <button
+                    type="button"
+                    data-testid="composer-reference-context-button"
+                    onClick={onOpenReferences}
+                    className="nbu-control-button flex items-center gap-3 rounded-[18px] px-3.5 py-2.5 text-left"
+                >
+                    <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-amber-700 dark:bg-amber-500/15 dark:text-amber-200">
+                        {totalReferenceCount}
+                    </span>
+                    <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        {t('workspaceTopHeaderReferenceTray')}
+                    </span>
+                </button>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <span className="nbu-chip">
+                        {t('workspacePickerObjects')} {objectCount}/{maxObjects}
+                    </span>
+                    <span className="nbu-chip">
+                        {t('workspacePickerCharacters')} {characterCount}/{maxCharacters}
+                    </span>
                 </div>
             </div>
 
@@ -449,13 +558,10 @@ function ComposerSettingsPanel({
                             )}
                         </div>
                     </div>
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
                         <button onClick={onToggleEnterToSubmit} className="nbu-control-button px-3 py-1.5 lg:hidden">
                             {enterToSubmit ? t('composerEnterSends') : t('composerEnterNewline')}
                         </button>
-                        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
-                            <span>{imageModel}</span>
-                        </div>
                     </div>
                 </div>
 

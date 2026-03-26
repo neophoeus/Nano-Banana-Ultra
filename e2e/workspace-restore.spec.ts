@@ -1546,7 +1546,9 @@ test.describe('workspace restore flows', () => {
         await expect(composer(page)).toHaveValue('Sketch advanced settings prompt');
     });
 
-    test('shared controls advanced settings changes persist after closing and reopening the modal', async ({ page }) => {
+    test('shared controls advanced settings changes persist after closing and reopening the modal', async ({
+        page,
+    }) => {
         await openFreshWorkspace(page);
         await composer(page).fill('Sketch advanced settings persistence prompt');
         await page.locator('[data-testid="side-tools-open-sketchpad"]:visible').click();
@@ -3142,7 +3144,7 @@ test.describe('workspace restore flows', () => {
         await expect(sideTools).toBeVisible();
         await expect(sideTools.getByTestId('workspace-side-tools-actions')).toBeVisible();
 
-        await sideTools.getByTestId('side-tools-open-references').click();
+        await page.getByTestId('composer-reference-context-button').click();
         const pickerSheet = page.getByRole('dialog').filter({ hasText: tt('workspaceSheetTitleReferences') });
         await expect(pickerSheet).toBeVisible();
         await expect(pickerSheet).toContainText(tt('workspacePickerCapabilityHint'));
@@ -3159,7 +3161,12 @@ test.describe('workspace restore flows', () => {
         await expect(page.getByTestId('sketchpad')).toHaveCount(0);
 
         await page.getByRole('button', { name: tt('composerToolbarAdvancedSettings') }).click();
-        await expect(page.getByRole('heading', { name: tt('composerAdvancedTitle') })).toBeVisible();
+        await expect(
+            page
+                .getByTestId('composer-advanced-settings-dialog')
+                .getByRole('heading', { name: tt('composerAdvancedTitle') })
+                .first(),
+        ).toBeVisible();
 
         const mobileInsights = page
             .locator('details:visible')
@@ -3258,7 +3265,12 @@ test.describe('workspace restore flows', () => {
         );
 
         await page.getByRole('button', { name: tt('composerToolbarAdvancedSettings') }).click();
-        await expect(page.getByRole('heading', { name: tt('composerAdvancedTitle') })).toBeVisible();
+        await expect(
+            page
+                .getByTestId('composer-advanced-settings-dialog')
+                .getByRole('heading', { name: tt('composerAdvancedTitle') })
+                .first(),
+        ).toBeVisible();
     });
 
     test('viewer owner route keeps top rail compact while viewer expands structured output', async ({ page }) => {

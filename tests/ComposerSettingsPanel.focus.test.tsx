@@ -14,6 +14,16 @@ const baseProps = {
     isEnhancingPrompt: false,
     currentLanguage: 'en' as const,
     imageStyleLabel: 'None',
+    modelLabel: 'Gemini 3.1 Flash',
+    aspectRatio: '1:1' as const,
+    imageSize: '2K' as const,
+    batchSize: 3,
+    hasSizePicker: true,
+    totalReferenceCount: 2,
+    objectCount: 1,
+    characterCount: 1,
+    maxObjects: 4,
+    maxCharacters: 2,
     outputFormat: 'images-only' as const,
     structuredOutputMode: 'off' as const,
     thinkingLevel: 'high' as const,
@@ -46,6 +56,10 @@ const baseProps = {
     onOpenPromptHistory: vi.fn(),
     onOpenTemplates: vi.fn(),
     onOpenStyles: vi.fn(),
+    onOpenModelPicker: vi.fn(),
+    onOpenRatioPicker: vi.fn(),
+    onOpenSizePicker: vi.fn(),
+    onOpenBatchPicker: vi.fn(),
     onOpenReferences: vi.fn(),
     onExportWorkspace: vi.fn(),
     onImportWorkspace: vi.fn(),
@@ -97,5 +111,48 @@ describe('ComposerSettingsPanel prompt focus wiring', () => {
 
         expect(promptTextareaRef.current).toBeInstanceOf(HTMLTextAreaElement);
         expect(promptTextareaRef.current?.value).toBe('Test prompt');
+    });
+
+    it('routes settings and reference strip actions through the composer-owned openers', () => {
+        const onOpenModelPicker = vi.fn();
+        const onOpenRatioPicker = vi.fn();
+        const onOpenSizePicker = vi.fn();
+        const onOpenBatchPicker = vi.fn();
+        const onOpenReferences = vi.fn();
+
+        act(() => {
+            root.render(
+                <ComposerSettingsPanel
+                    {...baseProps}
+                    onOpenModelPicker={onOpenModelPicker}
+                    onOpenRatioPicker={onOpenRatioPicker}
+                    onOpenSizePicker={onOpenSizePicker}
+                    onOpenBatchPicker={onOpenBatchPicker}
+                    onOpenReferences={onOpenReferences}
+                />,
+            );
+        });
+
+        const modelButton = container.querySelector('[data-testid="composer-settings-model"]') as HTMLButtonElement;
+        const ratioButton = container.querySelector('[data-testid="composer-settings-ratio"]') as HTMLButtonElement;
+        const sizeButton = container.querySelector('[data-testid="composer-settings-size"]') as HTMLButtonElement;
+        const qtyButton = container.querySelector('[data-testid="composer-settings-qty"]') as HTMLButtonElement;
+        const referenceButton = container.querySelector(
+            '[data-testid="composer-reference-context-button"]',
+        ) as HTMLButtonElement;
+
+        act(() => {
+            modelButton.click();
+            ratioButton.click();
+            sizeButton.click();
+            qtyButton.click();
+            referenceButton.click();
+        });
+
+        expect(onOpenModelPicker).toHaveBeenCalledTimes(1);
+        expect(onOpenRatioPicker).toHaveBeenCalledTimes(1);
+        expect(onOpenSizePicker).toHaveBeenCalledTimes(1);
+        expect(onOpenBatchPicker).toHaveBeenCalledTimes(1);
+        expect(onOpenReferences).toHaveBeenCalledTimes(1);
     });
 });

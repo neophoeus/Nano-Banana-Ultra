@@ -81,6 +81,9 @@ vi.mock('../components/ComposerSettingsPanel', async () => {
                 <button onClick={() => (props.onToggleAdvancedSettings as (() => void) | undefined)?.()}>
                     Advanced Settings
                 </button>
+                <button onClick={() => (props.onOpenReferences as (() => void) | undefined)?.()}>
+                    Open References
+                </button>
             </div>
         );
     });
@@ -93,13 +96,7 @@ vi.mock('../components/WorkspaceSideToolPanel', async () => {
         const previousPropsRef = ReactModule.useRef<Record<string, unknown>>();
         recordRender(trackers.workspaceSideToolPanel, props, previousPropsRef.current);
         previousPropsRef.current = props;
-        return (
-            <div data-testid="mock-workspace-side-tool-panel">
-                <button onClick={() => (props.onOpenReferences as (() => void) | undefined)?.()}>
-                    Open References
-                </button>
-            </div>
-        );
+        return <div data-testid="mock-workspace-side-tool-panel" />;
     });
     return { default: Component };
 });
@@ -340,7 +337,7 @@ describe('Phase B render stability', () => {
         expect(trackers.composerSettingsPanel.renders).toBeGreaterThan(0);
     });
 
-    it('does not rerender stage/history memo surfaces when opening the references tray', async () => {
+    it('does not rerender stage/history memo surfaces when opening references from the composer owner route', async () => {
         const initialGeneratedImageRenders = trackers.generatedImage.renders;
         const initialRecentHistoryRenders = trackers.recentHistoryFilmstrip.renders;
         const initialHistoryCanvasRenders = trackers.workspaceHistoryCanvas.renders;

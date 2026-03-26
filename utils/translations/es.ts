@@ -641,6 +641,9 @@ export const es = {
     workspacePickerHistoryLinked: 'vinculado al historial',
     workspacePickerStageSourceHint:
         'El escenario actual y las reaperturas desde el historial ahora alimentan el mismo modelo de origen para seguimientos que pueden reutilizar las acciones del editor.',
+    workspaceSideToolTitle: 'Herramientas de imagen',
+    workspaceSideToolCurrentImage: 'Imagen actual',
+    workspaceSideToolBaseImage: 'Imagen base',
     workspacePickerOpenSketchPad: 'Abrir SketchPad',
     workspacePickerUploadBaseImage: 'Subir imagen base',
     workspacePickerUseCurrentStageAsEditorBase: 'Usar el escenario actual como base del editor',
@@ -878,18 +881,23 @@ export const es = {
     historyBranchContinuationSource: 'Fuente de continuacion',
     workspaceCurrentStageSourceNoLinkedHistory:
         'Esta etapa esta temporalmente preparada sin un turno de historial vinculado, por lo que las acciones de seguimiento solo usaran el estado de la imagen preparada.',
-    workspaceInsightsReplaySession: 'Sesion de repeticion',
+    workspaceInsightsReplaySession: 'Revisar sesion',
+    workspaceInsightsCurrentImage: 'Imagen actual',
     workspaceInsightsBranchesEmpty:
         'Las ramas apareceran aqui cuando la sesion empiece a dividirse en direcciones alternativas.',
     workspaceInsightsNoContinuitySignals: 'Aun no hay senales de continuidad.',
-    workspaceInsightsOfficialConversation: 'Conversacion oficial',
+    workspaceInsightsOfficialConversation: 'Historial del chat',
     workspaceInsightsConversationTurnPosition: 'turno {0}',
     workspaceInsightsConversationBranchActiveSource: 'Rama {0} · fuente activa {1}',
-    workspaceInsightsSessionSource: 'Fuente de la sesion',
+    workspaceInsightsSessionSource: 'Esta sesion',
     workspaceInsightsSessionStateHint:
-        'Este panel mantiene visible la sesion activa, el linaje de ramas y el contexto del flujo de trabajo mientras cambia el escenario.',
-    workspaceInsightsEyebrow: 'Sesion y linaje',
-    workspaceInsightsTitle: 'Contexto, estado de ramas y flujo de trabajo',
+        'Aunque cambie el escenario, aqui seguiran visibles el resultado actual, las versiones guardadas, las fuentes consultadas y la actividad reciente.',
+    workspaceInsightsEyebrow: 'Resumen del espacio de trabajo',
+    workspaceInsightsTitle: 'Trabajo actual, versiones, fuentes y actividad',
+    workspaceInsightsCurrentWork: 'Trabajo actual',
+    workspaceInsightsVersions: 'Versiones',
+    workspaceInsightsSourcesCitations: 'Fuentes y citas',
+    workspaceInsightsActivity: 'Actividad',
     workspaceInsightsModelSettingsTitle: 'Configuracion del modelo',
     workspaceInsightsPhaseLabel: 'Activo',
     workspaceInsightsCurrentModel: 'Modelo actual',
@@ -900,9 +908,9 @@ export const es = {
     workspaceInsightsRenameBranch: 'Renombrar rama',
     workspaceInsightsStageSourceEmpty:
         'Cuando un resultado entra en escena, esta tarjeta mostrara si vino del historial, de una continuacion activa de rama, de un seguimiento desde el editor o de un turno reabierto.',
-    workspaceInsightsActiveBranch: 'Rama activa',
+    workspaceInsightsActiveBranch: 'Version actual',
     workspaceInsightsBranchesCount: '{0} ramas',
-    workspaceInsightsSessionContinuity: 'Continuidad de la sesion',
+    workspaceInsightsSessionContinuity: 'Lo que se mantiene',
     workspaceInsightsLatestResultText: 'Texto del ultimo resultado',
     workspaceInsightsLatestResultTextEmpty:
         'Cuando Imagenes y texto este activo, el resumen del escenario aparecera aqui y tambien en el visor.',
@@ -912,17 +920,17 @@ export const es = {
     workspaceViewerStructuredOutputHint:
         'Aqui se expande la misma salida estructurada de la barra superior en un diseno completo de inspeccion.',
     workspaceInsightsLatestThoughts: 'Ultimos pensamientos',
-    workspaceInsightsProvenance: 'Procedencia',
-    workspaceInsightsSessionTurnStack: 'Pila de turnos de la sesion',
+    workspaceInsightsProvenance: 'Detalles de origen',
+    workspaceInsightsSessionTurnStack: 'Turnos recientes',
     workspaceInsightsTurnsCount: '{0} turnos',
     workspaceInsightsSessionTurnStackEmpty:
         'Los turnos exitosos recientes apareceran aqui para reabrir, continuar o ramificar con rapidez.',
-    workspaceInsightsLineageMap: 'Mapa de linaje',
+    workspaceInsightsLineageMap: 'Mapa de versiones',
     workspaceInsightsRootsCount: '{0} raices',
     workspaceInsightsRoot: 'Raiz',
     workspaceInsightsLineageEmpty:
         'Cuando se acumulen varios turnos exitosos, sus raices y relaciones de rama apareceran aqui.',
-    workspaceInsightsTimelineTitle: 'Registro del flujo de trabajo',
+    workspaceInsightsTimelineTitle: 'Actividad reciente',
     workspaceInsightsTimelineDesc:
         'Las solicitudes, salidas, pasos del historial y errores se mantienen legibles aqui sin salir del espacio de trabajo.',
     workspaceInsightsTimelineEmpty: 'Los mensajes del sistema y de generacion apareceran aqui a medida que trabajes.',

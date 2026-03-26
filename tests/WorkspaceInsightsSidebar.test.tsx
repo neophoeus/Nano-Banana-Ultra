@@ -5,12 +5,6 @@ import WorkspaceInsightsSidebar from '../components/WorkspaceInsightsSidebar';
 
 describe('WorkspaceInsightsSidebar', () => {
     it('renders compact collapsible context sections with a latest timeline summary', () => {
-        const timelineTitleMatches = (value: string) => value.match(/Workflow Log/g) || [];
-        const activeBranchTitleMatches = (value: string) => value.match(/Active Branch/g) || [];
-        const currentStageOriginLabelMatches = (value: string) => value.match(/>History<\/span>/g) || [];
-        const officialConversationTitleMatches = (value: string) => value.match(/Official Conversation/g) || [];
-        const currentStageSourceTitleMatches = (value: string) => value.match(/Current Stage Source/g) || [];
-        const sessionSourceTitleMatches = (value: string) => value.match(/Session Source/g) || [];
         const markup = renderToStaticMarkup(
             <WorkspaceInsightsSidebar
                 currentLanguage="en"
@@ -258,7 +252,8 @@ describe('WorkspaceInsightsSidebar', () => {
 
         expect(markup).toContain('session-stack-section');
         expect(markup).toContain('context-system-panel');
-        expect(markup).toContain('session-branch-section');
+        expect(markup).toContain('current-work-section');
+        expect(markup).toContain('versions-section');
         expect(markup).toContain('context-workflow-summary');
         expect(markup).toContain('context-provenance-section');
         expect(markup).toContain('context-timeline-section');
@@ -275,14 +270,25 @@ describe('WorkspaceInsightsSidebar', () => {
         expect(markup).toContain('timeline-latest-summary');
         expect(markup).toContain('timeline-history-section');
         expect(markup).not.toContain('timeline-history-summary');
-        expect(timelineTitleMatches(markup)).toHaveLength(1);
-        expect(activeBranchTitleMatches(markup)).toHaveLength(1);
-        expect(currentStageOriginLabelMatches(markup)).toHaveLength(1);
-        expect(officialConversationTitleMatches(markup)).toHaveLength(2);
-        expect(currentStageSourceTitleMatches(markup)).toHaveLength(3);
-        expect(sessionSourceTitleMatches(markup)).toHaveLength(2);
+        expect(markup).toContain('Current Work');
+        expect(markup).toContain('Versions');
+        expect(markup).toContain('Sources &amp; Citations');
+        expect(markup).toContain('Activity');
+        expect(markup).toContain('Recent activity');
+        expect(markup).toContain('Current version');
+        expect(markup).toContain('Chat history');
+        expect(markup).toContain('Current image');
+        expect(markup).toContain('This session');
+        expect(markup).toContain('What carries over');
+        expect(markup).toContain('Recent turns');
+        expect(markup).toContain('Version map');
+        expect(markup).toContain('Source details');
+        expect(markup).toContain('Review session');
+        expect(markup).toContain('History</span>');
         expect(markup).toContain('session-hints-section');
-        expect(markup).toContain('session-hints-section" class="group ');
+        expect(markup).toContain(
+            'session-hints-section" class="border-t border-gray-200/80 pt-4 dark:border-gray-800 group"',
+        );
         expect(markup).toContain('continuity-source-section');
         expect(markup).toContain('continuity-source-summary');
         expect(markup).toContain('continuity-source-section" class="mt-3 group ');

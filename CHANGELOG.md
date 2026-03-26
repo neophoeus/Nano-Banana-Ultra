@@ -4,7 +4,31 @@ This changelog is compiled from the repository's local git tags plus the publish
 
 ## Unreleased
 
-- No unreleased changes recorded after `v3.0.0` yet.
+- No unreleased changes recorded after `v3.0.1` yet.
+
+## v3.0.1 - 2026-03-26
+
+- Release title: Nano Banana Ultra 3.0.1 - Workspace Shell Clarity Update
+- Release prep summary:
+    - completed the post-3.0.0 workspace shell refinement plan across Sessions A-I without reopening the underlying continuity, restore, provenance, or picker-state architecture
+    - moved visible ownership of `Model`, `Ratio`, `Size`, and `Qty` into the composer so setup now starts where prompt writing and generation actions already live
+    - added a composer-owned `Reference Tray` strip directly under the helper row so reference state stays near the prompt instead of being split across header and side surfaces
+    - simplified the top header into a compact global bar that keeps brand, theme, language, and console status without competing as a second settings surface
+    - trimmed the side tool panel into image tools only, keeping upload, editor, and SketchPad actions while removing stale reference-surface ownership and related dead prop wiring
+    - regrouped the right rail into `Current Work`, `Versions`, `Sources & Citations`, and `Activity` so the workspace reads more like a product flow and less like an engineering dashboard
+    - softened first-read shell wording across the regrouped insights rail and side tools, including review/session/history/version phrasing that better matches normal-user mental models
+    - closed translation parity for the new shell groupings and wording across all supported locales, including Japanese, Korean, Spanish, French, German, Russian, Traditional Chinese, and Simplified Chinese
+    - extended regression coverage for the composer-owned settings row, composer reference strip, simplified header, image-only side tools, regrouped insights rail, and localized shell wording so the 3.0.1 shell contract is guarded by tests
+    - kept focused validation green for the shell-owner path, including targeted Vitest coverage for composer, header, side tool, insights, and translation baselines
+- 繁中發版摘要:
+    - 3.0.1 是 3.0.0 之後的工作區殼層整理版，重點不是新增新功能，而是把已完成的 continuity workspace 做到更清楚、更像一般使用者會理解的產品介面
+    - 完成 A-I 全部後續收尾，把 `Model`、`Ratio`、`Size`、`Qty` 正式收進 composer，讓設定入口和 prompt 與 generate 行為放在同一個主操作區
+    - `Reference Tray` 狀態改成 composer 自己管理，直接放在 helper 區下方，不再分散在 header、side tool、composer 多個表面之間
+    - 頂部 header 壓回精簡全域列，只保留品牌、theme、language、console 等全域元素，不再兼任第二個參數設定列
+    - 側邊工具面板收斂成純影像工具，保留上傳底圖、編輯當前圖、SketchPad 等真正的 image-tool 入口，同時移除舊的 reference owner contract
+    - 右側脈絡欄重新整理成 `目前工作`、`版本`、`來源與引用`、`活動` 四個家族，降低舊版 branch / lineage / workflow dashboard 的工程味
+    - 補完多語系收尾，把新版 shell 的首屏文案與分組名稱在 9 種語言中對齊，避免部分 locale 仍停留在舊的工程導向 wording
+    - 相關 Vitest 回歸覆蓋一併補齊，3.0.1 的 shell owner 與文案契約已由 focused tests 守住
 
 ## v3.0.0 - 2026-03-26
 

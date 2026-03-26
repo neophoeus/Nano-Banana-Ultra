@@ -1102,12 +1102,21 @@ const App: React.FC = () => {
         includeThoughts,
         groundingMode,
         imageModel,
+        aspectRatio,
+        imageSize,
+        batchSize,
         currentStageAsset,
         capability,
         availableGroundingModes,
         temperature,
         isAdvancedSettingsOpen,
         generateLabel: t('generate'),
+        hasSizePicker: capability.supportedSizes.length > 0,
+        totalReferenceCount,
+        objectCount: objectImages.length,
+        characterCount: characterImages.length,
+        maxObjects: capability.maxObjects,
+        maxCharacters: capability.maxCharacters,
         queuedJobs,
         queueBatchModeSummary,
         queueBatchConversationNotice,
@@ -1180,17 +1189,6 @@ const App: React.FC = () => {
         headerConsole,
         currentLanguage: currentLang,
         onLanguageChange: setCurrentLang,
-        imageModel,
-        aspectRatio,
-        imageSize,
-        batchSize,
-        referenceCount: objectImages.length + characterImages.length,
-        maxObjects: capability.maxObjects,
-        maxCharacters: capability.maxCharacters,
-        isGenerating,
-        batchProgress,
-        hasSizePicker: capability.supportedSizes.length > 0,
-        setActivePickerSheet,
     });
     const handleReplacePromptFromStructuredOutput = useCallback(
         (value: string) => {
@@ -1410,15 +1408,8 @@ const App: React.FC = () => {
         () => (
             <WorkspaceSideToolPanel
                 currentLanguage={currentLang}
-                referenceCount={totalReferenceCount}
-                objectCount={objectImages.length}
-                characterCount={characterImages.length}
-                maxObjects={capability.maxObjects}
-                maxCharacters={capability.maxCharacters}
-                hasSketch={hasSketch}
                 editorBaseAsset={editorBaseAsset}
                 currentStageAsset={currentStageAsset}
-                onOpenReferences={handleOpenReferencesSheet}
                 onUploadBaseImage={handleOpenUploadDialog}
                 onOpenSketchPad={handleOpenSketchPad}
                 onOpenEditor={handleOpenEditor}
@@ -1427,9 +1418,6 @@ const App: React.FC = () => {
             />
         ),
         [
-            capability.maxCharacters,
-            capability.maxObjects,
-            characterImages.length,
             currentLang,
             currentStageAsset,
             editorBaseAsset,
@@ -1437,11 +1425,7 @@ const App: React.FC = () => {
             getStageOriginLabel,
             handleOpenEditor,
             handleOpenSketchPad,
-            handleOpenReferencesSheet,
             handleOpenUploadDialog,
-            hasSketch,
-            objectImages.length,
-            totalReferenceCount,
         ],
     );
     const contextProvenanceStatusLabel =

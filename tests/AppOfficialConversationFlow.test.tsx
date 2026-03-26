@@ -311,7 +311,7 @@ describe('App official conversation flow', () => {
         await waitFor(() => {
             expect(container.querySelector('[data-testid="workspace-restore-notice"]')).toBeTruthy();
             expect(container.querySelector('[data-testid="conversation-continuity-card"]')?.textContent).toContain(
-                'Official Conversation',
+                'Chat history',
             );
         });
 

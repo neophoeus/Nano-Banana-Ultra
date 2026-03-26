@@ -513,8 +513,17 @@ const historyFilmstripFallbackSensitiveKeys = [
     'historyFilmstripEmpty',
 ] as const;
 
+const workspaceSideToolFallbackSensitiveKeys = [
+    'workspaceSideToolTitle',
+    'workspaceSideToolCurrentImage',
+    'workspaceSideToolBaseImage',
+] as const;
+
 const workspaceInsightsSidebarLabelFallbackSensitiveKeys = [
     'workspaceInsightsEyebrow',
+    'workspaceInsightsCurrentWork',
+    'workspaceInsightsSourcesCitations',
+    'workspaceInsightsActivity',
     'workspaceInsightsModelSettingsTitle',
     'workspaceInsightsPhaseLabel',
     'workspaceInsightsCurrentModel',
@@ -945,7 +954,7 @@ const zhTwShellMixedLanguageBaseline = {
     historySourceReopenLog: '已將歷史回合重新開啟為目前的階段來源（{0}）。',
     workspaceCurrentStageSourceNoLinkedHistory:
         '這個階段目前只有暫存狀態，沒有連結到歷史回合，因此延續動作只會使用目前暫存的圖片狀態。',
-    workspaceInsightsReplaySession: '重播工作階段',
+    workspaceInsightsReplaySession: '檢視工作階段',
     groundingPanelAttributionSourceTypeWeb: '網頁',
     groundingPanelAttributionSourceTypeImage: '圖片',
     groundingPanelAttributionSourceTypeContext: '上下文',
@@ -973,7 +982,7 @@ const zhCnShellMixedLanguageBaseline = {
     historySourceReopenLog: '已将历史回合重新打开为当前的阶段来源（{0}）。',
     workspaceCurrentStageSourceNoLinkedHistory:
         '这个阶段当前只有暂存状态，没有链接到历史回合，因此延续动作只会使用当前暂存的图片状态。',
-    workspaceInsightsReplaySession: '重放会话',
+    workspaceInsightsReplaySession: '查看会话',
     groundingPanelAttributionSourceTypeWeb: '网页',
     groundingPanelAttributionSourceTypeImage: '图片',
     groundingPanelAttributionSourceTypeContext: '上下文',
@@ -1084,37 +1093,58 @@ const zhCnInsightsContinuityBaseline = {
 } as const;
 
 const zhTwInsightsSessionSourceBaseline = {
-    workspaceInsightsSessionSource: '工作階段來源',
+    workspaceInsightsSessionSource: '本次工作',
 } as const;
 
 const zhCnInsightsSessionSourceBaseline = {
-    workspaceInsightsSessionSource: '会话来源',
+    workspaceInsightsSessionSource: '本次工作',
 } as const;
 
 const zhTwInsightsEyebrowBaseline = {
-    workspaceInsightsEyebrow: '工作階段與延續脈絡',
+    workspaceInsightsEyebrow: '工作區脈絡',
 } as const;
 
 const zhCnInsightsEyebrowBaseline = {
-    workspaceInsightsEyebrow: '会话与延续脉络',
+    workspaceInsightsEyebrow: '工作区上下文',
+} as const;
+
+const englishInsightsRegroupHeadingBaseline = {
+    workspaceInsightsCurrentWork: 'Current Work',
+    workspaceInsightsVersions: 'Versions',
+    workspaceInsightsSourcesCitations: 'Sources & Citations',
+    workspaceInsightsActivity: 'Activity',
+} as const;
+
+const zhTwInsightsRegroupHeadingBaseline = {
+    workspaceInsightsCurrentWork: '目前工作',
+    workspaceInsightsVersions: '版本',
+    workspaceInsightsSourcesCitations: '來源與引用',
+    workspaceInsightsActivity: '活動',
+} as const;
+
+const zhCnInsightsRegroupHeadingBaseline = {
+    workspaceInsightsCurrentWork: '当前工作',
+    workspaceInsightsVersions: '版本',
+    workspaceInsightsSourcesCitations: '来源与引用',
+    workspaceInsightsActivity: '活动',
 } as const;
 
 const zhTwInsightsSessionStateHintBaseline = {
     workspaceInsightsSessionStateHint:
-        '不管階段畫面切到哪個結果，這一欄都持續保留目前工作階段、分支延續脈絡與工作流程脈絡。',
+        '不管階段畫面切到哪個結果，這一欄都會保留目前成果、已存版本、來源依據與近期活動。',
 } as const;
 
 const zhCnInsightsSessionStateHintBaseline = {
     workspaceInsightsSessionStateHint:
-        '无论阶段画面切到哪个结果，这一栏都会持续保留当前会话、分支延续脉络和工作流上下文。',
+        '无论阶段画面切到哪个结果，这一栏都会保留当前成果、已存版本、来源依据与近期活动。',
 } as const;
 
 const zhTwInsightsTimelineTitleBaseline = {
-    workspaceInsightsTimelineTitle: '工作流程紀錄',
+    workspaceInsightsTimelineTitle: '近期活動',
 } as const;
 
 const zhCnInsightsTimelineTitleBaseline = {
-    workspaceInsightsTimelineTitle: '工作流记录',
+    workspaceInsightsTimelineTitle: '近期活动',
 } as const;
 
 const zhTwInsightsTimelineDescBaseline = {
@@ -2689,7 +2719,7 @@ const jaSourceLineageLabelBaseline = {
     historyBranchContinuationSource: '継続元',
     workspaceCurrentStageSourceNoLinkedHistory:
         'このステージは現在、履歴ターンにひも付かないまま一時配置されているため、フォローアップ操作では一時配置された画像状態のみを使います。',
-    workspaceInsightsReplaySession: 'リプレイ セッション',
+    workspaceInsightsReplaySession: 'セッションを確認',
 } as const;
 
 const koSourceLineageLabelBaseline = {
@@ -2698,7 +2728,7 @@ const koSourceLineageLabelBaseline = {
     historyBranchContinuationSource: '연속 원본',
     workspaceCurrentStageSourceNoLinkedHistory:
         '이 스테이지는 현재 연결된 기록 턴 없이 임시 배치된 상태이므로, 후속 작업은 현재 임시 이미지 상태만 사용합니다.',
-    workspaceInsightsReplaySession: '리플레이 세션',
+    workspaceInsightsReplaySession: '세션 보기',
 } as const;
 
 const esSourceLineageLabelBaseline = {
@@ -2707,7 +2737,7 @@ const esSourceLineageLabelBaseline = {
     historyBranchContinuationSource: 'Fuente de continuacion',
     workspaceCurrentStageSourceNoLinkedHistory:
         'Esta etapa esta temporalmente preparada sin un turno de historial vinculado, por lo que las acciones de seguimiento solo usaran el estado de la imagen preparada.',
-    workspaceInsightsReplaySession: 'Sesion de repeticion',
+    workspaceInsightsReplaySession: 'Revisar sesion',
 } as const;
 
 const frSourceLineageLabelBaseline = {
@@ -2716,7 +2746,7 @@ const frSourceLineageLabelBaseline = {
     historyBranchContinuationSource: 'Source de continuation',
     workspaceCurrentStageSourceNoLinkedHistory:
         "Cette etape est actuellement mise en attente sans tour d'historique lie, donc les actions de suivi utiliseront uniquement l'etat de l'image mise en attente.",
-    workspaceInsightsReplaySession: 'Session de relecture',
+    workspaceInsightsReplaySession: 'Revoir la session',
 } as const;
 
 const deSourceLineageLabelBaseline = {
@@ -2725,7 +2755,7 @@ const deSourceLineageLabelBaseline = {
     historyBranchContinuationSource: 'Fortsetzungsquelle',
     workspaceCurrentStageSourceNoLinkedHistory:
         'Diese Stage ist derzeit ohne verknupfte Verlaufsrunde zwischengespeichert, daher verwenden Folgeaktionen nur den zwischengespeicherten Bildstatus.',
-    workspaceInsightsReplaySession: 'Wiedergabesitzung',
+    workspaceInsightsReplaySession: 'Sitzung ansehen',
 } as const;
 
 const ruSourceLineageLabelBaseline = {
@@ -2734,7 +2764,7 @@ const ruSourceLineageLabelBaseline = {
     historyBranchContinuationSource: 'Источник продолжения',
     workspaceCurrentStageSourceNoLinkedHistory:
         'Эта сцена сейчас подготовлена без связанного хода истории, поэтому действия продолжения будут использовать только текущее состояние подготовленного изображения.',
-    workspaceInsightsReplaySession: 'Сеанс повтора',
+    workspaceInsightsReplaySession: 'Просмотреть сессию',
 } as const;
 
 const jaBranchRenameDialogBaseline = {
@@ -2985,8 +3015,18 @@ const ruHistoryFilmstripBaseline = {
     historyFilmstripEmpty: 'Сгенерируйте или загрузите изображение, чтобы начать собирать ленту ходов.',
 } as const;
 
+const englishWorkspaceSideToolBaseline = {
+    workspaceSideToolTitle: 'Image Tools',
+    workspaceSideToolCurrentImage: 'Current image',
+    workspaceSideToolBaseImage: 'Base image',
+} as const;
+
 const jaWorkspaceInsightsSidebarLabelBaseline = {
-    workspaceInsightsEyebrow: 'セッションと系統',
+    workspaceInsightsEyebrow: 'ワークスペースの状況',
+    workspaceInsightsCurrentWork: '現在の作業',
+    workspaceInsightsVersions: 'バージョン',
+    workspaceInsightsSourcesCitations: 'ソースと引用',
+    workspaceInsightsActivity: 'アクティビティ',
     workspaceInsightsModelSettingsTitle: 'モデル設定',
     workspaceInsightsPhaseLabel: 'ライブ',
     workspaceInsightsCurrentModel: '現在のモデル',
@@ -2995,16 +3035,20 @@ const jaWorkspaceInsightsSidebarLabelBaseline = {
     workspaceInsightsObjects: 'オブジェクト: {0}/{1}',
     workspaceInsightsCharacters: 'キャラクター: {0}/{1}',
     workspaceInsightsRenameBranch: '分岐名を変更',
-    workspaceInsightsActiveBranch: 'アクティブな分岐',
+    workspaceInsightsActiveBranch: '現在のバージョン',
     workspaceInsightsBranchesCount: '{0} 個の分岐',
-    workspaceInsightsSessionContinuity: 'セッション継続',
+    workspaceInsightsSessionContinuity: '引き継がれる内容',
     workspaceInsightsLatestResultText: '最新の結果テキスト',
     workspaceInsightsLatestThoughts: '最新の思考',
-    workspaceInsightsProvenance: '由来情報',
+    workspaceInsightsProvenance: 'ソースの詳細',
 } as const;
 
 const koWorkspaceInsightsSidebarLabelBaseline = {
-    workspaceInsightsEyebrow: '세션 및 계보',
+    workspaceInsightsEyebrow: '작업 공간 개요',
+    workspaceInsightsCurrentWork: '현재 작업',
+    workspaceInsightsVersions: '버전',
+    workspaceInsightsSourcesCitations: '출처 및 인용',
+    workspaceInsightsActivity: '활동',
     workspaceInsightsModelSettingsTitle: '모델 설정',
     workspaceInsightsPhaseLabel: '실시간',
     workspaceInsightsCurrentModel: '현재 모델',
@@ -3013,16 +3057,20 @@ const koWorkspaceInsightsSidebarLabelBaseline = {
     workspaceInsightsObjects: '오브젝트: {0}/{1}',
     workspaceInsightsCharacters: '캐릭터: {0}/{1}',
     workspaceInsightsRenameBranch: '브랜치 이름 변경',
-    workspaceInsightsActiveBranch: '활성 브랜치',
+    workspaceInsightsActiveBranch: '현재 버전',
     workspaceInsightsBranchesCount: '{0}개 브랜치',
-    workspaceInsightsSessionContinuity: '세션 연속성',
+    workspaceInsightsSessionContinuity: '이어지는 내용',
     workspaceInsightsLatestResultText: '최신 결과 텍스트',
     workspaceInsightsLatestThoughts: '최신 생각',
-    workspaceInsightsProvenance: '출처 정보',
+    workspaceInsightsProvenance: '출처 세부 정보',
 } as const;
 
 const esWorkspaceInsightsSidebarLabelBaseline = {
-    workspaceInsightsEyebrow: 'Sesion y linaje',
+    workspaceInsightsEyebrow: 'Resumen del espacio de trabajo',
+    workspaceInsightsCurrentWork: 'Trabajo actual',
+    workspaceInsightsVersions: 'Versiones',
+    workspaceInsightsSourcesCitations: 'Fuentes y citas',
+    workspaceInsightsActivity: 'Actividad',
     workspaceInsightsModelSettingsTitle: 'Configuracion del modelo',
     workspaceInsightsPhaseLabel: 'Activo',
     workspaceInsightsCurrentModel: 'Modelo actual',
@@ -3031,16 +3079,20 @@ const esWorkspaceInsightsSidebarLabelBaseline = {
     workspaceInsightsObjects: 'Objetos: {0}/{1}',
     workspaceInsightsCharacters: 'Personajes: {0}/{1}',
     workspaceInsightsRenameBranch: 'Renombrar rama',
-    workspaceInsightsActiveBranch: 'Rama activa',
+    workspaceInsightsActiveBranch: 'Version actual',
     workspaceInsightsBranchesCount: '{0} ramas',
-    workspaceInsightsSessionContinuity: 'Continuidad de la sesion',
+    workspaceInsightsSessionContinuity: 'Lo que se mantiene',
     workspaceInsightsLatestResultText: 'Texto del ultimo resultado',
     workspaceInsightsLatestThoughts: 'Ultimos pensamientos',
-    workspaceInsightsProvenance: 'Procedencia',
+    workspaceInsightsProvenance: 'Detalles de origen',
 } as const;
 
 const frWorkspaceInsightsSidebarLabelBaseline = {
-    workspaceInsightsEyebrow: 'Session et lignage',
+    workspaceInsightsEyebrow: 'Vue d ensemble de l espace de travail',
+    workspaceInsightsCurrentWork: 'Travail en cours',
+    workspaceInsightsVersions: 'Versions',
+    workspaceInsightsSourcesCitations: 'Sources et citations',
+    workspaceInsightsActivity: 'Activite',
     workspaceInsightsModelSettingsTitle: 'Parametres du modele',
     workspaceInsightsPhaseLabel: 'Actif',
     workspaceInsightsCurrentModel: 'Modele actuel',
@@ -3049,16 +3101,20 @@ const frWorkspaceInsightsSidebarLabelBaseline = {
     workspaceInsightsObjects: 'Objets : {0}/{1}',
     workspaceInsightsCharacters: 'Personnages : {0}/{1}',
     workspaceInsightsRenameBranch: 'Renommer la branche',
-    workspaceInsightsActiveBranch: 'Branche active',
+    workspaceInsightsActiveBranch: 'Version actuelle',
     workspaceInsightsBranchesCount: 'Total des branches : {0}',
-    workspaceInsightsSessionContinuity: 'Continuite de la session',
+    workspaceInsightsSessionContinuity: 'Ce qui continue',
     workspaceInsightsLatestResultText: 'Dernier texte du resultat',
     workspaceInsightsLatestThoughts: 'Dernieres pensees',
-    workspaceInsightsProvenance: 'Origine',
+    workspaceInsightsProvenance: 'Details des sources',
 } as const;
 
 const deWorkspaceInsightsSidebarLabelBaseline = {
-    workspaceInsightsEyebrow: 'Sitzung und Verlaufslinie',
+    workspaceInsightsEyebrow: 'Arbeitsbereich im Blick',
+    workspaceInsightsCurrentWork: 'Aktuelle Arbeit',
+    workspaceInsightsVersions: 'Versionen',
+    workspaceInsightsSourcesCitations: 'Quellen und Zitate',
+    workspaceInsightsActivity: 'Aktivitat',
     workspaceInsightsModelSettingsTitle: 'Modelleinstellungen',
     workspaceInsightsPhaseLabel: 'Aktiv',
     workspaceInsightsCurrentModel: 'Aktuelles Modell',
@@ -3067,16 +3123,20 @@ const deWorkspaceInsightsSidebarLabelBaseline = {
     workspaceInsightsObjects: 'Objekte: {0}/{1}',
     workspaceInsightsCharacters: 'Charaktere: {0}/{1}',
     workspaceInsightsRenameBranch: 'Zweig umbenennen',
-    workspaceInsightsActiveBranch: 'Aktiver Zweig',
+    workspaceInsightsActiveBranch: 'Aktuelle Version',
     workspaceInsightsBranchesCount: '{0} Zweige',
-    workspaceInsightsSessionContinuity: 'Sitzungskontinuitat',
+    workspaceInsightsSessionContinuity: 'Was erhalten bleibt',
     workspaceInsightsLatestResultText: 'Neuester Ergebnistext',
     workspaceInsightsLatestThoughts: 'Neueste Gedanken',
-    workspaceInsightsProvenance: 'Herkunft',
+    workspaceInsightsProvenance: 'Quelldetails',
 } as const;
 
 const ruWorkspaceInsightsSidebarLabelBaseline = {
-    workspaceInsightsEyebrow: 'Сессия и линия происхождения',
+    workspaceInsightsEyebrow: 'Обзор рабочего пространства',
+    workspaceInsightsCurrentWork: 'Текущая работа',
+    workspaceInsightsVersions: 'Версии',
+    workspaceInsightsSourcesCitations: 'Источники и цитаты',
+    workspaceInsightsActivity: 'Активность',
     workspaceInsightsModelSettingsTitle: 'Настройки модели',
     workspaceInsightsPhaseLabel: 'Активно',
     workspaceInsightsCurrentModel: 'Текущая модель',
@@ -3085,36 +3145,36 @@ const ruWorkspaceInsightsSidebarLabelBaseline = {
     workspaceInsightsObjects: 'Объекты: {0}/{1}',
     workspaceInsightsCharacters: 'Персонажи: {0}/{1}',
     workspaceInsightsRenameBranch: 'Переименовать ветку',
-    workspaceInsightsActiveBranch: 'Активная ветка',
+    workspaceInsightsActiveBranch: 'Текущая версия',
     workspaceInsightsBranchesCount: '{0} веток',
-    workspaceInsightsSessionContinuity: 'Непрерывность сессии',
+    workspaceInsightsSessionContinuity: 'Что сохранится',
     workspaceInsightsLatestResultText: 'Текст последнего результата',
     workspaceInsightsLatestThoughts: 'Последние мысли',
-    workspaceInsightsProvenance: 'Происхождение',
+    workspaceInsightsProvenance: 'Сведения об источниках',
 } as const;
 
 const jaWorkspaceInsightsStructuralBaseline = {
     workspaceInsightsBranchesEmpty: 'セッションが別方向へ分岐し始めると、ここに分岐が整理されます。',
     workspaceInsightsNoContinuitySignals: 'まだ継続シグナルはありません。',
-    workspaceInsightsOfficialConversation: '公式会話',
+    workspaceInsightsOfficialConversation: '会話の履歴',
     workspaceInsightsConversationBranchActiveSource: '分岐 {0} · 現在のソース {1}',
-    workspaceInsightsSessionSource: 'セッションソース',
+    workspaceInsightsSessionSource: 'このセッション',
     workspaceInsightsSessionStateHint:
-        'このレールには、ステージが変わっても現在のセッション、分岐の系統、ワークフローの文脈が表示され続けます。',
-    workspaceInsightsTitle: 'コンテキスト、分岐状態、ワークフロー',
+        'ステージが切り替わっても、現在の結果、保存したバージョン、参照したソース、最近の動きがここにまとまって残ります。',
+    workspaceInsightsTitle: '現在の作業、バージョン、ソース、アクティビティ',
     workspaceInsightsStageSourceEmpty:
         '結果がステージに入ると、このカードには履歴、アクティブな分岐継続、エディターのフォローアップ、または再度開いたターンのどれから来たかが表示されます。',
     workspaceInsightsLatestResultTextEmpty:
         '画像とテキストが有効なときは、ステージ要約がここにもビューアにも表示されます。',
-    workspaceInsightsSessionTurnStack: 'セッションターン一覧',
+    workspaceInsightsSessionTurnStack: '最近のターン',
     workspaceInsightsTurnsCount: '{0} ターン',
     workspaceInsightsSessionTurnStackEmpty:
         '直近で成功したターンがここに並び、再度開く、継続する、分岐する操作をすばやく行えます。',
-    workspaceInsightsLineageMap: '系統マップ',
+    workspaceInsightsLineageMap: 'バージョンマップ',
     workspaceInsightsRootsCount: '{0} 個のルート',
     workspaceInsightsRoot: 'ルート',
     workspaceInsightsLineageEmpty: '複数の成功ターンがたまると、そのルートと分岐関係がここに表示されます。',
-    workspaceInsightsTimelineTitle: 'ワークフローログ',
+    workspaceInsightsTimelineTitle: '最近のアクティビティ',
     workspaceInsightsTimelineDesc:
         'リクエスト、出力、履歴、エラーの各ステップが、ワークスペースを離れなくてもここで読みやすく整理されます。',
     workspaceInsightsTimelineEmpty: '作業を進めると、システムや生成のメッセージがここに表示されます。',
@@ -3128,25 +3188,25 @@ const jaWorkspaceInsightsStructuralBaseline = {
 const koWorkspaceInsightsStructuralBaseline = {
     workspaceInsightsBranchesEmpty: '세션이 다른 방향으로 갈라지기 시작하면 브랜치가 여기에 정리됩니다.',
     workspaceInsightsNoContinuitySignals: '아직 연속성 신호가 없습니다.',
-    workspaceInsightsOfficialConversation: '공식 대화',
+    workspaceInsightsOfficialConversation: '대화 기록',
     workspaceInsightsConversationBranchActiveSource: '브랜치 {0} · 현재 원본 {1}',
-    workspaceInsightsSessionSource: '세션 원본',
+    workspaceInsightsSessionSource: '이번 세션',
     workspaceInsightsSessionStateHint:
-        '스테이지가 바뀌어도 현재 세션, 브랜치 계보, 워크플로 맥락이 이 레일에 계속 표시됩니다.',
-    workspaceInsightsTitle: '컨텍스트, 브랜치 상태 및 워크플로',
+        '스테이지가 바뀌어도 현재 결과, 저장된 버전, 참고한 출처, 최근 활동이 이곳에 계속 정리되어 남습니다.',
+    workspaceInsightsTitle: '현재 작업, 버전, 출처, 활동',
     workspaceInsightsStageSourceEmpty:
         '결과가 스테이지에 올라오면 이 카드에 기록, 활성 브랜치 연속, 에디터 후속 편집, 또는 다시 연 턴 가운데 어디에서 왔는지 표시됩니다.',
     workspaceInsightsLatestResultTextEmpty:
         '이미지와 텍스트가 활성화되면 스테이지 요약이 여기와 뷰어에 함께 표시됩니다.',
-    workspaceInsightsSessionTurnStack: '세션 턴 스택',
+    workspaceInsightsSessionTurnStack: '최근 턴',
     workspaceInsightsTurnsCount: '{0}개 턴',
     workspaceInsightsSessionTurnStackEmpty:
         '최근 성공한 턴이 여기에 모여 빠르게 다시 열기, 이어가기, 브랜치 만들기를 할 수 있습니다.',
-    workspaceInsightsLineageMap: '계보 맵',
+    workspaceInsightsLineageMap: '버전 맵',
     workspaceInsightsRootsCount: '루트 {0}개',
     workspaceInsightsRoot: '루트',
     workspaceInsightsLineageEmpty: '성공한 턴이 여러 개 쌓이면 루트와 브랜치 관계가 여기에 표시됩니다.',
-    workspaceInsightsTimelineTitle: '워크플로 로그',
+    workspaceInsightsTimelineTitle: '최근 활동',
     workspaceInsightsTimelineDesc:
         '요청, 출력, 기록, 오류 단계가 워크스페이스를 떠나지 않아도 여기에서 읽기 쉽게 정리됩니다.',
     workspaceInsightsTimelineEmpty: '작업을 진행하면 시스템 및 생성 메시지가 여기에 표시됩니다.',
@@ -3160,26 +3220,26 @@ const esWorkspaceInsightsStructuralBaseline = {
     workspaceInsightsBranchesEmpty:
         'Las ramas apareceran aqui cuando la sesion empiece a dividirse en direcciones alternativas.',
     workspaceInsightsNoContinuitySignals: 'Aun no hay senales de continuidad.',
-    workspaceInsightsOfficialConversation: 'Conversacion oficial',
+    workspaceInsightsOfficialConversation: 'Historial del chat',
     workspaceInsightsConversationBranchActiveSource: 'Rama {0} · fuente activa {1}',
-    workspaceInsightsSessionSource: 'Fuente de la sesion',
+    workspaceInsightsSessionSource: 'Esta sesion',
     workspaceInsightsSessionStateHint:
-        'Este panel mantiene visible la sesion activa, el linaje de ramas y el contexto del flujo de trabajo mientras cambia el escenario.',
-    workspaceInsightsTitle: 'Contexto, estado de ramas y flujo de trabajo',
+        'Aunque cambie el escenario, aqui seguiran visibles el resultado actual, las versiones guardadas, las fuentes consultadas y la actividad reciente.',
+    workspaceInsightsTitle: 'Trabajo actual, versiones, fuentes y actividad',
     workspaceInsightsStageSourceEmpty:
         'Cuando un resultado entra en escena, esta tarjeta mostrara si vino del historial, de una continuacion activa de rama, de un seguimiento desde el editor o de un turno reabierto.',
     workspaceInsightsLatestResultTextEmpty:
         'Cuando Imagenes y texto este activo, el resumen del escenario aparecera aqui y tambien en el visor.',
-    workspaceInsightsSessionTurnStack: 'Pila de turnos de la sesion',
+    workspaceInsightsSessionTurnStack: 'Turnos recientes',
     workspaceInsightsTurnsCount: '{0} turnos',
     workspaceInsightsSessionTurnStackEmpty:
         'Los turnos exitosos recientes apareceran aqui para reabrir, continuar o ramificar con rapidez.',
-    workspaceInsightsLineageMap: 'Mapa de linaje',
+    workspaceInsightsLineageMap: 'Mapa de versiones',
     workspaceInsightsRootsCount: '{0} raices',
     workspaceInsightsRoot: 'Raiz',
     workspaceInsightsLineageEmpty:
         'Cuando se acumulen varios turnos exitosos, sus raices y relaciones de rama apareceran aqui.',
-    workspaceInsightsTimelineTitle: 'Registro del flujo de trabajo',
+    workspaceInsightsTimelineTitle: 'Actividad reciente',
     workspaceInsightsTimelineDesc:
         'Las solicitudes, salidas, pasos del historial y errores se mantienen legibles aqui sin salir del espacio de trabajo.',
     workspaceInsightsTimelineEmpty: 'Los mensajes del sistema y de generacion apareceran aqui a medida que trabajes.',
@@ -3194,26 +3254,26 @@ const frWorkspaceInsightsStructuralBaseline = {
     workspaceInsightsBranchesEmpty:
         'Les branches apparaitront ici quand la session commencera a se diviser vers d autres directions.',
     workspaceInsightsNoContinuitySignals: 'Aucun signal de continuite pour le moment.',
-    workspaceInsightsOfficialConversation: 'Conversation officielle',
+    workspaceInsightsOfficialConversation: 'Historique du chat',
     workspaceInsightsConversationBranchActiveSource: 'Branche {0} · source active {1}',
-    workspaceInsightsSessionSource: 'Source de la session',
+    workspaceInsightsSessionSource: 'Cette session',
     workspaceInsightsSessionStateHint:
-        'Ce panneau garde visibles la session active, le lignage des branches et le contexte du flux de travail pendant que la scene change.',
-    workspaceInsightsTitle: 'Contexte, etat des branches et flux de travail',
+        'Meme si la scene change, le resultat actuel, les versions enregistrees, les sources consultees et l activite recente restent visibles ici.',
+    workspaceInsightsTitle: 'Travail en cours, versions, sources et activite',
     workspaceInsightsStageSourceEmpty:
         'Quand un resultat est place sur la scene, cette carte indiquera s il vient de l historique, d une continuation active de branche, d une suite depuis l editeur ou d un tour rouvert.',
     workspaceInsightsLatestResultTextEmpty:
         'Quand Images et texte est actif, le resume de la scene apparait ici ainsi que dans le visualiseur.',
-    workspaceInsightsSessionTurnStack: 'Pile des tours de session',
+    workspaceInsightsSessionTurnStack: 'Tours recents',
     workspaceInsightsTurnsCount: '{0} tours',
     workspaceInsightsSessionTurnStackEmpty:
         'Les tours recents reussis arrivent ici pour rouvrir, continuer ou creer une branche rapidement.',
-    workspaceInsightsLineageMap: 'Carte de lignage',
+    workspaceInsightsLineageMap: 'Carte des versions',
     workspaceInsightsRootsCount: '{0} racines',
     workspaceInsightsRoot: 'Racine',
     workspaceInsightsLineageEmpty:
         'Quand plusieurs tours reussis s accumulent, leur racine et leurs relations de branche apparaitront ici.',
-    workspaceInsightsTimelineTitle: 'Journal du flux de travail',
+    workspaceInsightsTimelineTitle: 'Activite recente',
     workspaceInsightsTimelineDesc:
         'Les requetes, sorties, etapes d historique et erreurs restent lisibles ici sans quitter l espace de travail.',
     workspaceInsightsTimelineEmpty:
@@ -3229,26 +3289,26 @@ const deWorkspaceInsightsStructuralBaseline = {
     workspaceInsightsBranchesEmpty:
         'Sobald sich die Sitzung in verschiedene Richtungen aufteilt, werden die Zweige hier gesammelt.',
     workspaceInsightsNoContinuitySignals: 'Noch keine Kontinuitatssignale vorhanden.',
-    workspaceInsightsOfficialConversation: 'Offizielle Unterhaltung',
+    workspaceInsightsOfficialConversation: 'Chat-Verlauf',
     workspaceInsightsConversationBranchActiveSource: 'Zweig {0} · aktive Quelle {1}',
-    workspaceInsightsSessionSource: 'Sitzungsquelle',
+    workspaceInsightsSessionSource: 'Diese Sitzung',
     workspaceInsightsSessionStateHint:
-        'Diese Leiste halt die aktive Sitzung, die Zweigherkunft und den Arbeitsablaufkontext sichtbar, wahrend sich die Stage andert.',
-    workspaceInsightsTitle: 'Kontext, Verzweigungsstatus und Arbeitsablauf',
+        'Auch wenn sich die Ansicht andert, bleiben das aktuelle Ergebnis, gespeicherte Versionen, genutzte Quellen und die letzte Aktivitat hier sichtbar.',
+    workspaceInsightsTitle: 'Aktuelle Arbeit, Versionen, Quellen und Aktivitat',
     workspaceInsightsStageSourceEmpty:
         'Sobald ein Ergebnis auf die Stage gelegt wird, zeigt diese Karte, ob es aus dem Verlauf, aus einer aktiven Zweigfortsetzung, aus einer Editor-Nachbearbeitung oder aus einer erneut geoffneten Runde stammt.',
     workspaceInsightsLatestResultTextEmpty:
         'Wenn Bilder und Text aktiv sind, erscheint die Stufenzusammenfassung hier und auch im Viewer.',
-    workspaceInsightsSessionTurnStack: 'Sitzungsrundenstapel',
+    workspaceInsightsSessionTurnStack: 'Letzte Zuge',
     workspaceInsightsTurnsCount: '{0} Zuge',
     workspaceInsightsSessionTurnStackEmpty:
         'Neuere erfolgreiche Runden erscheinen hier fur schnelles erneutes Offnen, Fortsetzen oder Verzweigen.',
-    workspaceInsightsLineageMap: 'Herkunftskarte',
+    workspaceInsightsLineageMap: 'Versionskarte',
     workspaceInsightsRootsCount: '{0} Wurzeln',
     workspaceInsightsRoot: 'Wurzel',
     workspaceInsightsLineageEmpty:
         'Sobald mehrere erfolgreiche Runden vorhanden sind, erscheinen ihre Wurzeln und Verzweigungsbeziehungen hier.',
-    workspaceInsightsTimelineTitle: 'Arbeitsablaufprotokoll',
+    workspaceInsightsTimelineTitle: 'Letzte Aktivitat',
     workspaceInsightsTimelineDesc:
         'Anfragen, Ausgaben, Verlaufsschritte und Fehler bleiben hier lesbar, ohne den Arbeitsbereich zu verlassen.',
     workspaceInsightsTimelineEmpty: 'System- und Generierungsnachrichten erscheinen hier, wahrend Sie arbeiten.',
@@ -3262,26 +3322,26 @@ const deWorkspaceInsightsStructuralBaseline = {
 const ruWorkspaceInsightsStructuralBaseline = {
     workspaceInsightsBranchesEmpty: 'Когда сессия начнет расходиться по разным направлениям, ветки появятся здесь.',
     workspaceInsightsNoContinuitySignals: 'Пока нет сигналов продолжения.',
-    workspaceInsightsOfficialConversation: 'Официальный диалог',
+    workspaceInsightsOfficialConversation: 'История чата',
     workspaceInsightsConversationBranchActiveSource: 'Ветка {0} · активный источник {1}',
-    workspaceInsightsSessionSource: 'Источник сессии',
+    workspaceInsightsSessionSource: 'Эта сессия',
     workspaceInsightsSessionStateHint:
-        'Эта панель сохраняет видимыми активную сессию, линию ветвления и контекст хода работы, пока меняется сцена.',
-    workspaceInsightsTitle: 'Контекст, состояние веток и ход работы',
+        'Даже когда сцена меняется, здесь остаются видны текущий результат, сохраненные версии, использованные источники и недавняя активность.',
+    workspaceInsightsTitle: 'Текущая работа, версии, источники и активность',
     workspaceInsightsStageSourceEmpty:
         'Когда результат попадает на сцену, эта карточка покажет, пришел ли он из истории, из активного продолжения ветки, из последующего редактирования или из повторно открытого хода.',
     workspaceInsightsLatestResultTextEmpty:
         'Когда активен режим изображений и текста, сводка по сцене появляется здесь и в просмотрщике.',
-    workspaceInsightsSessionTurnStack: 'Стек ходов сессии',
+    workspaceInsightsSessionTurnStack: 'Недавние ходы',
     workspaceInsightsTurnsCount: '{0} ходов',
     workspaceInsightsSessionTurnStackEmpty:
         'Недавние успешные ходы появятся здесь для быстрого повторного открытия, продолжения или ветвления.',
-    workspaceInsightsLineageMap: 'Карта ветвления',
+    workspaceInsightsLineageMap: 'Карта версий',
     workspaceInsightsRootsCount: '{0} корней',
     workspaceInsightsRoot: 'Корень',
     workspaceInsightsLineageEmpty:
         'Когда накопится несколько успешных ходов, их корни и связи между ветками появятся здесь.',
-    workspaceInsightsTimelineTitle: 'Журнал хода работы',
+    workspaceInsightsTimelineTitle: 'Недавние события',
     workspaceInsightsTimelineDesc:
         'Запросы, результаты, шаги истории и ошибки остаются читаемыми здесь без выхода из рабочего пространства.',
     workspaceInsightsTimelineEmpty: 'Сообщения системы и генерации будут появляться здесь по мере работы.',
@@ -5221,6 +5281,20 @@ describe('workspace flow translations', () => {
         }
     });
 
+    it('keeps workspace side tool labels localized outside English', () => {
+        const english = translations.en;
+
+        for (const language of Object.keys(translations) as Array<keyof typeof translations>) {
+            if (language === 'en') continue;
+
+            const dictionary = translations[language];
+
+            for (const key of workspaceSideToolFallbackSensitiveKeys) {
+                expect(dictionary[key], `${language} fell back to English for ${key}`).not.toBe(english[key]);
+            }
+        }
+    });
+
     it('keeps workspace insights sidebar labels localized outside English', () => {
         const english = translations.en;
 
@@ -5246,6 +5320,38 @@ describe('workspace flow translations', () => {
             for (const key of workspaceInsightsStructuralFallbackSensitiveKeys) {
                 expect(dictionary[key], `${language} fell back to English for ${key}`).not.toBe(english[key]);
             }
+        }
+    });
+
+    it('keeps the English insights regroup headings baseline stable', () => {
+        const english = translations.en;
+
+        for (const [key, value] of Object.entries(englishInsightsRegroupHeadingBaseline)) {
+            expect(english[key as keyof typeof english], `en drifted for ${key}`).toBe(value);
+        }
+    });
+
+    it('keeps the zh_TW insights regroup headings baseline stable', () => {
+        const traditionalChinese = translations.zh_TW;
+
+        for (const [key, value] of Object.entries(zhTwInsightsRegroupHeadingBaseline)) {
+            expect(traditionalChinese[key as keyof typeof traditionalChinese], `zh_TW drifted for ${key}`).toBe(value);
+        }
+    });
+
+    it('keeps the zh_CN insights regroup headings baseline stable', () => {
+        const simplifiedChinese = translations.zh_CN;
+
+        for (const [key, value] of Object.entries(zhCnInsightsRegroupHeadingBaseline)) {
+            expect(simplifiedChinese[key as keyof typeof simplifiedChinese], `zh_CN drifted for ${key}`).toBe(value);
+        }
+    });
+
+    it('keeps the English workspace side tool wording baseline stable', () => {
+        const english = translations.en;
+
+        for (const [key, value] of Object.entries(englishWorkspaceSideToolBaseline)) {
+            expect(english[key as keyof typeof english], `en drifted for ${key}`).toBe(value);
         }
     });
 

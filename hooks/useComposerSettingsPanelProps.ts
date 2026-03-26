@@ -1,8 +1,9 @@
-import { Dispatch, MutableRefObject, SetStateAction, useLayoutEffect, useMemo, useRef } from 'react';
+import { Dispatch, MutableRefObject, SetStateAction, useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import ComposerSettingsPanel from '../components/ComposerSettingsPanel';
 import type { PickerSheet } from '../components/WorkspacePickerSheet';
 import { Language } from '../utils/translations';
 import {
+    AspectRatio,
     GeneratedImage,
     GroundingMode,
     OutputFormat,
@@ -11,9 +12,28 @@ import {
     StructuredOutputMode,
     ThinkingLevel,
     TurnLineageAction,
+    ImageSize,
 } from '../types';
 
 type ComposerSettingsPanelProps = React.ComponentProps<typeof ComposerSettingsPanel>;
+export type ComposerSettingsPanelPickerEntryProps = {
+    modelLabel: string;
+    aspectRatio: AspectRatio;
+    imageSize: ImageSize;
+    batchSize: number;
+    hasSizePicker: boolean;
+    totalReferenceCount: number;
+    objectCount: number;
+    characterCount: number;
+    maxObjects: number;
+    maxCharacters: number;
+    onOpenModelPicker: () => void;
+    onOpenRatioPicker: () => void;
+    onOpenSizePicker: () => void;
+    onOpenBatchPicker: () => void;
+    onOpenReferences: () => void;
+};
+type ComposerSettingsPanelOwnedProps = ComposerSettingsPanelProps & ComposerSettingsPanelPickerEntryProps;
 
 type UseComposerSettingsPanelPropsArgs = {
     prompt: string;
@@ -29,12 +49,21 @@ type UseComposerSettingsPanelPropsArgs = {
     includeThoughts: boolean;
     groundingMode: GroundingMode;
     imageModel: ComposerSettingsPanelProps['imageModel'];
+    aspectRatio: AspectRatio;
+    imageSize: ImageSize;
+    batchSize: number;
     currentStageAsset: StageAsset | null;
     capability: ComposerSettingsPanelProps['capability'];
     availableGroundingModes: GroundingMode[];
     temperature: number;
     isAdvancedSettingsOpen: boolean;
     generateLabel: string;
+    hasSizePicker: boolean;
+    totalReferenceCount: number;
+    objectCount: number;
+    characterCount: number;
+    maxObjects: number;
+    maxCharacters: number;
     queuedJobs: QueuedBatchJob[];
     queueBatchModeSummary: string;
     queueBatchConversationNotice: string | null;
@@ -90,12 +119,21 @@ export function useComposerSettingsPanelProps({
     includeThoughts,
     groundingMode,
     imageModel,
+    aspectRatio,
+    imageSize,
+    batchSize,
     currentStageAsset,
     capability,
     availableGroundingModes,
     temperature,
     isAdvancedSettingsOpen,
     generateLabel,
+    hasSizePicker,
+    totalReferenceCount,
+    objectCount,
+    characterCount,
+    maxObjects,
+    maxCharacters,
     queuedJobs,
     queueBatchModeSummary,
     queueBatchConversationNotice,
@@ -135,7 +173,24 @@ export function useComposerSettingsPanelProps({
     handleRemoveQueuedJob,
     getStageOriginLabel,
     getLineageActionLabel,
-}: UseComposerSettingsPanelPropsArgs): ComposerSettingsPanelProps {
+}: UseComposerSettingsPanelPropsArgs): ComposerSettingsPanelOwnedProps {
+    const getModelLabel = useCallback(
+        (model: ComposerSettingsPanelProps['imageModel']) => {
+            if (model === 'gemini-3.1-flash-image-preview') {
+                return t('modelGemini31Flash');
+            }
+            if (model === 'gemini-3-pro-image-preview') {
+                return t('modelGemini3Pro');
+            }
+            return t('modelGemini25Flash');
+        },
+        [t],
+    );
+    const openModelPicker = useCallback(() => setActivePickerSheet('model'), [setActivePickerSheet]);
+    const openRatioPicker = useCallback(() => setActivePickerSheet('ratio'), [setActivePickerSheet]);
+    const openSizePicker = useCallback(() => setActivePickerSheet('size'), [setActivePickerSheet]);
+    const openBatchPicker = useCallback(() => setActivePickerSheet('batch'), [setActivePickerSheet]);
+    const openReferencesPicker = useCallback(() => setActivePickerSheet('references'), [setActivePickerSheet]);
     const latestHandlersRef = useRef({
         setPrompt,
         toggleEnterToSubmit,
@@ -271,6 +326,16 @@ export function useComposerSettingsPanelProps({
             temperature,
             isAdvancedSettingsOpen,
             generateLabel,
+            modelLabel: getModelLabel(imageModel),
+            aspectRatio,
+            imageSize,
+            batchSize,
+            hasSizePicker,
+            totalReferenceCount,
+            objectCount,
+            characterCount,
+            maxObjects,
+            maxCharacters,
             queuedJobs,
             queueBatchModeSummary,
             queueBatchConversationNotice,
@@ -293,6 +358,11 @@ export function useComposerSettingsPanelProps({
             onOpenPromptHistory: () => latestHandlersRef.current.setActivePickerSheet('history'),
             onOpenTemplates: () => latestHandlersRef.current.setActivePickerSheet('templates'),
             onOpenStyles: () => latestHandlersRef.current.setActivePickerSheet('styles'),
+            onOpenModelPicker: openModelPicker,
+            onOpenRatioPicker: openRatioPicker,
+            onOpenSizePicker: openSizePicker,
+            onOpenBatchPicker: openBatchPicker,
+            onOpenReferences: openReferencesPicker,
             onExportWorkspace: () => latestHandlersRef.current.handleExportWorkspaceSnapshot(),
             onImportWorkspace: () => latestHandlersRef.current.workspaceImportInputRef.current?.click(),
             onToggleAdvancedSettings: () => {
@@ -354,17 +424,32 @@ export function useComposerSettingsPanelProps({
             includeThoughts,
             groundingMode,
             imageModel,
+            aspectRatio,
+            imageSize,
+            batchSize,
             currentStageAsset,
             capability,
             availableGroundingModes,
             temperature,
             isAdvancedSettingsOpen,
             generateLabel,
+            hasSizePicker,
+            totalReferenceCount,
+            objectCount,
+            characterCount,
+            maxObjects,
+            maxCharacters,
             queuedJobs,
             queueBatchModeSummary,
             queueBatchConversationNotice,
             activeImportedQueuedHistoryId,
             promptTextareaRef,
+            getModelLabel,
+            openModelPicker,
+            openRatioPicker,
+            openSizePicker,
+            openBatchPicker,
+            openReferencesPicker,
         ],
     );
 }

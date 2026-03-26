@@ -638,6 +638,9 @@ export const fr = {
     workspacePickerHistoryLinked: "lie a l'historique",
     workspacePickerStageSourceHint:
         "La scene actuelle et les reouvertures depuis l'historique alimentent maintenant le meme modele source de suivi, reutilisable par les actions de l'editeur.",
+    workspaceSideToolTitle: 'Outils d image',
+    workspaceSideToolCurrentImage: 'Image actuelle',
+    workspaceSideToolBaseImage: 'Image de base',
     workspacePickerOpenSketchPad: 'Ouvrir SketchPad',
     workspacePickerUploadBaseImage: "Televerser l'image de base",
     workspacePickerUseCurrentStageAsEditorBase: "Utiliser la scene actuelle comme base de l'editeur",
@@ -877,18 +880,23 @@ export const fr = {
     historyBranchContinuationSource: 'Source de continuation',
     workspaceCurrentStageSourceNoLinkedHistory:
         "Cette etape est actuellement mise en attente sans tour d'historique lie, donc les actions de suivi utiliseront uniquement l'etat de l'image mise en attente.",
-    workspaceInsightsReplaySession: 'Session de relecture',
+    workspaceInsightsReplaySession: 'Revoir la session',
+    workspaceInsightsCurrentImage: 'Image actuelle',
     workspaceInsightsBranchesEmpty:
         'Les branches apparaitront ici quand la session commencera a se diviser vers d autres directions.',
     workspaceInsightsNoContinuitySignals: 'Aucun signal de continuite pour le moment.',
-    workspaceInsightsOfficialConversation: 'Conversation officielle',
+    workspaceInsightsOfficialConversation: 'Historique du chat',
     workspaceInsightsConversationTurnPosition: 'tour {0}',
     workspaceInsightsConversationBranchActiveSource: 'Branche {0} · source active {1}',
-    workspaceInsightsSessionSource: 'Source de la session',
+    workspaceInsightsSessionSource: 'Cette session',
     workspaceInsightsSessionStateHint:
-        'Ce panneau garde visibles la session active, le lignage des branches et le contexte du flux de travail pendant que la scene change.',
-    workspaceInsightsEyebrow: 'Session et lignage',
-    workspaceInsightsTitle: 'Contexte, etat des branches et flux de travail',
+        'Meme si la scene change, le resultat actuel, les versions enregistrees, les sources consultees et l activite recente restent visibles ici.',
+    workspaceInsightsEyebrow: 'Vue d ensemble de l espace de travail',
+    workspaceInsightsTitle: 'Travail en cours, versions, sources et activite',
+    workspaceInsightsCurrentWork: 'Travail en cours',
+    workspaceInsightsVersions: 'Versions',
+    workspaceInsightsSourcesCitations: 'Sources et citations',
+    workspaceInsightsActivity: 'Activite',
     workspaceInsightsModelSettingsTitle: 'Parametres du modele',
     workspaceInsightsPhaseLabel: 'Actif',
     workspaceInsightsCurrentModel: 'Modele actuel',
@@ -899,9 +907,9 @@ export const fr = {
     workspaceInsightsRenameBranch: 'Renommer la branche',
     workspaceInsightsStageSourceEmpty:
         'Quand un resultat est place sur la scene, cette carte indiquera s il vient de l historique, d une continuation active de branche, d une suite depuis l editeur ou d un tour rouvert.',
-    workspaceInsightsActiveBranch: 'Branche active',
+    workspaceInsightsActiveBranch: 'Version actuelle',
     workspaceInsightsBranchesCount: 'Total des branches : {0}',
-    workspaceInsightsSessionContinuity: 'Continuite de la session',
+    workspaceInsightsSessionContinuity: 'Ce qui continue',
     workspaceInsightsLatestResultText: 'Dernier texte du resultat',
     workspaceInsightsLatestResultTextEmpty:
         'Quand Images et texte est actif, le resume de la scene apparait ici ainsi que dans le visualiseur.',
@@ -911,17 +919,17 @@ export const fr = {
     workspaceViewerStructuredOutputHint:
         'Ici, la meme sortie structuree que dans la barre du haut est deployeee en mise en page d inspection complete.',
     workspaceInsightsLatestThoughts: 'Dernieres pensees',
-    workspaceInsightsProvenance: 'Origine',
-    workspaceInsightsSessionTurnStack: 'Pile des tours de session',
+    workspaceInsightsProvenance: 'Details des sources',
+    workspaceInsightsSessionTurnStack: 'Tours recents',
     workspaceInsightsTurnsCount: '{0} tours',
     workspaceInsightsSessionTurnStackEmpty:
         'Les tours recents reussis arrivent ici pour rouvrir, continuer ou creer une branche rapidement.',
-    workspaceInsightsLineageMap: 'Carte de lignage',
+    workspaceInsightsLineageMap: 'Carte des versions',
     workspaceInsightsRootsCount: '{0} racines',
     workspaceInsightsRoot: 'Racine',
     workspaceInsightsLineageEmpty:
         'Quand plusieurs tours reussis s accumulent, leur racine et leurs relations de branche apparaitront ici.',
-    workspaceInsightsTimelineTitle: 'Journal du flux de travail',
+    workspaceInsightsTimelineTitle: 'Activite recente',
     workspaceInsightsTimelineDesc:
         'Les requetes, sorties, etapes d historique et erreurs restent lisibles ici sans quitter l espace de travail.',
     workspaceInsightsTimelineEmpty:

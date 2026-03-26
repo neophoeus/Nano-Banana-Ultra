@@ -4,32 +4,15 @@ import { describe, expect, it, vi } from 'vitest';
 import WorkspaceTopHeader from '../components/WorkspaceTopHeader';
 
 describe('WorkspaceTopHeader', () => {
-    it('keeps the mobile controls disclosure wired for chevron rotation', () => {
+    it('renders the simplified global header chrome only', () => {
         const markup = renderToStaticMarkup(
-            <WorkspaceTopHeader
-                headerConsole={<div>console</div>}
-                currentLanguage="en"
-                onLanguageChange={vi.fn()}
-                modelLabel="Gemini"
-                aspectRatio="1:1"
-                imageSize="2K"
-                batchSize={3}
-                referenceCount={2}
-                maxObjects={4}
-                maxCharacters={2}
-                isGenerating={true}
-                batchProgress={{ completed: 1, total: 3 }}
-                hasSizePicker={true}
-                onOpenModelPicker={vi.fn()}
-                onOpenRatioPicker={vi.fn()}
-                onOpenSizePicker={vi.fn()}
-                onOpenBatchPicker={vi.fn()}
-            />,
+            <WorkspaceTopHeader headerConsole={<div>console</div>} currentLanguage="en" onLanguageChange={vi.fn()} />,
         );
 
-        expect(markup).toContain('Ratio: 1:1');
-        expect(markup).toContain('group-open:rotate-180');
-        expect(markup).toContain('sm:hidden');
-        expect(markup).toContain('<details class="group ');
+        expect(markup).toContain('Nano Banana Ultra');
+        expect(markup).toContain('console');
+        expect(markup).not.toContain('Ratio:');
+        expect(markup).not.toContain('Reference Tray');
+        expect(markup).not.toContain('<section class="nbu-shell-panel nbu-shell-surface-header relative z-10');
     });
 });
