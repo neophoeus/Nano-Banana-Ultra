@@ -233,6 +233,334 @@
         border-color: rgba(255, 255, 255, 0.08);
         background-color: rgba(8, 12, 18, 0.94);
     }
+
+    .nbu-shell-surface-header {
+        border-color: rgba(251, 191, 36, 0.18);
+        background: linear-gradient(180deg, rgba(255, 251, 240, 0.96), rgba(255, 246, 228, 0.9));
+        box-shadow: 0 24px 72px rgba(180, 83, 9, 0.1);
+    }
+
+    .dark .nbu-shell-surface-header {
+        border-color: rgba(251, 191, 36, 0.12);
+        background: linear-gradient(180deg, rgba(24, 20, 15, 0.96), rgba(14, 18, 24, 0.92));
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+    }
+
+    .nbu-shell-surface-header .nbu-subpanel {
+        border-color: rgba(251, 191, 36, 0.14);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 249, 238, 0.82));
+        box-shadow: 0 10px 28px rgba(180, 83, 9, 0.06);
+    }
+
+    .dark .nbu-shell-surface-header .nbu-subpanel {
+        border-color: rgba(251, 191, 36, 0.08);
+        background: linear-gradient(180deg, rgba(33, 28, 22, 0.9), rgba(18, 22, 29, 0.82));
+        box-shadow: none;
+    }
+
+    .nbu-shell-surface-header .nbu-inline-panel,
+    .nbu-shell-surface-header .nbu-overlay-shell {
+        border-color: rgba(251, 191, 36, 0.14);
+        background-color: rgba(255, 255, 255, 0.82);
+    }
+
+    .dark .nbu-shell-surface-header .nbu-inline-panel,
+    .dark .nbu-shell-surface-header .nbu-overlay-shell {
+        border-color: rgba(251, 191, 36, 0.08);
+        background-color: rgba(25, 29, 37, 0.86);
+    }
+
+    .nbu-shell-surface-output-strip {
+        border-color: rgba(203, 213, 225, 0.72);
+        background: linear-gradient(180deg, rgba(252, 253, 255, 0.97), rgba(242, 247, 252, 0.92));
+        box-shadow: 0 22px 72px rgba(15, 23, 42, 0.08);
+    }
+
+    .dark .nbu-shell-surface-output-strip {
+        border-color: rgba(148, 163, 184, 0.12);
+        background: linear-gradient(180deg, rgba(15, 19, 26, 0.96), rgba(9, 13, 19, 0.92));
+        box-shadow: 0 22px 80px rgba(0, 0, 0, 0.38);
+    }
+
+    .nbu-shell-surface-output-strip .nbu-soft-well,
+    .nbu-shell-surface-output-strip .nbu-inline-panel {
+        border-color: rgba(203, 213, 225, 0.72);
+        background-color: rgba(255, 255, 255, 0.72);
+    }
+
+    .dark .nbu-shell-surface-output-strip .nbu-soft-well,
+    .dark .nbu-shell-surface-output-strip .nbu-inline-panel {
+        border-color: rgba(148, 163, 184, 0.12);
+        background-color: rgba(17, 22, 30, 0.82);
+    }
+
+    .nbu-shell-surface-stage-hero {
+        border-color: rgba(191, 219, 254, 0.34);
+        background: linear-gradient(180deg, rgba(247, 250, 252, 0.98), rgba(233, 240, 247, 0.94));
+        box-shadow: 0 24px 78px rgba(15, 23, 42, 0.09);
+    }
+
+    .dark .nbu-shell-surface-stage-hero {
+        border-color: rgba(148, 163, 184, 0.12);
+        background: linear-gradient(180deg, rgba(11, 15, 21, 0.97), rgba(6, 9, 13, 0.94));
+        box-shadow: 0 26px 84px rgba(0, 0, 0, 0.44);
+    }
+
+    .nbu-shell-surface-stage-hero .nbu-stage-surface {
+        border-color: rgba(191, 219, 254, 0.4);
+        background: linear-gradient(180deg, rgba(252, 253, 255, 0.96), rgba(236, 243, 250, 0.94));
+    }
+
+    .dark .nbu-shell-surface-stage-hero .nbu-stage-surface {
+        border-color: rgba(148, 163, 184, 0.12);
+        background: linear-gradient(180deg, rgba(10, 13, 19, 0.96), rgba(4, 7, 11, 0.94));
+    }
+
+    .nbu-stage-hero-filmstrip-shell {
+        border-color: rgba(191, 219, 254, 0.34);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(241, 245, 249, 0.66));
+    }
+
+    .dark .nbu-stage-hero-filmstrip-shell {
+        border-color: rgba(148, 163, 184, 0.12);
+        background: linear-gradient(180deg, rgba(15, 19, 26, 0.84), rgba(10, 13, 18, 0.78));
+    }
+
+    .nbu-stage-hero-filmstrip-disclosure {
+        border-color: rgba(203, 213, 225, 0.7);
+        background-color: rgba(255, 255, 255, 0.7);
+    }
+
+    .dark .nbu-stage-hero-filmstrip-disclosure {
+        border-color: rgba(148, 163, 184, 0.12);
+        background-color: rgba(17, 22, 30, 0.82);
+    }
+
+    .nbu-stage-hero-filmstrip-summary {
+        border-color: rgba(203, 213, 225, 0.78);
+        background-color: rgba(255, 255, 255, 0.76);
+    }
+
+    .dark .nbu-stage-hero-filmstrip-summary {
+        border-color: rgba(148, 163, 184, 0.12);
+        background-color: rgba(18, 24, 33, 0.84);
+    }
+
+    .nbu-stage-hero-overlay-veil {
+        background-color: rgba(248, 250, 252, 0.56);
+    }
+
+    .dark .nbu-stage-hero-overlay-veil {
+        background-color: rgba(5, 8, 12, 0.56);
+    }
+
+    .nbu-stage-hero-status-pill {
+        background-color: rgba(255, 255, 255, 0.78);
+    }
+
+    .dark .nbu-stage-hero-status-pill {
+        background-color: rgba(11, 16, 23, 0.54);
+    }
+
+    .nbu-stage-hero-thumb-media {
+        background-color: rgba(241, 245, 249, 0.9);
+    }
+
+    .dark .nbu-stage-hero-thumb-media {
+        background-color: rgba(7, 10, 15, 0.92);
+    }
+
+    .nbu-stage-hero-thumb-placeholder {
+        background-color: rgba(241, 245, 249, 0.88);
+    }
+
+    .dark .nbu-stage-hero-thumb-placeholder {
+        background-color: rgba(15, 19, 26, 0.84);
+    }
+
+    .nbu-shell-surface-context-rail {
+        border-color: rgba(148, 163, 184, 0.2);
+        background: linear-gradient(180deg, rgba(251, 252, 254, 0.97), rgba(239, 244, 249, 0.93));
+        box-shadow: 0 22px 76px rgba(15, 23, 42, 0.08);
+    }
+
+    .dark .nbu-shell-surface-context-rail {
+        border-color: rgba(148, 163, 184, 0.12);
+        background: linear-gradient(180deg, rgba(14, 18, 25, 0.97), rgba(9, 12, 18, 0.93));
+        box-shadow: 0 22px 82px rgba(0, 0, 0, 0.4);
+    }
+
+    .nbu-shell-surface-context-rail .nbu-soft-well,
+    .nbu-shell-surface-context-rail .nbu-inline-panel,
+    .nbu-shell-surface-context-rail .nbu-dashed-panel {
+        border-color: rgba(203, 213, 225, 0.72);
+        background-color: rgba(255, 255, 255, 0.72);
+    }
+
+    .dark .nbu-shell-surface-context-rail .nbu-soft-well,
+    .dark .nbu-shell-surface-context-rail .nbu-inline-panel,
+    .dark .nbu-shell-surface-context-rail .nbu-dashed-panel {
+        border-color: rgba(148, 163, 184, 0.12);
+        background-color: rgba(17, 22, 30, 0.82);
+    }
+
+    .nbu-context-rail-callout {
+        border-color: rgba(125, 211, 252, 0.3);
+        background: linear-gradient(180deg, rgba(240, 249, 255, 0.84), rgba(255, 255, 255, 0.76));
+        box-shadow: 0 10px 24px rgba(14, 165, 233, 0.08);
+    }
+
+    .dark .nbu-context-rail-callout {
+        border-color: rgba(56, 189, 248, 0.16);
+        background: linear-gradient(180deg, rgba(11, 31, 40, 0.72), rgba(16, 20, 27, 0.86));
+        box-shadow: none;
+    }
+
+    .nbu-shell-surface-composer-dock {
+        border-color: rgba(251, 191, 36, 0.14);
+        background: linear-gradient(180deg, rgba(255, 252, 246, 0.98), rgba(246, 241, 233, 0.94));
+        box-shadow: 0 24px 78px rgba(180, 83, 9, 0.08);
+    }
+
+    .dark .nbu-shell-surface-composer-dock {
+        border-color: rgba(251, 191, 36, 0.08);
+        background: linear-gradient(180deg, rgba(18, 16, 14, 0.97), rgba(11, 14, 20, 0.93));
+        box-shadow: 0 24px 86px rgba(0, 0, 0, 0.42);
+    }
+
+    .nbu-shell-surface-composer-dock .nbu-subpanel,
+    .nbu-shell-surface-composer-dock .nbu-soft-well {
+        border-color: rgba(226, 232, 240, 0.72);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(248, 250, 252, 0.76));
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
+    }
+
+    .dark .nbu-shell-surface-composer-dock .nbu-subpanel,
+    .dark .nbu-shell-surface-composer-dock .nbu-soft-well {
+        border-color: rgba(148, 163, 184, 0.12);
+        background: linear-gradient(180deg, rgba(19, 23, 31, 0.9), rgba(11, 15, 22, 0.84));
+        box-shadow: none;
+    }
+
+    .nbu-shell-surface-composer-dock .nbu-floating-panel {
+        border-color: rgba(251, 191, 36, 0.16);
+        background: linear-gradient(180deg, rgba(255, 248, 236, 0.97), rgba(252, 242, 224, 0.92));
+        box-shadow: 0 24px 68px rgba(180, 83, 9, 0.12);
+    }
+
+    .dark .nbu-shell-surface-composer-dock .nbu-floating-panel {
+        border-color: rgba(251, 191, 36, 0.08);
+        background: linear-gradient(180deg, rgba(32, 24, 17, 0.94), rgba(16, 18, 24, 0.92));
+        box-shadow: 0 26px 72px rgba(0, 0, 0, 0.42);
+    }
+
+    .nbu-composer-dock-textarea {
+        border-color: rgba(226, 232, 240, 0.8);
+        background: linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(255, 255, 255, 0.9));
+        color: rgb(15, 23, 42);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+
+    .nbu-composer-dock-textarea:focus {
+        border-color: rgba(251, 191, 36, 0.9);
+    }
+
+    .dark .nbu-composer-dock-textarea {
+        border-color: rgba(255, 255, 255, 0.1);
+        background: linear-gradient(180deg, rgba(10, 13, 19, 0.98), rgba(16, 21, 29, 0.92));
+        color: rgb(243, 244, 246);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    .nbu-shell-surface-actions-bar {
+        border-color: rgba(203, 213, 225, 0.76);
+        background: linear-gradient(180deg, rgba(250, 251, 253, 0.97), rgba(238, 242, 247, 0.92));
+        box-shadow: 0 18px 54px rgba(15, 23, 42, 0.08);
+    }
+
+    .dark .nbu-shell-surface-actions-bar {
+        border-color: rgba(148, 163, 184, 0.12);
+        background: linear-gradient(180deg, rgba(15, 19, 26, 0.97), rgba(9, 13, 19, 0.92));
+        box-shadow: 0 20px 62px rgba(0, 0, 0, 0.4);
+    }
+
+    .nbu-shell-surface-actions-bar .nbu-inline-panel {
+        border-color: rgba(203, 213, 225, 0.72);
+        background-color: rgba(255, 255, 255, 0.74);
+    }
+
+    .dark .nbu-shell-surface-actions-bar .nbu-inline-panel {
+        border-color: rgba(148, 163, 184, 0.12);
+        background-color: rgba(17, 22, 30, 0.84);
+    }
+
+    .nbu-overlay-panel-warm {
+        border-color: rgba(251, 191, 36, 0.18);
+        background: linear-gradient(180deg, rgba(255, 252, 246, 0.98), rgba(255, 247, 232, 0.96));
+        box-shadow: 0 32px 120px rgba(15, 23, 42, 0.24);
+    }
+
+    .dark .nbu-overlay-panel-warm {
+        border-color: rgba(251, 191, 36, 0.18);
+        background: linear-gradient(180deg, rgba(20, 16, 12, 0.98), rgba(10, 14, 20, 0.97));
+        box-shadow: 0 32px 120px rgba(0, 0, 0, 0.5);
+    }
+
+    .nbu-overlay-panel-neutral {
+        border-color: rgba(226, 232, 240, 0.82);
+        background: linear-gradient(180deg, rgba(252, 253, 255, 0.98), rgba(244, 247, 251, 0.95));
+        box-shadow: 0 32px 120px rgba(15, 23, 42, 0.22);
+    }
+
+    .dark .nbu-overlay-panel-neutral {
+        border-color: rgba(100, 116, 139, 0.22);
+        background: linear-gradient(180deg, rgba(18, 22, 30, 0.98), rgba(10, 14, 20, 0.95));
+        box-shadow: 0 32px 120px rgba(0, 0, 0, 0.48);
+    }
+
+    .nbu-overlay-card-warm {
+        border-color: rgba(251, 191, 36, 0.18);
+        background: linear-gradient(180deg, rgba(255, 250, 240, 0.96), rgba(255, 244, 227, 0.92));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    }
+
+    .dark .nbu-overlay-card-warm {
+        border-color: rgba(251, 191, 36, 0.18);
+        background: linear-gradient(180deg, rgba(56, 38, 11, 0.42), rgba(28, 22, 14, 0.38));
+        box-shadow: inset 0 1px 0 rgba(255, 244, 214, 0.04);
+    }
+
+    .nbu-overlay-card-neutral {
+        border-color: rgba(226, 232, 240, 0.82);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(247, 250, 252, 0.9));
+        box-shadow: 0 16px 48px rgba(15, 23, 42, 0.08);
+    }
+
+    .dark .nbu-overlay-card-neutral {
+        border-color: rgba(71, 85, 105, 0.55);
+        background: linear-gradient(180deg, rgba(23, 28, 36, 0.94), rgba(14, 18, 24, 0.9));
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.28);
+    }
+
+    .nbu-overlay-pane-neutral {
+        background: linear-gradient(180deg, rgba(248, 250, 252, 0.9), rgba(255, 255, 255, 0.84));
+    }
+
+    .dark .nbu-overlay-pane-neutral {
+        background: linear-gradient(180deg, rgba(17, 22, 31, 0.92), rgba(12, 16, 23, 0.88));
+    }
+
+    .nbu-overlay-nav-shell {
+        border-color: rgba(226, 232, 240, 0.82);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(247, 250, 252, 0.78));
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+    }
+
+    .dark .nbu-overlay-nav-shell {
+        border-color: rgba(71, 85, 105, 0.55);
+        background: linear-gradient(180deg, rgba(23, 28, 36, 0.92), rgba(14, 18, 24, 0.88));
+        box-shadow: none;
+    }
 }
 
 /* Add any custom global CSS overrides below */

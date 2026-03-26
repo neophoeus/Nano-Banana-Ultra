@@ -1,6 +1,10 @@
 import { useState, useCallback, Dispatch, SetStateAction } from 'react';
-import { ExecutionMode, GeneratedImage as GeneratedImageType, GenerationSettings } from '../types';
-import { loadWorkspaceSnapshot } from '../utils/workspacePersistence';
+import {
+    ExecutionMode,
+    GeneratedImage as GeneratedImageType,
+    GenerationSettings,
+    WorkspacePersistenceSnapshot,
+} from '../types';
 
 interface GenerationState {
     generatedImageUrls: string[];
@@ -34,8 +38,7 @@ interface UseImageGenerationReturn extends GenerationState {
  * Custom hook encapsulating image generation state and operations.
  * Extracts ~200 lines of state + logic from App.tsx.
  */
-export function useImageGeneration(): UseImageGenerationReturn {
-    const initialSnapshot = loadWorkspaceSnapshot();
+export function useImageGeneration(initialSnapshot: WorkspacePersistenceSnapshot): UseImageGenerationReturn {
     const [generatedImageUrls, setGeneratedImageUrls] = useState<string[]>(
         () => initialSnapshot.viewState.generatedImageUrls,
     );

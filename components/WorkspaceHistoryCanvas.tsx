@@ -6,11 +6,7 @@ type WorkspaceHistoryCanvasProps = {
     supportSurface: React.ReactNode;
 };
 
-export default function WorkspaceHistoryCanvas({
-    recentLane,
-    focusSurface,
-    supportSurface,
-}: WorkspaceHistoryCanvasProps) {
+function WorkspaceHistoryCanvas({ recentLane, focusSurface, supportSurface }: WorkspaceHistoryCanvasProps) {
     return (
         <section data-testid="workspace-history-canvas" className="grid gap-5 lg:min-h-0">
             <div data-testid="workspace-history-recent-lane">{recentLane}</div>
@@ -26,3 +22,5 @@ export default function WorkspaceHistoryCanvas({
         </section>
     );
 }
+
+export default React.memo(WorkspaceHistoryCanvas);

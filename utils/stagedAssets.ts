@@ -4,6 +4,7 @@ type CreateStageAssetOptions = {
     role: StageAssetRole;
     origin: StageAssetOrigin;
     url: string;
+    savedFilename?: string;
     isSketch?: boolean;
     sourceHistoryId?: string;
     lineageAction?: TurnLineageAction;
@@ -26,12 +27,14 @@ export const createStageAsset = ({
     role,
     origin,
     url,
+    savedFilename,
     isSketch,
     sourceHistoryId,
     lineageAction,
 }: CreateStageAssetOptions): StageAsset => ({
     id: createStageAssetId(),
     url,
+    savedFilename,
     role,
     origin,
     createdAt: Date.now(),
@@ -72,13 +75,15 @@ export const replaceStageAssetRoleUrls = (
 };
 
 export const addStageAsset = (assets: StageAsset[], options: AddStageAssetOptions): StageAsset[] => {
-    const { role, origin, url, isSketch, sourceHistoryId, lineageAction, maxAssets, preferFront } = options;
+    const { role, origin, url, savedFilename, isSketch, sourceHistoryId, lineageAction, maxAssets, preferFront } =
+        options;
 
     if (role === 'editor-base' || role === 'stage-source') {
         const existingSingletonAsset = assets.find((asset) => asset.role === role);
         if (
             existingSingletonAsset &&
             existingSingletonAsset.url === url &&
+            existingSingletonAsset.savedFilename === savedFilename &&
             existingSingletonAsset.origin === origin &&
             existingSingletonAsset.sourceHistoryId === sourceHistoryId &&
             existingSingletonAsset.lineageAction === lineageAction
@@ -87,14 +92,23 @@ export const addStageAsset = (assets: StageAsset[], options: AddStageAssetOption
         }
 
         const withoutSingletonRole = assets.filter((asset) => asset.role !== role);
-        return [...withoutSingletonRole, createStageAsset({ role, origin, url, sourceHistoryId, lineageAction })];
+        return [
+            ...withoutSingletonRole,
+            createStageAsset({ role, origin, url, savedFilename, sourceHistoryId, lineageAction }),
+        ];
     }
 
     const existingRoleAssets = assets.filter((asset) => asset.role === role);
     const dedupedRoleAssets = existingRoleAssets.filter((asset) => asset.url !== url && !(isSketch && asset.isSketch));
     const nextRoleAssets = preferFront
-        ? [createStageAsset({ role, origin, url, isSketch, sourceHistoryId, lineageAction }), ...dedupedRoleAssets]
-        : [...dedupedRoleAssets, createStageAsset({ role, origin, url, isSketch, sourceHistoryId, lineageAction })];
+        ? [
+              createStageAsset({ role, origin, url, savedFilename, isSketch, sourceHistoryId, lineageAction }),
+              ...dedupedRoleAssets,
+          ]
+        : [
+              ...dedupedRoleAssets,
+              createStageAsset({ role, origin, url, savedFilename, isSketch, sourceHistoryId, lineageAction }),
+          ];
     const trimmedRoleAssets =
         typeof maxAssets === 'number'
             ? preferFront

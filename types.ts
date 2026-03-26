@@ -149,6 +149,7 @@ export interface QueuedBatchJob {
     localId: string;
     name: string;
     displayName: string;
+    restoredFromSnapshot?: boolean;
     state: QueuedBatchJobState;
     model: ImageModel;
     prompt: string;
@@ -183,6 +184,7 @@ export interface QueuedBatchJob {
 export interface StageAsset {
     id: string;
     url: string;
+    savedFilename?: string;
     role: StageAssetRole;
     origin: StageAssetOrigin;
     createdAt: number;

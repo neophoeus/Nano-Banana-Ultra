@@ -322,6 +322,9 @@ export const ko = {
     queuedBatchJobsRefreshAll: '모두 새로고침',
     queuedBatchJobsTrackedCount: '추적 중 {0}',
     queuedBatchJobsImportedTag: '가져옴',
+    queuedBatchJobsRestoredHistoryTag: '복원 기록',
+    queuedBatchJobsRestoredHistoryHint:
+        '이 종료된 항목은 복원된 작업공간 스냅샷에서 온 기록입니다. 현재 라이브 큐 실패가 아니라 기록으로 보존됩니다.',
     queuedBatchJobsRequestCount: '요청 {0}개',
     queuedBatchJobsLinkedSource: '연결된 소스',
     queuedBatchJobsUpdated: '업데이트',
@@ -841,6 +844,7 @@ export const ko = {
     workspaceInsightsBranchesEmpty: '세션이 다른 방향으로 갈라지기 시작하면 브랜치가 여기에 정리됩니다.',
     workspaceInsightsNoContinuitySignals: '아직 연속성 신호가 없습니다.',
     workspaceInsightsOfficialConversation: '공식 대화',
+    workspaceInsightsConversationTurnPosition: '{0}턴째',
     workspaceInsightsConversationBranchActiveSource: '브랜치 {0} · 현재 원본 {1}',
     workspaceInsightsSessionSource: '세션 원본',
     workspaceInsightsSessionStateHint:

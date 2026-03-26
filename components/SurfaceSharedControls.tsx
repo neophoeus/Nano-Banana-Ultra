@@ -9,6 +9,7 @@ type SurfaceSharedControlsProps = {
     workspaceLabel: string;
     activeSheetLabel: string;
     activePickerSheet: SurfaceSharedControlSheet | null;
+    isAdvancedSettingsOpen: boolean;
     promptPreview: string;
     totalReferenceCount: number;
     styleLabel: string;
@@ -25,12 +26,15 @@ type SurfaceSharedControlsProps = {
     onToggleOpen: () => void;
     onClosePanel: () => void;
     onOpenSheet: (sheet: SurfaceSharedControlSheet) => void;
+    onOpenAdvancedSettings: () => void;
 };
 
 type SheetButtonConfig = {
-    sheet: SurfaceSharedControlSheet;
+    id: string;
     title: string;
     detail: string;
+    isActive: boolean;
+    onClick: () => void;
     testId?: string;
     wide?: boolean;
     badge?: string;
@@ -49,6 +53,7 @@ const SurfaceSharedControls: React.FC<SurfaceSharedControlsProps> = ({
     workspaceLabel,
     activeSheetLabel,
     activePickerSheet,
+    isAdvancedSettingsOpen,
     promptPreview,
     totalReferenceCount,
     styleLabel,
@@ -65,6 +70,7 @@ const SurfaceSharedControls: React.FC<SurfaceSharedControlsProps> = ({
     onToggleOpen,
     onClosePanel,
     onOpenSheet,
+    onOpenAdvancedSettings,
 }) => {
     const t = (key: string) => getTranslation(currentLanguage, key);
     const renderDisclosureChevron = () => (
@@ -89,44 +95,66 @@ const SurfaceSharedControls: React.FC<SurfaceSharedControlsProps> = ({
     };
     const sheetButtons: SheetButtonConfig[] = [
         {
-            sheet: 'prompt',
+            id: 'prompt',
             title: t('workspaceSheetTitlePrompt'),
             detail: t('surfaceSharedControlsPromptDetail'),
+            isActive: activePickerSheet === 'prompt',
+            onClick: () => onOpenSheet('prompt'),
             testId: 'shared-control-prompt',
         },
         {
-            sheet: 'styles',
+            id: 'styles',
             title: t('style'),
             detail: styleLabel,
+            isActive: activePickerSheet === 'styles',
+            onClick: () => onOpenSheet('styles'),
         },
         {
-            sheet: 'model',
+            id: 'model',
             title: t('modelSelect'),
             detail: modelLabel,
+            isActive: activePickerSheet === 'model',
+            onClick: () => onOpenSheet('model'),
         },
         {
-            sheet: 'ratio',
+            id: 'ratio',
             title: t('aspectRatio'),
             detail: aspectRatio,
+            isActive: activePickerSheet === 'ratio',
+            onClick: () => onOpenSheet('ratio'),
         },
         {
-            sheet: 'size',
+            id: 'size',
             title: t('workspaceSheetTitleSize'),
             detail: imageSize,
+            isActive: activePickerSheet === 'size',
+            onClick: () => onOpenSheet('size'),
         },
         {
-            sheet: 'batch',
+            id: 'batch',
             title: t('batchSize'),
             detail: t('surfaceSharedControlsQuantityDetail').replace('{0}', String(batchSize)),
+            isActive: activePickerSheet === 'batch',
+            onClick: () => onOpenSheet('batch'),
         },
         {
-            sheet: 'references',
+            id: 'advanced-settings',
+            title: t('composerToolbarAdvancedSettings'),
+            detail: t('composerAdvancedDesc'),
+            isActive: isAdvancedSettingsOpen,
+            onClick: onOpenAdvancedSettings,
+            testId: 'shared-control-advanced-settings',
+        },
+        {
+            id: 'references',
             title: t('workspaceTopHeaderReferenceTray'),
             detail: t('surfaceSharedControlsReferenceDetail')
                 .replace('{0}', String(objectImageCount))
                 .replace('{1}', String(maxObjects))
                 .replace('{2}', String(characterImageCount))
                 .replace('{3}', String(maxCharacters)),
+            isActive: activePickerSheet === 'references',
+            onClick: () => onOpenSheet('references'),
             wide: true,
             badge: String(totalReferenceCount),
         },
@@ -224,10 +252,10 @@ const SurfaceSharedControls: React.FC<SurfaceSharedControlsProps> = ({
                     <div className="grid gap-2 sm:grid-cols-2">
                         {sheetButtons.map((button) => (
                             <button
-                                key={button.sheet}
+                                key={button.id}
                                 data-testid={button.testId}
-                                onClick={() => onOpenSheet(button.sheet)}
-                                className={`${buildButtonClassName(activePickerSheet === button.sheet)} ${button.wide ? 'sm:col-span-2' : ''}`}
+                                onClick={button.onClick}
+                                className={`${buildButtonClassName(button.isActive)} ${button.wide ? 'sm:col-span-2' : ''}`}
                             >
                                 {button.badge ? (
                                     <div className="flex items-center justify-between gap-3">

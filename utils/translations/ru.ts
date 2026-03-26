@@ -326,6 +326,9 @@ export const ru = {
     queuedBatchJobsRefreshAll: 'Обновить все',
     queuedBatchJobsTrackedCount: 'Отслеживается: {0}',
     queuedBatchJobsImportedTag: 'Импортировано',
+    queuedBatchJobsRestoredHistoryTag: 'Восстановленная история',
+    queuedBatchJobsRestoredHistoryHint:
+        'Этот закрытый элемент пришел из восстановленного снимка рабочего пространства. Он сохранен как история, а не как текущая ошибка живой очереди.',
     queuedBatchJobsRequestCount: 'Запросов: {0}',
     queuedBatchJobsLinkedSource: 'Связанный источник',
     queuedBatchJobsUpdated: 'Обновлено',
@@ -871,6 +874,7 @@ export const ru = {
     workspaceInsightsBranchesEmpty: 'Когда сессия начнет расходиться по разным направлениям, ветки появятся здесь.',
     workspaceInsightsNoContinuitySignals: 'Пока нет сигналов продолжения.',
     workspaceInsightsOfficialConversation: 'Официальный диалог',
+    workspaceInsightsConversationTurnPosition: 'ход {0}',
     workspaceInsightsConversationBranchActiveSource: 'Ветка {0} · активный источник {1}',
     workspaceInsightsSessionSource: 'Источник сессии',
     workspaceInsightsSessionStateHint:

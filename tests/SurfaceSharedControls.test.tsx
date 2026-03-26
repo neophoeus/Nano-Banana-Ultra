@@ -14,6 +14,7 @@ describe('SurfaceSharedControls', () => {
                 workspaceLabel="Workspace A"
                 activeSheetLabel="Prompt"
                 activePickerSheet="prompt"
+                isAdvancedSettingsOpen={false}
                 promptPreview={longPrompt}
                 totalReferenceCount={3}
                 styleLabel="None"
@@ -29,6 +30,7 @@ describe('SurfaceSharedControls', () => {
                 onToggleOpen={vi.fn()}
                 onClosePanel={vi.fn()}
                 onOpenSheet={vi.fn()}
+                onOpenAdvancedSettings={vi.fn()}
             />,
         );
 
@@ -47,6 +49,8 @@ describe('SurfaceSharedControls', () => {
         expect(markup).toContain(preview);
         expect(markup).toContain(longPrompt);
         expect(markup).toContain('shared-control-prompt');
+        expect(markup).toContain('shared-control-advanced-settings');
+        expect(markup).toContain('Advanced settings');
         expect(markup).toContain('Reference Tray');
     });
 });

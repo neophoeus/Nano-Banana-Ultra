@@ -685,4 +685,95 @@ describe('GroundingProvenancePanel', () => {
         expect(markup).toContain('provenance-compare-source-summary-0');
         expect(markup).not.toContain('provenance-compare-select-source-0');
     });
+
+    it('localizes provenance mode and source types for non-English locales', () => {
+        const markup = renderToStaticMarkup(
+            <GroundingProvenancePanel
+                currentLanguage="zh_TW"
+                tone="light"
+                scope="primary"
+                insightRows={[]}
+                provenanceSummaryRows={[{ id: 'mode', label: '模式', value: '即時' }]}
+                attributionOverviewRows={[]}
+                provenanceSourceTurn={
+                    {
+                        id: 'turn-source',
+                        url: 'https://example.com/source.png',
+                        prompt: '來源回合',
+                        aspectRatio: '1:1',
+                        size: '1K',
+                        style: 'None',
+                        model: 'gemini-3.1-flash-image-preview',
+                        createdAt: 1,
+                        status: 'success',
+                        mode: 'Text to Image',
+                        executionMode: 'single-turn',
+                    } as any
+                }
+                currentStageSourceHistoryId="turn-source"
+                getShortTurnId={(historyId) => historyId || 'none'}
+                renderHistoryTurnActionRow={() => null}
+                provenanceContinuityMessage="延續中"
+                provenanceSelectionMessage="請選擇來源"
+                activeGroundingSelection={{ kind: 'source', index: 0 }}
+                setActiveGroundingSelection={vi.fn()}
+                focusLinkedGroundingItems={false}
+                setFocusLinkedGroundingItems={vi.fn()}
+                displayedSources={[
+                    {
+                        index: 0,
+                        source: {
+                            title: '網頁來源',
+                            url: 'https://example.com/cited',
+                            sourceType: 'web',
+                        },
+                    },
+                ]}
+                displayedSupportBundles={[]}
+                uncitedSources={[
+                    {
+                        index: 1,
+                        source: {
+                            title: '未引用來源',
+                            url: 'https://example.com/uncited',
+                            sourceType: 'context',
+                        },
+                    },
+                ]}
+                citedSourceIndexSet={new Set([0])}
+                citedSourceTitleSet={new Set(['網頁來源'])}
+                sourceAttributionStatusMessage="1 cited"
+                entryPointStatusMessage="未要求"
+                activeSource={{ title: '網頁來源', url: 'https://example.com/cited', sourceType: 'web' }}
+                activeSupportBundle={null}
+                activeSourceIndexSet={new Set([0])}
+                activeSourceTitleSet={new Set(['網頁來源'])}
+                activeBundleIndexSet={new Set()}
+                sourceCitationCountByIndex={new Map([[0, 1]])}
+                relatedSourcesForSelectedBundle={[]}
+                otherSourcesForSelectedBundle={[]}
+                relatedBundlesForSelectedSource={[]}
+                activeGroundingReuseSnippet=""
+                activeGroundingReuseLabel=""
+                activeGroundingAppendPreview=""
+                activeGroundingReplacePreview=""
+                activeGroundingHasExistingPrompt={false}
+                activeGroundingCurrentPromptText=""
+                activeGroundingAppendCueText=""
+                formatSourceHost={(url) => new URL(url).hostname}
+                handleAppendGroundingSelectionToPrompt={vi.fn()}
+                handleReplacePromptWithGroundingSelection={vi.fn()}
+                groundingStateMessage="有來源"
+                groundingSupportMessage="無 bundle"
+                groundingQueries={[]}
+            />,
+        );
+
+        expect(markup).toContain('文生圖');
+        expect(markup).toContain('example.com · 網頁');
+        expect(markup).toContain('example.com · 上下文');
+        expect(markup).not.toContain('Text to Image ·');
+        expect(markup).not.toContain(' · web');
+        expect(markup).not.toContain(' · context');
+    });
 });

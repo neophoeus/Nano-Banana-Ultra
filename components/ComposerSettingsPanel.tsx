@@ -18,7 +18,7 @@ import {
     TurnLineageAction,
 } from '../types';
 
-type ComposerSettingsPanelProps = {
+export type ComposerSettingsPanelProps = {
     prompt: string;
     placeholder: string;
     enterToSubmit: boolean;
@@ -134,7 +134,7 @@ const STRUCTURED_OUTPUT_PROMPT_READY_FIELD_KEYS: Partial<Record<StructuredOutput
     'variation-compare': ['recommendedNextMove', 'testPrompts'],
 };
 
-export default function ComposerSettingsPanel({
+function ComposerSettingsPanel({
     prompt,
     placeholder,
     enterToSubmit,
@@ -341,7 +341,7 @@ export default function ComposerSettingsPanel({
     );
 
     return (
-        <section className="nbu-shell-panel shrink-0 p-4 md:p-5">
+        <section className="nbu-shell-panel nbu-shell-surface-composer-dock shrink-0 p-4 md:p-5">
             <div className="mb-4 flex flex-wrap items-start gap-3">
                 <div data-testid="composer-quick-tools" className={`${toolbarGroupClassName} flex-1`}>
                     <button
@@ -370,6 +370,15 @@ export default function ComposerSettingsPanel({
                     <button onClick={onOpenStyles} className={toolbarButtonClassName}>
                         {t('workspaceSheetTitleStyles')}: {imageStyleLabel}
                     </button>
+                    <button
+                        type="button"
+                        aria-haspopup="dialog"
+                        aria-expanded={isAdvancedSettingsOpen}
+                        onClick={onToggleAdvancedSettings}
+                        className={toolbarButtonClassName}
+                    >
+                        {t('composerToolbarAdvancedSettings')}
+                    </button>
                 </div>
                 <div data-testid="composer-workspace-tools" className={toolbarGroupClassName}>
                     <button onClick={onExportWorkspace} className={toolbarButtonClassName}>
@@ -377,12 +386,6 @@ export default function ComposerSettingsPanel({
                     </button>
                     <button onClick={onImportWorkspace} className={toolbarButtonClassName}>
                         {t('composerToolbarImportWorkspace')}
-                    </button>
-                    <button
-                        onClick={onToggleAdvancedSettings}
-                        className={`${toolbarButtonClassName} border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-500/20 dark:bg-amber-950/20 dark:text-amber-200`}
-                    >
-                        {t('composerToolbarAdvancedSettings')}
                     </button>
                 </div>
             </div>
@@ -406,7 +409,7 @@ export default function ComposerSettingsPanel({
                         </div>
                         <textarea
                             ref={promptTextareaRef}
-                            className="h-40 w-full rounded-[28px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,253,248,0.98),rgba(255,255,255,0.92))] px-5 py-4 text-sm leading-7 text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] outline-none transition-all focus:border-amber-400 focus:ring-4 focus:ring-amber-100/70 dark:border-white/10 dark:bg-[linear-gradient(180deg,rgba(8,11,16,0.98),rgba(15,20,28,0.92))] dark:text-gray-100 dark:focus:ring-amber-500/10"
+                            className="nbu-composer-dock-textarea h-40 w-full rounded-[28px] border px-5 py-4 text-sm leading-7 outline-none transition-all focus:ring-4 focus:ring-amber-100/70 dark:focus:ring-amber-500/10"
                             placeholder={placeholder}
                             value={prompt}
                             onChange={(e) => onPromptChange(e.target.value)}
@@ -560,321 +563,8 @@ export default function ComposerSettingsPanel({
                 onOpenImportedQueuedHistoryItem={onOpenImportedQueuedHistoryItem}
                 onRemoveQueuedJob={onRemoveQueuedJob}
             />
-
-            {isAdvancedSettingsOpen && (
-                <div className="nbu-subpanel mt-4 p-4">
-                    <div className="mb-4 flex items-center justify-between">
-                        <div>
-                            <p className="nbu-section-eyebrow">{t('composerAdvancedEyebrow')}</p>
-                            <h3 className="mt-1 text-base font-black text-slate-900 dark:text-slate-100">
-                                {t('composerAdvancedTitle')}
-                            </h3>
-                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('composerAdvancedDesc')}</p>
-                        </div>
-                        <span className="nbu-chip">
-                            {t('composerDefaultTemp').replace('{0}', temperature.toFixed(1))}
-                        </span>
-                    </div>
-
-                    <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)]">
-                        <div className="nbu-soft-well p-4">
-                            <div className="mb-3">
-                                <h4 className="text-xs font-bold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
-                                    {t('composerAdvancedGenerationSectionTitle')}
-                                </h4>
-                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    {t('composerAdvancedGenerationSectionDesc')}
-                                </p>
-                            </div>
-                            <div className="grid gap-4 md:grid-cols-2">
-                                {capability.outputFormats.length > 1 && (
-                                    <label className="space-y-2 text-sm text-gray-700 dark:text-gray-200">
-                                        <span className="block text-xs font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
-                                            {t('groundingProvenanceInsightOutputFormat')}
-                                        </span>
-                                        <select
-                                            value={outputFormat}
-                                            onChange={(e) => onOutputFormatChange(e.target.value as OutputFormat)}
-                                            className="nbu-input-surface w-full px-4 py-3"
-                                        >
-                                            {OUTPUT_FORMATS.filter((option) =>
-                                                capability.outputFormats.includes(option.value),
-                                            ).map((option) => (
-                                                <option key={option.value} value={option.value}>
-                                                    {option.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </label>
-                                )}
-
-                                {capability.supportsStructuredOutputs && (
-                                    <div className="space-y-2 text-sm text-gray-700 dark:text-gray-200">
-                                        <span className="block text-xs font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
-                                            {t('composerAdvancedStructuredOutput')}
-                                        </span>
-                                        <select
-                                            value={structuredOutputMode}
-                                            onChange={(e) =>
-                                                onStructuredOutputModeChange(e.target.value as StructuredOutputMode)
-                                            }
-                                            className="nbu-input-surface w-full px-4 py-3"
-                                        >
-                                            {STRUCTURED_OUTPUT_MODES.map((option) => (
-                                                <option key={option.value} value={option.value}>
-                                                    {getStructuredOutputModeLabel(option.value)}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                                            {t('composerAdvancedStructuredOutputDesc')}
-                                        </p>
-                                        <div
-                                            data-testid="composer-advanced-structured-output-guide"
-                                            className="rounded-2xl border border-emerald-200/80 bg-emerald-50/70 px-4 py-3 dark:border-emerald-500/20 dark:bg-emerald-950/20"
-                                        >
-                                            <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-700/80 dark:text-emerald-200/70">
-                                                {getStructuredOutputModeLabel(structuredOutputMode)}
-                                            </div>
-                                            <div className="mt-1 text-xs leading-6 text-emerald-900 dark:text-emerald-100">
-                                                {getStructuredOutputModeGuide(structuredOutputMode)}
-                                            </div>
-                                            {getStructuredOutputModeGuideBestFor(structuredOutputMode) &&
-                                                getStructuredOutputModeGuideAvoidWhen(structuredOutputMode) && (
-                                                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                                                        <div className="rounded-2xl border border-emerald-200/80 bg-white/70 px-3 py-2 dark:border-emerald-400/20 dark:bg-emerald-900/20">
-                                                            <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-700/70 dark:text-emerald-200/65">
-                                                                {t('composerAdvancedStructuredOutputGuideBestForLabel')}
-                                                            </div>
-                                                            <div className="mt-1 text-[11px] leading-5 text-emerald-900 dark:text-emerald-100">
-                                                                {getStructuredOutputModeGuideBestFor(
-                                                                    structuredOutputMode,
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                        <div className="rounded-2xl border border-amber-200/80 bg-white/70 px-3 py-2 dark:border-amber-400/20 dark:bg-amber-900/10">
-                                                            <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-700/80 dark:text-amber-200/70">
-                                                                {t(
-                                                                    'composerAdvancedStructuredOutputGuideAvoidWhenLabel',
-                                                                )}
-                                                            </div>
-                                                            <div className="mt-1 text-[11px] leading-5 text-amber-900 dark:text-amber-100">
-                                                                {getStructuredOutputModeGuideAvoidWhen(
-                                                                    structuredOutputMode,
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            {getStructuredOutputModeGuideFields(structuredOutputMode).length > 0 && (
-                                                <div className="mt-3">
-                                                    <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-700/70 dark:text-emerald-200/65">
-                                                        {t('composerAdvancedStructuredOutputGuideFieldsLabel')}
-                                                    </div>
-                                                    <div className="mt-2 flex flex-wrap gap-2">
-                                                        {getStructuredOutputModeGuideFields(structuredOutputMode).map(
-                                                            (fieldLabel) => (
-                                                                <span
-                                                                    key={fieldLabel}
-                                                                    className="rounded-full border border-emerald-200 bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-emerald-900 dark:border-emerald-400/30 dark:bg-emerald-900/30 dark:text-emerald-100"
-                                                                >
-                                                                    {fieldLabel}
-                                                                </span>
-                                                            ),
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {getStructuredOutputModePromptReadyGuide(structuredOutputMode) && (
-                                                <div
-                                                    data-testid="composer-advanced-structured-output-next-prompt-guide"
-                                                    className="mt-3 rounded-2xl border border-sky-200/80 bg-white/70 px-3 py-3 dark:border-sky-400/20 dark:bg-sky-950/20"
-                                                >
-                                                    <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-sky-700/80 dark:text-sky-200/70">
-                                                        {t('structuredOutputPromptReady')}
-                                                    </div>
-                                                    <div className="mt-1 text-[11px] leading-5 text-sky-900 dark:text-sky-100">
-                                                        {getStructuredOutputModePromptReadyGuide(structuredOutputMode)}
-                                                    </div>
-                                                    {getStructuredOutputModePromptReadyFields(structuredOutputMode)
-                                                        .length > 0 && (
-                                                        <div className="mt-2 flex flex-wrap gap-2">
-                                                            {getStructuredOutputModePromptReadyFields(
-                                                                structuredOutputMode,
-                                                            ).map((fieldLabel) => (
-                                                                <span
-                                                                    key={fieldLabel}
-                                                                    className="rounded-full border border-sky-200 bg-white/85 px-2.5 py-1 text-[11px] font-semibold text-sky-900 dark:border-sky-400/30 dark:bg-sky-900/30 dark:text-sky-100"
-                                                                >
-                                                                    {fieldLabel}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                            {getStructuredOutputModeGuideExampleRows(structuredOutputMode).length >
-                                                0 && (
-                                                <div className="mt-3">
-                                                    <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-700/70 dark:text-emerald-200/65">
-                                                        {t('composerAdvancedStructuredOutputGuideExampleLabel')}
-                                                    </div>
-                                                    <div className="mt-2 overflow-x-auto rounded-2xl border border-emerald-200/80 bg-emerald-950 px-3 py-2 font-mono text-[11px] leading-5 text-emerald-50 dark:border-emerald-400/20 dark:bg-[#07130f] dark:text-emerald-100">
-                                                        {getStructuredOutputModeGuideExampleRows(
-                                                            structuredOutputMode,
-                                                        ).map((exampleRow) => (
-                                                            <div key={exampleRow}>{exampleRow}</div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {capability.supportsTemperature && (
-                                    <div className="space-y-2 text-sm text-gray-700 dark:text-gray-200">
-                                        <span className="block text-xs font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
-                                            {t('groundingProvenanceInsightTemperature')}
-                                        </span>
-                                        <div className="nbu-input-surface flex items-center gap-3 px-4 py-3">
-                                            <input
-                                                type="range"
-                                                min="0"
-                                                max="2"
-                                                step="0.1"
-                                                value={temperature}
-                                                onChange={(e) => onTemperatureChange(Number(e.target.value))}
-                                                className="flex-1"
-                                            />
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                max="2"
-                                                step="0.1"
-                                                value={temperature}
-                                                onChange={(e) =>
-                                                    onTemperatureChange(
-                                                        Math.max(0, Math.min(2, Number(e.target.value) || 0)),
-                                                    )
-                                                }
-                                                className="nbu-input-surface w-20 rounded-xl px-2 py-1.5 text-right"
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {capability.thinkingLevels.some((level) => level !== 'disabled') && (
-                                    <label className="space-y-2 text-sm text-gray-700 dark:text-gray-200">
-                                        <span className="block text-xs font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
-                                            {t('groundingProvenanceInsightThinkingLevel')}
-                                        </span>
-                                        <select
-                                            value={thinkingLevel}
-                                            onChange={(e) => onThinkingLevelChange(e.target.value as ThinkingLevel)}
-                                            className="nbu-input-surface w-full px-4 py-3"
-                                        >
-                                            {THINKING_LEVELS.filter((option) =>
-                                                capability.thinkingLevels.includes(option.value),
-                                            ).map((option) => (
-                                                <option key={option.value} value={option.value}>
-                                                    {option.label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </label>
-                                )}
-
-                                {capability.supportsIncludeThoughts && (
-                                    <div className="nbu-input-surface px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
-                                        <div className="text-xs font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
-                                            {t('groundingProvenanceInsightReturnThoughts')}
-                                        </div>
-                                        <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                            {t('composerAdvancedReturnThoughtsDesc')}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {availableGroundingModes.length > 1 && (
-                            <div className="nbu-soft-well p-4">
-                                <div className="mb-3">
-                                    <h4 className="text-xs font-bold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
-                                        {t('composerAdvancedGroundingSectionTitle')}
-                                    </h4>
-                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                        {t('composerAdvancedGroundingSectionDesc')}
-                                    </p>
-                                </div>
-
-                                <label className="space-y-2 text-sm text-gray-700 dark:text-gray-200">
-                                    <span className="block text-xs font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
-                                        {t('composerAdvancedGroundingMode')}
-                                    </span>
-                                    <select
-                                        value={groundingMode}
-                                        onChange={(e) => onGroundingModeChange(e.target.value as GroundingMode)}
-                                        className="nbu-input-surface w-full px-4 py-3"
-                                    >
-                                        {availableGroundingModes.map((mode) => (
-                                            <option key={mode} value={mode}>
-                                                {getGroundingModeLabel(mode)}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                                        {t('composerAdvancedGroundingDesc')}
-                                    </div>
-                                </label>
-
-                                {showGroundingResolutionWarning && (
-                                    <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
-                                        {t('composerAdvancedGroundingResolutionWarningFlashImageSearch')}
-                                    </div>
-                                )}
-
-                                <details
-                                    data-testid="composer-advanced-grounding-guide-details"
-                                    className="group nbu-subpanel mt-4 p-3"
-                                >
-                                    <summary
-                                        data-testid="composer-advanced-grounding-guide-summary"
-                                        className="flex cursor-pointer list-none items-start justify-between gap-3 marker:hidden"
-                                    >
-                                        <div className="min-w-0 flex-1">
-                                            <div className="text-xs font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
-                                                {t('composerAdvancedGroundingGuideTitle')}
-                                            </div>
-                                            <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                                {t('composerAdvancedGroundingGuideDesc')}
-                                            </div>
-                                            <div
-                                                data-testid="composer-advanced-grounding-guide-count"
-                                                className="mt-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500"
-                                            >
-                                                {groundingGuideRows.length} notes
-                                            </div>
-                                        </div>
-                                        <span className="mt-1 shrink-0">{renderDisclosureChevron()}</span>
-                                    </summary>
-                                    <div className="mt-3 space-y-2">
-                                        {groundingGuideRows.map((row) => (
-                                            <div
-                                                key={row}
-                                                className="nbu-inline-panel px-3 py-2 text-xs leading-relaxed text-gray-700 dark:text-gray-200"
-                                            >
-                                                {row}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </details>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
         </section>
     );
 }
+
+export default React.memo(ComposerSettingsPanel);

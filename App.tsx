@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, Suspense, lazy } from 'react';
 import {
     AspectRatio,
     BranchNameOverrides,
@@ -16,6 +16,7 @@ import {
     SessionContinuitySource,
 } from './types';
 import RecentHistoryFilmstrip from './components/RecentHistoryFilmstrip';
+import ComposerAdvancedSettingsDialog from './components/ComposerAdvancedSettingsDialog';
 import ComposerSettingsPanel from './components/ComposerSettingsPanel';
 import PanelLoadingFallback from './components/PanelLoadingFallback';
 import SurfaceLoadingFallback from './components/SurfaceLoadingFallback';
@@ -160,7 +161,7 @@ const App: React.FC = () => {
         getActiveImageUrl,
         handleClearResults,
         handleClearHistory,
-    } = useImageGeneration();
+    } = useImageGeneration(initialWorkspaceSnapshot);
 
     const {
         prompt,
@@ -282,16 +283,17 @@ const App: React.FC = () => {
     const t = useCallback((key: string) => getTranslation(currentLang, key), [currentLang]);
     const capability = MODEL_CAPABILITIES[imageModel];
     const groundingMode = deriveGroundingMode(googleSearch, imageSearch);
-    const availableGroundingModes = getAvailableGroundingModes(capability);
+    const availableGroundingModes = useMemo(() => getAvailableGroundingModes(capability), [capability]);
+    const historyById = useMemo(() => new Map(history.map((item) => [item.id, item])), [history]);
     const getHistoryTurnById = useCallback(
         (historyId?: string | null) => {
             if (!historyId) {
                 return null;
             }
 
-            return history.find((item) => item.id === historyId) || null;
+            return historyById.get(historyId) || null;
         },
-        [history],
+        [historyById],
     );
     const getStyleLabel = useCallback(
         (style: string) => {
@@ -313,9 +315,24 @@ const App: React.FC = () => {
         },
         [t],
     );
+    const lineageBranchLabelConfig = useMemo(
+        () => ({
+            main: t('historyBranchMain'),
+            branchNumber: t('historyBranchNumber'),
+        }),
+        [t],
+    );
+    const lineageContinueActionLabels = useMemo(
+        () => ({
+            continue: t('lineageActionContinue'),
+            promoteVariant: t('historyContinuePromoteVariant'),
+            sourceActive: t('historyContinueSourceActive'),
+        }),
+        [t],
+    );
 
-    const recentHistory = history.slice(0, 12);
-    const sessionTurnStack = history.filter((item) => item.status === 'success').slice(0, 4);
+    const recentHistory = useMemo(() => history.slice(0, 12), [history]);
+    const sessionTurnStack = useMemo(() => history.filter((item) => item.status === 'success').slice(0, 4), [history]);
     const {
         successfulHistory,
         branchLabelByTurnId,
@@ -342,15 +359,8 @@ const App: React.FC = () => {
         branchNameOverrides,
         branchContinuationSourceByBranchOriginId,
         workspaceSessionSourceHistoryId: workspaceSession.sourceHistoryId,
-        branchLabelConfig: {
-            main: t('historyBranchMain'),
-            branchNumber: t('historyBranchNumber'),
-        },
-        continueActionLabels: {
-            continue: t('lineageActionContinue'),
-            promoteVariant: t('historyContinuePromoteVariant'),
-            sourceActive: t('historyContinueSourceActive'),
-        },
+        branchLabelConfig: lineageBranchLabelConfig,
+        continueActionLabels: lineageContinueActionLabels,
         selectedHistoryId,
         currentStageAssetSourceHistoryId: currentStageAsset?.sourceHistoryId || null,
         conversationId: workspaceSession.conversationId,
@@ -965,6 +975,7 @@ const App: React.FC = () => {
     } = useWorkspaceOverlayAuxiliaryProps({
         isSurfaceWorkspaceOpen,
         isSurfaceSharedControlsOpen,
+        isAdvancedSettingsOpen,
         isEditing,
         activeSurfaceSheetLabel,
         activePickerSheet,
@@ -981,7 +992,9 @@ const App: React.FC = () => {
         maxCharacters: capability.maxCharacters,
         floatingControlsZIndex,
         currentLanguage: currentLang,
+        onLanguageChange: setCurrentLang,
         setIsSurfaceSharedControlsOpen,
+        setIsAdvancedSettingsOpen,
         openSurfacePickerSheet,
         getStyleLabel,
         getModelLabel,
@@ -1024,6 +1037,15 @@ const App: React.FC = () => {
         currentStageSourceTurn,
         setIsSessionReplayOpen,
     });
+    const handleOpenSessionReplay = useCallback(() => {
+        setIsSessionReplayOpen(true);
+    }, [setIsSessionReplayOpen]);
+    const handleOpenUploadDialog = useCallback(() => {
+        uploadInputRef.current?.click();
+    }, []);
+    const handleOpenReferencesSheet = useCallback(() => {
+        setActivePickerSheet('references');
+    }, [setActivePickerSheet]);
     const latestTimelineEntry = timelineEntries[0] || null;
     const workspaceInsightsSidebarProps = useWorkspaceInsightsSidebarProps({
         currentLanguage: currentLang,
@@ -1051,7 +1073,7 @@ const App: React.FC = () => {
         lineageRootGroups,
         timelineEntries,
         sessionHintEntries,
-        onOpenSessionReplay: () => setIsSessionReplayOpen(true),
+        onOpenSessionReplay: handleOpenSessionReplay,
         onHistorySelect: handleHistorySelect,
         onRenameBranch: handleRenameBranch,
         getStageOriginLabel,
@@ -1127,8 +1149,16 @@ const App: React.FC = () => {
         getStageOriginLabel,
         getLineageActionLabel,
     });
-    const workspaceTopHeaderProps = useWorkspaceTopHeaderProps({
-        headerConsole: (
+    const advancedSettingsDialogProps: React.ComponentProps<typeof ComposerAdvancedSettingsDialog> | null =
+        isAdvancedSettingsOpen
+            ? {
+                  ...composerSettingsPanelProps,
+                  isOpen: true,
+                  onClose: () => setIsAdvancedSettingsOpen(false),
+              }
+            : null;
+    const headerConsole = useMemo(
+        () => (
             <Suspense
                 fallback={
                     <PanelLoadingFallback
@@ -1144,6 +1174,10 @@ const App: React.FC = () => {
                 />
             </Suspense>
         ),
+        [currentLang, showWorkspaceRestoreNotice, systemStatusRefreshToken, t],
+    );
+    const workspaceTopHeaderProps = useWorkspaceTopHeaderProps({
+        headerConsole,
         currentLanguage: currentLang,
         onLanguageChange: setCurrentLang,
         imageModel,
@@ -1219,6 +1253,31 @@ const App: React.FC = () => {
         },
         [prompt, setPrompt, showNotification, t],
     );
+    const stageViewerSettings = useMemo(
+        () => ({
+            aspectRatio: viewSettings.aspectRatio,
+            imageSize: viewSettings.size,
+            imageStyle: viewSettings.style,
+            model: viewSettings.model,
+            batchSize: viewSettings.batchSize,
+        }),
+        [viewSettings.aspectRatio, viewSettings.batchSize, viewSettings.model, viewSettings.size, viewSettings.style],
+    );
+    const darkProvenancePanel = useMemo(
+        () => (
+            <Suspense
+                fallback={
+                    <PanelLoadingFallback
+                        label={t('loadingPrepareProvenancePanel')}
+                        className="rounded-[24px] border border-dashed border-slate-700/70 bg-slate-900/70 px-4 py-6 text-center text-sm text-slate-300"
+                    />
+                }
+            >
+                <GroundingProvenancePanel {...groundingProvenancePanelProps} tone="dark" scope="dark" />
+            </Suspense>
+        ),
+        [groundingProvenancePanelProps, t],
+    );
     const { activeViewerImage, workspaceViewerOverlayProps, generatedImageStageProps } = useWorkspaceStageViewer({
         generatedImageUrls,
         selectedImageIndex,
@@ -1231,18 +1290,12 @@ const App: React.FC = () => {
         actualOutputLabel: actualOutputSizeLabel || actualOutputDimensions,
         resultStatusSummary: groundingResolutionStatusSummary,
         resultStatusTone: groundingResolutionStatusTone,
-        settings: {
-            aspectRatio: viewSettings.aspectRatio,
-            size: viewSettings.size,
-            style: viewSettings.style,
-            model: viewSettings.model,
-            batchSize: viewSettings.batchSize,
-        },
+        settings: stageViewerSettings,
         generationMode,
         executionMode,
         onGenerate: handleGenerate,
         onEdit: handleOpenEditor,
-        onUpload: () => uploadInputRef.current?.click(),
+        onUpload: handleOpenUploadDialog,
         onClear: handleClearCurrentStage,
         onAddToObjectReference: handleAddToObjectReference,
         onAddToCharacterReference: capability.maxCharacters > 0 ? handleAddToCharacterReference : undefined,
@@ -1256,18 +1309,7 @@ const App: React.FC = () => {
         formattedStructuredOutput,
         effectiveThoughts,
         thoughtStateMessage,
-        provenancePanel: (
-            <Suspense
-                fallback={
-                    <PanelLoadingFallback
-                        label={t('loadingPrepareProvenancePanel')}
-                        className="rounded-[24px] border border-dashed border-slate-700/70 bg-slate-900/70 px-4 py-6 text-center text-sm text-slate-300"
-                    />
-                }
-            >
-                <GroundingProvenancePanel {...groundingProvenancePanelProps} tone="dark" scope="dark" />
-            </Suspense>
-        ),
+        provenancePanel: darkProvenancePanel,
         sessionHintEntries,
         formatSessionHintKey,
         formatSessionHintValue,
@@ -1323,7 +1365,7 @@ const App: React.FC = () => {
         getStageOriginLabel,
         getLineageActionLabel,
         handleOpenSketchPad,
-        openUploadDialog: () => uploadInputRef.current?.click(),
+        openUploadDialog: handleOpenUploadDialog,
         activeViewerImage,
         handleStageCurrentImageAsEditorBase,
         handleClearEditorBaseAsset,
@@ -1337,7 +1379,7 @@ const App: React.FC = () => {
     const recentHistoryFilmstripProps = useRecentHistoryFilmstripProps({
         recentHistory,
         branchCount: branchSummaries.length,
-        generatedImageUrls,
+        activeStageImageUrl: activeViewerImage || null,
         currentStageSourceHistoryId,
         branchOriginIdByTurnId,
         branchLabelByTurnId,
@@ -1355,48 +1397,96 @@ const App: React.FC = () => {
         currentLanguage: currentLang,
         renderHistoryActionButton,
     });
-    const shellPanelClassName = 'nbu-shell-panel p-4';
-    const stagePanelClassName = 'nbu-shell-panel min-h-[440px] overflow-hidden p-4 lg:min-h-0 lg:flex-1';
+    const shellPanelClassName = 'nbu-shell-panel nbu-shell-surface-stage-hero p-4';
+    const stagePanelClassName =
+        'nbu-shell-panel nbu-shell-surface-stage-hero min-h-[440px] overflow-hidden p-4 lg:min-h-0 lg:flex-1';
     const responseTextPlaceholder =
         effectiveStructuredOutputMode !== 'off'
             ? t('workspaceViewerStructuredOutput')
             : viewSettings.outputFormat === 'images-and-text'
               ? t('workspacePanelResultTextReady')
               : t('workspacePanelResultTextReserved');
-    const sideToolPanel = (
-        <WorkspaceSideToolPanel
-            currentLanguage={currentLang}
-            referenceCount={totalReferenceCount}
-            objectCount={objectImages.length}
-            characterCount={characterImages.length}
-            maxObjects={capability.maxObjects}
-            maxCharacters={capability.maxCharacters}
-            hasSketch={hasSketch}
-            editorBaseAsset={editorBaseAsset}
-            currentStageAsset={currentStageAsset}
-            onOpenReferences={() => setActivePickerSheet('references')}
-            onUploadBaseImage={() => uploadInputRef.current?.click()}
-            onOpenSketchPad={handleOpenSketchPad}
-            onOpenEditor={handleOpenEditor}
-            getStageOriginLabel={getStageOriginLabel}
-            getLineageActionLabel={getLineageActionLabel}
-        />
+    const sideToolPanel = useMemo(
+        () => (
+            <WorkspaceSideToolPanel
+                currentLanguage={currentLang}
+                referenceCount={totalReferenceCount}
+                objectCount={objectImages.length}
+                characterCount={characterImages.length}
+                maxObjects={capability.maxObjects}
+                maxCharacters={capability.maxCharacters}
+                hasSketch={hasSketch}
+                editorBaseAsset={editorBaseAsset}
+                currentStageAsset={currentStageAsset}
+                onOpenReferences={handleOpenReferencesSheet}
+                onUploadBaseImage={handleOpenUploadDialog}
+                onOpenSketchPad={handleOpenSketchPad}
+                onOpenEditor={handleOpenEditor}
+                getStageOriginLabel={getStageOriginLabel}
+                getLineageActionLabel={getLineageActionLabel}
+            />
+        ),
+        [
+            capability.maxCharacters,
+            capability.maxObjects,
+            characterImages.length,
+            currentLang,
+            currentStageAsset,
+            editorBaseAsset,
+            getLineageActionLabel,
+            getStageOriginLabel,
+            handleOpenEditor,
+            handleOpenSketchPad,
+            handleOpenReferencesSheet,
+            handleOpenUploadDialog,
+            hasSketch,
+            objectImages.length,
+            totalReferenceCount,
+        ],
     );
     const contextProvenanceStatusLabel =
         viewSettings.googleSearch || viewSettings.imageSearch
             ? t('workspacePanelStatusPrepared')
             : t('workspacePanelStatusReserved');
-    const contextProvenancePanel = (
-        <Suspense
-            fallback={
-                <PanelLoadingFallback
-                    label={t('loadingPrepareProvenancePanel')}
-                    className="rounded-[24px] border border-dashed border-slate-200 bg-white/85 px-4 py-6 text-center text-sm text-slate-500"
-                />
-            }
-        >
-            <GroundingProvenancePanel {...groundingProvenancePanelProps} tone="light" scope="primary" />
-        </Suspense>
+    const contextProvenancePanel = useMemo(
+        () => (
+            <Suspense
+                fallback={
+                    <PanelLoadingFallback
+                        label={t('loadingPrepareProvenancePanel')}
+                        className="nbu-dashed-panel px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300"
+                    />
+                }
+            >
+                <GroundingProvenancePanel {...groundingProvenancePanelProps} tone="light" scope="primary" />
+            </Suspense>
+        ),
+        [groundingProvenancePanelProps, t],
+    );
+    const recentLane = useMemo(
+        () => (
+            <div className={shellPanelClassName}>
+                <RecentHistoryFilmstrip {...recentHistoryFilmstripProps} />
+            </div>
+        ),
+        [recentHistoryFilmstripProps],
+    );
+    const focusSurface = useMemo(
+        () => (
+            <div className={stagePanelClassName}>
+                <Suspense
+                    fallback={
+                        <PanelLoadingFallback
+                            label={t('loadingStageSurface')}
+                            className="nbu-dashed-panel flex h-full min-h-[420px] items-center justify-center rounded-[28px] text-sm text-gray-500 dark:text-gray-400"
+                        />
+                    }
+                >
+                    <GeneratedImage {...generatedImageStageProps} />
+                </Suspense>
+            </div>
+        ),
+        [generatedImageStageProps, t],
     );
 
     return (
@@ -1428,6 +1518,7 @@ const App: React.FC = () => {
                 surfaceSharedControlsProps={surfaceSharedControlsProps}
                 restoreNoticeProps={restoreNoticeProps}
                 importReviewProps={importReviewProps}
+                advancedSettingsDialogProps={advancedSettingsDialogProps}
                 sketchPadSurface={
                     isSketchPadOpen ? (
                         <Suspense fallback={<SurfaceLoadingFallback label={t('loadingPrepareSketchPad')} />}>
@@ -1512,25 +1603,8 @@ const App: React.FC = () => {
                         <div className="flex min-w-0 flex-col gap-5">
                             <div className="hidden xl:block">{sideToolPanel}</div>
                             <WorkspaceHistoryCanvas
-                                recentLane={
-                                    <div className={shellPanelClassName}>
-                                        <RecentHistoryFilmstrip {...recentHistoryFilmstripProps} />
-                                    </div>
-                                }
-                                focusSurface={
-                                    <div className={stagePanelClassName}>
-                                        <Suspense
-                                            fallback={
-                                                <PanelLoadingFallback
-                                                    label={t('loadingStageSurface')}
-                                                    className="flex h-full min-h-[420px] items-center justify-center rounded-[28px] border border-dashed border-gray-300 bg-gray-50 text-sm text-gray-500 dark:border-gray-700 dark:bg-[#090b10] dark:text-gray-400"
-                                                />
-                                            }
-                                        >
-                                            <GeneratedImage {...generatedImageStageProps} />
-                                        </Suspense>
-                                    </div>
-                                }
+                                recentLane={recentLane}
+                                focusSurface={focusSurface}
                                 supportSurface={null}
                             />
                         </div>
@@ -1552,7 +1626,7 @@ const App: React.FC = () => {
                         <ComposerSettingsPanel {...composerSettingsPanelProps} />
                     </div>
 
-                    <details className="order-5 nbu-shell-panel p-4 xl:hidden">
+                    <details className="order-5 nbu-shell-panel nbu-shell-surface-context-rail p-4 xl:hidden">
                         <summary className="flex cursor-pointer list-none items-start justify-between gap-3 marker:hidden">
                             <div>
                                 <p className="nbu-section-eyebrow">{t('workspaceInsightsEyebrow')}</p>

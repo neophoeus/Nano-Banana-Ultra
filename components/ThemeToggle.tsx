@@ -3,41 +3,84 @@ import { Language, getTranslation } from '../utils/translations';
 
 interface ThemeToggleProps {
     currentLanguage?: Language;
+    className?: string;
 }
 
-const ThemeToggle: React.FC<ThemeToggleProps> = ({ currentLanguage = 'en' as Language }) => {
+const THEME_STORAGE_KEY = 'theme';
+const THEME_EVENT_NAME = 'nbu-theme-change';
+
+const getPreferredDarkMode = () => {
+    if (typeof window === 'undefined') {
+        return true;
+    }
+
+    const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return storedTheme === 'dark' || (!storedTheme && prefersDark);
+};
+
+const syncDocumentTheme = (isDark: boolean) => {
+    if (typeof document === 'undefined') {
+        return;
+    }
+
+    document.documentElement.classList.toggle('dark', isDark);
+};
+
+const ThemeToggle: React.FC<ThemeToggleProps> = ({ currentLanguage = 'en' as Language, className = '' }) => {
     const t = (key: string) => getTranslation(currentLanguage, key);
-    const [isDark, setIsDark] = useState(true);
+    const [isDark, setIsDark] = useState(() => getPreferredDarkMode());
 
     useEffect(() => {
-        // Check local storage or system preference
-        const storedTheme = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const syncThemeState = () => {
+            const nextIsDark = getPreferredDarkMode();
+            syncDocumentTheme(nextIsDark);
+            setIsDark(nextIsDark);
+        };
 
-        if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
-            setIsDark(true);
-            document.documentElement.classList.add('dark');
-        } else {
-            setIsDark(false);
-            document.documentElement.classList.remove('dark');
-        }
+        const handleThemeChange = () => {
+            if (typeof document === 'undefined') {
+                return;
+            }
+
+            setIsDark(document.documentElement.classList.contains('dark'));
+        };
+
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const handleSystemThemeChange = () => {
+            if (!window.localStorage.getItem(THEME_STORAGE_KEY)) {
+                syncThemeState();
+            }
+        };
+
+        syncThemeState();
+        window.addEventListener('storage', syncThemeState);
+        window.addEventListener(THEME_EVENT_NAME, handleThemeChange);
+        mediaQuery.addEventListener('change', handleSystemThemeChange);
+
+        return () => {
+            window.removeEventListener('storage', syncThemeState);
+            window.removeEventListener(THEME_EVENT_NAME, handleThemeChange);
+            mediaQuery.removeEventListener('change', handleSystemThemeChange);
+        };
     }, []);
 
     const toggleTheme = () => {
         const newDark = !isDark;
         setIsDark(newDark);
-        if (newDark) {
-            document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
+
+        syncDocumentTheme(newDark);
+
+        if (typeof window !== 'undefined') {
+            window.localStorage.setItem(THEME_STORAGE_KEY, newDark ? 'dark' : 'light');
+            window.dispatchEvent(new CustomEvent(THEME_EVENT_NAME, { detail: { isDark: newDark } }));
         }
     };
 
     return (
         <button
             onClick={toggleTheme}
+            aria-label={isDark ? t('switchLight') : t('switchDark')}
             className={`
         flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition-all duration-300
         ${
@@ -45,8 +88,10 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ currentLanguage = 'en' as Lan
                 ? 'nbu-overlay-shell text-amber-400 hover:bg-gray-800 hover:text-amber-300'
                 : 'nbu-overlay-shell text-amber-600 hover:bg-gray-50 hover:text-amber-700 shadow-amber-500/10'
         }
+        ${className}
       `}
             title={isDark ? t('switchLight') : t('switchDark')}
+            type="button"
         >
             {isDark ? (
                 // Moon Icon

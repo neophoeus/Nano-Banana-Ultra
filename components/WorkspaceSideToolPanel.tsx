@@ -21,7 +21,7 @@ type WorkspaceSideToolPanelProps = {
     getLineageActionLabel: (action?: TurnLineageAction) => string;
 };
 
-export default function WorkspaceSideToolPanel({
+function WorkspaceSideToolPanel({
     currentLanguage,
     referenceCount,
     objectCount,
@@ -72,7 +72,7 @@ export default function WorkspaceSideToolPanel({
     const editorBaseDetail = editorBaseAsset ? getStageOriginLabel(editorBaseAsset.origin) : t('stageOriginNotStaged');
 
     return (
-        <aside data-testid="workspace-side-tool-panel" className="nbu-subpanel p-4">
+        <aside data-testid="workspace-side-tool-panel" className="nbu-subpanel nbu-shell-surface-actions-bar p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                     <p className="nbu-section-eyebrow">{t('composerActionPanelEyebrow')}</p>
@@ -196,3 +196,5 @@ export default function WorkspaceSideToolPanel({
         </aside>
     );
 }
+
+export default React.memo(WorkspaceSideToolPanel);

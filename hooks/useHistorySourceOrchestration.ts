@@ -74,6 +74,7 @@ type UseHistorySourceOrchestrationArgs = {
     upsertViewerStageSource: (args: {
         url: string;
         origin: 'generated' | 'history' | 'upload' | 'sketch' | 'editor';
+        savedFilename?: string;
         sourceHistoryId?: string;
         lineageAction?: TurnLineageAction;
     }) => void;
@@ -238,6 +239,7 @@ export function useHistorySourceOrchestration({
             upsertViewerStageSource({
                 origin: 'history',
                 url: item.url,
+                savedFilename: item.savedFilename,
                 sourceHistoryId: item.id,
                 lineageAction,
             });
@@ -250,6 +252,7 @@ export function useHistorySourceOrchestration({
                             upsertViewerStageSource({
                                 origin: 'history',
                                 url: fullUrl,
+                                savedFilename: item.savedFilename,
                                 sourceHistoryId: item.id,
                                 lineageAction,
                             });
@@ -350,6 +353,7 @@ export function useHistorySourceOrchestration({
         }
 
         const nextSourceHistoryId = selectedHistoryId || undefined;
+        const nextHistoryItem = nextSourceHistoryId ? getHistoryTurnById(nextSourceHistoryId) : null;
         const preservedLineageAction = nextSourceHistoryId
             ? selectedHistoryLineageActionRef.current
             : currentStageLineageAction;
@@ -357,12 +361,14 @@ export function useHistorySourceOrchestration({
         upsertViewerStageSource({
             origin: selectedHistoryId ? 'history' : 'generated',
             url: currentViewerImage,
+            savedFilename: nextHistoryItem?.savedFilename,
             sourceHistoryId: nextSourceHistoryId,
             lineageAction: preservedLineageAction,
         });
     }, [
         currentStageLineageAction,
         generatedImageUrls,
+        getHistoryTurnById,
         isGenerating,
         selectedHistoryId,
         selectedImageIndex,

@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useCallback, useState } from 'react';
+import { Dispatch, SetStateAction, useCallback, useMemo, useState } from 'react';
 import { StageAsset, StageAssetOrigin, StageAssetRole, TurnLineageAction } from '../types';
 import {
     addStageAsset,
@@ -16,6 +16,7 @@ type AddWorkspaceAssetArgs = {
     role: StageAssetRole;
     origin: StageAssetOrigin;
     url: string;
+    savedFilename?: string;
     maxAssets?: number;
     preferFront?: boolean;
     isSketch?: boolean;
@@ -39,6 +40,7 @@ type UseWorkspaceAssetsReturn = {
     upsertViewerStageSource: (args: {
         url: string;
         origin: StageAssetOrigin;
+        savedFilename?: string;
         sourceHistoryId?: string;
         lineageAction?: TurnLineageAction;
     }) => void;
@@ -47,11 +49,17 @@ type UseWorkspaceAssetsReturn = {
 export function useWorkspaceAssets({ initialStagedAssets }: UseWorkspaceAssetsArgs): UseWorkspaceAssetsReturn {
     const [stagedAssets, setStagedAssets] = useState<StageAsset[]>(() => initialStagedAssets);
 
-    const objectImages = getStageAssetUrlsByRole(stagedAssets, 'object');
-    const characterImages = getStageAssetUrlsByRole(stagedAssets, 'character');
-    const editorBaseAsset = getStageAssetsByRole(stagedAssets, 'editor-base')[0] || null;
-    const currentStageAsset = getStageAssetsByRole(stagedAssets, 'stage-source')[0] || null;
-    const hasSketch = getStageAssetsByRole(stagedAssets, 'object').some((asset) => asset.isSketch);
+    const objectImages = useMemo(() => getStageAssetUrlsByRole(stagedAssets, 'object'), [stagedAssets]);
+    const characterImages = useMemo(() => getStageAssetUrlsByRole(stagedAssets, 'character'), [stagedAssets]);
+    const editorBaseAsset = useMemo(() => getStageAssetsByRole(stagedAssets, 'editor-base')[0] || null, [stagedAssets]);
+    const currentStageAsset = useMemo(
+        () => getStageAssetsByRole(stagedAssets, 'stage-source')[0] || null,
+        [stagedAssets],
+    );
+    const hasSketch = useMemo(
+        () => getStageAssetsByRole(stagedAssets, 'object').some((asset) => asset.isSketch),
+        [stagedAssets],
+    );
 
     const setRoleImages = useCallback(
         (
@@ -107,6 +115,7 @@ export function useWorkspaceAssets({ initialStagedAssets }: UseWorkspaceAssetsAr
         (args: {
             url: string;
             origin: StageAssetOrigin;
+            savedFilename?: string;
             sourceHistoryId?: string;
             lineageAction?: TurnLineageAction;
         }) => {
@@ -115,6 +124,7 @@ export function useWorkspaceAssets({ initialStagedAssets }: UseWorkspaceAssetsAr
                     role: 'stage-source',
                     origin: args.origin,
                     url: args.url,
+                    savedFilename: args.savedFilename,
                     sourceHistoryId: args.sourceHistoryId,
                     lineageAction: args.lineageAction,
                 }),

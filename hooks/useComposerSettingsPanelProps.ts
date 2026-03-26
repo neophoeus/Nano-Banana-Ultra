@@ -1,4 +1,4 @@
-import { Dispatch, MutableRefObject, SetStateAction, useMemo } from 'react';
+import { Dispatch, MutableRefObject, SetStateAction, useLayoutEffect, useMemo, useRef } from 'react';
 import ComposerSettingsPanel from '../components/ComposerSettingsPanel';
 import type { PickerSheet } from '../components/WorkspacePickerSheet';
 import { Language } from '../utils/translations';
@@ -136,6 +136,120 @@ export function useComposerSettingsPanelProps({
     getStageOriginLabel,
     getLineageActionLabel,
 }: UseComposerSettingsPanelPropsArgs): ComposerSettingsPanelProps {
+    const latestHandlersRef = useRef({
+        setPrompt,
+        toggleEnterToSubmit,
+        handleGenerate,
+        handleQueueBatchJob,
+        handleCancelGeneration,
+        handleStartNewConversation,
+        handleFollowUpGenerate,
+        handleSurpriseMe,
+        handleSmartRewrite,
+        setActivePickerSheet,
+        handleExportWorkspaceSnapshot,
+        workspaceImportInputRef,
+        setIsAdvancedSettingsOpen,
+        setOutputFormat,
+        setStructuredOutputMode,
+        setTemperature,
+        setThinkingLevel,
+        setGroundingMode,
+        getGroundingFlagsFromMode,
+        showNotification,
+        t,
+        outputFormat,
+        handleImportAllQueuedJobs,
+        handlePollAllQueuedJobs,
+        handlePollQueuedJob,
+        handleCancelQueuedJob,
+        handleImportQueuedJob,
+        handleOpenImportedQueuedJob,
+        handleOpenLatestImportedQueuedJob,
+        handleOpenImportedQueuedHistoryItem,
+        handleRemoveQueuedJob,
+        getImportedQueuedResultCount,
+        getImportedQueuedHistoryItems,
+        getStageOriginLabel,
+        getLineageActionLabel,
+    });
+
+    useLayoutEffect(() => {
+        latestHandlersRef.current = {
+            setPrompt,
+            toggleEnterToSubmit,
+            handleGenerate,
+            handleQueueBatchJob,
+            handleCancelGeneration,
+            handleStartNewConversation,
+            handleFollowUpGenerate,
+            handleSurpriseMe,
+            handleSmartRewrite,
+            setActivePickerSheet,
+            handleExportWorkspaceSnapshot,
+            workspaceImportInputRef,
+            setIsAdvancedSettingsOpen,
+            setOutputFormat,
+            setStructuredOutputMode,
+            setTemperature,
+            setThinkingLevel,
+            setGroundingMode,
+            getGroundingFlagsFromMode,
+            showNotification,
+            t,
+            outputFormat,
+            handleImportAllQueuedJobs,
+            handlePollAllQueuedJobs,
+            handlePollQueuedJob,
+            handleCancelQueuedJob,
+            handleImportQueuedJob,
+            handleOpenImportedQueuedJob,
+            handleOpenLatestImportedQueuedJob,
+            handleOpenImportedQueuedHistoryItem,
+            handleRemoveQueuedJob,
+            getImportedQueuedResultCount,
+            getImportedQueuedHistoryItems,
+            getStageOriginLabel,
+            getLineageActionLabel,
+        };
+    }, [
+        setPrompt,
+        toggleEnterToSubmit,
+        handleGenerate,
+        handleQueueBatchJob,
+        handleCancelGeneration,
+        handleStartNewConversation,
+        handleFollowUpGenerate,
+        handleSurpriseMe,
+        handleSmartRewrite,
+        setActivePickerSheet,
+        handleExportWorkspaceSnapshot,
+        workspaceImportInputRef,
+        setIsAdvancedSettingsOpen,
+        setOutputFormat,
+        setStructuredOutputMode,
+        setTemperature,
+        setThinkingLevel,
+        setGroundingMode,
+        getGroundingFlagsFromMode,
+        showNotification,
+        t,
+        outputFormat,
+        handleImportAllQueuedJobs,
+        handlePollAllQueuedJobs,
+        handlePollQueuedJob,
+        handleCancelQueuedJob,
+        handleImportQueuedJob,
+        handleOpenImportedQueuedJob,
+        handleOpenLatestImportedQueuedJob,
+        handleOpenImportedQueuedHistoryItem,
+        handleRemoveQueuedJob,
+        getImportedQueuedResultCount,
+        getImportedQueuedHistoryItems,
+        getStageOriginLabel,
+        getLineageActionLabel,
+    ]);
+
     return useMemo(
         () => ({
             prompt,
@@ -160,55 +274,71 @@ export function useComposerSettingsPanelProps({
             queuedJobs,
             queueBatchModeSummary,
             queueBatchConversationNotice,
-            getImportedQueuedResultCount,
-            getImportedQueuedHistoryItems,
+            getImportedQueuedResultCount: (job: QueuedBatchJob) =>
+                latestHandlersRef.current.getImportedQueuedResultCount(job),
+            getImportedQueuedHistoryItems: (job: QueuedBatchJob) =>
+                latestHandlersRef.current.getImportedQueuedHistoryItems(job),
             activeImportedQueuedHistoryId,
             promptTextareaRef,
-            onPromptChange: setPrompt,
-            onToggleEnterToSubmit: toggleEnterToSubmit,
-            onGenerate: handleGenerate,
-            onQueueBatchJob: handleQueueBatchJob,
-            onCancelGeneration: handleCancelGeneration,
-            onStartNewConversation: handleStartNewConversation,
-            onFollowUpGenerate: handleFollowUpGenerate,
-            onSurpriseMe: handleSurpriseMe,
-            onSmartRewrite: handleSmartRewrite,
-            onOpenGallery: () => setActivePickerSheet('gallery'),
-            onOpenPromptHistory: () => setActivePickerSheet('history'),
-            onOpenTemplates: () => setActivePickerSheet('templates'),
-            onOpenStyles: () => setActivePickerSheet('styles'),
-            onExportWorkspace: handleExportWorkspaceSnapshot,
-            onImportWorkspace: () => workspaceImportInputRef.current?.click(),
-            onToggleAdvancedSettings: () => setIsAdvancedSettingsOpen((previous) => !previous),
-            onOutputFormatChange: setOutputFormat,
-            onStructuredOutputModeChange: (nextMode) => {
-                setStructuredOutputMode(nextMode);
-                if (nextMode !== 'off' && outputFormat !== 'images-and-text') {
-                    setOutputFormat('images-and-text');
-                    showNotification(t('composerStructuredOutputUpgradeNotice'), 'info');
+            onPromptChange: (value: string) => latestHandlersRef.current.setPrompt(value),
+            onToggleEnterToSubmit: () => latestHandlersRef.current.toggleEnterToSubmit(),
+            onGenerate: () => latestHandlersRef.current.handleGenerate(),
+            onQueueBatchJob: () => latestHandlersRef.current.handleQueueBatchJob(),
+            onCancelGeneration: () => latestHandlersRef.current.handleCancelGeneration(),
+            onStartNewConversation: () => latestHandlersRef.current.handleStartNewConversation(),
+            onFollowUpGenerate: () => latestHandlersRef.current.handleFollowUpGenerate(),
+            onSurpriseMe: () => latestHandlersRef.current.handleSurpriseMe(),
+            onSmartRewrite: () => latestHandlersRef.current.handleSmartRewrite(),
+            onOpenGallery: () => latestHandlersRef.current.setActivePickerSheet('gallery'),
+            onOpenPromptHistory: () => latestHandlersRef.current.setActivePickerSheet('history'),
+            onOpenTemplates: () => latestHandlersRef.current.setActivePickerSheet('templates'),
+            onOpenStyles: () => latestHandlersRef.current.setActivePickerSheet('styles'),
+            onExportWorkspace: () => latestHandlersRef.current.handleExportWorkspaceSnapshot(),
+            onImportWorkspace: () => latestHandlersRef.current.workspaceImportInputRef.current?.click(),
+            onToggleAdvancedSettings: () => {
+                latestHandlersRef.current.setActivePickerSheet(null);
+                latestHandlersRef.current.setIsAdvancedSettingsOpen(true);
+            },
+            onOutputFormatChange: (value: OutputFormat) => latestHandlersRef.current.setOutputFormat(value),
+            onStructuredOutputModeChange: (nextMode: StructuredOutputMode) => {
+                latestHandlersRef.current.setStructuredOutputMode(nextMode);
+                if (nextMode !== 'off' && latestHandlersRef.current.outputFormat !== 'images-and-text') {
+                    latestHandlersRef.current.setOutputFormat('images-and-text');
+                    latestHandlersRef.current.showNotification(
+                        latestHandlersRef.current.t('composerStructuredOutputUpgradeNotice'),
+                        'info',
+                    );
                 }
             },
-            onTemperatureChange: setTemperature,
-            onThinkingLevelChange: setThinkingLevel,
-            onGroundingModeChange: (nextMode) => {
-                const nextFlags = getGroundingFlagsFromMode(nextMode);
-                setGroundingMode(nextMode);
-                if (nextFlags.imageSearch && outputFormat !== 'images-and-text') {
-                    setOutputFormat('images-and-text');
-                    showNotification(t('composerGroundingImageSearchUpgradeNotice'), 'info');
+            onTemperatureChange: (value: number) => latestHandlersRef.current.setTemperature(value),
+            onThinkingLevelChange: (value: ThinkingLevel) => latestHandlersRef.current.setThinkingLevel(value),
+            onGroundingModeChange: (nextMode: GroundingMode) => {
+                const nextFlags = latestHandlersRef.current.getGroundingFlagsFromMode(nextMode);
+                latestHandlersRef.current.setGroundingMode(nextMode);
+                if (nextFlags.imageSearch && latestHandlersRef.current.outputFormat !== 'images-and-text') {
+                    latestHandlersRef.current.setOutputFormat('images-and-text');
+                    latestHandlersRef.current.showNotification(
+                        latestHandlersRef.current.t('composerGroundingImageSearchUpgradeNotice'),
+                        'info',
+                    );
                 }
             },
-            onImportAllQueuedJobs: handleImportAllQueuedJobs,
-            onPollAllQueuedJobs: handlePollAllQueuedJobs,
-            onPollQueuedJob: handlePollQueuedJob,
-            onCancelQueuedJob: handleCancelQueuedJob,
-            onImportQueuedJob: handleImportQueuedJob,
-            onOpenImportedQueuedJob: handleOpenImportedQueuedJob,
-            onOpenLatestImportedQueuedJob: handleOpenLatestImportedQueuedJob,
-            onOpenImportedQueuedHistoryItem: handleOpenImportedQueuedHistoryItem,
-            onRemoveQueuedJob: handleRemoveQueuedJob,
-            getStageOriginLabel,
-            getLineageActionLabel,
+            onImportAllQueuedJobs: () => latestHandlersRef.current.handleImportAllQueuedJobs(),
+            onPollAllQueuedJobs: () => latestHandlersRef.current.handlePollAllQueuedJobs(),
+            onPollQueuedJob: (localId: string) => latestHandlersRef.current.handlePollQueuedJob(localId),
+            onCancelQueuedJob: (localId: string) => latestHandlersRef.current.handleCancelQueuedJob(localId),
+            onImportQueuedJob: (localId: string) => latestHandlersRef.current.handleImportQueuedJob(localId),
+            onOpenImportedQueuedJob: (localId: string) =>
+                latestHandlersRef.current.handleOpenImportedQueuedJob(localId),
+            onOpenLatestImportedQueuedJob: (localId: string) =>
+                latestHandlersRef.current.handleOpenLatestImportedQueuedJob(localId),
+            onOpenImportedQueuedHistoryItem: (historyId: string) =>
+                latestHandlersRef.current.handleOpenImportedQueuedHistoryItem(historyId),
+            onRemoveQueuedJob: (localId: string) => latestHandlersRef.current.handleRemoveQueuedJob(localId),
+            getStageOriginLabel: (origin?: StageAsset['origin']) =>
+                latestHandlersRef.current.getStageOriginLabel(origin),
+            getLineageActionLabel: (action?: TurnLineageAction) =>
+                latestHandlersRef.current.getLineageActionLabel(action),
         }),
         [
             prompt,
@@ -233,42 +363,8 @@ export function useComposerSettingsPanelProps({
             queuedJobs,
             queueBatchModeSummary,
             queueBatchConversationNotice,
-            getImportedQueuedResultCount,
-            getImportedQueuedHistoryItems,
             activeImportedQueuedHistoryId,
             promptTextareaRef,
-            setPrompt,
-            toggleEnterToSubmit,
-            handleGenerate,
-            handleQueueBatchJob,
-            handleCancelGeneration,
-            handleStartNewConversation,
-            handleFollowUpGenerate,
-            handleSurpriseMe,
-            handleSmartRewrite,
-            setActivePickerSheet,
-            handleExportWorkspaceSnapshot,
-            workspaceImportInputRef,
-            setIsAdvancedSettingsOpen,
-            setOutputFormat,
-            setStructuredOutputMode,
-            setTemperature,
-            setThinkingLevel,
-            setGroundingMode,
-            getGroundingFlagsFromMode,
-            showNotification,
-            t,
-            handleImportAllQueuedJobs,
-            handlePollAllQueuedJobs,
-            handlePollQueuedJob,
-            handleCancelQueuedJob,
-            handleImportQueuedJob,
-            handleOpenImportedQueuedJob,
-            handleOpenLatestImportedQueuedJob,
-            handleOpenImportedQueuedHistoryItem,
-            handleRemoveQueuedJob,
-            getStageOriginLabel,
-            getLineageActionLabel,
         ],
     );
 }

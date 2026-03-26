@@ -1,276 +1,298 @@
-# Nano Banana Ultra 🚀
+# Nano Banana Ultra
 
 [English](#english) | [繁體中文](#繁體中文)
 
-> v3.0 is currently in progress. This README has been updated to stay aligned with the current codebase and verified Phase 1 rebuild state, but some planned features and product polish are still incomplete.
-
-> v3.0 版本目前仍在開發中。此 README 已先依照目前實際程式碼與已驗證的 Phase 1 重構狀態更新，但部分規劃中的功能與產品細節仍未完成。
-
-> The current working tree also contains a large multi-package refactor wave. See `IMPLEMENTATION_MASTER_SPEC.md` for the active packaging plan before reviewing or committing the refactor as a single changeset.
-
-> 目前工作樹另外還包含一波大型多主題重構。若要 review 或切 commit，請先參考 `IMPLEMENTATION_MASTER_SPEC.md` 內的 working-tree packaging plan，不要把整批變更視為單一 changeset。
-
-<details open>
-<summary><b>🇧 English version</b></summary>
-
 <a id="english"></a>
 
-<br>
+## English
 
-This repository is currently moving toward v3.0. The product description below is intentionally aligned to the current rebuilt codebase rather than older UI assumptions, and some planned areas are still under active development.
+Nano Banana Ultra is a Gemini-powered visual creation workspace for image generation, guided editing, and continuity-based iteration. It is designed for people who do more than run one prompt at a time: concept artists, prompt designers, visual storytellers, and anyone who needs to evolve an image idea across multiple passes without losing context.
 
-Current UI/UX refinement focus in the working tree:
+Instead of treating image generation as a disposable single-shot action, Nano Banana Ultra turns it into a persistent workspace. You can move from prompt drafting to reference-guided creation, from batch exploration to branch continuation, from targeted editing to result reuse, all inside one connected flow.
 
-- the just-landed shell ownership slice: the top rail now reads as one model-output family, workflow summary now belongs to the unified context rail, and the side tool owner now behaves as a lighter stage-adjacent actions bar instead of a parallel heavyweight panel
-- clearer history / branch / continue / source-active semantics across all continuity-related entry points
-- structured-output reuse closure so prompt-kit drafts and variation-compare test prompts can drive the next pass directly instead of forcing manual copy-and-rebuild steps
-- owner-route naming, CTA wording alignment, and remaining secondary-surface closure polish after the latest canonical-action cleanup wave
-- summary-first provenance and insight presentation before deep citation drill-down
-- contextual action wording on history-style surfaces so generic `Continue` only appears where the action is truly generic
-- provenance empty-state compression so restore-derived results do not expand into multiple low-signal empty sections
-- queued batch task framing that reads like a job workflow rather than a debug surface
-- localization and browser-path verification as the closure pass after interaction structure stabilizes
+## Documentation
 
-The current shipped foundation is the rebuilt v2.5-era Nano Banana Ultra image generation application. Built on the React ecosystem, it uses a local Vite server route to call the Google Gemini API so your API key stays out of the browser bundle.
+- [USER_MANUAL.zh-TW.md](USER_MANUAL.zh-TW.md) - Traditional Chinese full user manual covering setup, interface structure, major workflows, and day-to-day operation guidance
 
-## ✨ Features
+## Why It Feels Different
 
-- **Text-to-Image**: Generate beautiful images quickly by entering text prompts.
-- **Image-to-Image & Style Transfer**: Upload reference images and combine them with prompts or built-in styles to create entirely new artworks.
-- **Advanced Model Selection**: Switch freely between the latest Gemini image models (Gemini 3.1 Flash Image, Gemini 3 Pro Image, Gemini 2.5 Flash Image). The UI adapts and locks unsupported features based on your selection (for example ratio limits, image sizes, and reference-image counts).
-- **Response Rail & Runtime Health**: The top response rail combines model text output, thought summaries, workflow state, queue summary, and local API / Gemini key health into one owner surface instead of scattering status across multiple support panels.
-- **Grounded Results & Insight Panels**: Supported Gemini 3.1 flows can return images, text, thoughts, grounding sources, support bundles, image-search attribution, and session hints in one result workspace.
-- **Structured Output Reuse Flow**: Structured-output presets now go beyond display-only summaries. Prompt-kit can assemble a reusable `Prompt draft`, and variation-compare can surface direct next-pass candidate prompts, each with copy / append / replace actions from the result surfaces.
-- **Global Theme & Language Sync**: SketchPad and ImageEditor now feature synchronized global theme and language controls for a seamless experience. Added consistent hover tooltips across all interactive UI elements.
-- **Interactive Image Editor**: Built-in powerful canvas editor supporting Inpainting and Outpainting! Zoom, pan, and mask specific areas of an image using the brush tool for precise modification. Features a dedicated UI layout and optimized reference image limits specialized for editing tasks.
-- **Dual Reference Trays**: Independently configure Characters and Objects schemas, equipped with native HTML5 Drag and Drop ordering for prompt structure matching.
-- **Smart File Naming**: Auto-saving now embeds the generating model's name directly into the filename (e.g., `gemini-3-pro-image-preview-gen_...png`) for easy sorting and management.
-- **Sketch Pad**: Draw rough sketches directly on the canvas to use as a structural reference for image generation.
-- **Smart Prompt Tools**: Includes "Smart Rewrite" and "Surprise Me" features to automatically optimize your drawing prompts using AI.
-- **Permanent Prompt History**: Your prompt history is now automatically saved securely to your local disk, supporting a massive **9,999** record capacity with smart UI rendering to prevent lag.
-- **Batch Generation**: Generate multiple images simultaneously to save waiting time.
-- **Variant Promotion Workflow**: Batch outputs remain explicit exploration candidates until you promote exactly one result into the active continuation source for that branch.
-- **Workspace Restore / Import Continuity**: Restore notices, import review, history cards, and branch surfaces now preserve the same Candidate / Promote Variant / Source Active semantics instead of flattening everything into generic continue actions, and the restore/import modals no longer duplicate gallery, prompt-history, or references launcher shortcuts that belong to their owner surfaces.
-- **Summary-First Continuity Entry Points**: Import-review branch previews, direct-replace latest-turn review, and restore-notice secondary recovery paths now open as compact summaries first, so the primary continuation actions stay visible without forcing secondary narrative blocks to remain expanded.
-- **Contextual History Actions**: History cards, the recent-history filmstrip, and lineage-style side panels now prefer `Continue from turn` style wording for plain reopenable turns, while promoted/source surfaces keep their stronger `Promote + continue` and `Continue source` semantics.
-- **Compressed Provenance Empty States**: When a restored or imported result has continuity metadata but no returned sources, bundles, or queries, Provenance stays summary-first instead of expanding into several redundant empty sections.
-- **Summary-First Provenance Detail Shells**: Citation detail, provenance source, reuse preview, source/bundle status cards, compare lists, and selected-bundle segment text now default to compact disclosure summaries before expanding into full attribution drill-down, and compare/detail rows now use a single inspect path instead of repeating extra inspect buttons.
-- **Compact Secondary Shells**: Top-rail thoughts, viewer thoughts/session hints and inspect guidance, branch-rename restore guidance, recent-history filmstrip guidance, side-tool explanatory copy, picker-sheet reference helper cards, composer guidance cards, shared-controls prompt preview plus shared-state guidance, and queued imported-result plus queue-header guidance now default to compact previews and disclosures, keeping primary owner actions visible while reducing always-open secondary detail.
-- **Rich Style Library**: Comes with over 40 built-in image styles (e.g., Cyberpunk, Watercolor, Pixel Art, 3D Render, etc.).
-- **I18n & Dark Mode**: Supports multiple interface languages and allows toggling between Light and Dark themes based on your preference.
-- **History-First Workspace Shell**: The main app now uses a four-region shell: top response rail, center history canvas, side tool panel, and bottom composer. `Recent Turns` now lives inside the center canvas as a recent lane, while large right-side context regions have been compacted into summary-first collapsible insights and neither the insights timeline header nor the recent-turn filmstrip header duplicates gallery or prompt-history launcher buttons.
+- it is built as a workspace, not just a prompt box
+- it keeps image history, continuation state, and reusable outputs visible
+- it supports both exploratory generation and more deliberate editing workflows
+- it lets different Gemini image models expose different strengths without forcing a one-size-fits-all UI
+- it is designed for iterative image work where compare, refine, continue, and recover are all first-class actions
 
-## 🛠️ Run Locally
+## Product Highlights
 
-**Prerequisites:** Node.js (v18+ recommended)
+- text-to-image, image-to-image, and style-guided creation
+- built-in SketchPad workflow for rough visual ideation before generation
+- image editing workflow for inpainting, outpainting, and follow-up refinement
+- prompt enhancement tools such as Smart Rewrite and Surprise Me
+- batch exploration, variant promotion, and branch-based continuation
+- persistent history, restore, import, and replay-oriented workspace recovery
+- structured output reuse, provenance review, and insight surfaces
+- multilingual UI and light/dark theme support
 
-1. **Install dependencies:**
+## Supported Models
 
-    ```bash
-    npm install
-    ```
+Nano Banana Ultra currently supports three Gemini image-model paths, each presented with capability-aware controls instead of a generic shared form.
 
-2. **Environment Setup:**
-    - Copy the `.env.example` file and rename it to `.env.local`
-    - Fill in your Gemini API key in the newly created `.env.local` file:
+### Nano Banana 2
 
-        ```env
-        GEMINI_API_KEY=your_api_key_here
-        ```
+- model id: `gemini-3.1-flash-image-preview`
+- default mainline model in the current product flow
+- supports broad aspect-ratio coverage and sizes from `512` to `4K`
+- supports Google Search grounding and Image Search grounding paths
+- supports selectable thinking levels in the current product flow
+- best fit for flexible generation, richer grounding paths, and the broadest feature surface
 
-    _(Note: `.env.local` is intentionally ignored by Git to keep your API key secure)._
+### Nano Banana Pro
 
-3. **Run the app in Development Mode:**
+- model id: `gemini-3-pro-image-preview`
+- quality-focused alternative for higher-end image work
+- supports `1K`, `2K`, and `4K` image sizes in the current product path
+- supports standard Google Search grounding
+- supports structured-output-oriented flows where the product enables them
+- best fit for users who want stronger high-quality output and richer controlled workflows
 
-    ```bash
-    npm run dev
-    ```
+### Nano Banana
 
-4. **Check local API health:**
+- model id: `gemini-2.5-flash-image`
+- lighter legacy path kept for lower-latency image generation scenarios
+- uses a narrower capability surface than the newer Gemini 3 family
+- best fit for simpler, faster generation needs when the full Gemini 3.x surface is not required
 
-    Open this URL in your browser after the dev server starts:
+## Core Workflows
 
-    ```text
-    http://127.0.0.1:22287/api/health
-    ```
+### Create
 
-    A healthy response looks like this:
+- start from text prompts
+- add character and object references
+- choose aspect ratio, model, size, style, and generation settings
+- generate one result or explore multiple outputs in a batch
 
-    ```json
-    { "ok": true, "hasApiKey": true, "outputDir": "...", "timestamp": "..." }
-    ```
+### Edit
 
-5. **Run the production-like local preview:**
+- reopen a result as the next working source
+- refine images with the built-in editor workflow
+- use inpainting and outpainting style edits for targeted changes
+- carry prior results forward instead of rebuilding from scratch every time
 
-    ```bash
-    npm run build
-    npm run preview
-    ```
+### Explore
 
-    Then verify:
+- compare sibling variants from the same creative pass
+- promote exactly one result into the active continuation source when needed
+- branch into different visual directions without flattening everything into one timeline
 
-    ```text
-    http://127.0.0.1:4173/api/health
-    ```
+### Recover
 
-6. **Build for Production:**
+- restore previous workspace state after reload
+- import or replay saved workspaces and continue from recovered turns
+- keep history, source, and continuity context visible across longer sessions
 
-    ```bash
-    npm run build
-    ```
+### Reuse
 
-    The generated static files do not contain your Gemini key. To use image generation outside dev mode, serve the app with a Node process that exposes the same API routes, such as `vite preview` or a small Express server.</details>
+- extract reusable prompt material from structured outputs
+- inspect provenance and grounding context when available
+- push useful results back into the next generation pass instead of copying everything by hand
 
-## Editor Tooling
+## Version Overview
 
-- Treat TypeScript as the primary authoritative editor signal for this repo. The project ships with [tsconfig.json](tsconfig.json) and uses the workspace TypeScript version from `node_modules/typescript`.
-- Treat Tailwind CSS IntelliSense as project-backed because [tailwind.config.js](tailwind.config.js) and [postcss.config.js](postcss.config.js) are committed and active.
-- Treat Playwright tooling as project-backed because [playwright.config.ts](playwright.config.ts) and the `test:e2e` script in [package.json](package.json) are wired to the repo.
-- Use `npm run test:e2e:restore:owner-paths` when you need the focused restore owner-path subset without hand-writing a fragile long `--grep` expression in PowerShell.
-- Use `npm run test:e2e:restore:branch-rename` for the focused restore rename flow, and `npm run test:e2e:restore:provenance` for the restore provenance summary/detail subset, instead of ad hoc long `--grep` commands.
-- Use `npm run test:e2e:restore:replay` for the restore replay family and `npm run test:e2e:restore:queued-batch` for the queued-batch restore panel path when validating those surfaces in isolation.
-- Use `npm run test:e2e:restore:mainline-smoke` for the fastest browser-path proof that the current shell-owner and prompt-reuse mainline still holds after UI changes.
-- Use `npm run test:e2e:restore:regression` when you want one aggregated restore/import/replay continuity entrypoint instead of manually chaining multiple focused Playwright subsets.
-- Treat Prettier as an authoritative formatter for this repo. The project now commits [prettier.config.mjs](prettier.config.mjs), [.prettierignore](.prettierignore), and `format` / `format:check` scripts in [package.json](package.json).
-- Project-level VS Code recommendations live under [.vscode/extensions.json](.vscode/extensions.json) and [.vscode/settings.json](.vscode/settings.json). This repo now also binds project-backed JS/TS/TSX and related text formats to the Prettier VS Code formatter, while [../Projects.code-workspace](../Projects.code-workspace) provides workspace-level fallback defaults for `javascript` and `jsonc`.
+### 3.x
 
-### Current Prettier Policy
+Version 3.x includes everything from 2.x and turns the app into a continuity-first image workspace rather than a simple generation screen.
 
-Prettier is now part of repo policy rather than a workspace-only editor preference. Use the committed config as the formatting source of truth, prefer the project scripts for explicit formatting runs, and treat the VS Code formatter binding as an editor convenience layered on top of that repo-backed rule set. ESLint is still not adopted as repo policy.
+New in 3.x:
 
-The current working tree still carries broad historical formatting debt. Treat `npm run format:check` as the inventory source, and clean up formatting in narrow, reviewable batches instead of running a whole-repo write pass during unrelated product work.
+- a rebuilt workspace shell with clearer ownership across model output, history canvas, context rail, tool surfaces, and composer actions
+- official conversation continuity as a first-class product path across generation, history, replay, restore, and snapshot persistence
+- stronger branch, source-active, open-latest, continue-latest, and lineage-routing semantics across the product
+- preset-based structured outputs with reusable result flows, richer presentation, and prompt append or replace actions
+- summary-first provenance and insights surfaces with deeper drill-down, comparison, and reuse paths when needed
+- queued-batch workflow support that reads like a tracked job system instead of a debug panel, including restore-aware job persistence
+- safer local workspace snapshot restore with compacted payloads and file-backed image recovery when possible
+- restore, import, replay, and continuity flows that keep context visible without flattening everything into one generic action
+- broader 9-language shell wording convergence across queue, viewer, provenance, restore, replay, history, and composer surfaces
+- a more deliberate visual system with shared shell tokens, overlay tokens, and compact secondary surfaces that reduce duplicate actions and visual noise
+
+### 2.x
+
+Version 2.x includes everything from 1.x and expands the product into a broader creation workspace.
+
+New in 2.x:
+
+- expansion from the original Pro-focused path into the full Nano Banana model family
+- dual reference trays with drag-and-drop ordering
+- permanent local prompt history with large-capacity storage
+- refined mobile and sidebar behavior
+- custom model-selection UI and broader internationalization
+- editor layout refinements and official model input-limit handling
+- global theme and language synchronization across tools
+- richer tooltip coverage and overall UI consistency
+- system status monitoring and more secure local API-key handling
+- updated Gemini model naming and stronger runtime health visibility
+- a more mature transition from single-shot generation toward reusable multi-step image work
+
+### 1.x
+
+Version 1.x established the core creative foundation of Nano Banana Ultra.
+
+Included capabilities:
+
+- the original Nano Banana Pro model path built around `gemini-3-pro-image-preview`
+- early image editor workflow
+- doodle and sketch-assisted creation
+- early multilingual UI improvements
+- first-generation interface refinement for prompt and editor surfaces
+- the initial product identity for Nano Banana as an image-focused creative tool
+
+## Version Detail
+
+For release-by-release history, see [CHANGELOG.md](CHANGELOG.md).
 
 ---
-
-<details>
-<summary><b>🇹🇼 繁體中文 (Traditional Chinese)</b></summary>
 
 <a id="繁體中文"></a>
 
-# Nano Banana Ultra 🚀
+## 繁體中文
 
-<br>
+Nano Banana Ultra 是一個以 Google Gemini 影像模型為核心的視覺創作工作區產品，聚焦在影像生成、引導式編修、以及可延續的多輪創作流程。它不是只給你一個 prompt 輸入框，而是讓整個創作過程可以在同一個工作區裡持續推進。
 
-此專案目前正往 v3.0 推進。以下內容刻意以目前已重構完成的程式碼為準，不再沿用舊版 UI 假設；但也因為仍在開發中，部分規劃中的區塊與細節尚未完成。
+你可以從提示詞開始，加入參考圖、做批次探索、從某一張結果繼續延伸、進入編輯模式做局部修正、在稍後重新還原工作區，再把有價值的結果重用到下一輪。整體體驗更像影像工作區，而不是一次性的生圖工具。
 
-目前 working tree 的 UI/UX 收尾重點如下：
+## 文件導覽
 
-- 已落地的 shell ownership slice：top rail 現在收斂成單一 model output family、workflow summary 已回到統一 context rail，side tool owner 也已縮成較輕的 stage-adjacent actions bar，而不是平行的重型主面板
-- 在所有延續相關入口上，讓 history / branch / continue / source active 語意更清楚
-- 收斂 structured output 的結果重用流程，讓 prompt-kit 草稿與 variation-compare 的 test prompts 都能直接驅動下一輪，而不是還要手動複製再重組
-- 在最新 canonical-action cleanup wave 之後，繼續收尾 owner-route 命名、CTA 文案對齊，以及殘餘 secondary surface 的 closure polish
-- 讓 provenance 與 insights 先以摘要可讀，再提供深層 citation drill-down
-- 讓 history 類 surface 用情境化動作文案，只有真的泛用時才顯示一般 `Continue`
-- 讓 provenance 在沒有 sources / bundles / queries 時收斂空狀態，不再展開多塊低訊號空面板
-- 讓 queued batch 更像工作任務流程，而不是工程除錯面板
-- 等互動結構穩定後，再用多語系與瀏覽器路徑驗證把行為鎖定
+- [USER_MANUAL.zh-TW.md](USER_MANUAL.zh-TW.md) - 提供繁體中文完整操作手冊，涵蓋安裝啟動、介面分區、主要工作流、常用操作與實際使用方式
 
-目前可運作的基礎，是重構後的 v2.5 階段 Nano Banana Ultra 影像生成應用程式。此專案基於前端 React 生態系建立，並透過本機 Vite 伺服器路由呼叫 Google Gemini API，避免把 API 金鑰打包進瀏覽器端。
+## 產品定位
 
-## ✨ 核心功能 (Features)
+- 它是工作區，不只是 prompt 輸入器
+- 它把歷史、延續關係、與可重用結果保留在同一個產品空間
+- 它同時支援探索式生成與較精準的編輯工作流
+- 它會依不同 Gemini 模型能力調整介面，而不是所有模型都硬塞同一套控制項
+- 它適合需要比較、修正、延續、還原、重用的長流程影像創作
 
-- **文字生圖 (Text-to-Image)**：輸入提示詞 (Prompt)，快速生成精美圖片。
-- **圖生圖 / 風格轉換 (Image-to-Image & Style Transfer)**：上傳參考圖片，結合提示詞或內建風格，生成全新面貌的作品。
-- **進階模型選擇 (Advanced Model Selection)**：支援最新 Gemini 影像模型 (包含 Gemini 3.1 Flash Image、Gemini 3 Pro Image、Gemini 2.5 Flash Image 等)，並會根據所選模型動態開關介面功能 (例如各模型支援的尺寸、比例與參考圖數量上限)。
-- **回覆主軌與執行健康狀態 (Response Rail & Runtime Health)**：頂部 response rail 會集中顯示模型文字回覆、thought summary、workflow / queue 摘要，以及本機 API / Gemini 金鑰健康狀態，不再把狀態分散在多個 support panel。
-- **Grounded 結果與洞察面板 (Grounded Results & Insight Panels)**：在支援的 Gemini 3.1 流程中，可於同一個結果工作區檢視圖片、文字、thoughts、grounding sources、support bundles、image-search attribution 與 session hints。
-- **Structured Output 結果重用流程**：structured-output presets 不再只是展示摘要。prompt-kit 現在能組出可直接重用的 `Prompt draft`，variation-compare 也能把 test prompts 直接作為下一輪候選 prompt，並在結果面板中直接提供 copy / append / replace 動作。
-- **全域佈景切換與語系同步**：手繪板 (SketchPad) 與編輯器 (ImageEditor) 現已與首頁完全同步色彩模式與語系設定。所有互動按鈕與滑桿皆已全面補齊懸停提示 (Tooltips)。
-- **專業影像編輯器 (Interactive Image Editor)**：內建強大的畫布編輯器，支援局部修改 (Inpainting) 與畫面外擴 (Outpainting)！您可以在畫布上自由縮放原圖、使用筆刷塗抹遮罩，精準替換或擴充指定區域的細節。擁有專屬的最佳化操作介面與精準的參考圖數量控制設計。
-- **雙軌參考圖架構 (Dual Reference Trays)**：支援人物與物品獨立配置，並支援 HTML5 原生拖放 (Drag & Drop) 排序功能讓您輕鬆更動提示詞陣列。
-- **智慧檔名系統 (Smart File Naming)**：產生的圖片在存檔時，會自動擷取生成該圖片的 AI 模型名稱作為檔名標籤 (例如：`gemini-3-pro-image-preview-gen_...png`)，便於後續管理與分類。
-- **手繪塗鴉板 (Sketch Pad)**：直接在畫布上勾勒草圖，作為生成的參考依據。
-- **智慧提示詞 (Smart Prompt Tools)**：包含「幫我寫 (Smart Rewrite)」與「驚喜一下 (Surprise Me)」功能，自動優化繪圖提示詞。
-- **永久歷史紀錄 (Permanent Prompt History)**：您的提示詞歷史將自動儲存在本機硬碟中，最高支援 **9,999** 筆超大容量，並採用智慧 UI 渲染，確保流暢不卡頓！
-- **批次生成 (Batch Generation)**：一次生成多張圖片，節省等待時間。
-- **Variant 升格流程 (Variant Promotion Workflow)**：批次輸出的結果會先保持為探索候選，只有在您明確升格其中一張後，才會成為該 branch 的 active continuation source。
-- **工作區還原 / 匯入延續語意 (Workspace Restore / Import Continuity)**：restore notice、import review、history cards 與 branch surfaces 現在都會保留一致的 Candidate / Promote Variant / Source Active 語意，不再把所有流程壓平成一般 continue 動作；restore / import modal 也不再平行複製 gallery、prompt history、references 這些應由 owner surface 提供的 launcher shortcuts。
-- **summary-first 的延續入口 (Summary-First Continuity Entry Points)**：import review 的 branch previews、direct replace latest turn 檢視，以及 restore notice 的次級 recovery 路徑，現在都會先以精簡摘要顯示，讓主要延續動作保持可見，而不是被次級敘述區塊長期撐開。
-- **情境化 History 動作文案 (Contextual History Actions)**：history cards、recent-history filmstrip 與 lineage 類側欄，對一般可延續 turn 會優先顯示 `從這個 turn 延續` 這類情境化文案；對已升格 variant 與 active source 則維持 `提升並延續` / `延續來源` 的強語意。
-- **收斂的 Provenance 空狀態 (Compressed Provenance Empty States)**：當還原或匯入的結果只有 continuity metadata、但沒有 sources / bundles / queries 時，Provenance 會維持 summary-first，而不是展開多塊重複的空狀態區塊。
-- **收斂的次級 shell (Compact Secondary Shells)**：top-rail thoughts、viewer 的 thoughts / session hints 與 inspect guidance、branch rename 的 restore guidance、recent-history filmstrip 的導覽說明、side tool panel 的補充說明、picker references 的輔助卡、composer 的 guidance cards、shared-controls 的 prompt preview 與 shared-state guidance、provenance compare/detail rows 的單一路徑 inspect，以及 queued imported-result previews 與 queue header guidance 現在都預設以摘要或 disclosure 顯示，保留主要 owner actions，同時降低常駐次級細節的密度。
-- **豐富風格庫 (Rich Style Library)**：內建超過 40 種以上的影像風格 (如：賽博龐克、水彩、像素風、3D渲染等)。
-- **多國語系與深色模式 (I18n & Dark Mode)**：支援多語言介面切換，並可依喜好切換深/淺色主題。
-- **history-first 工作區 shell**：主畫面現已改為四區結構：top response rail、center history canvas、side tool panel、bottom composer。`Recent Turns` 已併入中心畫布的 recent lane，右側大型 context 區塊也已壓成 summary-first、可展開的 insights 結構，且不再在 timeline header 或 recent-turn filmstrip header 平行複製 gallery 或 prompt history 的 launcher。
+## 產品重點
 
-## 🛠️ 本機執行 (Run Locally)
+- 支援文字生圖、圖生圖、與風格導向生成
+- 內建 SketchPad 與影像編輯工作流
+- 提供 Smart Rewrite、Surprise Me 等提示詞增強工具
+- 支援批次探索、變體升格、與 branch 式延續
+- 支援歷史保存、工作區還原、匯入與 replay 回復
+- 支援 structured output 重用、provenance 檢視、與 insight 顯示
+- 支援多語系介面與明暗主題切換
 
-**環境要求：** Node.js (建議 v18 以上版本)
+## 支援模型
 
-1. **安裝依賴套件 (Install dependencies)：**
+Nano Banana Ultra 目前支援三條 Gemini 影像模型路徑，並會依模型能力顯示不同的控制選項，而不是用同一個表單硬套全部模型。
 
-    ```bash
-    npm install
-    ```
+### Nano Banana 2
 
-2. **環境變數設定 (Environment Setup)：**
-    - 複製專案內的 `.env.example` 檔案，並將其重新命名為 `.env.local`
-    - 將您的 Gemini API 金鑰填入剛建立的 `.env.local` 檔案中：
+- 模型 id：`gemini-3.1-flash-image-preview`
+- 目前產品主流程的預設模型
+- 支援從 `512` 到 `4K` 的解析度範圍與更廣的長寬比選擇
+- 支援 Google Search grounding 與 Image Search grounding
+- 在目前產品流程中支援 thinking level 選擇
+- 適合需要高彈性、較完整功能面、以及較多 grounding 路徑的生成工作
 
-        ```env
-        GEMINI_API_KEY=您的_API_KEY_填寫於此
-        ```
+### Nano Banana Pro
 
-    _(註：`.env.local` 已被 Git 忽略，因此直接填寫您的金鑰是安全的，不會被上傳到公開庫)_。
+- 模型 id：`gemini-3-pro-image-preview`
+- 偏向高品質輸出的進階路徑
+- 在目前產品中支援 `1K`、`2K`、`4K` 尺寸
+- 支援標準 Google Search grounding
+- 在產品支援的路徑中可搭配 structured output 類能力
+- 適合重視輸出品質、控制性、與較成熟工作流的使用者
 
-3. **啟動開發伺服器 (Run the app - Development Mode):**
+### Nano Banana
 
-    ```bash
-    npm run dev
-    ```
+- 模型 id：`gemini-2.5-flash-image`
+- 保留作為較輕量、較低延遲的生成路徑
+- 能力面比 Gemini 3 系列更精簡
+- 適合需求較單純、希望更快完成生成的情境
 
-4. **檢查本機 API 狀態 (Check local API health):**
+## 核心工作流
 
-    開啟下列網址確認後端路由與金鑰狀態：
+### 創作
 
-    ```text
-    http://127.0.0.1:22287/api/health
-    ```
+- 從文字 prompt 開始
+- 加入角色與物件參考圖
+- 選擇模型、比例、尺寸、風格與生成設定
+- 可以單張生成，也可以一次探索多個結果
 
-    正常回應範例：
+### 編輯
 
-    ```json
-    { "ok": true, "hasApiKey": true, "outputDir": "...", "timestamp": "..." }
-    ```
+- 把某張結果重新打開成下一輪工作來源
+- 使用內建 editor 工作流做影像細修
+- 透過 inpainting、outpainting 這類方式做局部調整
+- 不需要每次都從零重建整張圖
 
-5. **用接近正式環境的本機模式驗證 (Run local preview):**
+### 探索
 
-    ```bash
-    npm run build
-    npm run preview
-    ```
+- 比較同一輪生成下的多個 sibling variants
+- 在需要時只升格其中一張成為 active continuation source
+- 讓不同視覺方向能分支發展，而不是全部擠進同一條線
 
-    啟動後可再檢查：
+### 回復
 
-    ```text
-    http://127.0.0.1:4173/api/health
-    ```
+- 重新整理後可還原先前工作區狀態
+- 可匯入、replay 與延續過去保存的工作結果
+- 長流程工作時，歷史、來源、延續脈絡仍保持可見
 
-6. **打包正式環境版本 (Build for Production):**
+### 重用
 
-    ```bash
-    npm run build
-    ```
+- 從 structured output 擷取可重用的 prompt 素材
+- 在可用時查看 provenance 與 grounding 脈絡
+- 把有價值的結果直接回灌到下一輪，而不是手動重複複製整理
 
-    打包後的靜態檔不會包含 Gemini 金鑰。若要在非開發模式下繼續使用生成功能，仍需透過 `vite preview` 或自建 Node/Express 伺服器提供相同 API 路由。</details>
+## 版本總覽
 
-## 編輯器工具政策 (Editor Tooling)
+### 3.x
 
-- 這個 repo 目前最權威的 editor 訊號是 TypeScript。專案已提交 [tsconfig.json](tsconfig.json)，並使用 `node_modules/typescript` 內的 workspace TypeScript 版本。
-- Tailwind CSS IntelliSense 屬於 project-backed 工具，因為 [tailwind.config.js](tailwind.config.js) 與 [postcss.config.js](postcss.config.js) 都已提交並實際參與專案。
-- Playwright 屬於 project-backed 工具，因為 [playwright.config.ts](playwright.config.ts) 與 [package.json](package.json) 內的 `test:e2e` script 已接上本 repo。
-- 如果要只跑 restore owner-path 的聚焦子集，直接用 `npm run test:e2e:restore:owner-paths`，避免在 PowerShell 手打很長的 `--grep` 參數而誤跑整份 suite。
-- 如果要只跑 restore rename 流程或 provenance summary/detail 子集，直接用 `npm run test:e2e:restore:branch-rename` 與 `npm run test:e2e:restore:provenance`，不要再臨時手打冗長的 `--grep` 組合。
-- 如果要單獨驗證 restore replay 家族或 queued-batch restore panel，直接用 `npm run test:e2e:restore:replay` 與 `npm run test:e2e:restore:queued-batch`，避免每次手拼 grep 條件。
-- Prettier 現在已是這個 repo 的正式 formatter 規範。專案已提交 [prettier.config.mjs](prettier.config.mjs)、[.prettierignore](.prettierignore)，並在 [package.json](package.json) 提供 `format` 與 `format:check` scripts。
-- 專案層級的 VS Code 建議位於 [.vscode/extensions.json](.vscode/extensions.json) 與 [.vscode/settings.json](.vscode/settings.json)。目前這些設定也把本專案的 JS/TS/TSX 與相關文字格式綁到 Prettier formatter，作為 repo 規則的 editor 對應；而 [../Projects.code-workspace](../Projects.code-workspace) 也補上 `javascript` 與 `jsonc` 的 workspace-level fallback default formatter。
+3.x 版本包含 2.x 的全部能力，並把產品從單純的生成工具提升為以延續與工作脈絡為核心的影像工作區。
 
-### 目前的 Prettier 政策
+3.x 新增：
 
-Prettier 現在已不是單純的 workspace 偏好，而是 repo-backed 規則。格式化時應以專案提交的設定為準，明確執行時優先使用 repo scripts；VS Code 的 formatter 綁定只是把同一套規則落到編輯器中。ESLint 目前仍未被採用為 repo policy。
+- history-first 工作區 shell，重新整理 output、context、stage、composer 的空間分工
+- 更清楚的 branch、continue、source-active、reopen 語意
+- 可直接驅動下一輪 prompt 的 structured output 重用流程
+- 以摘要優先呈現的 provenance 與 insight 面板，並保留深層 drill-down
+- 更像任務系統的 queued-batch 呈現，而不是除錯面板
+- 收斂次級 surface，降低重複按鈕與視覺噪音
+- 更安全的本地 snapshot restore，能在可行時優先使用 file-backed recovery
+- restore、import、replay、continuity 流程整合得更完整，不再把不同操作壓成同一種泛用動作
 
-目前 working tree 仍有一批歷史格式債。`npm run format:check` 應視為盤點來源，後續格式整理要用小批、可 review 的 wave 進行，不要在無關功能修改時直接做全 repo write-format。
+### 2.x
 
----
+2.x 版本包含 1.x 的全部能力，並把產品擴展成更完整的創作工作區。
 
-_Built with React, Vite, and TailwindCSS. Powered by Google Gemini._
+2.x 新增：
+
+- 從早期以 Nano Banana Pro 為主的單一路徑，擴展成完整的 Nano Banana 模型家族
+- 雙軌參考圖區與拖放排序
+- 大容量永久本地 prompt history
+- 更成熟的 mobile 與 sidebar 行為修正
+- 自訂模型選擇 UI 與更完整的多語系支援
+- editor 版面優化與官方模型輸入限制處理
+- 全域主題與語言設定同步
+- 更完整的 tooltip 與整體 UI 一致性提升
+- 系統狀態監控與更安全的本機 API 金鑰處理
+- 更新後的 Gemini 模型命名與更清楚的執行健康狀態顯示
+- 讓產品從單點生成逐步變成更完整的創作介面
+
+### 1.x
+
+1.x 版本建立了 Nano Banana Ultra 的核心創作基礎。
+
+包含功能：
+
+- 以 Nano Banana Pro `gemini-3-pro-image-preview` 為核心的最初模型路徑
+- 早期影像編輯工作流
+- 塗鴉與草圖輔助創作
+- 初步多語系介面改進
+- 第一代 prompt 與 editor 介面整理
+- 建立 Nano Banana 作為影像創作工具的最初產品輪廓
+
+## 版本細節
+
+逐版本的 release 歷史請參考 [CHANGELOG.md](CHANGELOG.md).

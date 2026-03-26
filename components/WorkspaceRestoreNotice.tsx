@@ -1,10 +1,13 @@
 import React, { useRef } from 'react';
 import { WORKSPACE_OVERLAY_Z_INDEX } from '../constants/workspaceOverlays';
 import { getTranslation, Language } from '../utils/translations';
+import LanguageSelector from './LanguageSelector';
+import ThemeToggle from './ThemeToggle';
 import WorkspaceModalFrame from './WorkspaceModalFrame';
 
 type WorkspaceRestoreNoticeProps = {
     currentLanguage: Language;
+    onLanguageChange: (language: Language) => void;
     historyCount: number;
     stagedAssetCount: number;
     viewerImageCount: number;
@@ -19,6 +22,7 @@ type WorkspaceRestoreNoticeProps = {
 
 const WorkspaceRestoreNotice: React.FC<WorkspaceRestoreNoticeProps> = ({
     currentLanguage,
+    onLanguageChange,
     historyCount,
     stagedAssetCount,
     viewerImageCount,
@@ -33,18 +37,6 @@ const WorkspaceRestoreNotice: React.FC<WorkspaceRestoreNoticeProps> = ({
     const primaryActionRef = useRef<HTMLButtonElement>(null);
     const t = (key: string) => getTranslation(currentLanguage, key);
     const compactNeutralActionButtonClassName = 'nbu-control-button px-3 py-1.5 text-[11px] font-semibold';
-    const renderDisclosureChevron = () => (
-        <svg
-            aria-hidden="true"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            className="h-4 w-4 text-gray-400 transition-transform group-open:rotate-180 dark:text-gray-500"
-        >
-            <path d="M6 8l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-    );
     const effectiveContinueActionLabel = continueActionLabel || t('workspaceRestoreContinueChain');
     const summaryItems = [
         t('workspaceRestoreTurns').replace('{0}', String(historyCount)),
@@ -61,8 +53,14 @@ const WorkspaceRestoreNotice: React.FC<WorkspaceRestoreNoticeProps> = ({
             closeLabel={t('workspaceRestoreDismiss')}
             title={t('workspaceRestoreTitle')}
             description={t('workspaceRestoreRecoveredSummary')}
-            backdropClassName="bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.1),_transparent_34%),linear-gradient(180deg,rgba(255,251,235,0.94),rgba(255,255,255,0.98))] backdrop-blur-md dark:bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.12),_transparent_34%),rgba(15,23,42,0.78)]"
-            panelClassName="max-h-[calc(100vh-2rem)] overflow-y-auto border border-amber-200 bg-white px-6 py-6 shadow-[0_32px_120px_rgba(15,23,42,0.16)] dark:border-amber-500/20 dark:bg-[#0d1117] dark:shadow-[0_32px_120px_rgba(0,0,0,0.5)]"
+            headerExtra={
+                <div className="mt-4 flex items-center gap-3">
+                    <LanguageSelector currentLanguage={currentLanguage} onLanguageChange={onLanguageChange} />
+                    <ThemeToggle currentLanguage={currentLanguage} className="h-9 w-9" />
+                </div>
+            }
+            backdropClassName="bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.1),_transparent_34%),linear-gradient(180deg,rgba(255,251,235,0.9),rgba(255,255,255,0.94))] backdrop-blur-md dark:bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.1),_transparent_30%),linear-gradient(180deg,rgba(2,6,23,0.86),rgba(2,6,23,0.92))]"
+            panelClassName="max-h-[calc(100vh-2rem)] overflow-y-auto border border-amber-200/80 bg-[linear-gradient(180deg,rgba(255,252,246,0.98),rgba(255,247,232,0.96))] px-6 py-6 shadow-[0_32px_120px_rgba(15,23,42,0.16)] dark:border-amber-500/18 dark:bg-[linear-gradient(180deg,rgba(20,16,12,0.98),rgba(10,14,20,0.97))] dark:shadow-[0_32px_120px_rgba(0,0,0,0.5)]"
             headerClassName="flex flex-wrap items-start justify-between gap-4 border-b border-amber-100 pb-5 dark:border-amber-500/10"
             closeButtonClassName={compactNeutralActionButtonClassName}
             containerClassName="items-start justify-center overflow-y-auto sm:items-center"
@@ -74,14 +72,14 @@ const WorkspaceRestoreNotice: React.FC<WorkspaceRestoreNoticeProps> = ({
                     {summaryItems.map((item) => (
                         <div
                             key={item}
-                            className="rounded-2xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm font-semibold text-gray-800 dark:border-amber-500/20 dark:bg-amber-950/10 dark:text-gray-100"
+                            className="rounded-2xl border border-amber-200/80 bg-[linear-gradient(180deg,rgba(255,250,240,0.96),rgba(255,244,227,0.92))] px-4 py-3 text-sm font-semibold text-gray-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] dark:border-amber-500/18 dark:bg-[linear-gradient(180deg,rgba(56,38,11,0.42),rgba(28,22,14,0.38))] dark:text-gray-100 dark:shadow-[inset_0_1px_0_rgba(255,244,214,0.04)]"
                         >
                             {item}
                         </div>
                     ))}
                 </div>
 
-                <div className="rounded-[28px] border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-[#11161f]/88">
+                <div className="rounded-[28px] border border-gray-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(247,250,252,0.9))] p-5 shadow-[0_16px_48px_rgba(15,23,42,0.08)] dark:border-gray-700/80 dark:bg-[linear-gradient(180deg,rgba(23,28,36,0.94),rgba(14,18,24,0.9))] dark:shadow-[0_16px_48px_rgba(0,0,0,0.28)]">
                     <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
                         {t('workspaceRestoreActionsTitle')}
                     </div>
@@ -120,34 +118,18 @@ const WorkspaceRestoreNotice: React.FC<WorkspaceRestoreNoticeProps> = ({
                                 {t('workspaceRestoreBranch')}
                             </button>
                         )}
-                    </div>
-                    <details
-                        data-testid="workspace-restore-secondary-details"
-                        className="group mt-3 border-t border-dashed border-gray-200 pt-3 dark:border-gray-700/80"
-                    >
-                        <summary
-                            data-testid="workspace-restore-secondary-summary"
-                            className="flex cursor-pointer list-none items-center justify-between gap-3 marker:hidden"
+                        <button
+                            ref={
+                                !onOpenLatestTurn && !onContinueRestoredChain && !onBranchFromRestore
+                                    ? primaryActionRef
+                                    : undefined
+                            }
+                            onClick={onUseSettingsClearChain}
+                            className={compactNeutralActionButtonClassName}
                         >
-                            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">
-                                {t('workspaceRestoreUseSettingsClear')}
-                            </span>
-                            {renderDisclosureChevron()}
-                        </summary>
-                        <div className="mt-3">
-                            <button
-                                ref={
-                                    !onOpenLatestTurn && !onContinueRestoredChain && !onBranchFromRestore
-                                        ? primaryActionRef
-                                        : undefined
-                                }
-                                onClick={onUseSettingsClearChain}
-                                className={compactNeutralActionButtonClassName}
-                            >
-                                {t('workspaceRestoreUseSettingsClear')}
-                            </button>
-                        </div>
-                    </details>
+                            {t('workspaceRestoreUseSettingsClear')}
+                        </button>
+                    </div>
                 </div>
             </div>
         </WorkspaceModalFrame>

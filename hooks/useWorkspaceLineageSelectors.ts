@@ -21,6 +21,7 @@ export type ConversationSummary = {
     conversationIdShort: string;
     branchLabel: string;
     activeSourceShortId: string;
+    activeTurnNumber: number | null;
     turnCount: number;
     isCurrentStageSource: boolean;
 };
@@ -180,6 +181,16 @@ export function useWorkspaceLineageSelectors({
             ? collection.branchSummaryByOriginId[conversationBranchOriginId] || null
             : null;
         const conversationSourceTurn = getHistoryTurnById(conversationActiveSourceHistoryId);
+        const activeConversationTurnNumber =
+            typeof conversationSourceTurn?.conversationTurnIndex === 'number' &&
+            conversationSourceTurn.conversationTurnIndex >= 0
+                ? conversationSourceTurn.conversationTurnIndex + 1
+                : conversationActiveSourceHistoryId
+                  ? (() => {
+                        const turnIndex = conversationTurnIds.indexOf(conversationActiveSourceHistoryId);
+                        return turnIndex >= 0 ? turnIndex + 1 : null;
+                    })()
+                  : null;
         const conversationSummary: ConversationSummary | null = conversationId
             ? {
                   conversationIdShort: getShortTurnId(conversationId),
@@ -188,6 +199,7 @@ export function useWorkspaceLineageSelectors({
                       collection.branchLabelByOriginId[conversationBranchOriginId || ''] ||
                       getShortTurnId(conversationBranchOriginId),
                   activeSourceShortId: getShortTurnId(conversationActiveSourceHistoryId),
+                  activeTurnNumber: activeConversationTurnNumber,
                   turnCount: conversationTurnIds.length,
                   isCurrentStageSource: Boolean(
                       conversationActiveSourceHistoryId &&

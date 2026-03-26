@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Button from './Button';
 import HexagonHUD from './HexagonHUD';
-import { AspectRatio, ExecutionMode, ImageSize, ImageStyle, ImageModel } from '../types';
+import { AspectRatio, ExecutionMode, ImageSize, ImageStyle } from '../types';
 import { Language, getTranslation } from '../utils/translations';
 import { getExecutionModeLabel } from '../utils/executionMode';
 
@@ -13,13 +13,16 @@ interface GeneratedImageProps {
     actualOutputLabel?: string | null;
     resultStatusSummary?: string | null;
     resultStatusTone?: 'warning' | 'success' | null;
-    settings: {
+    settings?: {
         aspectRatio: AspectRatio;
         size: ImageSize;
         style: ImageStyle;
-        model: ImageModel;
         batchSize?: number;
     };
+    aspectRatio?: AspectRatio;
+    imageSize?: ImageSize;
+    imageStyle?: ImageStyle;
+    batchSize?: number;
     generationMode?: string;
     executionMode?: ExecutionMode;
     onEdit?: () => void;
@@ -44,6 +47,10 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
     resultStatusSummary,
     resultStatusTone,
     settings,
+    aspectRatio,
+    imageSize,
+    imageStyle,
+    batchSize,
     generationMode = 'Text to Image',
     executionMode = 'single-turn',
     onEdit,
@@ -59,6 +66,10 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
     onOpenViewer,
 }) => {
     const [isHovered, setIsHovered] = useState(false);
+    const resolvedAspectRatio = aspectRatio ?? settings?.aspectRatio;
+    const resolvedImageSize = imageSize ?? settings?.size;
+    const resolvedImageStyle = imageStyle ?? settings?.style;
+    const resolvedBatchSize = batchSize ?? settings?.batchSize;
 
     const t = (key: string) => getTranslation(currentLanguage, key);
 
@@ -74,7 +85,7 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
     const showFullLoading = isLoading && imageUrls.length === 0;
 
     // Calculate Progress
-    const totalBatch = settings.batchSize || 1;
+    const totalBatch = resolvedBatchSize || 1;
     const currentCount = imageUrls.length;
     // If loading, we are working on the next one (current + 1), capped at total
     const processingIndex = Math.min(currentCount + 1, totalBatch);
@@ -125,9 +136,9 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
         <div className="absolute top-4 right-4 z-30 flex flex-col items-end gap-2 pointer-events-none transition-opacity duration-300">
             {/* Row 1: Metadata Badges */}
             <div className="nbu-overlay-shell pointer-events-auto flex cursor-default items-center gap-0.5 px-3 py-1.5 text-[10px] font-bold text-gray-700 transition-colors sm:text-xs dark:text-gray-200">
-                <span className="text-amber-600 dark:text-amber-400">{settings.aspectRatio}</span>
+                <span className="text-amber-600 dark:text-amber-400">{resolvedAspectRatio}</span>
                 <span className="mx-1.5 opacity-30">|</span>
-                <span className="text-amber-500 dark:text-amber-200">{settings.size}</span>
+                <span className="text-amber-500 dark:text-amber-200">{resolvedImageSize}</span>
                 {actualOutputLabel && (
                     <>
                         <span className="mx-1.5 opacity-30">|</span>
@@ -136,19 +147,19 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
                         </span>
                     </>
                 )}
-                {settings.style !== 'None' && (
+                {resolvedImageStyle !== 'None' && resolvedImageStyle && (
                     <>
                         <span className="mx-1.5 opacity-30">|</span>
                         <span className="text-gray-900 dark:text-white opacity-90">
-                            {getStyleLabel(settings.style)}
+                            {getStyleLabel(resolvedImageStyle)}
                         </span>
                     </>
                 )}
-                {settings.batchSize && settings.batchSize > 1 && (
+                {resolvedBatchSize && resolvedBatchSize > 1 && (
                     <>
                         <span className="mx-1.5 opacity-30">|</span>
                         <span className="text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10 px-1 rounded">
-                            {settings.batchSize}x
+                            {resolvedBatchSize}x
                         </span>
                     </>
                 )}
@@ -374,7 +385,7 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
                 {isLoading && (
                     <div className="absolute inset-0 z-40 pointer-events-none animate-[fadeIn_0.3s_ease-out]">
                         {/* 1. Darken Background slightly to focus on scan */}
-                        <div className="absolute inset-0 bg-white/50 dark:bg-black/50 backdrop-blur-[2px] transition-all duration-500"></div>
+                        <div className="nbu-stage-hero-overlay-veil absolute inset-0 backdrop-blur-[2px] transition-all duration-500"></div>
 
                         {/* 2. Scanline Animation */}
                         <div className="absolute left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent shadow-[0_0_25px_rgba(251,191,36,1)] animate-scan z-10"></div>
@@ -437,7 +448,7 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
                 <div
                     className={`mt-3 rounded-2xl border px-4 py-3 text-xs leading-relaxed shadow-sm ${resultStatusClassName}`}
                 >
-                    <span className="mr-2 inline-flex rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-current dark:bg-black/20">
+                    <span className="nbu-stage-hero-status-pill mr-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-current">
                         {t('stageGroundingResultStatus')}
                     </span>
                     <span>{resultStatusSummary}</span>
@@ -463,7 +474,7 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
                             <img
                                 src={url}
                                 alt={`Variation ${idx + 1}`}
-                                className="w-full h-full object-cover bg-gray-100 dark:bg-black"
+                                className="nbu-stage-hero-thumb-media h-full w-full object-cover"
                             />
                             <div className="nbu-overlay-shell absolute top-1 left-1 rounded px-1.5 text-[8px] font-mono text-gray-800 dark:text-white">
                                 #{idx + 1}
@@ -472,7 +483,7 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
                     ))}
                     {/* Placeholder spinner for pending images */}
                     {isLoading && processingIndex > imageUrls.length && (
-                        <div className="aspect-square h-full rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-800 bg-gray-100 dark:bg-gray-900/40 flex items-center justify-center flex-shrink-0 animate-pulse">
+                        <div className="nbu-stage-hero-thumb-placeholder flex aspect-square h-full flex-shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-800 animate-pulse">
                             <div className="flex flex-col items-center gap-1">
                                 <div className="w-5 h-5 border-2 border-gray-400 dark:border-gray-600 border-t-amber-500 rounded-full animate-spin"></div>
                                 <span className="text-[9px] text-gray-400 dark:text-gray-500 font-mono">
@@ -487,4 +498,4 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
     );
 };
 
-export default GeneratedImage;
+export default React.memo(GeneratedImage);

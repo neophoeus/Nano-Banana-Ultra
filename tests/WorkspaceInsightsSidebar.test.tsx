@@ -173,6 +173,7 @@ describe('WorkspaceInsightsSidebar', () => {
                     conversationIdShort: 'conv-001',
                     branchLabel: 'Main',
                     activeSourceShortId: 'turn-a',
+                    activeTurnNumber: 2,
                     turnCount: 2,
                     isCurrentStageSource: true,
                 }}
@@ -295,8 +296,9 @@ describe('WorkspaceInsightsSidebar', () => {
         expect(markup).toContain('Processing queued import.');
         expect(markup).toContain('2/4');
         expect(markup).toContain('1 active');
-        expect(markup).toContain('1 import ready');
+        expect(markup).toContain('1 ready to import');
         expect(markup).toContain('1 closed with issues');
+        expect(markup).toContain('turn 2');
         expect(markup).toContain('Google Search + Image Search · Requested 4K · Actual 1K');
         expect(markup).toContain('Latest workflow entry');
         expect(markup).toContain('Earlier workflow entry');
@@ -428,6 +430,7 @@ describe('WorkspaceInsightsSidebar', () => {
                     conversationIdShort: 'conv-001',
                     branchLabel: 'Main',
                     activeSourceShortId: 'turn-a',
+                    activeTurnNumber: 2,
                     turnCount: 2,
                     isCurrentStageSource: false,
                 }}
@@ -468,6 +471,7 @@ describe('WorkspaceInsightsSidebar', () => {
         expect(markup).toContain('conversation-continuity-card');
         expect(markup).toContain('conversation-continuity-details');
         expect(markup).toContain('conversation-continuity-open');
+        expect(markup).toContain('turn 2');
         expect(markup).not.toContain('session-continuity-source-card');
     });
 });

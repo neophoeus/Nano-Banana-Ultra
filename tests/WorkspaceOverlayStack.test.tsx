@@ -7,6 +7,10 @@ vi.mock('../components/BranchRenameDialog', () => ({
     default: () => <div data-testid="mock-branch-rename-dialog" />,
 }));
 
+vi.mock('../components/ComposerAdvancedSettingsDialog', () => ({
+    default: () => <div data-testid="mock-composer-advanced-settings-dialog" />,
+}));
+
 vi.mock('../components/SurfaceSharedControls', () => ({
     default: () => <div data-testid="mock-surface-shared-controls" />,
 }));
@@ -39,6 +43,7 @@ describe('WorkspaceOverlayStack', () => {
                 surfaceSharedControlsProps={null}
                 restoreNoticeProps={null}
                 importReviewProps={null}
+                advancedSettingsDialogProps={null}
                 sketchPadSurface={null}
                 showSketchReplaceConfirm={false}
                 sketchReplaceTitle="Replace"
@@ -75,6 +80,7 @@ describe('WorkspaceOverlayStack', () => {
                 surfaceSharedControlsProps={null}
                 restoreNoticeProps={null}
                 importReviewProps={null}
+                advancedSettingsDialogProps={null}
                 sketchPadSurface={null}
                 showSketchReplaceConfirm={true}
                 sketchReplaceTitle="Replace Sketch?"

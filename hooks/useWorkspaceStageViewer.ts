@@ -1,7 +1,7 @@
 import { Dispatch, ReactNode, SetStateAction, useCallback, useMemo } from 'react';
 import type GeneratedImageStage from '../components/GeneratedImage';
 import type WorkspaceViewerOverlay from '../components/WorkspaceViewerOverlay';
-import { StructuredOutputMode } from '../types';
+import { ImageModel, StructuredOutputMode } from '../types';
 import { Language } from '../utils/translations';
 
 type SessionHintEntry = [string, unknown];
@@ -21,7 +21,13 @@ type UseWorkspaceStageViewerArgs = {
     actualOutputLabel: string | null;
     resultStatusSummary: string | null;
     resultStatusTone: 'warning' | 'success' | null;
-    settings: GeneratedImageStageProps['settings'];
+    settings: {
+        aspectRatio: GeneratedImageStageProps['aspectRatio'];
+        imageSize: GeneratedImageStageProps['imageSize'];
+        imageStyle: GeneratedImageStageProps['imageStyle'];
+        batchSize: GeneratedImageStageProps['batchSize'];
+        model: ImageModel;
+    };
     generationMode: GeneratedImageStageProps['generationMode'];
     executionMode: GeneratedImageStageProps['executionMode'];
     onGenerate: () => void;
@@ -137,7 +143,7 @@ export function useWorkspaceStageViewer({
                 generatedImageCount: generatedImageUrls.length,
                 prompt,
                 aspectRatio: settings.aspectRatio,
-                size: settings.size,
+                size: settings.imageSize,
                 styleLabel,
                 model: modelLabel,
                 effectiveResultText,
@@ -176,7 +182,7 @@ export function useWorkspaceStageViewer({
             provenancePanel,
             sessionHintEntries,
             settings.aspectRatio,
-            settings.size,
+            settings.imageSize,
             styleLabel,
             thoughtStateMessage,
         ],
@@ -192,7 +198,10 @@ export function useWorkspaceStageViewer({
                 actualOutputLabel,
                 resultStatusSummary,
                 resultStatusTone,
-                settings,
+                aspectRatio: settings.aspectRatio,
+                imageSize: settings.imageSize,
+                imageStyle: settings.imageStyle,
+                batchSize: settings.batchSize,
                 generationMode,
                 executionMode,
                 onGenerate,
@@ -204,7 +213,7 @@ export function useWorkspaceStageViewer({
                 onSelectImage: handleSelectGeneratedImage,
                 selectedImageUrl: generatedImageUrls[selectedImageIndex],
                 currentLanguage,
-                currentLog,
+                currentLog: isGenerating ? currentLog : '',
                 onOpenViewer: openViewer,
             }) satisfies GeneratedImageStageProps,
         [
@@ -228,7 +237,10 @@ export function useWorkspaceStageViewer({
             resultStatusSummary,
             resultStatusTone,
             selectedImageIndex,
-            settings,
+            settings.aspectRatio,
+            settings.batchSize,
+            settings.imageSize,
+            settings.imageStyle,
         ],
     );
 

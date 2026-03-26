@@ -67,6 +67,42 @@ interface UsePerformGenerationProps {
 }
 
 export function usePerformGeneration(options: UsePerformGenerationProps) {
+    const {
+        t,
+        apiKeyReady,
+        setApiKeyReady,
+        handleApiKeyConnect,
+        setIsGenerating,
+        setError,
+        setGeneratedImageUrls,
+        setSelectedImageIndex,
+        setLogs,
+        addLog,
+        abortControllerRef,
+        objectImages,
+        characterImages,
+        batchSize,
+        aspectRatio,
+        outputFormat,
+        structuredOutputMode,
+        temperature,
+        thinkingLevel,
+        includeThoughts,
+        googleSearch,
+        imageSearch,
+        setBatchProgress,
+        setGenerationMode,
+        setExecutionMode,
+        setDisplaySettings,
+        showNotification,
+        setHistory,
+        setIsEditing,
+        setEditingImageSource,
+        addPromptToHistory,
+        getGenerationLineageContext,
+        getConversationRequestContext,
+    } = options;
+
     const performGeneration = useCallback(
         async (
             targetPrompt: string,
@@ -81,42 +117,6 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
             extraObjectImages?: string[],
             extraCharacterImages?: string[],
         ) => {
-            const {
-                t,
-                apiKeyReady,
-                setApiKeyReady,
-                handleApiKeyConnect,
-                setIsGenerating,
-                setError,
-                setGeneratedImageUrls,
-                setSelectedImageIndex,
-                setLogs,
-                addLog,
-                abortControllerRef,
-                objectImages,
-                characterImages,
-                batchSize,
-                aspectRatio,
-                outputFormat,
-                structuredOutputMode,
-                temperature,
-                thinkingLevel,
-                includeThoughts,
-                googleSearch,
-                imageSearch,
-                setBatchProgress,
-                setGenerationMode,
-                setExecutionMode,
-                setDisplaySettings,
-                showNotification,
-                setHistory,
-                setIsEditing,
-                setEditingImageSource,
-                addPromptToHistory,
-                getGenerationLineageContext,
-                getConversationRequestContext,
-            } = options;
-
             const isStyleTransfer =
                 (objectImages.length > 0 || characterImages.length > 0) && targetStyle !== 'None' && !editingInput;
 
@@ -262,53 +262,53 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                     (completed, total) => setBatchProgress({ completed, total }),
                 );
 
-                const newHistoryItems: GeneratedImageType[] = await Promise.all(
-                    results.map(async (res) => {
-                        let thumbnailUrl = '';
-                        if (res.status === 'success' && res.url) {
-                            try {
-                                thumbnailUrl = await generateThumbnail(res.url);
-                            } catch {
-                                thumbnailUrl = res.url;
-                            }
+                const newHistoryItems: GeneratedImageType[] = [];
+                for (const res of results) {
+                    let thumbnailUrl = '';
+                    if (res.status === 'success' && res.url) {
+                        try {
+                            thumbnailUrl = await generateThumbnail(res.url);
+                        } catch {
+                            thumbnailUrl = res.url;
                         }
-                        return {
-                            id: crypto.randomUUID(),
-                            url: thumbnailUrl,
-                            prompt: finalPrompt || 'Auto-fill',
-                            aspectRatio: effectiveAspectRatio || '1:1',
-                            size: currentImageSize,
-                            style: targetStyle,
-                            model: targetModel,
-                            createdAt: Date.now(),
-                            mode: currentMode,
-                            executionMode: currentExecutionMode,
-                            variantGroupId,
-                            status: res.status,
-                            error: res.error,
-                            savedFilename: res.savedFilename,
-                            text: res.text,
-                            thoughts: res.thoughts,
-                            structuredData: res.structuredData,
-                            metadata: res.metadata,
-                            grounding: res.grounding,
-                            sessionHints: res.sessionHints,
-                            conversationId: res.conversation?.conversationId || null,
-                            conversationBranchOriginId:
-                                res.conversation?.branchOriginId || conversationContext?.branchOriginId || null,
-                            conversationSourceHistoryId: conversationContext?.activeSourceHistoryId || null,
-                            conversationTurnIndex:
-                                currentExecutionMode === 'chat-continuation'
-                                    ? conversationContext?.priorTurns.length || 0
-                                    : null,
-                            parentHistoryId: generationLineage?.parentHistoryId || null,
-                            rootHistoryId: generationLineage?.rootHistoryId || null,
-                            sourceHistoryId: generationLineage?.sourceHistoryId || null,
-                            lineageAction: generationLineage?.lineageAction || 'root',
-                            lineageDepth: generationLineage?.lineageDepth || 0,
-                        } as GeneratedImageType;
-                    }),
-                );
+                    }
+
+                    newHistoryItems.push({
+                        id: crypto.randomUUID(),
+                        url: thumbnailUrl,
+                        prompt: finalPrompt || 'Auto-fill',
+                        aspectRatio: effectiveAspectRatio || '1:1',
+                        size: currentImageSize,
+                        style: targetStyle,
+                        model: targetModel,
+                        createdAt: Date.now(),
+                        mode: currentMode,
+                        executionMode: currentExecutionMode,
+                        variantGroupId,
+                        status: res.status,
+                        error: res.error,
+                        savedFilename: res.savedFilename,
+                        text: res.text,
+                        thoughts: res.thoughts,
+                        structuredData: res.structuredData,
+                        metadata: res.metadata,
+                        grounding: res.grounding,
+                        sessionHints: res.sessionHints,
+                        conversationId: res.conversation?.conversationId || null,
+                        conversationBranchOriginId:
+                            res.conversation?.branchOriginId || conversationContext?.branchOriginId || null,
+                        conversationSourceHistoryId: conversationContext?.activeSourceHistoryId || null,
+                        conversationTurnIndex:
+                            currentExecutionMode === 'chat-continuation'
+                                ? conversationContext?.priorTurns.length || 0
+                                : null,
+                        parentHistoryId: generationLineage?.parentHistoryId || null,
+                        rootHistoryId: generationLineage?.rootHistoryId || null,
+                        sourceHistoryId: generationLineage?.sourceHistoryId || null,
+                        lineageAction: generationLineage?.lineageAction || 'root',
+                        lineageDepth: generationLineage?.lineageDepth || 0,
+                    } as GeneratedImageType);
+                }
 
                 setHistory((prev: GeneratedImageType[]) => [...newHistoryItems, ...prev]);
 
@@ -350,7 +350,41 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                 setBatchProgress({ completed: 0, total: 0 });
             }
         },
-        [options],
+        [
+            abortControllerRef,
+            addLog,
+            addPromptToHistory,
+            apiKeyReady,
+            aspectRatio,
+            batchSize,
+            characterImages,
+            getConversationRequestContext,
+            getGenerationLineageContext,
+            googleSearch,
+            handleApiKeyConnect,
+            imageSearch,
+            includeThoughts,
+            objectImages,
+            outputFormat,
+            setApiKeyReady,
+            setBatchProgress,
+            setDisplaySettings,
+            setEditingImageSource,
+            setError,
+            setExecutionMode,
+            setGeneratedImageUrls,
+            setGenerationMode,
+            setHistory,
+            setIsEditing,
+            setIsGenerating,
+            setLogs,
+            setSelectedImageIndex,
+            showNotification,
+            structuredOutputMode,
+            t,
+            temperature,
+            thinkingLevel,
+        ],
     );
 
     return { performGeneration };

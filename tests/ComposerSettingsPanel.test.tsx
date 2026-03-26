@@ -1,6 +1,7 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
+import ComposerAdvancedSettingsDialog from '../components/ComposerAdvancedSettingsDialog';
 import ComposerSettingsPanel from '../components/ComposerSettingsPanel';
 import { MODEL_CAPABILITIES } from '../constants';
 
@@ -63,11 +64,33 @@ const baseProps = {
     getLineageActionLabel: () => 'Root',
 };
 
-describe('ComposerSettingsPanel grounding warning', () => {
-    it('shows the image-search resolution warning for 3.1 Flash image grounding', () => {
+describe('ComposerSettingsPanel toolbar layout', () => {
+    it('keeps advanced settings alongside the quick tools while workspace tools stay focused on import/export', () => {
         const markup = renderToStaticMarkup(
             <ComposerSettingsPanel
                 {...baseProps}
+                groundingMode="off"
+                imageModel="gemini-3.1-flash-image-preview"
+                capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
+            />,
+        );
+
+        expect(markup).toContain('composer-quick-tools');
+        expect(markup).toContain('composer-workspace-tools');
+        expect(markup).toContain('Advanced settings');
+        expect(markup).toContain('Export Workspace');
+        expect(markup).toContain('Import Workspace');
+        expect(markup).not.toContain('border-amber-200 bg-amber-50');
+    });
+});
+
+describe('ComposerAdvancedSettingsDialog grounding warning', () => {
+    it('shows the image-search resolution warning for 3.1 Flash image grounding', () => {
+        const markup = renderToStaticMarkup(
+            <ComposerAdvancedSettingsDialog
+                {...baseProps}
+                isOpen={true}
+                onClose={vi.fn()}
                 groundingMode="google-search-plus-image-search"
                 imageModel="gemini-3.1-flash-image-preview"
                 capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
@@ -80,29 +103,16 @@ describe('ComposerSettingsPanel grounding warning', () => {
         expect(markup).toContain('composer-advanced-grounding-guide-details');
         expect(markup).toContain('composer-advanced-grounding-guide-summary');
         expect(markup).toContain('composer-advanced-grounding-guide-count');
-        expect(markup).toContain('composer-queue-summary-details');
-        expect(markup).toContain('composer-queue-summary-summary');
-        expect(markup).toContain('composer-queue-summary-workflow-hint');
-        expect(markup).toContain('composer-queue-summary-notice');
         expect(markup).toContain('group-open:rotate-180');
         expect(markup).toContain('3 notes');
-        expect(markup).toContain('Queued Batch Jobs');
-        expect(markup).toContain('Queued batch runs as a separate official job workflow.');
-        expect(markup).toContain(
-            'Monitor the queue here, pull finished results into history when they are ready, then clear the entry once the workflow is done.',
-        );
-        expect(markup).toContain('Continuity note');
-        expect(markup).toContain('Official chat continuation stays out of queued batch mode.');
-        expect(markup).toContain('composer-quick-tools');
-        expect(markup).toContain('composer-workspace-tools');
-        expect(markup).not.toContain('Reference Tray');
-        expect(markup).not.toContain('Open Editor');
     });
 
     it('does not show the warning for 3 Pro Google Search grounding', () => {
         const markup = renderToStaticMarkup(
-            <ComposerSettingsPanel
+            <ComposerAdvancedSettingsDialog
                 {...baseProps}
+                isOpen={true}
+                onClose={vi.fn()}
                 groundingMode="google-search"
                 imageModel="gemini-3-pro-image-preview"
                 capability={MODEL_CAPABILITIES['gemini-3-pro-image-preview']}
@@ -119,8 +129,10 @@ describe('ComposerSettingsPanel grounding warning', () => {
 
     it('shows a structured output guide card when the selected model supports structured outputs', () => {
         const markup = renderToStaticMarkup(
-            <ComposerSettingsPanel
+            <ComposerAdvancedSettingsDialog
                 {...baseProps}
+                isOpen={true}
+                onClose={vi.fn()}
                 groundingMode="google-search"
                 imageModel="gemini-3-pro-image-preview"
                 capability={MODEL_CAPABILITIES['gemini-3-pro-image-preview']}
@@ -162,8 +174,10 @@ describe('ComposerSettingsPanel grounding warning', () => {
 
     it('shows revision-brief guidance when that preset is selected', () => {
         const markup = renderToStaticMarkup(
-            <ComposerSettingsPanel
+            <ComposerAdvancedSettingsDialog
                 {...baseProps}
+                isOpen={true}
+                onClose={vi.fn()}
                 groundingMode="google-search"
                 imageModel="gemini-3-pro-image-preview"
                 capability={MODEL_CAPABILITIES['gemini-3-pro-image-preview']}
@@ -196,8 +210,10 @@ describe('ComposerSettingsPanel grounding warning', () => {
 
     it('localizes shell action labels outside English', () => {
         const markup = renderToStaticMarkup(
-            <ComposerSettingsPanel
+            <ComposerAdvancedSettingsDialog
                 {...baseProps}
+                isOpen={true}
+                onClose={vi.fn()}
                 currentLanguage="ja"
                 isGenerating
                 groundingMode="google-search"
@@ -207,13 +223,11 @@ describe('ComposerSettingsPanel grounding warning', () => {
             />,
         );
 
-        expect(markup).toContain('アクション');
-        expect(markup).toContain('作成');
         expect(markup).toContain('詳細操作');
-        expect(markup).toContain('キャンセル');
-        expect(markup).not.toContain('>Actions<');
-        expect(markup).not.toContain('>Create<');
+        expect(markup).toContain('機能対応の詳細設定');
+        expect(markup).toContain('閉じる');
         expect(markup).not.toContain('>Deep Controls<');
-        expect(markup).not.toContain('>Cancel<');
+        expect(markup).not.toContain('>Advanced settings<');
+        expect(markup).not.toContain('>Close<');
     });
 });

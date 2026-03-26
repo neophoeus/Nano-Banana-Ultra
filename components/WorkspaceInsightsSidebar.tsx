@@ -57,6 +57,7 @@ type WorkspaceInsightsSidebarProps = {
         conversationIdShort: string;
         branchLabel: string;
         activeSourceShortId: string;
+        activeTurnNumber: number | null;
         turnCount: number;
         isCurrentStageSource: boolean;
     } | null;
@@ -109,7 +110,7 @@ type WorkspaceInsightsSidebarProps = {
     formatSessionHintValue: (value: unknown) => string;
 };
 
-export default function WorkspaceInsightsSidebar({
+function WorkspaceInsightsSidebar({
     currentLanguage,
     provenancePanel,
     provenanceStatusLabel,
@@ -282,7 +283,7 @@ export default function WorkspaceInsightsSidebar({
             {conversationSummary && (
                 <div
                     data-testid="conversation-continuity-card"
-                    className="rounded-2xl border border-sky-200/80 bg-[linear-gradient(180deg,rgba(240,249,255,0.96),rgba(255,255,255,0.96))] px-3 py-3 shadow-[0_12px_28px_rgba(14,165,233,0.08)] dark:border-sky-500/20 dark:bg-[linear-gradient(180deg,rgba(8,28,37,0.74),rgba(16,20,27,0.96))] dark:shadow-none"
+                    className="nbu-context-rail-callout rounded-2xl border px-3 py-3"
                 >
                     <div className="flex flex-wrap items-center gap-2">
                         <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">
@@ -294,6 +295,17 @@ export default function WorkspaceInsightsSidebar({
                         <span className="nbu-chip px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:text-gray-400">
                             {t('workspaceInsightsTurnsCount').replace('{0}', String(conversationSummary.turnCount))}
                         </span>
+                        {conversationSummary.activeTurnNumber !== null && (
+                            <span
+                                data-testid="conversation-turn-position-badge"
+                                className="nbu-chip px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:text-gray-400"
+                            >
+                                {t('workspaceInsightsConversationTurnPosition').replace(
+                                    '{0}',
+                                    String(conversationSummary.activeTurnNumber),
+                                )}
+                            </span>
+                        )}
                         {conversationSummary.isCurrentStageSource && (
                             <span
                                 data-testid="conversation-stage-source-badge"
@@ -419,7 +431,10 @@ export default function WorkspaceInsightsSidebar({
     );
 
     return (
-        <aside data-testid="context-system-panel" className="nbu-shell-panel overflow-hidden p-4 lg:min-h-0">
+        <aside
+            data-testid="context-system-panel"
+            className="nbu-shell-panel nbu-shell-surface-context-rail overflow-hidden p-4 lg:min-h-0"
+        >
             <div className="flex flex-col gap-5">
                 <div>
                     <div className="flex items-start justify-between gap-3">
@@ -1179,3 +1194,5 @@ export default function WorkspaceInsightsSidebar({
         </aside>
     );
 }
+
+export default React.memo(WorkspaceInsightsSidebar);

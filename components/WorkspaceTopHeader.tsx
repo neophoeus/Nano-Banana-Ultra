@@ -26,7 +26,7 @@ type WorkspaceTopHeaderProps = {
     onOpenBatchPicker: () => void;
 };
 
-export default function WorkspaceTopHeader({
+function WorkspaceTopHeader({
     headerConsole,
     currentLanguage,
     onLanguageChange,
@@ -54,7 +54,7 @@ export default function WorkspaceTopHeader({
     return (
         <>
             <header className="relative z-30 shrink-0">
-                <div className="nbu-shell-panel relative z-30 mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-3 rounded-full px-4 py-3">
+                <div className="nbu-shell-panel nbu-shell-surface-header relative z-30 mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-3 rounded-full px-4 py-3">
                     <div className="flex items-center gap-3 rounded-full bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 px-4 py-2 text-sm font-black uppercase tracking-[0.22em] text-black shadow-lg">
                         <span>NBU</span>
                         <span className="hidden sm:inline">Nano Banana Ultra</span>
@@ -65,7 +65,7 @@ export default function WorkspaceTopHeader({
                 </div>
             </header>
 
-            <section className="nbu-shell-panel relative z-10 shrink-0 px-4 py-3">
+            <section className="nbu-shell-panel nbu-shell-surface-header relative z-10 shrink-0 px-4 py-3">
                 <div className="flex flex-wrap items-start justify-between gap-3 lg:flex-nowrap lg:items-center">
                     <div className="nbu-subpanel min-w-0 flex-1 p-2">
                         <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -169,3 +169,5 @@ export default function WorkspaceTopHeader({
         </>
     );
 }
+
+export default React.memo(WorkspaceTopHeader);

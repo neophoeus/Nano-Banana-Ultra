@@ -12,7 +12,7 @@ type BranchSummary = {
 type RecentHistoryFilmstripProps = {
     recentHistory: GeneratedImage[];
     branchCount: number;
-    generatedImageUrls: string[];
+    activeStageImageUrl: string | null;
     currentStageSourceHistoryId: string | null;
     branchOriginIdByTurnId: Record<string, string>;
     branchLabelByTurnId: Record<string, string>;
@@ -37,10 +37,10 @@ type RecentHistoryFilmstripProps = {
     }) => React.ReactNode;
 };
 
-export default function RecentHistoryFilmstrip({
+function RecentHistoryFilmstrip({
     recentHistory,
     branchCount,
-    generatedImageUrls,
+    activeStageImageUrl,
     currentStageSourceHistoryId,
     branchOriginIdByTurnId,
     branchLabelByTurnId,
@@ -85,7 +85,7 @@ export default function RecentHistoryFilmstrip({
         .replace('{1}', String(branchCount));
 
     return (
-        <div className="rounded-[24px] border border-gray-200/60 bg-white/55 p-3 dark:border-gray-800/80 dark:bg-[#0c1016]/60">
+        <div className="nbu-stage-hero-filmstrip-shell rounded-[24px] border p-3">
             <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                     <h3
@@ -96,7 +96,7 @@ export default function RecentHistoryFilmstrip({
                     </h3>
                     <details
                         data-testid="filmstrip-desc-details"
-                        className="group mt-1 max-w-[42rem] rounded-2xl border border-gray-200/70 bg-white/60 px-3 py-2 dark:border-gray-700/80 dark:bg-[#11161f]/70"
+                        className="nbu-stage-hero-filmstrip-disclosure group mt-1 max-w-[42rem] rounded-2xl border px-3 py-2"
                     >
                         <summary
                             data-testid="filmstrip-desc-summary"
@@ -118,7 +118,7 @@ export default function RecentHistoryFilmstrip({
                 <div className="flex flex-wrap items-center gap-2">
                     <span
                         data-testid="filmstrip-summary"
-                        className="rounded-full border border-gray-200/80 bg-white/70 px-3 py-1 text-[11px] font-semibold text-gray-500 dark:border-gray-700 dark:bg-[#121821] dark:text-gray-300"
+                        className="nbu-stage-hero-filmstrip-summary rounded-full border px-3 py-1 text-[11px] font-semibold text-gray-500 dark:text-gray-300"
                     >
                         {summaryLabel}
                     </span>
@@ -139,7 +139,7 @@ export default function RecentHistoryFilmstrip({
                 <div className="flex gap-2.5 overflow-x-auto pb-1">
                     {recentHistory.map((item) => {
                         const isFailed = item.status === 'failed';
-                        const isActive = !isFailed && generatedImageUrls.includes(item.url);
+                        const isActive = !isFailed && activeStageImageUrl === item.url;
                         const isCurrentStageSource = currentStageSourceHistoryId === item.id;
                         const isQueuedBatchHistoryItem = item.executionMode === 'queued-batch-job';
                         const queuedBatchPositionLabel = getQueuedBatchPositionLabel(item);
@@ -273,3 +273,5 @@ export default function RecentHistoryFilmstrip({
         </div>
     );
 }
+
+export default React.memo(RecentHistoryFilmstrip);

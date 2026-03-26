@@ -5,6 +5,7 @@ import { BranchSummary } from '../utils/lineage';
 import { GeneratedImage } from '../types';
 import { getExecutionModeLabel } from '../utils/executionMode';
 import { getTranslation, Language } from '../utils/translations';
+import ThemeToggle from './ThemeToggle';
 import WorkspaceModalFrame from './WorkspaceModalFrame';
 
 type WorkspaceImportReviewProps = {
@@ -165,13 +166,18 @@ const WorkspaceImportReview: React.FC<WorkspaceImportReviewProps> = ({
             eyebrow={t('workspaceImportReviewEyebrow')}
             title={t('workspaceImportReviewTitle')}
             description={t('workspaceImportReviewDesc')}
+            headerExtra={
+                <div className="mt-4 flex items-center gap-3">
+                    <ThemeToggle currentLanguage={currentLanguage} className="h-9 w-9" />
+                </div>
+            }
             backdropClassName="bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.16),_transparent_36%),rgba(15,23,42,0.7)] backdrop-blur-md"
-            panelClassName="max-h-[calc(100vh-2rem)] overflow-y-auto border border-amber-100 bg-white/98 p-6 shadow-[0_32px_120px_rgba(15,23,42,0.28)] dark:border-amber-500/10 dark:bg-[#0d1117]/98 dark:shadow-[0_32px_120px_rgba(0,0,0,0.48)]"
+            panelClassName="max-h-[calc(100vh-2rem)] overflow-y-auto border border-amber-200/80 bg-[linear-gradient(180deg,rgba(255,252,246,0.98),rgba(255,247,232,0.96))] p-6 shadow-[0_32px_120px_rgba(15,23,42,0.28)] dark:border-amber-500/18 dark:bg-[linear-gradient(180deg,rgba(20,16,12,0.98),rgba(10,14,20,0.97))] dark:shadow-[0_32px_120px_rgba(0,0,0,0.48)]"
             headerClassName="flex flex-wrap items-start justify-between gap-4 border-b border-amber-100 pb-5 dark:border-amber-500/10"
             containerClassName="items-start justify-center overflow-y-auto sm:items-center"
         >
             <div className="grid gap-3 md:grid-cols-4">
-                <div className="rounded-2xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white px-4 py-3 dark:border-amber-500/10 dark:from-amber-950/10 dark:to-[#11161f]">
+                <div className="rounded-2xl border border-amber-200/80 bg-[linear-gradient(180deg,rgba(255,250,240,0.96),rgba(255,244,227,0.92))] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] dark:border-amber-500/18 dark:bg-[linear-gradient(180deg,rgba(56,38,11,0.42),rgba(28,22,14,0.38))] dark:shadow-[inset_0_1px_0_rgba(255,244,214,0.04)]">
                     <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-200">
                         {t('workspaceImportReviewFile')}
                     </div>
@@ -179,7 +185,7 @@ const WorkspaceImportReview: React.FC<WorkspaceImportReviewProps> = ({
                         {review.fileName}
                     </div>
                 </div>
-                <div className="rounded-2xl border border-gray-200 bg-gray-50/90 px-4 py-3 dark:border-gray-800 dark:bg-[#11161f]">
+                <div className="rounded-2xl border border-gray-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(247,250,252,0.92))] px-4 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.06)] dark:border-gray-700/80 dark:bg-[linear-gradient(180deg,rgba(23,28,36,0.94),rgba(14,18,24,0.9))] dark:shadow-[0_12px_30px_rgba(0,0,0,0.22)]">
                     <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
                         {t('workspaceImportReviewTurns')}
                     </div>
@@ -187,7 +193,7 @@ const WorkspaceImportReview: React.FC<WorkspaceImportReviewProps> = ({
                         {review.snapshot.history.length}
                     </div>
                 </div>
-                <div className="rounded-2xl border border-gray-200 bg-gray-50/90 px-4 py-3 dark:border-gray-800 dark:bg-[#11161f]">
+                <div className="rounded-2xl border border-gray-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(247,250,252,0.92))] px-4 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.06)] dark:border-gray-700/80 dark:bg-[linear-gradient(180deg,rgba(23,28,36,0.94),rgba(14,18,24,0.9))] dark:shadow-[0_12px_30px_rgba(0,0,0,0.22)]">
                     <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
                         {t('workspaceImportReviewBranches')}
                     </div>
@@ -195,7 +201,7 @@ const WorkspaceImportReview: React.FC<WorkspaceImportReviewProps> = ({
                         {importedBranchSummaries.length}
                     </div>
                 </div>
-                <div className="rounded-2xl border border-gray-200 bg-gray-50/90 px-4 py-3 dark:border-gray-800 dark:bg-[#11161f]">
+                <div className="rounded-2xl border border-gray-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(247,250,252,0.92))] px-4 py-3 shadow-[0_12px_30px_rgba(15,23,42,0.06)] dark:border-gray-700/80 dark:bg-[linear-gradient(180deg,rgba(23,28,36,0.94),rgba(14,18,24,0.9))] dark:shadow-[0_12px_30px_rgba(0,0,0,0.22)]">
                     <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
                         {t('workspaceImportReviewStagedAssets')}
                     </div>
@@ -206,12 +212,12 @@ const WorkspaceImportReview: React.FC<WorkspaceImportReviewProps> = ({
             </div>
 
             <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-                <div className="rounded-[28px] border border-amber-100 bg-gradient-to-br from-amber-50/80 to-white p-5 dark:border-amber-500/10 dark:from-amber-950/10 dark:to-[#11161f]">
+                <div className="rounded-[28px] border border-amber-200/80 bg-[linear-gradient(180deg,rgba(255,250,240,0.94),rgba(255,245,230,0.9))] p-5 shadow-[0_18px_48px_rgba(245,158,11,0.1)] dark:border-amber-500/18 dark:bg-[linear-gradient(180deg,rgba(56,38,11,0.4),rgba(20,19,24,0.92))] dark:shadow-[0_18px_48px_rgba(0,0,0,0.22)]">
                     <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-200">
                         {t('workspaceImportReviewSnapshotSummary')}
                     </div>
                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                        <div className="rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-[0_14px_35px_rgba(15,23,42,0.06)] dark:border-gray-800 dark:bg-[#0d1117]">
+                        <div className="rounded-2xl border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(250,250,252,0.88))] px-4 py-3 shadow-[0_14px_35px_rgba(15,23,42,0.06)] dark:border-gray-700/80 dark:bg-[linear-gradient(180deg,rgba(23,28,36,0.92),rgba(14,18,24,0.9))]">
                             <div className="text-xs font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
                                 {t('workspaceImportReviewViewerImages')}
                             </div>
@@ -219,7 +225,7 @@ const WorkspaceImportReview: React.FC<WorkspaceImportReviewProps> = ({
                                 {review.snapshot.viewState.generatedImageUrls.length}
                             </div>
                         </div>
-                        <div className="rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-[0_14px_35px_rgba(15,23,42,0.06)] dark:border-gray-800 dark:bg-[#0d1117]">
+                        <div className="rounded-2xl border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(250,250,252,0.88))] px-4 py-3 shadow-[0_14px_35px_rgba(15,23,42,0.06)] dark:border-gray-700/80 dark:bg-[linear-gradient(180deg,rgba(23,28,36,0.92),rgba(14,18,24,0.9))]">
                             <div className="text-xs font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
                                 {t('promptLabel')}
                             </div>
@@ -227,7 +233,7 @@ const WorkspaceImportReview: React.FC<WorkspaceImportReviewProps> = ({
                                 {review.snapshot.composerState.prompt || t('workspaceImportReviewNoPromptSaved')}
                             </div>
                         </div>
-                        <div className="rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-[0_14px_35px_rgba(15,23,42,0.06)] dark:border-gray-800 dark:bg-[#0d1117]">
+                        <div className="rounded-2xl border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(250,250,252,0.88))] px-4 py-3 shadow-[0_14px_35px_rgba(15,23,42,0.06)] dark:border-gray-700/80 dark:bg-[linear-gradient(180deg,rgba(23,28,36,0.92),rgba(14,18,24,0.9))]">
                             <div className="text-xs font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
                                 {t('workspaceImportReviewLatestTurn')}
                             </div>
@@ -247,7 +253,7 @@ const WorkspaceImportReview: React.FC<WorkspaceImportReviewProps> = ({
                                 </div>
                             )}
                         </div>
-                        <div className="rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-[0_14px_35px_rgba(15,23,42,0.06)] dark:border-gray-800 dark:bg-[#0d1117]">
+                        <div className="rounded-2xl border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(250,250,252,0.88))] px-4 py-3 shadow-[0_14px_35px_rgba(15,23,42,0.06)] dark:border-gray-700/80 dark:bg-[linear-gradient(180deg,rgba(23,28,36,0.92),rgba(14,18,24,0.9))]">
                             <div className="text-xs font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
                                 {t('workspaceImportReviewSessionContinuity')}
                             </div>
@@ -266,7 +272,7 @@ const WorkspaceImportReview: React.FC<WorkspaceImportReviewProps> = ({
                     </div>
                 </div>
 
-                <div className="rounded-[28px] border border-gray-200 bg-gray-50/90 p-5 dark:border-gray-800 dark:bg-[#11161f]">
+                <div className="rounded-[28px] border border-gray-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(245,248,251,0.9))] p-5 shadow-[0_16px_48px_rgba(15,23,42,0.08)] dark:border-gray-700/80 dark:bg-[linear-gradient(180deg,rgba(23,28,36,0.94),rgba(14,18,24,0.9))] dark:shadow-[0_16px_48px_rgba(0,0,0,0.28)]">
                     <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
                         {t('workspaceImportReviewBranchPreview')}
                     </div>
@@ -276,7 +282,7 @@ const WorkspaceImportReview: React.FC<WorkspaceImportReviewProps> = ({
                                 <details
                                     key={branch.branchOriginId}
                                     data-testid={`import-review-branch-details-${branch.branchOriginId}`}
-                                    className="group rounded-2xl border border-white/80 bg-white/92 px-4 py-3 shadow-[0_14px_35px_rgba(15,23,42,0.06)] dark:border-gray-800 dark:bg-[#0d1117]"
+                                    className="group rounded-2xl border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(250,250,252,0.88))] px-4 py-3 shadow-[0_14px_35px_rgba(15,23,42,0.06)] dark:border-gray-700/80 dark:bg-[linear-gradient(180deg,rgba(23,28,36,0.92),rgba(14,18,24,0.9))]"
                                 >
                                     <summary
                                         data-testid={`import-review-branch-summary-${branch.branchOriginId}`}
@@ -340,7 +346,7 @@ const WorkspaceImportReview: React.FC<WorkspaceImportReviewProps> = ({
                                         {(onReplaceAndOpenBranchLatest ||
                                             onReplaceAndContinueBranchLatest ||
                                             onReplaceAndBranchFromBranchLatest) && (
-                                            <div className="mt-3 rounded-2xl border border-dashed border-gray-200 bg-gray-50/70 p-3 dark:border-gray-700 dark:bg-[#11161f]/70">
+                                            <div className="mt-3 rounded-2xl border border-dashed border-gray-200/80 bg-[linear-gradient(180deg,rgba(247,250,252,0.88),rgba(241,245,249,0.82))] p-3 dark:border-gray-700/80 dark:bg-[linear-gradient(180deg,rgba(17,22,31,0.88),rgba(12,16,23,0.82))]">
                                                 {renderRouteGuide()}
                                                 <div className="grid gap-3 lg:grid-cols-2">
                                                     {onReplaceAndOpenBranchLatest &&
@@ -353,7 +359,7 @@ const WorkspaceImportReview: React.FC<WorkspaceImportReviewProps> = ({
                                                                 onClick={() =>
                                                                     onReplaceAndOpenBranchLatest(branch.branchOriginId)
                                                                 }
-                                                                className={primaryActionClassName}
+                                                                className={continueActionClassName}
                                                             >
                                                                 {t('workspaceImportReviewOpenLatest')}
                                                             </button>,
@@ -375,7 +381,7 @@ const WorkspaceImportReview: React.FC<WorkspaceImportReviewProps> = ({
                                                                                 branch.branchOriginId,
                                                                             )
                                                                         }
-                                                                        className={continueActionClassName}
+                                                                        className={primaryActionClassName}
                                                                     >
                                                                         {getImportContinueLabel(branch.latestTurn)}
                                                                     </button>
@@ -416,7 +422,7 @@ const WorkspaceImportReview: React.FC<WorkspaceImportReviewProps> = ({
             {importedLatestSuccessfulTurn && (
                 <details
                     data-testid="import-review-replace-latest-details"
-                    className="group mt-5 rounded-[28px] border border-amber-200 bg-gradient-to-br from-amber-50/90 to-white p-5 shadow-[0_18px_40px_rgba(245,158,11,0.12)] dark:border-amber-500/20 dark:from-amber-950/14 dark:to-[#11161f] dark:shadow-none"
+                    className="group mt-5 rounded-[28px] border border-amber-200/80 bg-[linear-gradient(180deg,rgba(255,250,240,0.94),rgba(255,245,230,0.9))] p-5 shadow-[0_18px_40px_rgba(245,158,11,0.12)] dark:border-amber-500/20 dark:bg-[linear-gradient(180deg,rgba(56,38,11,0.4),rgba(20,19,24,0.92))] dark:shadow-none"
                 >
                     <summary
                         data-testid="import-review-replace-latest-summary"
@@ -461,7 +467,7 @@ const WorkspaceImportReview: React.FC<WorkspaceImportReviewProps> = ({
                             {getExecutionLabel(importedLatestSuccessfulTurn)} ·{' '}
                             {formatDateTime(importedLatestSuccessfulTurn.createdAt)}
                         </div>
-                        <div className="mt-3 rounded-2xl border border-dashed border-amber-200/80 bg-white/80 p-3 dark:border-amber-500/20 dark:bg-[#11161f]/80">
+                        <div className="mt-3 rounded-2xl border border-dashed border-amber-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(250,250,252,0.84))] p-3 dark:border-amber-500/20 dark:bg-[linear-gradient(180deg,rgba(24,21,18,0.9),rgba(14,18,24,0.86))]">
                             {renderRouteGuide('amber')}
                             <div className="grid gap-3 lg:grid-cols-2">
                                 {onReplaceAndOpenLatest &&
@@ -472,7 +478,7 @@ const WorkspaceImportReview: React.FC<WorkspaceImportReviewProps> = ({
                                             data-testid="import-review-replace-open-latest"
                                             type="button"
                                             onClick={onReplaceAndOpenLatest}
-                                            className={primaryActionClassName}
+                                            className={continueActionClassName}
                                         >
                                             {t('workspaceImportReviewReplaceOpenLatest')}
                                         </button>,
@@ -489,7 +495,7 @@ const WorkspaceImportReview: React.FC<WorkspaceImportReviewProps> = ({
                                                     data-testid="import-review-replace-continue-latest"
                                                     type="button"
                                                     onClick={onReplaceAndContinueLatest}
-                                                    className={continueActionClassName}
+                                                    className={primaryActionClassName}
                                                 >
                                                     {t('workspaceImportReviewReplaceContinueLatest').replace(
                                                         '{0}',

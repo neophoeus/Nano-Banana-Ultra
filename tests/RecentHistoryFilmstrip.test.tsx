@@ -24,7 +24,7 @@ describe('RecentHistoryFilmstrip', () => {
             <RecentHistoryFilmstrip
                 recentHistory={[buildTurn({ lineageAction: 'continue' })]}
                 branchCount={1}
-                generatedImageUrls={[]}
+                activeStageImageUrl={null}
                 currentStageSourceHistoryId={null}
                 branchOriginIdByTurnId={{ 'turn-1': 'turn-1' }}
                 branchLabelByTurnId={{ 'turn-1': 'Main' }}
@@ -68,7 +68,7 @@ describe('RecentHistoryFilmstrip', () => {
                     }),
                 ]}
                 branchCount={1}
-                generatedImageUrls={[]}
+                activeStageImageUrl={null}
                 currentStageSourceHistoryId={null}
                 branchOriginIdByTurnId={{ 'turn-1': 'turn-1' }}
                 branchLabelByTurnId={{ 'turn-1': 'Main' }}

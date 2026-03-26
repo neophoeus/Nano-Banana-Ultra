@@ -25,6 +25,8 @@ export const SHARED_WORKSPACE_SNAPSHOT_ENDPOINT = '/api/workspace-snapshot';
 const LEGACY_BRANCH_NAME_OVERRIDES_STORAGE_KEY = 'nbu_branchNameOverrides';
 const WORKSPACE_SNAPSHOT_EXPORT_FORMAT = 'nbu-workspace-snapshot';
 const WORKSPACE_SNAPSHOT_EXPORT_VERSION = 1;
+const INLINE_ASSET_URL_PREFIX = 'data:';
+const LOAD_IMAGE_ENDPOINT = '/api/load-image';
 
 export const EMPTY_WORKSPACE_SESSION: WorkspaceSessionState = {
     activeResult: null,
@@ -84,6 +86,89 @@ export const EMPTY_WORKSPACE_SNAPSHOT: WorkspacePersistenceSnapshot = {
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
     typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const isInlineAssetUrl = (value: string): boolean => value.startsWith(INLINE_ASSET_URL_PREFIX);
+
+const buildLoadImageUrl = (savedFilename: string): string =>
+    `${LOAD_IMAGE_ENDPOINT}?filename=${encodeURIComponent(savedFilename)}`;
+
+const isStorageQuotaError = (error: unknown): boolean => {
+    if (typeof error !== 'object' || error === null) {
+        return false;
+    }
+
+    const storageError = error as { name?: string; code?: number; message?: string };
+    return (
+        storageError.name === 'QuotaExceededError' ||
+        storageError.code === 22 ||
+        storageError.code === 1014 ||
+        storageError.message?.toLowerCase().includes('quota') === true
+    );
+};
+
+const buildLocalWorkspaceSnapshot = (
+    snapshot: WorkspacePersistenceSnapshot,
+    options?: { aggressive?: boolean },
+): WorkspacePersistenceSnapshot => {
+    const normalized = sanitizeWorkspaceSnapshot(snapshot);
+    const historyWithLinkedAssets = normalized.history.map((item) => {
+        if (item.savedFilename && isInlineAssetUrl(item.url)) {
+            return {
+                ...item,
+                url: buildLoadImageUrl(item.savedFilename),
+            };
+        }
+
+        return item;
+    });
+    const selectedHistoryItem =
+        historyWithLinkedAssets.find((item) => item.id === normalized.viewState.selectedHistoryId) || null;
+    const stagedAssetsWithLinkedAssets = normalized.stagedAssets.map((asset) => {
+        if (asset.savedFilename && isInlineAssetUrl(asset.url)) {
+            return {
+                ...asset,
+                url: buildLoadImageUrl(asset.savedFilename),
+            };
+        }
+
+        return asset;
+    });
+    const currentStageAsset = stagedAssetsWithLinkedAssets.find((asset) => asset.role === 'stage-source') || null;
+    const filteredGeneratedImageUrls = normalized.viewState.generatedImageUrls.filter((url) => !isInlineAssetUrl(url));
+    const restoredStageUrl =
+        filteredGeneratedImageUrls[0] ||
+        currentStageAsset?.url ||
+        (selectedHistoryItem?.savedFilename ? buildLoadImageUrl(selectedHistoryItem.savedFilename) : null);
+
+    return sanitizeWorkspaceSnapshot({
+        ...normalized,
+        history: options?.aggressive
+            ? historyWithLinkedAssets.map((item) =>
+                  isInlineAssetUrl(item.url)
+                      ? {
+                            ...item,
+                            url: '',
+                        }
+                      : item,
+              )
+            : historyWithLinkedAssets,
+        stagedAssets: options?.aggressive
+            ? stagedAssetsWithLinkedAssets.map((asset) =>
+                  isInlineAssetUrl(asset.url)
+                      ? {
+                            ...asset,
+                            url: '',
+                        }
+                      : asset,
+              )
+            : stagedAssetsWithLinkedAssets,
+        viewState: {
+            ...normalized.viewState,
+            generatedImageUrls: restoredStageUrl ? [restoredStageUrl] : filteredGeneratedImageUrls,
+            selectedImageIndex: (restoredStageUrl ? 1 : filteredGeneratedImageUrls.length) === 0 ? 0 : 0,
+        },
+    });
+};
 
 const sanitizeBranchNameOverrides = (value: unknown): BranchNameOverrides => {
     if (!isRecord(value)) {
@@ -417,7 +502,25 @@ export const loadWorkspaceSnapshot = (): WorkspacePersistenceSnapshot => {
 };
 
 export const saveWorkspaceSnapshot = (snapshot: WorkspacePersistenceSnapshot): void => {
-    localStorage.setItem(WORKSPACE_SNAPSHOT_STORAGE_KEY, JSON.stringify(snapshot));
+    const normalized = sanitizeWorkspaceSnapshot(snapshot);
+    const localSnapshot = buildLocalWorkspaceSnapshot(normalized);
+    const compactSnapshot = buildLocalWorkspaceSnapshot(normalized, { aggressive: true });
+
+    try {
+        localStorage.setItem(WORKSPACE_SNAPSHOT_STORAGE_KEY, JSON.stringify(localSnapshot));
+        return;
+    } catch (error) {
+        if (!isStorageQuotaError(error)) {
+            console.warn('[workspacePersistence] Failed to persist workspace snapshot.', error);
+            return;
+        }
+    }
+
+    try {
+        localStorage.setItem(WORKSPACE_SNAPSHOT_STORAGE_KEY, JSON.stringify(compactSnapshot));
+    } catch (error) {
+        console.warn('[workspacePersistence] Failed to persist compact workspace snapshot.', error);
+    }
 };
 
 export const loadSharedWorkspaceSnapshot = async (): Promise<WorkspacePersistenceSnapshot | null> => {

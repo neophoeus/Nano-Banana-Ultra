@@ -7,6 +7,7 @@ export const WORKSPACE_OVERLAY_Z_INDEX = {
     branchRename: 245,
     sessionReplay: 250,
     pickerSheet: 255,
+    advancedSettings: 257,
     viewer: 260,
     sketchReplaceConfirm: 265,
     historyConfirm: 270,

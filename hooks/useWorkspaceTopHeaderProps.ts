@@ -1,4 +1,4 @@
-import { Dispatch, ReactNode, SetStateAction, useMemo } from 'react';
+import { Dispatch, ReactNode, SetStateAction, useCallback, useMemo } from 'react';
 import WorkspaceTopHeader from '../components/WorkspaceTopHeader';
 import { AspectRatio, ImageModel, ImageSize } from '../types';
 import { getTranslation, Language } from '../utils/translations';
@@ -38,15 +38,22 @@ export function useWorkspaceTopHeaderProps({
     hasSizePicker,
     setActivePickerSheet,
 }: UseWorkspaceTopHeaderPropsArgs): WorkspaceTopHeaderProps {
-    const getModelLabel = (model: ImageModel) => {
-        if (model === 'gemini-3.1-flash-image-preview') {
-            return getTranslation(currentLanguage, 'modelGemini31Flash');
-        }
-        if (model === 'gemini-3-pro-image-preview') {
-            return getTranslation(currentLanguage, 'modelGemini3Pro');
-        }
-        return getTranslation(currentLanguage, 'modelGemini25Flash');
-    };
+    const getModelLabel = useCallback(
+        (model: ImageModel) => {
+            if (model === 'gemini-3.1-flash-image-preview') {
+                return getTranslation(currentLanguage, 'modelGemini31Flash');
+            }
+            if (model === 'gemini-3-pro-image-preview') {
+                return getTranslation(currentLanguage, 'modelGemini3Pro');
+            }
+            return getTranslation(currentLanguage, 'modelGemini25Flash');
+        },
+        [currentLanguage],
+    );
+    const openModelPicker = useCallback(() => setActivePickerSheet('model'), [setActivePickerSheet]);
+    const openRatioPicker = useCallback(() => setActivePickerSheet('ratio'), [setActivePickerSheet]);
+    const openSizePicker = useCallback(() => setActivePickerSheet('size'), [setActivePickerSheet]);
+    const openBatchPicker = useCallback(() => setActivePickerSheet('batch'), [setActivePickerSheet]);
 
     return useMemo(
         () => ({
@@ -63,10 +70,10 @@ export function useWorkspaceTopHeaderProps({
             isGenerating,
             batchProgress,
             hasSizePicker,
-            onOpenModelPicker: () => setActivePickerSheet('model'),
-            onOpenRatioPicker: () => setActivePickerSheet('ratio'),
-            onOpenSizePicker: () => setActivePickerSheet('size'),
-            onOpenBatchPicker: () => setActivePickerSheet('batch'),
+            onOpenModelPicker: openModelPicker,
+            onOpenRatioPicker: openRatioPicker,
+            onOpenSizePicker: openSizePicker,
+            onOpenBatchPicker: openBatchPicker,
         }),
         [
             headerConsole,
@@ -82,7 +89,11 @@ export function useWorkspaceTopHeaderProps({
             isGenerating,
             batchProgress,
             hasSizePicker,
-            setActivePickerSheet,
+            getModelLabel,
+            openModelPicker,
+            openRatioPicker,
+            openSizePicker,
+            openBatchPicker,
         ],
     );
 }

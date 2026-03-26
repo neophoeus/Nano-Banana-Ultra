@@ -393,4 +393,58 @@ describe('usePerformGeneration', () => {
             }),
         );
     });
+
+    it('serializes thumbnail generation for multi-image batches', async () => {
+        generateImageWithGeminiMock.mockResolvedValue([
+            {
+                status: 'success',
+                url: 'data:image/png;base64,AAA',
+                savedFilename: 'first.png',
+                metadata: { actualOutput: { width: 4096, height: 4096 } },
+                grounding: null,
+                sessionHints: null,
+            },
+            {
+                status: 'success',
+                url: 'data:image/png;base64,BBB',
+                savedFilename: 'second.png',
+                metadata: { actualOutput: { width: 4096, height: 4096 } },
+                grounding: null,
+                sessionHints: null,
+            },
+        ]);
+
+        let activeThumbnailJobs = 0;
+        generateThumbnailMock.mockImplementation(async (imageUrl: string) => {
+            activeThumbnailJobs += 1;
+            expect(activeThumbnailJobs).toBe(1);
+            await Promise.resolve();
+            activeThumbnailJobs -= 1;
+            return `${imageUrl}-thumb`;
+        });
+
+        renderHook();
+
+        await act(async () => {
+            await latestHook!.performGeneration(
+                'Render four detailed variants',
+                '1:1',
+                '4K',
+                'None',
+                'gemini-3.1-flash-image-preview',
+                undefined,
+                2,
+            );
+        });
+
+        expect(generateThumbnailMock.mock.calls.map(([url]) => url)).toEqual([
+            'data:image/png;base64,AAA',
+            'data:image/png;base64,BBB',
+        ]);
+        expect(latestHistory).toHaveLength(2);
+        expect(latestHistory.map((item) => item.url)).toEqual([
+            'data:image/png;base64,AAA-thumb',
+            'data:image/png;base64,BBB-thumb',
+        ]);
+    });
 });

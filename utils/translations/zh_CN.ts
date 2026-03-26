@@ -333,6 +333,9 @@ export const zh_CN = {
     queuedBatchJobsRefreshAll: '全部刷新',
     queuedBatchJobsTrackedCount: '追踪中 {0} 个',
     queuedBatchJobsImportedTag: '已导入',
+    queuedBatchJobsRestoredHistoryTag: '还原历史',
+    queuedBatchJobsRestoredHistoryHint:
+        '这笔已结束项目来自已还原的工作区快照，会保留为历史记录，不代表当前实时队列失败。',
     queuedBatchJobsRequestCount: '{0} 条请求',
     queuedBatchJobsLinkedSource: '关联来源',
     queuedBatchJobsUpdated: '更新于',
@@ -809,6 +812,7 @@ export const zh_CN = {
     workspaceInsightsBranchesEmpty: '当工作流程开始分出不同方向后，这里就会整理出分支。',
     workspaceInsightsNoContinuitySignals: '目前还没有延续信号。',
     workspaceInsightsOfficialConversation: '官方对话',
+    workspaceInsightsConversationTurnPosition: '第 {0} 回合',
     workspaceInsightsConversationBranchActiveSource: '分支 {0} · 当前来源 {1}',
     workspaceInsightsSessionSource: '会话来源',
     workspaceInsightsSessionStateHint:

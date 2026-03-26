@@ -8,6 +8,7 @@ import {
     workflowMessageIncludes,
 } from '../utils/workflowTimeline';
 import { getTranslation, Language } from '../utils/translations';
+import ThemeToggle from './ThemeToggle';
 import WorkspaceModalFrame from './WorkspaceModalFrame';
 
 export type SessionReplayDialogProps = {
@@ -75,30 +76,35 @@ const SessionReplayDialog: React.FC<SessionReplayDialogProps> = ({
             eyebrow={t('sessionReplayEyebrow')}
             title={t('sessionReplayTitle')}
             description={t('sessionReplayDesc')}
+            headerExtra={
+                <div className="mt-4 flex items-center gap-3">
+                    <ThemeToggle currentLanguage={currentLanguage} className="h-9 w-9" />
+                </div>
+            }
             backdropClassName="bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.14),_transparent_34%),rgba(15,23,42,0.76)] backdrop-blur-md"
-            panelClassName="max-h-[90vh] border border-slate-200 bg-white/98 shadow-[0_32px_120px_rgba(15,23,42,0.3)] dark:border-slate-700 dark:bg-[#0d1117]/98 dark:shadow-[0_32px_120px_rgba(0,0,0,0.52)]"
-            headerClassName="border-b border-slate-200 px-6 py-5 dark:border-slate-700"
+            panelClassName="nbu-overlay-panel-neutral max-h-[90vh]"
+            headerClassName="border-b border-slate-200/80 px-6 py-5 dark:border-slate-700/80"
         >
-            <div className="grid gap-4 border-b border-slate-200 px-6 py-4 md:grid-cols-4 dark:border-slate-700">
-                <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 to-white px-4 py-3 dark:border-sky-500/10 dark:from-sky-950/12 dark:to-[#11161f]">
+            <div className="grid gap-4 border-b border-slate-200/80 px-6 py-4 md:grid-cols-4 dark:border-slate-700/80">
+                <div className="nbu-context-rail-callout rounded-2xl border px-4 py-3">
                     <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-200">
                         {t('sessionReplayEvents')}
                     </div>
                     <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">{entries.length}</div>
                 </div>
-                <div className="rounded-2xl border border-gray-200 bg-gray-50/90 px-4 py-3 dark:border-gray-800 dark:bg-[#11161f]">
+                <div className="nbu-overlay-card-neutral rounded-2xl border px-4 py-3">
                     <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
                         {t('sessionReplayStages')}
                     </div>
                     <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">{stageCount}</div>
                 </div>
-                <div className="rounded-2xl border border-gray-200 bg-gray-50/90 px-4 py-3 dark:border-gray-800 dark:bg-[#11161f]">
+                <div className="nbu-overlay-card-neutral rounded-2xl border px-4 py-3">
                     <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
                         {t('sessionReplayHistorySteps')}
                     </div>
                     <div className="mt-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">{historyCount}</div>
                 </div>
-                <div className="rounded-2xl border border-gray-200 bg-gray-50/90 px-4 py-3 dark:border-gray-800 dark:bg-[#11161f]">
+                <div className="nbu-overlay-card-neutral rounded-2xl border px-4 py-3">
                     <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
                         {t('sessionReplayErrors')}
                     </div>
@@ -107,7 +113,7 @@ const SessionReplayDialog: React.FC<SessionReplayDialogProps> = ({
             </div>
 
             <div className="grid max-h-[calc(90vh-208px)] gap-0 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-                <div className="border-r border-slate-200 bg-gradient-to-b from-slate-50/80 to-white p-4 dark:border-slate-700 dark:from-[#11161f] dark:to-[#0d1117]">
+                <div className="nbu-overlay-pane-neutral border-r border-slate-200/80 p-4 dark:border-slate-700/80">
                     <div className="mb-3 flex items-center justify-between gap-3">
                         <div className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
                             {t('sessionReplayFocus')}
@@ -135,7 +141,7 @@ const SessionReplayDialog: React.FC<SessionReplayDialogProps> = ({
                     {activeEntry ? (
                         <div
                             data-testid="session-replay-active"
-                            className={`rounded-[28px] border bg-white/90 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.08)] dark:bg-[#0d1117] dark:shadow-none ${activeEntry.border}`}
+                            className={`nbu-overlay-card-neutral rounded-[28px] border p-5 ${activeEntry.border}`}
                         >
                             <div className="flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-2">
@@ -180,13 +186,13 @@ const SessionReplayDialog: React.FC<SessionReplayDialogProps> = ({
                             </div>
                         </div>
                     ) : (
-                        <div className="rounded-[28px] border border-dashed border-gray-300 px-4 py-10 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                        <div className="nbu-overlay-card-neutral rounded-[28px] border border-dashed px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
                             {t('sessionReplayEmpty')}
                         </div>
                     )}
                 </div>
 
-                <div className="min-h-0 bg-white/70 p-4 dark:bg-[#0d1117]">
+                <div className="nbu-overlay-pane-neutral min-h-0 p-4">
                     <div className="mb-3 flex items-center justify-between gap-3">
                         <div className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
                             {t('sessionReplayTimeline')}

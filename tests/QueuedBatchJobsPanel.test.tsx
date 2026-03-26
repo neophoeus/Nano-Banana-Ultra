@@ -102,6 +102,7 @@ describe('QueuedBatchJobsPanel', () => {
                         localId: 'job-failed',
                         name: 'batches/job-failed',
                         displayName: 'Failed storyboard batch',
+                        restoredFromSnapshot: true,
                         state: 'JOB_STATE_FAILED',
                         model: 'gemini-3.1-flash-image-preview',
                         prompt: 'Generate failed storyboard',
@@ -182,14 +183,14 @@ describe('QueuedBatchJobsPanel', () => {
         expect(markup).toContain('queued-batch-panel-guidance-details');
         expect(markup).toContain('queued-batch-panel-guidance-summary');
         expect(markup).toContain('1 active');
-        expect(markup).toContain('1 import ready');
+        expect(markup).toContain('1 ready to import');
         expect(markup).toContain('1 closed with issues');
         expect(markup).toContain('4 tracked');
         expect(markup).toContain('Continuity note');
         expect(markup).toContain(
-            'Monitor the queue here, pull finished results into history when they are ready, then clear the entry once the workflow is done.',
+            'Check status here, import finished results into history when they are ready, then remove the entry when the workflow is done.',
         );
-        expect(markup).toContain('Import ready');
+        expect(markup).toContain('Import ready results');
         expect(markup).toContain('queued-batch-panel-monitor-group');
         expect(markup).toContain('queued-batch-panel-results-group');
         expect(markup).toContain('queued-batch-panel-results-count');
@@ -202,19 +203,21 @@ describe('QueuedBatchJobsPanel', () => {
         expect(markup).toContain('2x');
         expect(markup).toContain('Failed storyboard batch');
         expect(markup).toContain('Failed');
+        expect(markup).toContain('Restored history');
+        expect(markup).toContain('not a live queue failure');
         expect(markup).toContain('Upstream batch failed.');
         expect(markup).toContain('Submitted');
         expect(markup).toContain('Finished');
         expect(markup).toContain('Imported');
-        expect(markup).toContain('Monitor');
+        expect(markup).toContain('Status');
         expect(markup).toContain('Results');
-        expect(markup).toContain('Cleanup');
-        expect(markup).toContain('Poll');
+        expect(markup).toContain('Remove');
+        expect(markup).toContain('Check status');
         expect(markup).toContain('Cancel');
         expect(markup).toContain('Import');
         expect(markup).toContain('Open #1/2');
         expect(markup).toContain('Open latest #2/2');
-        expect(markup).toContain('Clear');
+        expect(markup).toContain('Remove');
         expect(markup).toContain('queued-batch-job-job-imported-preview-details');
         expect(markup).toContain('queued-batch-job-job-imported-preview-summary-shell');
         expect(markup).toContain('group-open:rotate-180');
@@ -246,6 +249,216 @@ describe('QueuedBatchJobsPanel', () => {
         expect(markup).toContain('queued-batch-job-job-pending-monitor-group');
         expect(markup).toContain('queued-batch-job-job-ready-results-group');
         expect(markup).toContain('queued-batch-job-job-imported-cleanup-group');
+        expect(markup).not.toContain('queued-batch-job-job-failed-poll');
+        expect(markup).toContain('queued-batch-job-job-failed-restored-history');
+        expect(markup).toContain('queued-batch-job-job-failed-restored-history-note');
         expect(markup).toContain('queued-batch-panel-workflow-hint');
+    });
+
+    it('renders every queue state label and localizes generation modes', () => {
+        const markup = renderToStaticMarkup(
+            <QueuedBatchJobsPanel
+                currentLanguage="zh_TW"
+                queueBatchConversationNotice={null}
+                queuedJobs={
+                    [
+                        {
+                            localId: 'job-pending',
+                            name: 'batches/job-pending',
+                            displayName: 'pending',
+                            state: 'JOB_STATE_PENDING',
+                            model: 'gemini-3.1-flash-image-preview',
+                            prompt: 'Prompt',
+                            generationMode: 'Text to Image',
+                            aspectRatio: '1:1',
+                            imageSize: '1K',
+                            style: 'None',
+                            outputFormat: 'images-only',
+                            temperature: 1,
+                            thinkingLevel: 'minimal',
+                            includeThoughts: true,
+                            googleSearch: false,
+                            imageSearch: false,
+                            batchSize: 1,
+                            objectImageCount: 0,
+                            characterImageCount: 0,
+                            createdAt: 1,
+                            updatedAt: 1,
+                            startedAt: null,
+                            completedAt: null,
+                            lastPolledAt: null,
+                            importedAt: null,
+                            error: null,
+                        },
+                        {
+                            localId: 'job-running',
+                            name: 'batches/job-running',
+                            displayName: 'running',
+                            state: 'JOB_STATE_RUNNING',
+                            model: 'gemini-3.1-flash-image-preview',
+                            prompt: 'Prompt',
+                            generationMode: 'Follow-up Edit',
+                            aspectRatio: '1:1',
+                            imageSize: '1K',
+                            style: 'None',
+                            outputFormat: 'images-only',
+                            temperature: 1,
+                            thinkingLevel: 'minimal',
+                            includeThoughts: true,
+                            googleSearch: false,
+                            imageSearch: false,
+                            batchSize: 1,
+                            objectImageCount: 0,
+                            characterImageCount: 0,
+                            createdAt: 1,
+                            updatedAt: 1,
+                            startedAt: 1,
+                            completedAt: null,
+                            lastPolledAt: null,
+                            importedAt: null,
+                            error: null,
+                        },
+                        {
+                            localId: 'job-succeeded',
+                            name: 'batches/job-succeeded',
+                            displayName: 'succeeded',
+                            state: 'JOB_STATE_SUCCEEDED',
+                            model: 'gemini-3.1-flash-image-preview',
+                            prompt: 'Prompt',
+                            generationMode: 'Image to Image',
+                            aspectRatio: '1:1',
+                            imageSize: '1K',
+                            style: 'None',
+                            outputFormat: 'images-only',
+                            temperature: 1,
+                            thinkingLevel: 'minimal',
+                            includeThoughts: true,
+                            googleSearch: false,
+                            imageSearch: false,
+                            batchSize: 1,
+                            objectImageCount: 0,
+                            characterImageCount: 0,
+                            createdAt: 1,
+                            updatedAt: 1,
+                            startedAt: 1,
+                            completedAt: 1,
+                            lastPolledAt: 1,
+                            importedAt: null,
+                            error: null,
+                        },
+                        {
+                            localId: 'job-failed',
+                            name: 'batches/job-failed',
+                            displayName: 'failed',
+                            state: 'JOB_STATE_FAILED',
+                            model: 'gemini-3.1-flash-image-preview',
+                            prompt: 'Prompt',
+                            generationMode: 'Text to Image',
+                            aspectRatio: '1:1',
+                            imageSize: '1K',
+                            style: 'None',
+                            outputFormat: 'images-only',
+                            temperature: 1,
+                            thinkingLevel: 'minimal',
+                            includeThoughts: true,
+                            googleSearch: false,
+                            imageSearch: false,
+                            batchSize: 1,
+                            objectImageCount: 0,
+                            characterImageCount: 0,
+                            createdAt: 1,
+                            updatedAt: 1,
+                            startedAt: 1,
+                            completedAt: 1,
+                            lastPolledAt: 1,
+                            importedAt: null,
+                            error: null,
+                        },
+                        {
+                            localId: 'job-cancelled',
+                            name: 'batches/job-cancelled',
+                            displayName: 'cancelled',
+                            state: 'JOB_STATE_CANCELLED',
+                            model: 'gemini-3.1-flash-image-preview',
+                            prompt: 'Prompt',
+                            generationMode: 'Text to Image',
+                            aspectRatio: '1:1',
+                            imageSize: '1K',
+                            style: 'None',
+                            outputFormat: 'images-only',
+                            temperature: 1,
+                            thinkingLevel: 'minimal',
+                            includeThoughts: true,
+                            googleSearch: false,
+                            imageSearch: false,
+                            batchSize: 1,
+                            objectImageCount: 0,
+                            characterImageCount: 0,
+                            createdAt: 1,
+                            updatedAt: 1,
+                            startedAt: 1,
+                            completedAt: 1,
+                            lastPolledAt: 1,
+                            importedAt: null,
+                            error: null,
+                        },
+                        {
+                            localId: 'job-expired',
+                            name: 'batches/job-expired',
+                            displayName: 'expired',
+                            state: 'JOB_STATE_EXPIRED',
+                            model: 'gemini-3.1-flash-image-preview',
+                            prompt: 'Prompt',
+                            generationMode: 'Text to Image',
+                            aspectRatio: '1:1',
+                            imageSize: '1K',
+                            style: 'None',
+                            outputFormat: 'images-only',
+                            temperature: 1,
+                            thinkingLevel: 'minimal',
+                            includeThoughts: true,
+                            googleSearch: false,
+                            imageSearch: false,
+                            batchSize: 1,
+                            objectImageCount: 0,
+                            characterImageCount: 0,
+                            createdAt: 1,
+                            updatedAt: 1,
+                            startedAt: 1,
+                            completedAt: 1,
+                            lastPolledAt: 1,
+                            importedAt: null,
+                            error: null,
+                        },
+                    ] as any
+                }
+                getLineageActionLabel={(action) => action || 'root'}
+                getImportedQueuedResultCount={() => 0}
+                getImportedQueuedHistoryItems={() => []}
+                activeImportedQueuedHistoryId={null}
+                onImportAllQueuedJobs={vi.fn()}
+                onPollAllQueuedJobs={vi.fn()}
+                onPollQueuedJob={vi.fn()}
+                onCancelQueuedJob={vi.fn()}
+                onImportQueuedJob={vi.fn()}
+                onOpenImportedQueuedJob={vi.fn()}
+                onOpenLatestImportedQueuedJob={vi.fn()}
+                onOpenImportedQueuedHistoryItem={vi.fn()}
+                onRemoveQueuedJob={vi.fn()}
+            />,
+        );
+
+        expect(markup).toContain('待處理');
+        expect(markup).toContain('執行中');
+        expect(markup).toContain('已完成');
+        expect(markup).toContain('失敗');
+        expect(markup).toContain('已取消');
+        expect(markup).toContain('已過期');
+        expect(markup).toContain('文生圖');
+        expect(markup).toContain('後續編修');
+        expect(markup).toContain('圖生圖');
+        expect(markup).not.toContain('Text to Image');
+        expect(markup).not.toContain('Follow-up Edit');
+        expect(markup).not.toContain('Image to Image');
     });
 });

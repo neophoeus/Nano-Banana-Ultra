@@ -41,6 +41,9 @@ const formatCompactTime = (timestamp: number) =>
         minute: '2-digit',
     });
 
+const isQueuedJobClosedIssue = (job: QueuedBatchJob) =>
+    job.state === 'JOB_STATE_FAILED' || job.state === 'JOB_STATE_CANCELLED' || job.state === 'JOB_STATE_EXPIRED';
+
 const buildJobTimeline = (job: QueuedBatchJob, t: (key: string) => string): JobTimelineEvent[] => {
     const events: JobTimelineEvent[] = [
         {
@@ -110,7 +113,27 @@ export default function QueuedBatchJobsPanel({
     onRemoveQueuedJob,
 }: QueuedBatchJobsPanelProps) {
     const t = (key: string) => getTranslation(currentLanguage, key);
+    const getTranslatedGenerationModeLabel = (mode?: string | null) => {
+        if (!mode) return t('modeTextToImg');
+        if (mode.includes('Inpaint') || mode.includes('Retouch')) return t('modeInpaint');
+        if (mode.includes('Text')) return t('modeTextToImg');
+        if (mode.includes('Image to')) return t('modeImgToImg');
+        if (mode.includes('Follow-up')) return t('workspaceViewerFollowUpEdit');
+        if (
+            mode.includes('Outpaint') ||
+            mode.includes('Reframe') ||
+            mode.includes('Reposition') ||
+            mode.includes('Upscale') ||
+            mode.includes('Refine')
+        ) {
+            return t('modeOutpaint');
+        }
+
+        return mode;
+    };
     const neutralActionButtonClassName = 'nbu-control-button px-3 py-1.5 text-xs';
+    const primaryImportActionButtonClassName =
+        'rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-600';
     const compactNeutralActionButtonClassName = 'nbu-control-button px-2 py-1 text-[11px]';
     const activeImportedPreviewClassName =
         'border-amber-300 bg-[linear-gradient(180deg,rgba(255,251,235,0.96),rgba(255,246,217,0.92))] shadow-[0_0_0_1px_rgba(251,191,36,0.28)] dark:border-amber-500/40 dark:bg-[linear-gradient(180deg,rgba(62,38,9,0.72),rgba(29,20,8,0.9))]';
@@ -152,12 +175,7 @@ export default function QueuedBatchJobsPanel({
     const runningCount = queuedJobs.filter(
         (job) => job.state === 'JOB_STATE_PENDING' || job.state === 'JOB_STATE_RUNNING',
     ).length;
-    const failedCount = queuedJobs.filter(
-        (job) =>
-            job.state === 'JOB_STATE_FAILED' ||
-            job.state === 'JOB_STATE_CANCELLED' ||
-            job.state === 'JOB_STATE_EXPIRED',
-    ).length;
+    const failedCount = queuedJobs.filter((job) => isQueuedJobClosedIssue(job)).length;
 
     const getQueuedJobStateLabel = (job: QueuedBatchJob) => {
         if (job.state === 'JOB_STATE_PENDING') return t('queuedBatchStatePending');
@@ -263,7 +281,7 @@ export default function QueuedBatchJobsPanel({
                                 <button
                                     data-testid="queued-batch-import-all"
                                     onClick={onImportAllQueuedJobs}
-                                    className="rounded-full border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:border-emerald-400 dark:border-emerald-500/40 dark:text-emerald-300"
+                                    className={primaryImportActionButtonClassName}
                                 >
                                     {t('queuedBatchJobsImportReadyAction')}
                                 </button>
@@ -275,6 +293,7 @@ export default function QueuedBatchJobsPanel({
 
             <div className="space-y-3">
                 {queuedJobs.map((job) => {
+                    const isRestoredHistoricalIssue = Boolean(job.restoredFromSnapshot && isQueuedJobClosedIssue(job));
                     const canImport = job.state === 'JOB_STATE_SUCCEEDED' && !job.importedAt;
                     const canOpenImported = Boolean(job.importedAt);
                     const canCancel = job.state === 'JOB_STATE_PENDING' || job.state === 'JOB_STATE_RUNNING';
@@ -302,22 +321,24 @@ export default function QueuedBatchJobsPanel({
                     const statusTone =
                         job.state === 'JOB_STATE_SUCCEEDED'
                             ? 'text-emerald-700 dark:text-emerald-300'
-                            : job.state === 'JOB_STATE_FAILED' ||
-                                job.state === 'JOB_STATE_CANCELLED' ||
-                                job.state === 'JOB_STATE_EXPIRED'
+                            : isQueuedJobClosedIssue(job)
                               ? 'text-rose-700 dark:text-rose-300'
                               : 'text-amber-700 dark:text-amber-300';
                     const timelineEvents = buildJobTimeline(job, t);
-                    const monitorActions: React.ReactNode[] = [
-                        <button
-                            key="poll"
-                            data-testid={`queued-batch-job-${job.localId}-poll`}
-                            onClick={() => onPollQueuedJob(job.localId)}
-                            className={neutralActionButtonClassName}
-                        >
-                            {t('queuedBatchJobsPoll')}
-                        </button>,
-                    ];
+                    const monitorActions: React.ReactNode[] = [];
+
+                    if (!isRestoredHistoricalIssue) {
+                        monitorActions.push(
+                            <button
+                                key="poll"
+                                data-testid={`queued-batch-job-${job.localId}-poll`}
+                                onClick={() => onPollQueuedJob(job.localId)}
+                                className={neutralActionButtonClassName}
+                            >
+                                {t('queuedBatchJobsPoll')}
+                            </button>,
+                        );
+                    }
 
                     if (canCancel) {
                         monitorActions.push(
@@ -340,7 +361,7 @@ export default function QueuedBatchJobsPanel({
                                 key="import"
                                 data-testid={`queued-batch-job-${job.localId}-import`}
                                 onClick={() => onImportQueuedJob(job.localId)}
-                                className="rounded-full border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:border-emerald-400 dark:border-emerald-500/40 dark:text-emerald-300"
+                                className={primaryImportActionButtonClassName}
                             >
                                 {t('queuedBatchJobsImport')}
                             </button>,
@@ -353,7 +374,7 @@ export default function QueuedBatchJobsPanel({
                                 key="open"
                                 data-testid={`queued-batch-job-${job.localId}-open`}
                                 onClick={() => onOpenImportedQueuedJob(job.localId)}
-                                className="rounded-full border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:border-emerald-400 dark:border-emerald-500/40 dark:text-emerald-300"
+                                className={neutralActionButtonClassName}
                             >
                                 {hasMultipleImportedResults
                                     ? `${t('historyActionOpen')} #1/${importedResultCount}`
@@ -368,7 +389,7 @@ export default function QueuedBatchJobsPanel({
                                 key="open-latest"
                                 data-testid={`queued-batch-job-${job.localId}-open-latest`}
                                 onClick={() => onOpenLatestImportedQueuedJob(job.localId)}
-                                className="rounded-full border border-sky-200 px-3 py-1.5 text-xs font-semibold text-sky-700 hover:border-sky-400 dark:border-sky-500/40 dark:text-sky-300"
+                                className={neutralActionButtonClassName}
                             >{`${t('historyActionOpenLatest')} #${importedResultCount}/${importedResultCount}`}</button>,
                         );
                     }
@@ -430,6 +451,14 @@ export default function QueuedBatchJobsPanel({
                                                 {t('queuedBatchJobsImportedTag')}
                                             </span>
                                         )}
+                                        {isRestoredHistoricalIssue && (
+                                            <span
+                                                data-testid={`queued-batch-job-${job.localId}-restored-history`}
+                                                className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
+                                            >
+                                                {t('queuedBatchJobsRestoredHistoryTag')}
+                                            </span>
+                                        )}
                                         {importedResultCount > 0 && (
                                             <span
                                                 data-testid={`queued-batch-job-${job.localId}-imported-count`}
@@ -442,7 +471,7 @@ export default function QueuedBatchJobsPanel({
                                     <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                         {job.model} ·{' '}
                                         {t('queuedBatchJobsRequestCount').replace('{0}', job.batchSize.toString())} ·{' '}
-                                        {job.generationMode || 'Text to Image'}
+                                        {getTranslatedGenerationModeLabel(job.generationMode)}
                                     </div>
                                     {job.sourceHistoryId && (
                                         <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -456,6 +485,14 @@ export default function QueuedBatchJobsPanel({
                                             ? ` · ${t('queuedBatchJobsLastChecked')} ${formatCompactTime(job.lastPolledAt)}`
                                             : ` · ${t('queuedBatchJobsAwaitingFirstStatus')}`}
                                     </div>
+                                    {isRestoredHistoricalIssue && (
+                                        <p
+                                            data-testid={`queued-batch-job-${job.localId}-restored-history-note`}
+                                            className="mt-2 text-xs text-amber-700 dark:text-amber-300"
+                                        >
+                                            {t('queuedBatchJobsRestoredHistoryHint')}
+                                        </p>
+                                    )}
                                     <p className="mt-2 line-clamp-2 text-sm text-gray-700 dark:text-gray-200">
                                         {job.prompt}
                                     </p>

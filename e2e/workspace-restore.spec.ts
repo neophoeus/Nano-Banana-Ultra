@@ -231,6 +231,91 @@ const restoredOfficialConversationSnapshot = {
     },
 };
 
+const restoredFileBackedSnapshot = {
+    history: [
+        {
+            id: 'file-backed-turn',
+            url: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==',
+            savedFilename: 'file-backed-turn.png',
+            prompt: 'File-backed restored turn',
+            aspectRatio: '1:1',
+            size: '1K',
+            style: 'None',
+            model: 'gemini-3.1-flash-image-preview',
+            createdAt: 1710200100000,
+            mode: 'Text to Image',
+            executionMode: 'single-turn',
+            status: 'success',
+            text: 'File-backed restored turn text',
+            rootHistoryId: 'file-backed-turn',
+            lineageAction: 'root',
+            lineageDepth: 0,
+        },
+    ],
+    stagedAssets: [
+        {
+            id: 'file-backed-stage',
+            url: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==',
+            savedFilename: 'file-backed-turn.png',
+            role: 'stage-source',
+            origin: 'history',
+            createdAt: 1710200101000,
+            sourceHistoryId: 'file-backed-turn',
+            lineageAction: 'reopen',
+        },
+    ],
+    workflowLogs: ['[10:31:00] File-backed restore snapshot loaded.'],
+    workspaceSession: {
+        activeResult: {
+            text: 'File-backed restored turn text',
+            thoughts: null,
+            grounding: null,
+            metadata: null,
+            sessionHints: null,
+            historyId: 'file-backed-turn',
+        },
+        continuityGrounding: null,
+        continuitySessionHints: null,
+        provenanceMode: null,
+        provenanceSourceHistoryId: null,
+        conversationId: null,
+        conversationBranchOriginId: null,
+        conversationActiveSourceHistoryId: null,
+        conversationTurnIds: [],
+        source: 'history',
+        sourceHistoryId: 'file-backed-turn',
+        updatedAt: 1710200102000,
+    },
+    branchState: {
+        nameOverrides: {},
+        continuationSourceByBranchOriginId: {},
+    },
+    conversationState: {
+        byBranchOriginId: {},
+    },
+    viewState: {
+        generatedImageUrls: ['data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='],
+        selectedImageIndex: 0,
+        selectedHistoryId: 'file-backed-turn',
+    },
+    composerState: {
+        prompt: 'File-backed restore prompt',
+        aspectRatio: '1:1',
+        imageSize: '1K',
+        imageStyle: 'None',
+        imageModel: 'gemini-3.1-flash-image-preview',
+        batchSize: 1,
+        outputFormat: 'images-only',
+        temperature: 1,
+        thinkingLevel: 'minimal',
+        includeThoughts: true,
+        googleSearch: false,
+        imageSearch: false,
+        generationMode: 'Text to Image',
+        executionMode: 'single-turn',
+    },
+};
+
 const queuedBatchPanelSnapshot = {
     history: [
         {
@@ -1110,16 +1195,20 @@ const expectSessionReplayLocalizedChrome = async (
     }
 };
 
-const setWorkspaceLanguage = async (page: Page, language: Language) => {
+const setWorkspaceLanguageWithin = async (target: Page | Locator, language: Language) => {
     if (language === 'en') {
         return;
     }
 
-    await page.getByTestId('language-selector-toggle').evaluate((button: HTMLButtonElement) => button.click());
-    await page.getByTestId(`language-option-${language}`).evaluate((button: HTMLButtonElement) => button.click());
-    await expect(page.getByTestId('language-selector-toggle')).toContainText(
+    await target.getByTestId('language-selector-toggle').evaluate((button: HTMLButtonElement) => button.click());
+    await target.getByTestId(`language-option-${language}`).evaluate((button: HTMLButtonElement) => button.click());
+    await expect(target.getByTestId('language-selector-toggle')).toContainText(
         SUPPORTED_LANGUAGES.find((item) => item.value === language)?.shortLabel || 'En',
     );
+};
+
+const setWorkspaceLanguage = async (page: Page, language: Language) => {
+    await setWorkspaceLanguageWithin(page, language);
 };
 
 const openFreshWorkspace = async (page: Page) => {
@@ -1246,6 +1335,33 @@ const openWorkspaceWithSnapshot = async (page: Page, snapshot: Record<string, un
     await setWorkspaceLanguage(page, TEST_LANGUAGE);
 };
 
+const openWorkspaceWithSnapshotQuotaFailure = async (page: Page, snapshot: Record<string, unknown>) => {
+    await page.addInitScript((nextSnapshot) => {
+        localStorage.clear();
+
+        const originalSetItem = Storage.prototype.setItem;
+        originalSetItem.call(localStorage, 'nbu_workspaceSnapshot', JSON.stringify(nextSnapshot));
+
+        const quotaSetItem = function (this: Storage, key: string, value: string) {
+            if (key === 'nbu_workspaceSnapshot') {
+                throw new DOMException('Quota exceeded', 'QuotaExceededError');
+            }
+
+            return originalSetItem.call(this, key, value);
+        };
+
+        Storage.prototype.setItem = quotaSetItem;
+        Object.defineProperty(localStorage, 'setItem', {
+            configurable: true,
+            writable: true,
+            value: quotaSetItem,
+        });
+    }, snapshot);
+    await page.goto('/');
+    await expect(composer(page)).toBeVisible();
+    await setWorkspaceLanguage(page, TEST_LANGUAGE);
+};
+
 const openSharedControlsFromSurface = async (page: Page) => {
     await page.getByTestId('shared-controls-toggle').click();
     await expect(page.getByTestId('shared-controls-panel')).toBeVisible();
@@ -1263,6 +1379,14 @@ const openEditorFromUpload = async (page: Page, promptValue: string) => {
 const closeSharedPromptSheet = async (page: Page) => {
     await page.getByTestId('picker-sheet-close').click();
     await expect(page.getByTestId('shared-prompt-input')).toHaveCount(0);
+};
+
+const expectAdvancedSettingsDialogVisible = async (page: Page) => {
+    const dialog = page.getByTestId('composer-advanced-settings-dialog');
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('heading', { name: tt('composerAdvancedTitle') }).first()).toBeVisible();
+    await expect(dialog).toContainText(tt('composerAdvancedGenerationSectionTitle'));
+    return dialog;
 };
 
 const drawEditorMaskStroke = async (page: Page) => {
@@ -1376,6 +1500,108 @@ test.describe('workspace restore flows', () => {
 
         await expect(page.getByTestId('sketchpad')).toHaveCount(0);
         await expect(composer(page)).toHaveValue('Updated from sketch shared controls');
+    });
+
+    test('editor shared controls can open advanced settings as the dedicated modal', async ({ page }) => {
+        await openFreshWorkspace(page);
+        await openEditorFromUpload(page, 'Editor advanced settings prompt');
+        await closeSharedPromptSheet(page);
+
+        await page
+            .getByTestId('shared-control-advanced-settings')
+            .evaluate((button: HTMLButtonElement) => button.click());
+        await expect(page.getByTestId('shared-controls-panel')).toHaveCount(0);
+
+        const dialog = await expectAdvancedSettingsDialogVisible(page);
+        await expect(dialog).toContainText(tt('composerAdvancedGroundingSectionTitle'));
+
+        await dialog
+            .getByTestId('composer-advanced-settings-close')
+            .evaluate((button: HTMLButtonElement) => button.click());
+        await expect(page.getByTestId('composer-advanced-settings-dialog')).toHaveCount(0);
+        await expect(page.getByTestId('image-editor')).toBeVisible();
+        await expect(composer(page)).toHaveValue('Editor advanced settings prompt');
+    });
+
+    test('sketch shared controls can open advanced settings as the dedicated modal', async ({ page }) => {
+        await openFreshWorkspace(page);
+        await composer(page).fill('Sketch advanced settings prompt');
+        await page.locator('[data-testid="side-tools-open-sketchpad"]:visible').click();
+
+        await expect(page.getByTestId('sketchpad')).toBeVisible();
+        await openSharedControlsFromSurface(page);
+        await page
+            .getByTestId('shared-control-advanced-settings')
+            .evaluate((button: HTMLButtonElement) => button.click());
+        await expect(page.getByTestId('shared-controls-panel')).toHaveCount(0);
+
+        const dialog = await expectAdvancedSettingsDialogVisible(page);
+        await expect(dialog).toContainText(tt('composerAdvancedGroundingSectionTitle'));
+
+        await dialog
+            .getByTestId('composer-advanced-settings-close')
+            .evaluate((button: HTMLButtonElement) => button.click());
+        await expect(page.getByTestId('composer-advanced-settings-dialog')).toHaveCount(0);
+        await expect(page.getByTestId('sketchpad')).toBeVisible();
+        await expect(composer(page)).toHaveValue('Sketch advanced settings prompt');
+    });
+
+    test('shared controls advanced settings changes persist after closing and reopening the modal', async ({ page }) => {
+        await openFreshWorkspace(page);
+        await composer(page).fill('Sketch advanced settings persistence prompt');
+        await page.locator('[data-testid="side-tools-open-sketchpad"]:visible').click();
+
+        await expect(page.getByTestId('sketchpad')).toBeVisible();
+        await openSharedControlsFromSurface(page);
+        await page
+            .getByTestId('shared-control-advanced-settings')
+            .evaluate((button: HTMLButtonElement) => button.click());
+        await expect(page.getByTestId('shared-controls-panel')).toHaveCount(0);
+
+        const firstDialog = await expectAdvancedSettingsDialogVisible(page);
+        await firstDialog.getByTestId('composer-advanced-output-format').selectOption('images-and-text');
+        await firstDialog.getByTestId('composer-advanced-temperature-input').fill('1.4');
+
+        await expect
+            .poll(async () =>
+                page.evaluate(() => {
+                    const raw = localStorage.getItem('nbu_workspaceSnapshot');
+                    if (!raw) {
+                        return null;
+                    }
+
+                    const snapshot = JSON.parse(raw);
+                    return {
+                        outputFormat: snapshot.composerState?.outputFormat || null,
+                        temperature: snapshot.composerState?.temperature || null,
+                    };
+                }),
+            )
+            .toEqual({
+                outputFormat: 'images-and-text',
+                temperature: 1.4,
+            });
+
+        await firstDialog
+            .getByTestId('composer-advanced-settings-close')
+            .evaluate((button: HTMLButtonElement) => button.click());
+        await expect(page.getByTestId('composer-advanced-settings-dialog')).toHaveCount(0);
+
+        await openSharedControlsFromSurface(page);
+        await page
+            .getByTestId('shared-control-advanced-settings')
+            .evaluate((button: HTMLButtonElement) => button.click());
+
+        const secondDialog = await expectAdvancedSettingsDialogVisible(page);
+        await expect(secondDialog.getByTestId('composer-advanced-output-format')).toHaveValue('images-and-text');
+        await expect(secondDialog.getByTestId('composer-advanced-temperature-input')).toHaveValue('1.4');
+
+        await secondDialog
+            .getByTestId('composer-advanced-settings-close')
+            .evaluate((button: HTMLButtonElement) => button.click());
+        await expect(page.getByTestId('composer-advanced-settings-dialog')).toHaveCount(0);
+        await expect(page.getByTestId('sketchpad')).toBeVisible();
+        await expect(composer(page)).toHaveValue('Sketch advanced settings persistence prompt');
     });
 
     test('editor close keeps shared composer context when only shared settings changed', async ({ page }) => {
@@ -1786,6 +2012,33 @@ test.describe('workspace restore flows', () => {
         );
     });
 
+    test('restore notice stays open while its language switch updates both the notice and the main-page language state', async ({
+        page,
+    }) => {
+        await openFreshWorkspace(page);
+        await replaceWithImportedWorkspace(page);
+
+        const targetLanguage: Language = TEST_LANGUAGE === 'en' ? 'ja' : TEST_LANGUAGE;
+        const restoreNotice = page.getByTestId('workspace-restore-notice');
+        const targetShortLabel = SUPPORTED_LANGUAGES.find((item) => item.value === targetLanguage)?.shortLabel || 'En';
+
+        await expect(restoreNotice).toContainText(getTranslation('en', 'workspaceRestoreTitle'));
+        await expect(page.getByTestId('language-selector-toggle')).toHaveCount(2);
+
+        await setWorkspaceLanguageWithin(restoreNotice, targetLanguage);
+
+        await expect(restoreNotice).toContainText(getTranslation(targetLanguage, 'workspaceRestoreTitle'));
+        await expect(
+            restoreNotice.getByText(getTranslation(targetLanguage, 'workspaceRestoreActionsTitle'), { exact: true }),
+        ).toBeVisible();
+        await expect(page.getByTestId('workspace-restore-notice')).toBeVisible();
+        await expect(page.getByTestId('language-selector-toggle').nth(0)).toContainText(targetShortLabel);
+        await expect(page.getByTestId('language-selector-toggle').nth(1)).toContainText(targetShortLabel);
+        await expect(page.locator('body')).toContainText(
+            getTranslation(targetLanguage, 'workspaceTopHeaderReferenceTray'),
+        );
+    });
+
     test('filmstrip branch preserves the composer while syncing stage-source surfaces and header hint', async ({
         page,
     }) => {
@@ -1986,7 +2239,6 @@ test.describe('workspace restore flows', () => {
         await openFreshWorkspace(page);
         await replaceWithImportedWorkspace(page);
 
-        await clickSummary(page.getByTestId('workspace-restore-secondary-summary'));
         await page.getByRole('button', { name: tt('workspaceRestoreUseSettingsClear') }).click();
 
         await expect(page.getByText(tt('workspaceRestoreTitle'))).toHaveCount(0);
@@ -2079,6 +2331,90 @@ test.describe('workspace restore flows', () => {
         await expect(page.getByText(tt('workspaceRestoreTitle'))).toHaveCount(0);
         await expect(composer(page)).toHaveValue('Imported workspace prompt');
         await expect(page.getByText(tt('historyFilmstripSummary', '2', '2'))).toBeVisible();
+    });
+
+    test('workspace snapshot quota errors do not white-screen the app', async ({ page }) => {
+        const pageErrors: string[] = [];
+        page.on('pageerror', (error) => {
+            pageErrors.push(error.message);
+        });
+
+        await openWorkspaceWithSnapshotQuotaFailure(page, restoredOfficialConversationSnapshot);
+
+        await expect(page.getByTestId('workspace-restore-notice')).toBeVisible();
+        await expect(page.getByText(tt('workspaceRestoreTitle'))).toBeVisible();
+        await expect(composer(page)).toHaveValue('Restored official conversation workspace');
+        await expect(page.locator('body')).toContainText(tt('workspaceRestoreTitle'));
+        expect(pageErrors).toEqual([]);
+    });
+
+    test('restored file-backed snapshots reload images through load-image links', async ({ page }) => {
+        await openWorkspaceWithSnapshot(page, restoredFileBackedSnapshot);
+        await dismissRestoreNoticeIfPresent(page);
+
+        await expect
+            .poll(async () =>
+                page.evaluate(() => {
+                    const raw = localStorage.getItem('nbu_workspaceSnapshot');
+                    if (!raw) {
+                        return null;
+                    }
+
+                    const snapshot = JSON.parse(raw);
+                    return {
+                        historyUrl: snapshot.history?.[0]?.url || null,
+                        stagedAssetUrl: snapshot.stagedAssets?.[0]?.url || null,
+                        viewerUrl: snapshot.viewState?.generatedImageUrls?.[0] || null,
+                    };
+                }),
+            )
+            .toEqual({
+                historyUrl: '/api/load-image?filename=file-backed-turn.png',
+                stagedAssetUrl: '/api/load-image?filename=file-backed-turn.png',
+                viewerUrl: '/api/load-image?filename=file-backed-turn.png',
+            });
+
+        const restoredSnapshot = await page.evaluate(() => {
+            const raw = localStorage.getItem('nbu_workspaceSnapshot');
+            return raw ? JSON.parse(raw) : null;
+        });
+
+        expect(restoredSnapshot).not.toBeNull();
+
+        const restoredPage = await page.context().newPage();
+        const requestedFilenames: string[] = [];
+
+        await restoredPage.route('**/api/load-image?filename=*', async (route) => {
+            const filename = new URL(route.request().url()).searchParams.get('filename');
+            if (filename) {
+                requestedFilenames.push(filename);
+            }
+
+            await route.fulfill({
+                status: 200,
+                contentType: 'image/png',
+                body: Buffer.from(
+                    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aRWQAAAAASUVORK5CYII=',
+                    'base64',
+                ),
+            });
+        });
+
+        await openWorkspaceWithSnapshot(restoredPage, restoredSnapshot as Record<string, unknown>);
+        await expect(composer(restoredPage)).toHaveValue('File-backed restore prompt');
+        await dismissRestoreNoticeIfPresent(restoredPage);
+        await openGalleryPanel(restoredPage);
+
+        const restoredHistoryImage = restoredPage
+            .locator('[data-testid^="history-card-"]')
+            .first()
+            .getByRole('img', { name: 'File-backed restored turn' });
+
+        await expect(restoredHistoryImage).toBeVisible();
+        await expect(restoredHistoryImage).toHaveAttribute('src', /\/api\/load-image\?filename=file-backed-turn\.png/);
+        expect(requestedFilenames).toContain('file-backed-turn.png');
+
+        await restoredPage.close();
     });
 
     test('replace imported inherited provenance exposes continuity summary and recovered sources', async ({ page }) => {
@@ -2807,7 +3143,7 @@ test.describe('workspace restore flows', () => {
         await expect(sideTools.getByTestId('workspace-side-tools-actions')).toBeVisible();
 
         await sideTools.getByTestId('side-tools-open-references').click();
-        const pickerSheet = page.getByRole('dialog').filter({ hasText: tt('workspaceTopHeaderReferenceTray') });
+        const pickerSheet = page.getByRole('dialog').filter({ hasText: tt('workspaceSheetTitleReferences') });
         await expect(pickerSheet).toBeVisible();
         await expect(pickerSheet).toContainText(tt('workspacePickerCapabilityHint'));
         await expect(pickerSheet).toContainText(tt('workspacePickerEditorBase'));
@@ -2823,7 +3159,7 @@ test.describe('workspace restore flows', () => {
         await expect(page.getByTestId('sketchpad')).toHaveCount(0);
 
         await page.getByRole('button', { name: tt('composerToolbarAdvancedSettings') }).click();
-        await expect(page.getByText(tt('composerAdvancedTitle'), { exact: true })).toBeVisible();
+        await expect(page.getByRole('heading', { name: tt('composerAdvancedTitle') })).toBeVisible();
 
         const mobileInsights = page
             .locator('details:visible')
@@ -2922,7 +3258,7 @@ test.describe('workspace restore flows', () => {
         );
 
         await page.getByRole('button', { name: tt('composerToolbarAdvancedSettings') }).click();
-        await expect(page.getByText(tt('composerAdvancedTitle'), { exact: true })).toBeVisible();
+        await expect(page.getByRole('heading', { name: tt('composerAdvancedTitle') })).toBeVisible();
     });
 
     test('viewer owner route keeps top rail compact while viewer expands structured output', async ({ page }) => {

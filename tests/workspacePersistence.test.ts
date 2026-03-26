@@ -1,11 +1,15 @@
-import { describe, expect, it } from 'vitest';
+/** @vitest-environment jsdom */
+
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { WorkspacePersistenceSnapshot } from '../types';
 import {
     EMPTY_WORKSPACE_SNAPSHOT,
     exportWorkspaceSnapshotDocument,
     mergeWorkspaceSnapshots,
     parseWorkspaceSnapshotDocument,
+    saveWorkspaceSnapshot,
     sanitizeWorkspaceSnapshot,
+    WORKSPACE_SNAPSHOT_STORAGE_KEY,
 } from '../utils/workspacePersistence';
 
 const baseSnapshot: WorkspacePersistenceSnapshot = {
@@ -121,6 +125,11 @@ const incomingSnapshot: WorkspacePersistenceSnapshot = {
 };
 
 describe('workspacePersistence', () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+        localStorage.clear();
+    });
+
     it('round-trips the wrapped export document', () => {
         const serialized = exportWorkspaceSnapshotDocument(baseSnapshot);
         const parsed = parseWorkspaceSnapshotDocument(serialized);
@@ -232,5 +241,152 @@ describe('workspacePersistence', () => {
         expect(restored.workspaceSession.conversationBranchOriginId).toBeNull();
         expect(restored.workspaceSession.conversationActiveSourceHistoryId).toBeNull();
         expect(restored.workspaceSession.conversationTurnIds).toEqual([]);
+    });
+
+    it('falls back to a compact local snapshot when inline images exceed localStorage quota', () => {
+        const snapshot: WorkspacePersistenceSnapshot = {
+            ...EMPTY_WORKSPACE_SNAPSHOT,
+            history: [
+                {
+                    id: 'large-turn',
+                    url: 'data:image/png;base64,history-thumb',
+                    prompt: 'Large image result',
+                    aspectRatio: '3:2',
+                    size: '4K',
+                    style: 'None',
+                    model: 'gemini-3.1-flash-image-preview',
+                    createdAt: 100,
+                },
+            ],
+            viewState: {
+                generatedImageUrls: ['data:image/png;base64,full-image-a', 'data:image/png;base64,full-image-b'],
+                selectedImageIndex: 1,
+                selectedHistoryId: 'large-turn',
+            },
+        };
+
+        const originalSetItem = Storage.prototype.setItem;
+        const setItemSpy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (key, value) {
+            const parsed = JSON.parse(value);
+            if (
+                key === WORKSPACE_SNAPSHOT_STORAGE_KEY &&
+                typeof parsed?.history?.[0]?.url === 'string' &&
+                parsed.history[0].url.startsWith('data:image/')
+            ) {
+                throw new DOMException('Quota exceeded', 'QuotaExceededError');
+            }
+
+            return originalSetItem.call(this, key, value);
+        });
+
+        expect(() => saveWorkspaceSnapshot(snapshot)).not.toThrow();
+        expect(setItemSpy).toHaveBeenCalledTimes(2);
+
+        const stored = JSON.parse(localStorage.getItem(WORKSPACE_SNAPSHOT_STORAGE_KEY) || 'null');
+        expect(stored.viewState.generatedImageUrls).toEqual([]);
+        expect(stored.viewState.selectedHistoryId).toBe('large-turn');
+        expect(stored.history[0].url).toBe('');
+    });
+
+    it('always strips inline generated image urls from local snapshots before quota fallback is needed', () => {
+        const snapshot: WorkspacePersistenceSnapshot = {
+            ...EMPTY_WORKSPACE_SNAPSHOT,
+            history: [
+                {
+                    id: 'kept-turn',
+                    url: 'data:image/jpeg;base64,thumb-inline',
+                    savedFilename: 'kept-turn.jpg',
+                    prompt: 'Keep the history item intact unless quota fallback is needed',
+                    aspectRatio: '1:1',
+                    size: '2K',
+                    style: 'None',
+                    model: 'gemini-3.1-flash-image-preview',
+                    createdAt: 200,
+                },
+            ],
+            viewState: {
+                generatedImageUrls: ['data:image/png;base64,stage-a', 'https://example.com/persistable-stage.png'],
+                selectedImageIndex: 1,
+                selectedHistoryId: 'kept-turn',
+            },
+        };
+
+        expect(() => saveWorkspaceSnapshot(snapshot)).not.toThrow();
+
+        const stored = JSON.parse(localStorage.getItem(WORKSPACE_SNAPSHOT_STORAGE_KEY) || 'null');
+        expect(stored.viewState.generatedImageUrls).toEqual(['https://example.com/persistable-stage.png']);
+        expect(stored.viewState.selectedImageIndex).toBe(0);
+        expect(stored.history[0].url).toBe('/api/load-image?filename=kept-turn.jpg');
+    });
+
+    it('uses saved output links for staged assets when restoring the stage from local snapshots', () => {
+        const snapshot: WorkspacePersistenceSnapshot = {
+            ...EMPTY_WORKSPACE_SNAPSHOT,
+            stagedAssets: [
+                {
+                    id: 'stage-source-1',
+                    url: 'data:image/png;base64,stage-inline',
+                    savedFilename: 'stage-source-1.png',
+                    role: 'stage-source',
+                    origin: 'history',
+                    createdAt: 300,
+                    sourceHistoryId: 'history-1',
+                    lineageAction: 'continue',
+                },
+            ],
+            viewState: {
+                generatedImageUrls: [],
+                selectedImageIndex: 0,
+                selectedHistoryId: null,
+            },
+        };
+
+        expect(() => saveWorkspaceSnapshot(snapshot)).not.toThrow();
+
+        const stored = JSON.parse(localStorage.getItem(WORKSPACE_SNAPSHOT_STORAGE_KEY) || 'null');
+        expect(stored.stagedAssets[0].url).toBe('/api/load-image?filename=stage-source-1.png');
+        expect(stored.viewState.generatedImageUrls).toEqual(['/api/load-image?filename=stage-source-1.png']);
+        expect(stored.viewState.selectedImageIndex).toBe(0);
+    });
+
+    it('removes inline image payloads from saved local snapshots when all visual surfaces are file-backed', () => {
+        const snapshot: WorkspacePersistenceSnapshot = {
+            ...EMPTY_WORKSPACE_SNAPSHOT,
+            history: [
+                {
+                    id: 'history-1',
+                    url: 'data:image/png;base64,history-inline',
+                    savedFilename: 'history-1.png',
+                    prompt: 'History image',
+                    aspectRatio: '1:1',
+                    size: '2K',
+                    style: 'None',
+                    model: 'gemini-3.1-flash-image-preview',
+                    createdAt: 400,
+                },
+            ],
+            stagedAssets: [
+                {
+                    id: 'stage-source-2',
+                    url: 'data:image/png;base64,stage-inline',
+                    savedFilename: 'stage-source-2.png',
+                    role: 'stage-source',
+                    origin: 'history',
+                    createdAt: 401,
+                    sourceHistoryId: 'history-1',
+                    lineageAction: 'reopen',
+                },
+            ],
+            viewState: {
+                generatedImageUrls: ['data:image/png;base64,viewer-inline'],
+                selectedImageIndex: 0,
+                selectedHistoryId: 'history-1',
+            },
+        };
+
+        expect(() => saveWorkspaceSnapshot(snapshot)).not.toThrow();
+
+        const storedPayload = localStorage.getItem(WORKSPACE_SNAPSHOT_STORAGE_KEY) || '';
+        expect(storedPayload).not.toContain('data:image/');
     });
 });

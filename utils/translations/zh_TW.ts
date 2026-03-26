@@ -297,6 +297,9 @@ export const zh_TW = {
     queuedBatchJobsRefreshAll: '全部刷新',
     queuedBatchJobsTrackedCount: '追蹤中 {0} 個',
     queuedBatchJobsImportedTag: '已匯入',
+    queuedBatchJobsRestoredHistoryTag: '還原歷史',
+    queuedBatchJobsRestoredHistoryHint:
+        '這筆已結束項目來自已還原的工作區快照，會保留為歷史記錄，不代表目前的即時佇列失敗。',
     queuedBatchJobsRequestCount: '{0} 筆請求',
     queuedBatchJobsLinkedSource: '關聯來源',
     queuedBatchJobsUpdated: '更新於',
@@ -809,6 +812,7 @@ export const zh_TW = {
     workspaceInsightsBranchesEmpty: '當工作流程開始分出不同走向後，這裡就會整理出分支。',
     workspaceInsightsNoContinuitySignals: '目前還沒有延續訊號。',
     workspaceInsightsOfficialConversation: '官方對話',
+    workspaceInsightsConversationTurnPosition: '第 {0} 回合',
     workspaceInsightsConversationBranchActiveSource: '分支 {0} · 目前來源 {1}',
     workspaceInsightsSessionSource: '工作階段來源',
     workspaceInsightsSessionStateHint:

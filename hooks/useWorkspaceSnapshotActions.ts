@@ -91,7 +91,7 @@ export const useWorkspaceSnapshotActions = ({
     setBranchRenameDialog,
     setBranchRenameDraft,
 }: UseWorkspaceSnapshotActionsArgs) => {
-    const t = (key: string) => getTranslation(currentLanguage, key);
+    const t = useCallback((key: string) => getTranslation(currentLanguage, key), [currentLanguage]);
     const [workspaceImportReview, setWorkspaceImportReview] = useState<WorkspaceImportReviewState | null>(null);
     const [showWorkspaceRestoreNotice, setShowWorkspaceRestoreNotice] = useState(initialShowRestoreNotice);
 

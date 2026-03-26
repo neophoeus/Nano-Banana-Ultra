@@ -498,6 +498,7 @@ describe('useQueuedBatchWorkflow', () => {
         expect(latestHook!.queuedJobs[0]).toEqual(
             expect.objectContaining({
                 localId: runningJob.localId,
+                restoredFromSnapshot: true,
                 state: 'JOB_STATE_FAILED',
                 error: 'Could not parse the batch name',
             }),

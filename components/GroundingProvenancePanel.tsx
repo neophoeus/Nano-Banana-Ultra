@@ -70,7 +70,7 @@ export type GroundingProvenancePanelProps = {
     searchEntryPointRenderedContent?: string;
 };
 
-export default function GroundingProvenancePanel({
+function GroundingProvenancePanel({
     currentLanguage,
     tone,
     scope = tone === 'dark' ? 'dark' : 'secondary',
@@ -121,6 +121,43 @@ export default function GroundingProvenancePanel({
     const t = (key: string) => getTranslation(currentLanguage, key);
     const formatMessage = (key: string, ...values: Array<string | number>) =>
         values.reduce((message, value, index) => message.replace(`{${index}}`, String(value)), t(key));
+    const getTranslatedModeLabel = (mode?: string | null) => {
+        if (!mode) {
+            return t('historyModeImage');
+        }
+
+        if (mode.includes('Inpaint') || mode.includes('Retouch')) return t('modeInpaint');
+        if (mode.includes('Text')) return t('modeTextToImg');
+        if (mode.includes('Image to')) return t('modeImgToImg');
+        if (mode.includes('Follow-up')) return t('workspaceViewerFollowUpEdit');
+        if (
+            mode.includes('Outpaint') ||
+            mode.includes('Reframe') ||
+            mode.includes('Reposition') ||
+            mode.includes('Upscale') ||
+            mode.includes('Refine')
+        ) {
+            return t('modeOutpaint');
+        }
+
+        return mode;
+    };
+    const getTranslatedSourceTypeLabel = (sourceType?: string | null) => {
+        if (sourceType === 'web') return t('groundingPanelAttributionSourceTypeWeb');
+        if (sourceType === 'image') return t('groundingPanelAttributionSourceTypeImage');
+        if (sourceType === 'context') return t('groundingPanelAttributionSourceTypeContext');
+        return sourceType || '';
+    };
+    const formatSourceMeta = (source: Pick<GroundingSource, 'url' | 'sourceType'>) => {
+        const parts = [formatSourceHost(source.url)];
+        const sourceTypeLabel = getTranslatedSourceTypeLabel(source.sourceType);
+
+        if (sourceTypeLabel) {
+            parts.push(sourceTypeLabel);
+        }
+
+        return parts.join(' · ');
+    };
     const getProvenanceTestId = (baseId: string) => (scope === 'primary' ? baseId : `${baseId}-${scope}`);
     const wrapperClassName =
         tone === 'dark'
@@ -354,10 +391,7 @@ export default function GroundingProvenancePanel({
                             </span>
                         </div>
                         <div className={titleClassName}>{source.title}</div>
-                        <div className={metaClassName}>
-                            {formatSourceHost(source.url)}
-                            {source.sourceType ? ` · ${source.sourceType}` : ''}
-                        </div>
+                        <div className={metaClassName}>{formatSourceMeta(source)}</div>
                         <div className={metaClassName}>
                             {citationCount > 0
                                 ? formatMessage('groundingPanelSourceCitationCount', citationCount)
@@ -696,7 +730,7 @@ export default function GroundingProvenancePanel({
                                             : 'mt-1 text-xs text-gray-500 dark:text-gray-400'
                                     }
                                 >
-                                    {provenanceSourceTurn.mode} ·{' '}
+                                    {getTranslatedModeLabel(provenanceSourceTurn.mode)} ·{' '}
                                     {new Date(provenanceSourceTurn.createdAt).toLocaleTimeString([], {
                                         hour: '2-digit',
                                         minute: '2-digit',
@@ -965,8 +999,7 @@ export default function GroundingProvenancePanel({
                                                         {activeSource.title}
                                                     </div>
                                                     <div className={detailMetaClassName}>
-                                                        {formatSourceHost(activeSource.url)}
-                                                        {activeSource.sourceType ? ` · ${activeSource.sourceType}` : ''}
+                                                        {formatSourceMeta(activeSource)}
                                                     </div>
                                                 </div>
                                                 {renderDisclosureChevron()}
@@ -1402,10 +1435,7 @@ export default function GroundingProvenancePanel({
                                                                             {source.title}
                                                                         </div>
                                                                         <div className={detailMetaClassName}>
-                                                                            {formatSourceHost(source.url)}
-                                                                            {source.sourceType
-                                                                                ? ` · ${source.sourceType}`
-                                                                                : ''}
+                                                                            {formatSourceMeta(source)}
                                                                         </div>
                                                                     </div>
                                                                     <div className="flex items-start gap-3">
@@ -1504,10 +1534,7 @@ export default function GroundingProvenancePanel({
                                                                             {source.title}
                                                                         </div>
                                                                         <div className={detailMetaClassName}>
-                                                                            {formatSourceHost(source.url)}
-                                                                            {source.sourceType
-                                                                                ? ` · ${source.sourceType}`
-                                                                                : ''}
+                                                                            {formatSourceMeta(source)}
                                                                         </div>
                                                                         <div className={detailMetaClassName}>
                                                                             {(sourceCitationCountByIndex.get(index) ||
@@ -1687,8 +1714,7 @@ export default function GroundingProvenancePanel({
                                                         {source.title}
                                                     </div>
                                                     <div className={detailMetaClassName}>
-                                                        {formatSourceHost(source.url)}
-                                                        {source.sourceType ? ` · ${source.sourceType}` : ''}
+                                                        {formatSourceMeta(source)}
                                                     </div>
                                                     <div className={detailMetaClassName}>
                                                         {t('groundingPanelUncitedSourcesHint')}
@@ -1739,3 +1765,5 @@ export default function GroundingProvenancePanel({
         </div>
     );
 }
+
+export default React.memo(GroundingProvenancePanel);

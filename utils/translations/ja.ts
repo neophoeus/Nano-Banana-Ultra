@@ -323,6 +323,9 @@ export const ja = {
     queuedBatchJobsRefreshAll: 'すべて更新',
     queuedBatchJobsTrackedCount: '追跡中 {0}',
     queuedBatchJobsImportedTag: 'インポート済み',
+    queuedBatchJobsRestoredHistoryTag: '復元履歴',
+    queuedBatchJobsRestoredHistoryHint:
+        'この終了済み項目は復元したワークスペースのスナップショット由来です。履歴として保持されており、現在のライブキュー障害ではありません。',
     queuedBatchJobsRequestCount: '{0} 件のリクエスト',
     queuedBatchJobsLinkedSource: '関連ソース',
     queuedBatchJobsUpdated: '更新',
@@ -851,6 +854,7 @@ export const ja = {
     workspaceInsightsBranchesEmpty: 'セッションが別方向へ分岐し始めると、ここに分岐が整理されます。',
     workspaceInsightsNoContinuitySignals: 'まだ継続シグナルはありません。',
     workspaceInsightsOfficialConversation: '公式会話',
+    workspaceInsightsConversationTurnPosition: '{0} ターン目',
     workspaceInsightsConversationBranchActiveSource: '分岐 {0} · 現在のソース {1}',
     workspaceInsightsSessionSource: 'セッションソース',
     workspaceInsightsSessionStateHint:

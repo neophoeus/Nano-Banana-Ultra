@@ -24,7 +24,7 @@ export default function WorkspaceSecondaryNav({ items, className = '' }: Workspa
 
     return (
         <div
-            className={`inline-flex flex-wrap gap-2 rounded-[22px] border border-gray-200/80 bg-white/72 p-2 shadow-[0_12px_30px_rgba(15,23,42,0.05)] dark:border-gray-800 dark:bg-[#11161f]/82 dark:shadow-none ${className}`.trim()}
+            className={`nbu-overlay-nav-shell inline-flex flex-wrap gap-2 rounded-[22px] border p-2 ${className}`.trim()}
         >
             {items.map((item) => (
                 <button

@@ -9,6 +9,7 @@ describe('WorkspaceRestoreNotice', () => {
         const markup = renderToStaticMarkup(
             <WorkspaceRestoreNotice
                 currentLanguage="en"
+                onLanguageChange={vi.fn()}
                 historyCount={1}
                 stagedAssetCount={1}
                 viewerImageCount={1}
@@ -24,11 +25,10 @@ describe('WorkspaceRestoreNotice', () => {
         expect(markup).toContain('max-h-[calc(100vh-2rem)]');
         expect(markup).toContain('overflow-y-auto');
         expect(markup).toContain('Choose next step');
-        expect(markup).toContain('Choose whether to reopen the recovered chain');
+        expect(markup).toContain('Choose whether to reopen the recovered chain, continue from the latest turn');
         expect(markup).toContain('workspace-restore-actions-hint');
-        expect(markup).toContain('workspace-restore-secondary-details');
-        expect(markup).toContain('workspace-restore-secondary-summary');
-        expect(markup).toContain('group-open:rotate-180');
+        expect(markup).toContain('language-selector-toggle');
+        expect(markup).toContain('Keep settings, clear restored chain');
         expect(markup).not.toContain('Recovery actions');
     });
 
@@ -36,6 +36,7 @@ describe('WorkspaceRestoreNotice', () => {
         const markup = renderToStaticMarkup(
             <WorkspaceRestoreNotice
                 currentLanguage="zh_TW"
+                onLanguageChange={vi.fn()}
                 historyCount={1}
                 stagedAssetCount={1}
                 viewerImageCount={1}
@@ -57,6 +58,7 @@ describe('WorkspaceRestoreNotice', () => {
         const markup = renderToStaticMarkup(
             <WorkspaceRestoreNotice
                 currentLanguage="zh_TW"
+                onLanguageChange={vi.fn()}
                 historyCount={1}
                 stagedAssetCount={1}
                 viewerImageCount={1}
@@ -69,6 +71,24 @@ describe('WorkspaceRestoreNotice', () => {
         expect(markup).toContain('延續還原回合');
         expect(markup).not.toContain('Continue restored turn');
         expect(markup).toContain('workspace-restore-continue');
+    });
+
+    it('uses a dark restore backdrop instead of the light overlay shell in dark mode', () => {
+        const markup = renderToStaticMarkup(
+            <WorkspaceRestoreNotice
+                currentLanguage="en"
+                onLanguageChange={vi.fn()}
+                historyCount={1}
+                stagedAssetCount={1}
+                viewerImageCount={1}
+                onUseSettingsClearChain={vi.fn()}
+                onDismiss={vi.fn()}
+            />,
+        );
+
+        expect(markup).toContain(
+            'dark:bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.1),_transparent_30%),linear-gradient(180deg,rgba(2,6,23,0.86),rgba(2,6,23,0.92))]',
+        );
     });
 
     it('defines restore notice labels for every supported language', () => {

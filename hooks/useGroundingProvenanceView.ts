@@ -43,6 +43,9 @@ const OUTPUT_DIMENSION_SIZE_LABELS: Record<string, string> = {
     '2048x2048': '2K',
     '4096x4096': '4K',
 };
+const EMPTY_GROUNDING_SOURCES: NonNullable<GroundingMetadata['sources']> = [];
+const EMPTY_GROUNDING_SUPPORTS: NonNullable<GroundingMetadata['supports']> = [];
+const EMPTY_SESSION_HINT_ENTRIES: Array<[string, unknown]> = [];
 
 export function useGroundingProvenanceView({
     selectedResultText,
@@ -239,8 +242,8 @@ export function useGroundingProvenanceView({
         ],
     );
 
-    const selectedSources = effectiveGrounding?.sources || [];
-    const selectedSupportBundles = effectiveGrounding?.supports || [];
+    const selectedSources = effectiveGrounding?.sources ?? EMPTY_GROUNDING_SOURCES;
+    const selectedSupportBundles = effectiveGrounding?.supports ?? EMPTY_GROUNDING_SUPPORTS;
     const activeSupportBundle =
         activeGroundingSelection?.kind === 'bundle' ? selectedSupportBundles[activeGroundingSelection.index] : null;
     const activeSource =
@@ -405,7 +408,10 @@ export function useGroundingProvenanceView({
             }),
         [effectiveGrounding, t],
     );
-    const sessionHintEntries = Object.entries(effectiveSessionHints || {});
+    const sessionHintEntries = useMemo(
+        () => (effectiveSessionHints ? Object.entries(effectiveSessionHints) : EMPTY_SESSION_HINT_ENTRIES),
+        [effectiveSessionHints],
+    );
     const formatSessionHintKey = useCallback(
         (key: string) => key.replace(/([A-Z])/g, ' $1').replace(/^./, (value) => value.toUpperCase()),
         [],
@@ -561,22 +567,32 @@ export function useGroundingProvenanceView({
 
     const sessionSourceTurn = getHistoryTurnById(workspaceSession.sourceHistoryId);
     const provenanceSourceTurn = getHistoryTurnById(workspaceSession.provenanceSourceHistoryId);
-    const provenanceSummaryRows = [
-        { id: 'mode', label: t('groundingProvenanceSummaryMode'), value: provenanceModeLabel },
-        {
-            id: 'source-turn',
-            label: t('groundingProvenanceSummarySourceTurn'),
-            value: workspaceSession.provenanceSourceHistoryId
-                ? getShortTurnId(workspaceSession.provenanceSourceHistoryId)
-                : t('groundingProvenanceNone'),
-        },
-        { id: 'sources', label: t('groundingProvenanceSummarySources'), value: String(selectedSources.length) },
-        {
-            id: 'support-bundles',
-            label: t('groundingProvenanceSummarySupportBundles'),
-            value: String(selectedSupportBundles.length),
-        },
-    ];
+    const provenanceSummaryRows = useMemo(
+        () => [
+            { id: 'mode', label: t('groundingProvenanceSummaryMode'), value: provenanceModeLabel },
+            {
+                id: 'source-turn',
+                label: t('groundingProvenanceSummarySourceTurn'),
+                value: workspaceSession.provenanceSourceHistoryId
+                    ? getShortTurnId(workspaceSession.provenanceSourceHistoryId)
+                    : t('groundingProvenanceNone'),
+            },
+            { id: 'sources', label: t('groundingProvenanceSummarySources'), value: String(selectedSources.length) },
+            {
+                id: 'support-bundles',
+                label: t('groundingProvenanceSummarySupportBundles'),
+                value: String(selectedSupportBundles.length),
+            },
+        ],
+        [
+            getShortTurnId,
+            provenanceModeLabel,
+            selectedSources.length,
+            selectedSupportBundles.length,
+            t,
+            workspaceSession.provenanceSourceHistoryId,
+        ],
+    );
 
     const provenanceSelectionMessage =
         activeGroundingSelection?.kind === 'bundle'

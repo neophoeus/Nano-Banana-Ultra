@@ -344,6 +344,159 @@ const composerControlChromeFallbackSensitiveKeys = [
 
 const composerQueueBatchJobFallbackSensitiveKeys = ['composerQueueBatchJob'] as const;
 
+const phaseEGroup1ShellParityKeys = [
+    'workspaceTopHeaderModel',
+    'workspaceTopHeaderRatio',
+    'workspaceTopHeaderSize',
+    'workspaceTopHeaderQty',
+    'workspaceTopHeaderReferenceTray',
+    'workspaceTopHeaderObjectRefs',
+    'workspaceTopHeaderCharacterRefs',
+    'workspacePanelResponseEyebrow',
+    'workspaceViewerResultText',
+    'workspaceViewerStructuredOutput',
+    'workspaceResponseRailStructuredOutputHint',
+    'workspaceViewerThoughts',
+    'workspaceInsightsLatestThoughts',
+    'workspacePanelStatusEnabled',
+    'workspacePanelStatusPrepared',
+    'workspacePanelStatusReserved',
+] as const;
+
+const phaseEGroup2ShellParityKeys = [
+    'composerToolbarExportWorkspace',
+    'composerToolbarImportWorkspace',
+    'composerToolbarAdvancedSettings',
+    'composerEnterSends',
+    'composerEnterNewline',
+    'composerVisibilityVisible',
+    'composerVisibilityHidden',
+    'composerActionPanelEyebrow',
+    'composerActionPanelTitle',
+    'composerActionPanelDesc',
+    'composerAdvancedEyebrow',
+    'composerAdvancedTitle',
+    'composerAdvancedDesc',
+    'composerDefaultTemp',
+    'composerAdvancedGenerationSectionTitle',
+    'composerAdvancedGenerationSectionDesc',
+    'composerAdvancedStructuredOutput',
+    'composerAdvancedStructuredOutputDesc',
+    'composerAdvancedStructuredOutputGuideBestForLabel',
+    'composerAdvancedStructuredOutputGuideFieldsLabel',
+    'composerAdvancedStructuredOutputGuideExampleLabel',
+    'structuredOutputPromptReady',
+    'structuredOutputPromptReadyHintRevisionBrief',
+    'structuredOutputPromptReadyHintVariationCompare',
+    'composerAdvancedReturnThoughtsDesc',
+    'composerAdvancedGroundingSectionTitle',
+    'composerAdvancedGroundingSectionDesc',
+    'composerAdvancedGroundingMode',
+    'composerAdvancedGroundingDesc',
+    'composerAdvancedGroundingResolutionWarningFlashImageSearch',
+    'composerAdvancedGroundingGuideTitle',
+    'composerAdvancedGroundingGuideDesc',
+    'composerAdvancedGroundingGuideFlashGoogle',
+    'composerAdvancedGroundingGuideFlashImage',
+    'composerAdvancedGroundingGuideProGoogle',
+    'composerQueueBatchJob',
+    'queuedBatchJobsTitle',
+    'queuedBatchJobsWorkflowHint',
+    'queuedBatchJobsConversationNoticeLabel',
+    'queueBatchModeEditor',
+    'queueBatchModeStage',
+    'queueBatchModeReferences',
+    'queueBatchModePromptOnly',
+    'queueBatchConversationNotice',
+    'structuredOutputModeOff',
+    'structuredOutputModeSceneBrief',
+    'structuredOutputModePromptKit',
+    'structuredOutputModeQualityCheck',
+    'structuredOutputModeShotPlan',
+    'structuredOutputModeDeliveryBrief',
+    'structuredOutputModeRevisionBrief',
+    'structuredOutputModeVariationCompare',
+    'composerAdvancedStructuredOutputGuideOff',
+    'composerAdvancedStructuredOutputGuideSceneBrief',
+    'composerAdvancedStructuredOutputGuidePromptKit',
+    'composerAdvancedStructuredOutputGuideQualityCheck',
+    'composerAdvancedStructuredOutputGuideShotPlan',
+    'composerAdvancedStructuredOutputGuideDeliveryBrief',
+    'composerAdvancedStructuredOutputGuideRevisionBrief',
+    'composerAdvancedStructuredOutputGuideVariationCompare',
+    'composerAdvancedStructuredOutputGuideBestForSceneBrief',
+    'composerAdvancedStructuredOutputGuideBestForPromptKit',
+    'composerAdvancedStructuredOutputGuideBestForQualityCheck',
+    'composerAdvancedStructuredOutputGuideBestForShotPlan',
+    'composerAdvancedStructuredOutputGuideBestForDeliveryBrief',
+    'composerAdvancedStructuredOutputGuideBestForRevisionBrief',
+    'composerAdvancedStructuredOutputGuideBestForVariationCompare',
+    'composerAdvancedStructuredOutputGuideAvoidWhenSceneBrief',
+    'composerAdvancedStructuredOutputGuideAvoidWhenPromptKit',
+    'composerAdvancedStructuredOutputGuideAvoidWhenQualityCheck',
+    'composerAdvancedStructuredOutputGuideAvoidWhenShotPlan',
+    'composerAdvancedStructuredOutputGuideAvoidWhenDeliveryBrief',
+    'composerAdvancedStructuredOutputGuideAvoidWhenRevisionBrief',
+    'composerAdvancedStructuredOutputGuideAvoidWhenVariationCompare',
+] as const;
+
+const phaseEGroup3ShellParityKeys = [
+    'composerActionPanelEyebrow',
+    'workspacePickerStageSource',
+    'workspacePickerStageSourceHint',
+    'workspacePickerEditorBase',
+    'workspacePickerEditorBaseHint',
+    'workspaceViewerEditCurrentImage',
+    'workspaceViewerContinueEditing',
+    'workspaceViewerUploadBaseToEdit',
+    'surfaceSharedControlsReferenceDetail',
+    'stageOriginNotStaged',
+    'stageOriginUpload',
+    'stageOriginSketch',
+    'stageOriginGenerated',
+    'stageOriginHistory',
+    'stageOriginEditor',
+    'workspacePickerUploadBaseImage',
+    'workspacePickerOpenSketchPad',
+    'workspacePickerObjects',
+    'workspacePickerCharacters',
+    'workspacePickerHasSketchAsset',
+    'workspacePickerNoSketchAsset',
+    'editorTitle',
+    'editorDiscard',
+    'editorDiscardMsg',
+    'editorKeep',
+    'editorYesDiscard',
+    'editorSwitchTitle',
+    'editorSwitchBtn',
+    'editorErrorTitle',
+    'editorErrorRetry',
+    'editorErrorReturn',
+    'btnRender',
+    'btnReset',
+    'btnFit',
+    'btnFill',
+    'btnAlignTop',
+    'btnAlignBottom',
+    'btnAlignLeft',
+    'btnAlignRight',
+    'warningSwitchMode',
+    'warningResized4K',
+    'modeInpaint',
+    'modeOutpaint',
+    'toolUndo',
+    'toolRedo',
+    'toolSize',
+    'toolZoom',
+    'toolText',
+    'toolPan',
+    'toolMask',
+    'toolDoodle',
+    'toolPen',
+    'statusProcessing',
+    'sketchExitTitle',
+] as const;
+
 const historyActionBadgeFallbackSensitiveKeys = [
     'historyActionOpen',
     'historyActionBranch',
@@ -681,6 +834,27 @@ const continuityLocalizedTextKeys = [
     'workspaceInsightsContinuitySourceTurn',
     'workspaceInsightsContinuitySourceFollowUp',
     'workspaceInsightsContinuityChatTurns',
+] as const;
+
+const phaseEGroup4ShellParityKeys = [
+    ...branchRenameDialogKeys,
+    ...historyContinueStageKeys,
+    ...historyStageNoticeKeys,
+] as const;
+
+const phaseEGroup5ShellParityKeys = [
+    ...workspaceInsightsSidebarLabelKeys,
+    ...workspaceInsightsStructuralKeys,
+    ...provenancePolishKeys,
+    ...groundingProvenanceSummaryKeys,
+    ...groundingPanelLocalizationKeys,
+] as const;
+
+const phaseEGroup6ShellParityKeys = [...historyActionBadgeKeys, ...historyFilmstripKeys] as const;
+
+const phaseEGroup7ShellParityKeys = [
+    ...historyBranchLabelFallbackSensitiveKeys,
+    ...sourceLineageLabelFallbackSensitiveKeys,
 ] as const;
 
 const englishGroundingProvenanceBaseline = {
@@ -1301,7 +1475,7 @@ const esComposerControlChromeBaseline = {
     composerToolbarAdvancedSettings: 'Ajustes avanzados',
     composerEnterSends: 'Enter envia',
     composerEnterNewline: 'Enter inserta salto de linea',
-    composerVisibilityVisible: 'Visible',
+    composerVisibilityVisible: 'Se muestra',
     composerVisibilityHidden: 'Oculto',
     composerActionPanelEyebrow: 'Acciones',
     composerActionPanelTitle: 'Crear',
@@ -1316,9 +1490,9 @@ const frComposerControlChromeBaseline = {
     composerToolbarAdvancedSettings: 'Parametres avances',
     composerEnterSends: 'Entrer pour envoyer',
     composerEnterNewline: 'Entrer pour un saut de ligne',
-    composerVisibilityVisible: 'Visible',
+    composerVisibilityVisible: 'Affiché',
     composerVisibilityHidden: 'Masque',
-    composerActionPanelEyebrow: 'Actions',
+    composerActionPanelEyebrow: 'Commandes',
     composerActionPanelTitle: 'Creer',
     composerActionPanelDesc:
         'La generation reste prioritaire. Les actions de suivi et d espace de travail restent proches, mais plus discretes.',
@@ -2732,10 +2906,10 @@ const frHistoryActionBadgeBaseline = {
     historyActionOpenLatest: 'Ouvrir la plus recente',
     historyActionOpenOrigin: "Ouvrir l'origine",
     historyActionBranchFromOrigin: "Bifurquer depuis l'origine",
-    historyModeImage: 'Image',
-    historyBadgeParent: 'parent',
-    historyBadgeCandidate: 'Candidate',
-    historyBadgeActive: 'Active',
+    historyModeImage: 'Image generee',
+    historyBadgeParent: 'parente',
+    historyBadgeCandidate: 'Candidate locale',
+    historyBadgeActive: 'Activee',
 } as const;
 
 const deHistoryActionBadgeBaseline = {
@@ -3220,10 +3394,10 @@ const esGroundingPanelProvenanceBaseline = {
     groundingPanelAttributionEntryPointAvailable: 'Disponible sin vista previa renderizada',
     groundingPanelAttributionEntryPointNotReturned: 'No devuelto',
     groundingPanelAttributionEntryPointNotRequested: 'No solicitado',
-    groundingPanelAttributionSourceTypeWeb: 'web',
+    groundingPanelAttributionSourceTypeWeb: 'sitio web',
     groundingPanelAttributionSourceTypeImage: 'imagen',
     groundingPanelAttributionSourceTypeContext: 'contexto',
-    groundingPanelAttributionWebQueries: 'web',
+    groundingPanelAttributionWebQueries: 'consultas web',
     groundingPanelAttributionImageQueries: 'imagen',
     groundingPanelAttributionNoSources: 'Sin fuentes',
     groundingPanelAttributionNoSourcesToCompare: 'No hay fuentes para comparar',
@@ -3312,11 +3486,11 @@ const frGroundingPanelProvenanceBaseline = {
     groundingPanelAttributionEntryPointAvailable: 'Disponible sans apercu rendu',
     groundingPanelAttributionEntryPointNotReturned: 'Non renvoye',
     groundingPanelAttributionEntryPointNotRequested: 'Non demande',
-    groundingPanelAttributionSourceTypeWeb: 'web',
-    groundingPanelAttributionSourceTypeImage: 'image',
+    groundingPanelAttributionSourceTypeWeb: 'site web',
+    groundingPanelAttributionSourceTypeImage: 'source image',
     groundingPanelAttributionSourceTypeContext: 'contexte',
-    groundingPanelAttributionWebQueries: 'web',
-    groundingPanelAttributionImageQueries: 'image',
+    groundingPanelAttributionWebQueries: 'requetes web',
+    groundingPanelAttributionImageQueries: 'requetes image',
     groundingPanelAttributionNoSources: 'Aucune source',
     groundingPanelAttributionNoSourcesToCompare: 'Aucune source a comparer',
     groundingPanelAttributionNoQueriesShort: 'Aucune requete',
@@ -3331,7 +3505,7 @@ const frGroundingPanelProvenanceBaseline = {
     groundingPanelCitationDetail: 'Detail de citation',
     groundingPanelEmptyDetail:
         "Selectionnez une source ou un bloc de support pour examiner l'attribution au niveau des segments et la reutiliser dans le compositeur.",
-    groundingPanelSourcesSection: 'Sources',
+    groundingPanelSourcesSection: 'Sources de contexte',
     groundingPanelCoverageSection: 'Couverture',
     groundingPanelQueriesSection: 'Requetes',
     groundingPanelNoQueries: 'Les termes de requete de contexte apparaitront ici lorsque le modele les renverra.',
@@ -3340,10 +3514,10 @@ const frGroundingPanelProvenanceBaseline = {
     groundingPanelCoveredBySelectedBundleState: 'Couvert par le bloc selectionne',
     groundingPanelSourceStatusCited: 'Citee',
     groundingPanelSourceStatusRetrievedOnly: 'Recuperee seulement',
-    groundingPanelSourceIndex: 'Source {0}',
+    groundingPanelSourceIndex: 'Source de contexte {0}',
     groundingPanelOpenSource: 'Ouvrir la source',
     groundingPanelSupportBundleTitle: 'Bloc de support {0}',
-    groundingPanelSourcesCount: '{0} sources',
+    groundingPanelSourcesCount: '{0} sources de contexte',
     groundingPanelChunksMeta: 'Segments : {0}',
     groundingPanelFocusState: 'Focalise sur {0} sources et {1} blocs lies a la citation actuelle.',
     groundingPanelFullContextState:
@@ -4571,6 +4745,76 @@ describe('workspace flow translations', () => {
         }
     });
 
+    it('defines the Phase E group 1 shell parity keys for every supported language', () => {
+        for (const language of Object.keys(translations) as Array<keyof typeof translations>) {
+            const dictionary = translations[language];
+
+            for (const key of phaseEGroup1ShellParityKeys) {
+                expect(dictionary[key], `${language} missing ${key}`).toBeTruthy();
+            }
+        }
+    });
+
+    it('defines the Phase E group 2 shell parity keys for every supported language', () => {
+        for (const language of Object.keys(translations) as Array<keyof typeof translations>) {
+            const dictionary = translations[language];
+
+            for (const key of phaseEGroup2ShellParityKeys) {
+                expect(dictionary[key], `${language} missing ${key}`).toBeTruthy();
+            }
+        }
+    });
+
+    it('defines the Phase E group 3 shell parity keys for every supported language', () => {
+        for (const language of Object.keys(translations) as Array<keyof typeof translations>) {
+            const dictionary = translations[language];
+
+            for (const key of phaseEGroup3ShellParityKeys) {
+                expect(dictionary[key], `${language} missing ${key}`).toBeTruthy();
+            }
+        }
+    });
+
+    it('defines the Phase E group 4 shell parity keys for every supported language', () => {
+        for (const language of Object.keys(translations) as Array<keyof typeof translations>) {
+            const dictionary = translations[language];
+
+            for (const key of phaseEGroup4ShellParityKeys) {
+                expect(dictionary[key], `${language} missing ${key}`).toBeTruthy();
+            }
+        }
+    });
+
+    it('defines the Phase E group 5 shell parity keys for every supported language', () => {
+        for (const language of Object.keys(translations) as Array<keyof typeof translations>) {
+            const dictionary = translations[language];
+
+            for (const key of phaseEGroup5ShellParityKeys) {
+                expect(dictionary[key], `${language} missing ${key}`).toBeTruthy();
+            }
+        }
+    });
+
+    it('defines the Phase E group 6 shell parity keys for every supported language', () => {
+        for (const language of Object.keys(translations) as Array<keyof typeof translations>) {
+            const dictionary = translations[language];
+
+            for (const key of phaseEGroup6ShellParityKeys) {
+                expect(dictionary[key], `${language} missing ${key}`).toBeTruthy();
+            }
+        }
+    });
+
+    it('defines the Phase E group 7 shell parity keys for every supported language', () => {
+        for (const language of Object.keys(translations) as Array<keyof typeof translations>) {
+            const dictionary = translations[language];
+
+            for (const key of phaseEGroup7ShellParityKeys) {
+                expect(dictionary[key], `${language} missing ${key}`).toBeTruthy();
+            }
+        }
+    });
+
     it('defines the history action and badge keys for every supported language', () => {
         for (const language of Object.keys(translations) as Array<keyof typeof translations>) {
             const dictionary = translations[language];
@@ -4790,6 +5034,104 @@ describe('workspace flow translations', () => {
             const dictionary = translations[language];
 
             for (const key of composerQueueBatchJobFallbackSensitiveKeys) {
+                expect(dictionary[key], `${language} fell back to English for ${key}`).not.toBe(english[key]);
+            }
+        }
+    });
+
+    it('keeps the Phase E group 1 shell parity keys localized outside English', () => {
+        const english = translations.en;
+
+        for (const language of Object.keys(translations) as Array<keyof typeof translations>) {
+            if (language === 'en') continue;
+
+            const dictionary = translations[language];
+
+            for (const key of phaseEGroup1ShellParityKeys) {
+                expect(dictionary[key], `${language} fell back to English for ${key}`).not.toBe(english[key]);
+            }
+        }
+    });
+
+    it('keeps the Phase E group 2 shell parity keys localized outside English', () => {
+        const english = translations.en;
+
+        for (const language of Object.keys(translations) as Array<keyof typeof translations>) {
+            if (language === 'en') continue;
+
+            const dictionary = translations[language];
+
+            for (const key of phaseEGroup2ShellParityKeys) {
+                expect(dictionary[key], `${language} fell back to English for ${key}`).not.toBe(english[key]);
+            }
+        }
+    });
+
+    it('keeps the Phase E group 3 shell parity keys localized outside English', () => {
+        const english = translations.en;
+
+        for (const language of Object.keys(translations) as Array<keyof typeof translations>) {
+            if (language === 'en') continue;
+
+            const dictionary = translations[language];
+
+            for (const key of phaseEGroup3ShellParityKeys) {
+                expect(dictionary[key], `${language} fell back to English for ${key}`).not.toBe(english[key]);
+            }
+        }
+    });
+
+    it('keeps the Phase E group 4 shell parity keys localized outside English', () => {
+        const english = translations.en;
+
+        for (const language of Object.keys(translations) as Array<keyof typeof translations>) {
+            if (language === 'en') continue;
+
+            const dictionary = translations[language];
+
+            for (const key of phaseEGroup4ShellParityKeys) {
+                expect(dictionary[key], `${language} fell back to English for ${key}`).not.toBe(english[key]);
+            }
+        }
+    });
+
+    it('keeps the Phase E group 5 shell parity keys localized outside English', () => {
+        const english = translations.en;
+
+        for (const language of Object.keys(translations) as Array<keyof typeof translations>) {
+            if (language === 'en') continue;
+
+            const dictionary = translations[language];
+
+            for (const key of phaseEGroup5ShellParityKeys) {
+                expect(dictionary[key], `${language} fell back to English for ${key}`).not.toBe(english[key]);
+            }
+        }
+    });
+
+    it('keeps the Phase E group 6 shell parity keys localized outside English', () => {
+        const english = translations.en;
+
+        for (const language of Object.keys(translations) as Array<keyof typeof translations>) {
+            if (language === 'en') continue;
+
+            const dictionary = translations[language];
+
+            for (const key of phaseEGroup6ShellParityKeys) {
+                expect(dictionary[key], `${language} fell back to English for ${key}`).not.toBe(english[key]);
+            }
+        }
+    });
+
+    it('keeps the Phase E group 7 shell parity keys localized outside English', () => {
+        const english = translations.en;
+
+        for (const language of Object.keys(translations) as Array<keyof typeof translations>) {
+            if (language === 'en') continue;
+
+            const dictionary = translations[language];
+
+            for (const key of phaseEGroup7ShellParityKeys) {
                 expect(dictionary[key], `${language} fell back to English for ${key}`).not.toBe(english[key]);
             }
         }

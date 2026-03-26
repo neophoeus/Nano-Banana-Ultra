@@ -17,7 +17,7 @@ type WorkspaceResponseRailProps = {
     onAppendPrompt?: (value: string) => void;
 };
 
-export default function WorkspaceResponseRail({
+function WorkspaceResponseRail({
     currentLanguage,
     resultText,
     structuredData,
@@ -53,7 +53,10 @@ export default function WorkspaceResponseRail({
 
     return (
         <section data-testid="workspace-response-rail" className="grid gap-4">
-            <div data-testid="workspace-model-output-card" className="nbu-shell-panel min-h-[212px] p-4 md:p-5">
+            <div
+                data-testid="workspace-model-output-card"
+                className="nbu-shell-panel nbu-shell-surface-output-strip min-h-[212px] p-4 md:p-5"
+            >
                 <div data-testid="workspace-response-text-card">
                     <div className="mb-4 flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
@@ -138,3 +141,5 @@ export default function WorkspaceResponseRail({
         </section>
     );
 }
+
+export default React.memo(WorkspaceResponseRail);

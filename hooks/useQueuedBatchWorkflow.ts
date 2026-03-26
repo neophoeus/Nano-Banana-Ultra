@@ -71,6 +71,7 @@ type RemoteQueuedJobSeed = Pick<
     QueuedBatchJob,
     | 'localId'
     | 'prompt'
+    | 'restoredFromSnapshot'
     | 'generationMode'
     | 'aspectRatio'
     | 'imageSize'
@@ -247,6 +248,7 @@ export function useQueuedBatchWorkflow({
                 localId: seed.localId,
                 name: remoteJob.name,
                 displayName: remoteJob.displayName,
+                restoredFromSnapshot: seed.restoredFromSnapshot,
                 state: normalizeQueuedBatchJobState(remoteJob.state),
                 model: remoteJob.model,
                 prompt: seed.prompt,
@@ -304,6 +306,7 @@ export function useQueuedBatchWorkflow({
         const seed = {
             localId,
             prompt: draft.finalPrompt,
+            restoredFromSnapshot: false,
             generationMode: draft.generationMode,
             aspectRatio,
             imageSize,
@@ -433,6 +436,7 @@ export function useQueuedBatchWorkflow({
                 if (isQueuedBatchJobNameUnrecoverable(message)) {
                     upsertQueuedJob({
                         ...job,
+                        restoredFromSnapshot: job.restoredFromSnapshot ?? true,
                         state: 'JOB_STATE_FAILED',
                         updatedAt: Date.now(),
                         completedAt: job.completedAt ?? Date.now(),

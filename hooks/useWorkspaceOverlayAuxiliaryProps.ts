@@ -23,8 +23,10 @@ type ImportReviewBranchActions = {
 
 type UseWorkspaceOverlayAuxiliaryPropsArgs = {
     currentLanguage: Language;
+    onLanguageChange: Dispatch<SetStateAction<Language>>;
     isSurfaceWorkspaceOpen: boolean;
     isSurfaceSharedControlsOpen: boolean;
+    isAdvancedSettingsOpen: boolean;
     isEditing: boolean;
     activeSurfaceSheetLabel: string;
     activePickerSheet: SurfaceSharedControlsProps['activePickerSheet'] | 'history' | 'gallery' | 'templates';
@@ -41,6 +43,7 @@ type UseWorkspaceOverlayAuxiliaryPropsArgs = {
     maxCharacters: number;
     floatingControlsZIndex: number;
     setIsSurfaceSharedControlsOpen: Dispatch<SetStateAction<boolean>>;
+    setIsAdvancedSettingsOpen: Dispatch<SetStateAction<boolean>>;
     openSurfacePickerSheet: SurfaceSharedControlsProps['onOpenSheet'];
     getStyleLabel: (style: ImageStyle) => string;
     getModelLabel: (model: ImageModel) => string;
@@ -89,8 +92,10 @@ type UseWorkspaceOverlayAuxiliaryPropsArgs = {
 
 export function useWorkspaceOverlayAuxiliaryProps({
     currentLanguage,
+    onLanguageChange,
     isSurfaceWorkspaceOpen,
     isSurfaceSharedControlsOpen,
+    isAdvancedSettingsOpen,
     isEditing,
     activeSurfaceSheetLabel,
     activePickerSheet,
@@ -107,6 +112,7 @@ export function useWorkspaceOverlayAuxiliaryProps({
     maxCharacters,
     floatingControlsZIndex,
     setIsSurfaceSharedControlsOpen,
+    setIsAdvancedSettingsOpen,
     openSurfacePickerSheet,
     getStyleLabel,
     getModelLabel,
@@ -163,6 +169,7 @@ export function useWorkspaceOverlayAuxiliaryProps({
                           activePickerSheet === 'templates'
                               ? null
                               : activePickerSheet,
+                      isAdvancedSettingsOpen,
                       promptPreview: surfacePromptPreview,
                       totalReferenceCount,
                       styleLabel: getStyleLabel(imageStyle),
@@ -179,11 +186,16 @@ export function useWorkspaceOverlayAuxiliaryProps({
                       onToggleOpen: () => setIsSurfaceSharedControlsOpen((previous) => !previous),
                       onClosePanel: () => setIsSurfaceSharedControlsOpen(false),
                       onOpenSheet: openSurfacePickerSheet,
+                      onOpenAdvancedSettings: () => {
+                          setIsSurfaceSharedControlsOpen(false);
+                          setIsAdvancedSettingsOpen(true);
+                      },
                   } satisfies SurfaceSharedControlsProps)
                 : null,
             restoreNoticeProps: showWorkspaceRestoreNotice
                 ? ({
                       currentLanguage,
+                      onLanguageChange,
                       historyCount,
                       stagedAssetCount,
                       viewerImageCount,
@@ -298,6 +310,7 @@ export function useWorkspaceOverlayAuxiliaryProps({
             imageModel,
             imageSize,
             imageStyle,
+            isAdvancedSettingsOpen,
             importReviewBranchActions,
             importedBranchSummaries,
             importedLatestSuccessfulTurn,
@@ -313,12 +326,14 @@ export function useWorkspaceOverlayAuxiliaryProps({
             maxCharacters,
             maxObjects,
             objectImageCount,
+            onLanguageChange,
             openGallerySheet,
             openPromptHistorySheet,
             openPromptSheet,
             openReferencesSheet,
             openSurfacePickerSheet,
             setBranchRenameDraft,
+            setIsAdvancedSettingsOpen,
             setIsSessionReplayOpen,
             setIsSurfaceSharedControlsOpen,
             setShowWorkspaceRestoreNotice,
