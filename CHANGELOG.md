@@ -8,7 +8,7 @@ This changelog is compiled from the repository's local git tags plus the publish
 
 ## v3.0.0 - 2026-03-26
 
-- Commit: `e50e91a`
+- Commit: `98c8ece`
 - Release title: Nano Banana Ultra 3.0.0 - Continuity Workspace Release
 - Tag subject: `v3.0.0: continuity workspace, structured outputs, queued batch, and restore hardening`
 - Release notes summary:
