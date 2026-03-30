@@ -47,10 +47,10 @@ export default function ComposerAdvancedSettingsDialog({
             title={t('composerAdvancedTitle')}
             backdropClassName="bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.14),_transparent_34%),rgba(15,23,42,0.76)] backdrop-blur-md"
             panelClassName="nbu-overlay-panel-neutral max-h-[88vh]"
-            headerClassName="border-b border-gray-200/80 px-6 py-5 dark:border-gray-700/80"
-            closeButtonClassName="nbu-control-button px-3 py-2 text-sm"
+            headerClassName="border-b border-gray-200/80 px-5 py-4 dark:border-gray-700/80"
+            closeButtonClassName="nbu-control-button px-3 py-1.5 text-[11px] font-semibold"
         >
-            <div className="max-h-[calc(88vh-108px)] overflow-y-auto p-6">
+            <div className="max-h-[calc(88vh-96px)] overflow-y-auto p-5">
                 <ComposerAdvancedSettingsContent
                     currentLanguage={currentLanguage}
                     outputFormat={outputFormat}

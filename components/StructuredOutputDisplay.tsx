@@ -118,6 +118,7 @@ export default function StructuredOutputDisplay({
     const [feedbackItemId, setFeedbackItemId] = useState<string | null>(null);
     const [feedbackKind, setFeedbackKind] = useState<'copy' | 'replace' | 'append' | null>(null);
     const resetTimerRef = useRef<number | null>(null);
+    const fallbackTextClassName = 'whitespace-pre-wrap break-words text-sm leading-6 text-inherit';
 
     useEffect(() => {
         return () => {
@@ -128,20 +129,12 @@ export default function StructuredOutputDisplay({
     }, []);
 
     if (!structuredData) {
-        return (
-            <pre className="whitespace-pre-wrap text-sm leading-7 text-inherit">
-                {formattedStructuredOutput || fallbackText || ''}
-            </pre>
-        );
+        return <div className={fallbackTextClassName}>{formattedStructuredOutput || fallbackText || ''}</div>;
     }
 
     const entries = buildStructuredOutputDisplayEntries(structuredData, currentLanguage, structuredOutputMode);
     if (entries.length === 0) {
-        return (
-            <pre className="whitespace-pre-wrap text-sm leading-7 text-inherit">
-                {formattedStructuredOutput || fallbackText || ''}
-            </pre>
-        );
+        return <div className={fallbackTextClassName}>{formattedStructuredOutput || fallbackText || ''}</div>;
     }
 
     const primaryTextKey =

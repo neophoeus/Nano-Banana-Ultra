@@ -221,7 +221,7 @@ export default function WorkspacePickerSheet({
         if (activePickerSheet === 'prompt') {
             return (
                 <div className="space-y-4">
-                    <div className="nbu-overlay-card-neutral rounded-3xl border p-4">
+                    <div className="nbu-overlay-card-neutral rounded-3xl border p-3">
                         <label className="text-xs font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
                             {t('workspacePickerSharedPrompt')}
                         </label>
@@ -229,7 +229,7 @@ export default function WorkspacePickerSheet({
                             data-testid="shared-prompt-input"
                             value={prompt}
                             onChange={(event) => setPrompt(event.target.value)}
-                            className="mt-3 h-40 w-full rounded-2xl border border-gray-200/80 bg-[linear-gradient(180deg,rgba(255,251,245,0.96),rgba(255,255,255,0.92))] px-4 py-3 text-sm text-gray-800 outline-none transition-colors focus:border-amber-400 dark:border-gray-700/80 dark:bg-[linear-gradient(180deg,rgba(23,28,36,0.94),rgba(14,18,24,0.9))] dark:text-gray-100"
+                            className="mt-3 h-36 w-full rounded-2xl border border-gray-200/80 bg-[linear-gradient(180deg,rgba(255,251,245,0.96),rgba(255,255,255,0.92))] px-3.5 py-2.5 text-sm text-gray-800 outline-none transition-colors focus:border-amber-400 dark:border-gray-700/80 dark:bg-[linear-gradient(180deg,rgba(23,28,36,0.94),rgba(14,18,24,0.9))] dark:text-gray-100"
                             placeholder={t('workspacePickerSharedPromptPlaceholder')}
                         />
                     </div>
@@ -256,7 +256,7 @@ export default function WorkspacePickerSheet({
             return (
                 <div className="space-y-2">
                     {promptHistory.length === 0 && (
-                        <div className="nbu-overlay-card-neutral rounded-2xl border border-dashed px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                        <div className="nbu-overlay-card-neutral rounded-2xl border border-dashed px-3 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                             {t('workspacePickerNoSavedPrompts')}
                         </div>
                     )}
@@ -440,13 +440,13 @@ export default function WorkspacePickerSheet({
 
         if (activePickerSheet === 'references') {
             return (
-                <div className="space-y-5">
+                <div className="space-y-4">
                     <div className="grid gap-3 md:grid-cols-3">
-                        <div className="nbu-overlay-card-neutral rounded-2xl border px-4 py-3 text-sm">
+                        <div className="nbu-overlay-card-neutral rounded-2xl border px-3 py-2.5 text-sm">
                             <div className="text-xs font-bold uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">
                                 {t('workspacePickerObjects')}
                             </div>
-                            <div className="mt-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
+                            <div className="mt-2 text-[17px] font-semibold text-gray-900 dark:text-gray-100">
                                 {objectImages.length} / {capability.maxObjects}
                             </div>
                             <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -455,7 +455,7 @@ export default function WorkspacePickerSheet({
                         </div>
                         <div
                             data-testid="picker-references-character-card"
-                            className="nbu-overlay-card-neutral rounded-2xl border px-4 py-3 text-sm"
+                            className="nbu-overlay-card-neutral rounded-2xl border px-3 py-2.5 text-sm"
                         >
                             <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">
@@ -466,7 +466,7 @@ export default function WorkspacePickerSheet({
                                         content={t('workspacePickerCharacterHint')}
                                     />
                                 </div>
-                                <div className="mt-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                <div className="mt-2 text-[17px] font-semibold text-gray-900 dark:text-gray-100">
                                     {characterImages.length} / {capability.maxCharacters}
                                 </div>
                             </div>
@@ -585,17 +585,17 @@ export default function WorkspacePickerSheet({
             closeButtonTestId="picker-sheet-close"
             title={activeSheetTitle}
             headerExtra={
-                <div className="mt-4 flex flex-wrap items-start justify-between gap-3">
+                <div className="mt-3 flex flex-wrap items-start justify-between gap-2.5">
                     <WorkspaceSecondaryNav items={secondaryNavItems} className="min-w-0 flex-1" />
-                    <ThemeToggle currentLanguage={currentLanguage} className="h-9 w-9" />
+                    <ThemeToggle currentLanguage={currentLanguage} className="h-8 w-8 shadow-none" />
                 </div>
             }
             backdropClassName="bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.18),_transparent_34%),rgba(15,23,42,0.74)] backdrop-blur-md"
             panelClassName="nbu-overlay-panel-neutral max-h-[85vh]"
-            headerClassName="flex items-center justify-between border-b border-gray-200/80 px-5 py-4 dark:border-gray-700/80"
-            closeButtonClassName="nbu-control-button px-3 py-2 text-sm"
+            headerClassName="flex items-center justify-between border-b border-gray-200/80 px-4 py-3.5 dark:border-gray-700/80"
+            closeButtonClassName="nbu-control-button px-3 py-1.5 text-[11px] font-semibold"
         >
-            <div className="max-h-[calc(85vh-80px)] overflow-y-auto p-5">{renderPickerSheetContent()}</div>
+            <div className="max-h-[calc(85vh-74px)] overflow-y-auto p-4">{renderPickerSheetContent()}</div>
         </WorkspaceModalFrame>
     );
 }

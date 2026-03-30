@@ -79,16 +79,16 @@ function WorkspaceHistoryCanvas({
     renderActiveBranchSummaryContent,
 }: WorkspaceHistoryCanvasProps) {
     const t = (key: string) => getTranslation(currentLanguage, key);
-    const sectionCardClassName = 'nbu-soft-well px-4 py-3';
-    const collapsibleSectionClassName = 'group nbu-inline-panel px-4 py-3';
-    const inlineSurfaceClassName = 'nbu-inline-panel px-3 py-3';
-    const dashedSurfaceClassName = 'nbu-dashed-panel p-3';
+    const sectionCardClassName = 'nbu-soft-well px-3 py-2.5';
+    const collapsibleSectionClassName = 'group nbu-inline-panel px-3 py-2.5';
+    const inlineSurfaceClassName = 'nbu-inline-panel px-3 py-2.5';
+    const dashedSurfaceClassName = 'nbu-dashed-panel p-2.5';
     const quietMonoPillClassName = 'nbu-quiet-pill px-2 py-0.5 text-[10px] font-mono';
     const compactControlButtonClassName = 'nbu-control-button px-3 py-1.5 text-[11px] font-semibold';
-    const nestedSectionDividerClassName = 'border-t border-gray-200/80 pt-4 dark:border-gray-800';
+    const nestedSectionDividerClassName = 'border-t border-gray-200/80 pt-3 dark:border-gray-800';
 
     const renderOwnerRouteActionShell = (actionRow: React.ReactNode, testId?: string) => (
-        <div data-testid={testId} className={`${dashedSurfaceClassName} space-y-3`}>
+        <div data-testid={testId} className={`${dashedSurfaceClassName} space-y-2.5`}>
             <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-700 dark:text-amber-200">
                 {t('historyActionOwnerRoute')}
             </div>
@@ -97,15 +97,15 @@ function WorkspaceHistoryCanvas({
     );
 
     return (
-        <section data-testid="workspace-history-canvas" className="grid gap-5 lg:min-h-0">
+        <section data-testid="workspace-history-canvas" className="grid gap-4 lg:min-h-0">
             <div data-testid="workspace-history-recent-lane">{recentLane}</div>
             <div
                 data-testid="workspace-history-focus-grid"
-                className="grid gap-5 lg:min-h-0 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.78fr)]"
+                className="grid gap-4 lg:min-h-0 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.78fr)]"
             >
                 <div data-testid="workspace-history-focus-state">{focusSurface}</div>
-                <aside data-testid="workspace-history-support-rail" className="grid content-start gap-4">
-                    <div data-testid="history-versions-section" className={`${sectionCardClassName} space-y-4`}>
+                <aside data-testid="workspace-history-support-rail" className="grid content-start gap-3">
+                    <div data-testid="history-versions-section" className={`${sectionCardClassName} space-y-3`}>
                         <div className="flex items-center justify-between gap-3">
                             <div className="text-xs uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">
                                 {t('workspaceInsightsVersions')}
@@ -118,7 +118,7 @@ function WorkspaceHistoryCanvas({
                             </div>
                         </div>
 
-                        <div data-testid="active-branch-card" className="space-y-3">
+                        <div data-testid="active-branch-card" className="space-y-2.5">
                             <div className="flex items-center justify-between gap-3">
                                 <div className="text-xs uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">
                                     {t('workspaceInsightsActiveBranch')}
@@ -128,14 +128,14 @@ function WorkspaceHistoryCanvas({
                                 </span>
                             </div>
                             {activeBranchSummary ? (
-                                <div className="space-y-3">
+                                <div className="space-y-2.5">
                                     <div className={inlineSurfaceClassName}>
                                         {renderActiveBranchSummaryContent(activeBranchSummary)}
                                     </div>
                                     {recentBranchSummaries.length > 1 ? (
                                         <div
                                             data-testid="active-branch-switcher-section"
-                                            className={`${collapsibleSectionClassName} space-y-3`}
+                                            className={`${collapsibleSectionClassName} space-y-2.5`}
                                         >
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="min-w-0 flex-1">
@@ -151,7 +151,7 @@ function WorkspaceHistoryCanvas({
                                                     )}
                                                 </span>
                                             </div>
-                                            <div className="flex flex-wrap gap-2 border-t border-gray-200/80 pt-3 dark:border-gray-800">
+                                            <div className="flex flex-wrap gap-2 border-t border-gray-200/80 pt-2.5 dark:border-gray-800">
                                                 {recentBranchSummaries.map((branch) => {
                                                     const isActiveBranch =
                                                         branch.branchOriginId === activeBranchSummary.branchOriginId;
@@ -177,7 +177,7 @@ function WorkspaceHistoryCanvas({
                             )}
                         </div>
 
-                        <div data-testid="lineage-map-card" className={`${nestedSectionDividerClassName} space-y-3`}>
+                        <div data-testid="lineage-map-card" className={`${nestedSectionDividerClassName} space-y-2.5`}>
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0 flex-1">
                                     <div className="text-xs uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">
@@ -203,10 +203,10 @@ function WorkspaceHistoryCanvas({
                                     {t('workspaceInsightsRootsCount').replace('{0}', String(lineageRootGroups.length))}
                                 </span>
                             </div>
-                            <div className="space-y-2 border-t border-gray-200/80 pt-3 dark:border-gray-800">
+                            <div className="space-y-2 border-t border-gray-200/80 pt-2.5 dark:border-gray-800">
                                 {lineageRootGroups.length > 0 ? (
                                     lineageRootGroups.map((rootGroup) => (
-                                        <div key={`root-group-${rootGroup.rootId}`} className="nbu-inline-panel p-3">
+                                        <div key={`root-group-${rootGroup.rootId}`} className="nbu-inline-panel p-2.5">
                                             <div className="flex items-center justify-between gap-3">
                                                 <div className="flex min-w-0 items-center gap-2">
                                                     <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
@@ -223,7 +223,7 @@ function WorkspaceHistoryCanvas({
                                                     )}
                                                 </span>
                                             </div>
-                                            <div className="mt-3 space-y-3">
+                                            <div className="mt-2.5 space-y-2.5">
                                                 {rootGroup.branches.map((branch) => (
                                                     <div
                                                         key={`branch-group-${branch.branchOriginId}`}
@@ -259,7 +259,7 @@ function WorkspaceHistoryCanvas({
                                                                 ) : null}
                                                             </div>
                                                         </div>
-                                                        <div className="mt-3 space-y-2">
+                                                        <div className="mt-2.5 space-y-2">
                                                             {branch.turns.map((item) => {
                                                                 const isActiveTurn = selectedHistoryId === item.id;
                                                                 return (

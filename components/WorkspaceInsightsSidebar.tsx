@@ -126,13 +126,13 @@ function WorkspaceInsightsSidebar({
     const t = (key: string) => getTranslation(currentLanguage, key);
     const activeQueueStates = new Set(['JOB_STATE_PENDING', 'JOB_STATE_RUNNING']);
     const issueQueueStates = new Set(['JOB_STATE_FAILED', 'JOB_STATE_CANCELLED', 'JOB_STATE_EXPIRED']);
-    const sourceActionShellClassName = 'nbu-dashed-panel p-3';
-    const sectionCardClassName = 'nbu-soft-well px-4 py-3';
-    const collapsibleSectionClassName = 'group nbu-inline-panel px-4 py-3';
+    const sourceActionShellClassName = 'nbu-dashed-panel p-2.5';
+    const sectionCardClassName = 'nbu-soft-well px-3 py-2.5';
+    const collapsibleSectionClassName = 'group nbu-inline-panel px-3 py-2.5';
     const detailSurfaceClassName =
-        'nbu-inline-panel px-3 py-3 shadow-[0_8px_24px_rgba(15,23,42,0.05)] dark:shadow-none';
-    const inlineSurfaceClassName = 'nbu-inline-panel px-3 py-3';
-    const dashedSurfaceClassName = 'nbu-dashed-panel p-3';
+        'nbu-inline-panel px-3 py-2.5 shadow-[0_8px_24px_rgba(15,23,42,0.05)] dark:shadow-none';
+    const inlineSurfaceClassName = 'nbu-inline-panel px-3 py-2.5';
+    const dashedSurfaceClassName = 'nbu-dashed-panel p-2.5';
     const quietMonoPillClassName = 'nbu-quiet-pill px-2 py-0.5 text-[10px] font-mono';
     const activeQueueCount = queuedJobs.filter((job) => activeQueueStates.has(job.state)).length;
     const importReadyQueueCount = queuedJobs.filter(
@@ -166,7 +166,7 @@ function WorkspaceInsightsSidebar({
         return preview.length > 72 ? `${preview.slice(0, 72)}...` : preview;
     };
     const renderOwnerRouteActionShell = (actionRow: React.ReactNode, testId?: string) => (
-        <div data-testid={testId} className={`${sourceActionShellClassName} space-y-3`}>
+        <div data-testid={testId} className={`${sourceActionShellClassName} space-y-2.5`}>
             <div className="flex items-center gap-2">
                 <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-700 dark:text-amber-200">
                     {t('historyActionOwnerRoute')}
@@ -196,7 +196,7 @@ function WorkspaceInsightsSidebar({
         badges: React.ReactNode;
         actionRow?: React.ReactNode;
     }) => (
-        <div data-testid={testId} className={`mt-3 ${collapsibleSectionClassName} space-y-3`}>
+        <div data-testid={testId} className={`mt-2.5 ${collapsibleSectionClassName} space-y-2.5`}>
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                     {eyebrow ? (
@@ -232,7 +232,7 @@ function WorkspaceInsightsSidebar({
             {conversationSummary && (
                 <div
                     data-testid="conversation-continuity-card"
-                    className="nbu-context-rail-callout rounded-2xl border px-3 py-3"
+                    className="nbu-context-rail-callout rounded-2xl border px-3 py-2.5"
                 >
                     <div className="flex flex-wrap items-center gap-2">
                         <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">
@@ -336,20 +336,20 @@ function WorkspaceInsightsSidebar({
     return (
         <aside
             data-testid="context-system-panel"
-            className="nbu-shell-panel nbu-shell-surface-context-rail overflow-hidden p-4 lg:min-h-0"
+            className="nbu-shell-panel nbu-shell-surface-context-rail overflow-hidden p-3 lg:min-h-0"
         >
-            <div className="space-y-5">
+            <div className="space-y-4">
                 {showHeader ? (
                     <div className="flex items-start justify-between gap-3">
                         <WorkspaceInsightsHeaderSummary currentLanguage={currentLanguage} />
                         <span className="nbu-status-pill">{t('workspaceInsightsPhaseLabel')}</span>
                     </div>
                 ) : null}
-                <div data-testid="current-work-section" className="space-y-4 text-sm text-gray-600 dark:text-gray-300">
+                <div data-testid="current-work-section" className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
                     <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                             <p className="nbu-section-eyebrow">{t('workflowStatusLabel')}</p>
-                            <h2 className="mt-1 text-lg font-black text-slate-900 dark:text-slate-100">
+                            <h2 className="mt-1 text-[15px] font-black text-slate-900 dark:text-slate-100">
                                 {t('workspaceInsightsCurrentWork')}
                             </h2>
                         </div>
@@ -361,9 +361,11 @@ function WorkspaceInsightsSidebar({
                             <div className="text-xs uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">
                                 {t('workflowStatusLabel')}
                             </div>
-                            {latestWorkflowEntry ? <span className="nbu-status-pill">{workflowStatusLabel}</span> : null}
+                            {latestWorkflowEntry ? (
+                                <span className="nbu-status-pill">{workflowStatusLabel}</span>
+                            ) : null}
                         </div>
-                        <div className="mt-3 space-y-3">
+                        <div className="mt-2.5 space-y-2.5">
                             <div>
                                 <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                                     {workflowHeadline}
@@ -393,7 +395,10 @@ function WorkspaceInsightsSidebar({
                                 )}
                                 {importReadyQueueCount > 0 && (
                                     <span data-testid="context-workflow-import-ready-queue" className="nbu-chip">
-                                        {t('queuedBatchJobsImportReadyCount').replace('{0}', String(importReadyQueueCount))}
+                                        {t('queuedBatchJobsImportReadyCount').replace(
+                                            '{0}',
+                                            String(importReadyQueueCount),
+                                        )}
                                     </span>
                                 )}
                                 {issueQueueCount > 0 && (
@@ -430,7 +435,7 @@ function WorkspaceInsightsSidebar({
                             </div>
                             <div
                                 data-testid="current-work-thoughts-body"
-                                className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-700 dark:text-gray-300"
+                                className="mt-2.5 whitespace-pre-wrap text-sm leading-6 text-gray-700 dark:text-gray-300"
                             >
                                 {thoughtsBodyText}
                             </div>
@@ -449,10 +454,13 @@ function WorkspaceInsightsSidebar({
                                     {t('workspaceInsightsActiveBranch')}
                                 </div>
                                 <span className="text-[11px] text-gray-400 dark:text-gray-500">
-                                    {t('workspaceInsightsTurnsCount').replace('{0}', String(activeBranchSummary.turnCount))}
+                                    {t('workspaceInsightsTurnsCount').replace(
+                                        '{0}',
+                                        String(activeBranchSummary.turnCount),
+                                    )}
                                 </span>
                             </div>
-                            <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <div className="mt-2.5 flex flex-wrap items-center gap-2">
                                 <span
                                     className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${getBranchAccentClassName(activeBranchSummary.branchOriginId, activeBranchSummary.branchLabel)}`}
                                 >
@@ -475,7 +483,7 @@ function WorkspaceInsightsSidebar({
                             </div>
                         </div>
                         {currentStageAsset ? (
-                            <div className="mt-3 space-y-3">
+                            <div className="mt-2.5 space-y-2.5">
                                 <div className="flex flex-wrap items-center gap-2">
                                     <span className="nbu-chip text-[10px] font-bold uppercase tracking-[0.16em]">
                                         {getStageOriginLabel(currentStageAsset.origin)}
@@ -556,14 +564,19 @@ function WorkspaceInsightsSidebar({
                         {continuitySourceCount > 0 && (
                             <div data-testid="continuity-source-section" className="mt-3 space-y-3">
                                 {continuitySourceCount > 1 ? (
-                                    <div className={`flex items-start justify-between gap-3 ${collapsibleSectionClassName}`}>
+                                    <div
+                                        className={`flex items-start justify-between gap-3 ${collapsibleSectionClassName}`}
+                                    >
                                         <div className="min-w-0 flex-1">
                                             <div className="text-[11px] leading-5 text-gray-500 dark:text-gray-400">
                                                 {continuitySourceLabels.join(' · ')}
                                             </div>
                                         </div>
                                         <span className="text-[11px] text-gray-400 dark:text-gray-500">
-                                            {t('workspaceInsightsItemsCount').replace('{0}', String(continuitySourceCount))}
+                                            {t('workspaceInsightsItemsCount').replace(
+                                                '{0}',
+                                                String(continuitySourceCount),
+                                            )}
                                         </span>
                                     </div>
                                 ) : null}
@@ -578,7 +591,9 @@ function WorkspaceInsightsSidebar({
                             <div className="text-xs uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">
                                 {t('workspaceInsightsSourcesCitations')}
                             </div>
-                            {provenanceStatusLabel ? <span className="nbu-status-pill">{provenanceStatusLabel}</span> : null}
+                            {provenanceStatusLabel ? (
+                                <span className="nbu-status-pill">{provenanceStatusLabel}</span>
+                            ) : null}
                         </div>
                         <div>{provenancePanel}</div>
                     </div>

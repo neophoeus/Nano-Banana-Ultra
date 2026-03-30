@@ -10,9 +10,10 @@ describe('WorkspaceTopHeader', () => {
         );
 
         expect(markup).toContain('Nano Banana Ultra');
+        expect(markup).toContain('workspace-brand-logo');
         expect(markup).toContain('console');
+        expect(markup).not.toContain('>NBU<');
         expect(markup).not.toContain('Ratio:');
         expect(markup).not.toContain('Reference Tray');
-        expect(markup).not.toContain('<section class="nbu-shell-panel nbu-shell-surface-header relative z-10');
     });
 });

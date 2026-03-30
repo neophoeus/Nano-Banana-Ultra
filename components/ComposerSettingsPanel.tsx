@@ -351,11 +351,11 @@ function ComposerSettingsPanel({
             '}',
         ];
     };
-    const toolbarGroupClassName = 'nbu-subpanel flex flex-wrap items-center gap-1.5 p-2 sm:gap-2 sm:p-2.5';
+    const toolbarGroupClassName = 'nbu-subpanel flex flex-wrap items-center gap-1.5 p-1.5 sm:gap-2 sm:p-2';
     const toolbarButtonClassName =
-        'nbu-control-button px-3 py-1.5 text-[13px] transition-all hover:-translate-y-0.5 hover:shadow-md sm:px-4 sm:py-2 sm:text-sm';
+        'nbu-control-button px-2.5 py-1.5 text-[12px] transition-all hover:-translate-y-0.5 hover:shadow-md sm:px-3 sm:py-1.5 sm:text-[13px]';
     const settingsButtonClassName =
-        'nbu-control-button rounded-[22px] px-4 py-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md disabled:hover:translate-y-0 disabled:hover:shadow-none';
+        'nbu-control-button rounded-[20px] px-3.5 py-2.5 text-left transition-all hover:-translate-y-0.5 hover:shadow-md disabled:hover:translate-y-0 disabled:hover:shadow-none';
     const showGroundingResolutionWarning =
         imageModel === 'gemini-3.1-flash-image-preview' &&
         (groundingMode === 'image-search' || groundingMode === 'google-search-plus-image-search');
@@ -376,7 +376,7 @@ function ComposerSettingsPanel({
     );
 
     return (
-        <section className="nbu-shell-panel nbu-shell-surface-composer-dock shrink-0 p-4 md:p-5">
+        <section className="nbu-shell-panel nbu-shell-surface-composer-dock shrink-0 p-3 md:p-4">
             <div data-testid="composer-settings-row" className="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                 <button
                     type="button"
@@ -425,7 +425,7 @@ function ComposerSettingsPanel({
                 </button>
             </div>
 
-            <div className="mb-3 flex flex-wrap items-start gap-3">
+            <div className="mb-2.5 flex flex-wrap items-start gap-2.5">
                 <div data-testid="composer-quick-tools" className={`${toolbarGroupClassName} flex-1`}>
                     <button
                         onClick={onSurpriseMe}
@@ -475,13 +475,13 @@ function ComposerSettingsPanel({
 
             <div
                 data-testid="composer-reference-context-strip"
-                className="nbu-inline-panel mb-4 flex flex-wrap items-center justify-between gap-3 px-3 py-3"
+                className="nbu-inline-panel mb-3 flex flex-wrap items-center justify-between gap-3 px-3 py-2.5"
             >
                 <button
                     type="button"
                     data-testid="composer-reference-context-button"
                     onClick={onOpenReferences}
-                    className="nbu-control-button flex items-center gap-3 rounded-[18px] px-3.5 py-2.5 text-left"
+                    className="nbu-control-button flex items-center gap-3 rounded-[18px] px-3 py-2 text-left"
                 >
                     <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-amber-700 dark:bg-amber-500/15 dark:text-amber-200">
                         {totalReferenceCount}
@@ -500,13 +500,13 @@ function ComposerSettingsPanel({
                 </div>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px] xl:grid-cols-[minmax(0,1fr)_270px]">
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_240px] xl:grid-cols-[minmax(0,1fr)_270px]">
                 <div>
-                    <div className="nbu-subpanel overflow-hidden p-3">
-                        <div className="mb-3 flex flex-wrap items-start justify-between gap-3 px-1">
+                    <div className="nbu-subpanel overflow-hidden p-2.5">
+                        <div className="mb-2.5 flex flex-wrap items-start justify-between gap-3 px-1">
                             <div>
                                 <p className="nbu-section-eyebrow">Compose</p>
-                                <h3 className="mt-1 text-lg font-black text-slate-900 dark:text-slate-100">
+                                <h3 className="mt-1 text-[15px] font-black text-slate-900 dark:text-slate-100">
                                     {t('promptLabel')}
                                 </h3>
                             </div>
@@ -516,7 +516,7 @@ function ComposerSettingsPanel({
                         </div>
                         <textarea
                             ref={promptTextareaRef}
-                            className="nbu-composer-dock-textarea h-40 w-full rounded-[28px] border px-5 py-4 text-sm leading-7 outline-none transition-all focus:ring-4 focus:ring-amber-100/70 dark:focus:ring-amber-500/10"
+                            className="nbu-composer-dock-textarea h-36 w-full rounded-[26px] border px-4 py-3.5 text-sm leading-6 outline-none transition-all focus:ring-4 focus:ring-amber-100/70 dark:focus:ring-amber-500/10"
                             placeholder={placeholder}
                             value={prompt}
                             onChange={(e) => onPromptChange(e.target.value)}
@@ -527,7 +527,7 @@ function ComposerSettingsPanel({
                                 }
                             }}
                         />
-                        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                        <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                             {currentStageAsset && (
                                 <span className="nbu-chip">
                                     {t('composerFollowUpSource')}: {getStageOriginLabel(currentStageAsset.origin)}
@@ -556,19 +556,19 @@ function ComposerSettingsPanel({
                             )}
                         </div>
                     </div>
-                    <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="mt-2.5 flex flex-wrap items-center gap-2.5 text-xs text-gray-500 dark:text-gray-400">
                         <button onClick={onToggleEnterToSubmit} className="nbu-control-button px-3 py-1.5 lg:hidden">
                             {enterToSubmit ? t('composerEnterSends') : t('composerEnterNewline')}
                         </button>
                     </div>
                 </div>
 
-                <div className="nbu-floating-panel p-3 text-slate-900 dark:text-white">
-                    <div className="nbu-subpanel mb-3 px-4 py-3">
+                <div className="nbu-floating-panel p-2.5 text-slate-900 dark:text-white">
+                    <div className="nbu-subpanel mb-2.5 px-3 py-2.5">
                         <p className="text-[11px] font-black uppercase tracking-[0.20em] text-amber-700 dark:text-amber-200/75">
                             {t('composerActionPanelEyebrow')}
                         </p>
-                        <h3 className="mt-1 text-xl font-black text-slate-900 dark:text-white">
+                        <h3 className="mt-1 text-[17px] font-black text-slate-900 dark:text-white">
                             {t('composerActionPanelTitle')}
                         </h3>
                     </div>
@@ -576,21 +576,21 @@ function ComposerSettingsPanel({
                         <Button
                             onClick={onCancelGeneration}
                             variant="danger"
-                            className="min-h-[72px] rounded-[22px] text-base"
+                            className="min-h-[64px] rounded-[20px] text-[15px]"
                         >
                             {t('clearHistoryCancel')}
                         </Button>
                     ) : (
-                        <Button onClick={onGenerate} className="btn-shimmer min-h-[72px] rounded-[22px] text-base">
+                        <Button onClick={onGenerate} className="btn-shimmer min-h-[64px] rounded-[20px] text-[15px]">
                             {generateLabel}
                         </Button>
                     )}
                     {!isGenerating && (
-                        <div className="mt-3 flex items-center gap-2">
+                        <div className="mt-2.5 flex items-center gap-2">
                             <Button
                                 variant="secondary"
                                 onClick={onQueueBatchJob}
-                                className="min-w-0 flex-1 rounded-[18px]"
+                                className="min-w-0 flex-1 rounded-[16px]"
                             >
                                 {t('composerQueueBatchJob')}
                             </Button>
@@ -604,14 +604,14 @@ function ComposerSettingsPanel({
                             />
                         </div>
                     )}
-                    <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                    <div className="mt-2.5 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
                         {!isGenerating && (
-                            <Button variant="secondary" onClick={onStartNewConversation} className="rounded-[18px]">
+                            <Button variant="secondary" onClick={onStartNewConversation} className="rounded-[16px]">
                                 {t('workspaceViewerNewConversation')}
                             </Button>
                         )}
                         {currentStageAsset && !isGenerating && (
-                            <Button variant="secondary" onClick={onFollowUpGenerate} className="rounded-[18px]">
+                            <Button variant="secondary" onClick={onFollowUpGenerate} className="rounded-[16px]">
                                 {t('workspaceViewerFollowUpEdit')}
                             </Button>
                         )}
@@ -619,7 +619,7 @@ function ComposerSettingsPanel({
                     {queueBatchConversationNotice && (
                         <details
                             data-testid="composer-queue-summary-details"
-                            className="group mt-3 rounded-[22px] border border-amber-200/70 bg-[linear-gradient(180deg,rgba(255,250,235,0.96),rgba(255,243,214,0.92))] px-3 py-3 text-xs leading-5 text-amber-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] dark:border-amber-300/20 dark:bg-[linear-gradient(180deg,rgba(58,36,8,0.78),rgba(37,23,6,0.9))] dark:text-amber-100 dark:shadow-[inset_0_1px_0_rgba(255,244,214,0.06)]"
+                            className="group mt-2.5 rounded-[20px] border border-amber-200/70 bg-[linear-gradient(180deg,rgba(255,250,235,0.96),rgba(255,243,214,0.92))] px-3 py-2.5 text-xs leading-5 text-amber-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] dark:border-amber-300/20 dark:bg-[linear-gradient(180deg,rgba(58,36,8,0.78),rgba(37,23,6,0.9))] dark:text-amber-100 dark:shadow-[inset_0_1px_0_rgba(255,244,214,0.06)]"
                         >
                             <summary
                                 data-testid="composer-queue-summary-summary"

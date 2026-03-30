@@ -4,9 +4,18 @@ import { Language, SUPPORTED_LANGUAGES } from '../utils/translations';
 interface LanguageSelectorProps {
     currentLanguage: Language;
     onLanguageChange: (lang: Language) => void;
+    className?: string;
+    buttonClassName?: string;
+    menuClassName?: string;
 }
 
-const LanguageSelector: React.FC<LanguageSelectorProps> = ({ currentLanguage, onLanguageChange }) => {
+const LanguageSelector: React.FC<LanguageSelectorProps> = ({
+    currentLanguage,
+    onLanguageChange,
+    className = '',
+    buttonClassName = '',
+    menuClassName = '',
+}) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -24,7 +33,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ currentLanguage, on
     const currentLangObj = SUPPORTED_LANGUAGES.find((l) => l.value === currentLanguage);
 
     return (
-        <div className={`relative ${isOpen ? 'z-[80]' : 'z-10'}`} ref={dropdownRef}>
+        <div className={`relative ${isOpen ? 'z-[80]' : 'z-10'} ${className}`} ref={dropdownRef}>
             <button
                 data-testid="language-selector-toggle"
                 onClick={() => setIsOpen(!isOpen)}
@@ -35,14 +44,18 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ currentLanguage, on
                     ? 'bg-gray-800 border-amber-500/50 text-amber-400 ring-2 ring-amber-500/20'
                     : 'nbu-overlay-shell text-gray-700 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:text-white'
             }
+            ${buttonClassName}
         `}
                 title={currentLangObj?.label}
+                type="button"
             >
                 <span className="font-bold text-xs uppercase tracking-wider">{currentLangObj?.shortLabel}</span>
             </button>
 
             {isOpen && (
-                <div className="nbu-overlay-shell absolute top-full right-0 z-50 mt-3 w-40 overflow-hidden animate-[fadeIn_0.1s_ease-out] rounded-xl ring-1 ring-black/5 dark:ring-white/10">
+                <div
+                    className={`nbu-overlay-shell absolute top-full right-0 z-50 mt-3 w-40 overflow-hidden animate-[fadeIn_0.1s_ease-out] rounded-xl ring-1 ring-black/5 dark:ring-white/10 ${menuClassName}`}
+                >
                     <div className="py-1 max-h-[60vh] overflow-y-auto scrollbar-thin">
                         {SUPPORTED_LANGUAGES.map((lang) => (
                             <button

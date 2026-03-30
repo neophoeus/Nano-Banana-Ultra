@@ -5,14 +5,17 @@ import WorkspaceHealthPanel from '../components/WorkspaceHealthPanel';
 import { getTranslation } from '../utils/translations';
 
 describe('WorkspaceHealthPanel', () => {
-    it('renders health-only header content without log-oriented summary text', () => {
+    it('renders compact health indicators without expandable status copy', () => {
         const markup = renderToStaticMarkup(<WorkspaceHealthPanel currentLanguage="en" />);
 
-        expect(markup).toContain(getTranslation('en', 'healthPanelTitle'));
+        expect(markup).toContain('global-health-summary');
+        expect(markup).toContain('global-health-local-api');
+        expect(markup).toContain('global-health-gemini-key');
         expect(markup).toContain(getTranslation('en', 'statusPanelLocalApi'));
         expect(markup).toContain(getTranslation('en', 'statusPanelGeminiKey'));
-        expect(markup).toContain(getTranslation('en', 'statusPanelChecking'));
-        expect(markup).not.toContain(getTranslation('en', 'statusPanelLastCheck'));
+        expect(markup).not.toContain(getTranslation('en', 'statusPanelLive'));
+        expect(markup).not.toContain('HEALTH');
+        expect(markup).not.toContain('Last Check');
         expect(markup).not.toContain(getTranslation('en', 'workflowStatusLabel'));
         expect(markup).not.toContain('global-log-stage-source-entry');
         expect(markup).not.toContain('global-log-stage-source-badge');

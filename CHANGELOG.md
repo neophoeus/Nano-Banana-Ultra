@@ -6,6 +6,15 @@ This changelog is compiled from the repository's local git tags plus the publish
 
 - no unreleased changes tracked yet
 
+## v3.1.1 - 2026-03-30
+
+- Release title: Nano Banana Ultra 3.1.1 - Workspace Layout Refinement
+- Release prep summary:
+    - this patch release is primarily a layout and density refinement pass on top of the 3.1 product-facing workspace baseline rather than a new workflow or feature release
+    - tightened and aligned the main workspace surfaces so `Recent Turns`, `Versions`, side tools, stage wrappers, answer placeholders, and composer sections now share the same compact visual contract
+    - applied the same layout standard to modal, picker-sheet, import, restore, viewer, rename, advanced-settings, confirm, and loading overlays so the whole workspace reads as one consistent shell family
+    - revalidated the UI-only refinement with focused Vitest coverage for history/composer/response/output surfaces, focused Vitest coverage for overlay/dialog surfaces, restore mainline smoke at `6 passed`, and the full restore regression suite at `22 passed`
+
 ## v3.1.0 - 2026-03-30
 
 - Release title: Nano Banana Ultra 3.1.0 - Product-Facing Workspace Baseline

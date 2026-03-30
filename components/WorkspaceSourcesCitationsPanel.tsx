@@ -15,27 +15,22 @@ function WorkspaceSourcesCitationsPanel({
     children,
 }: WorkspaceSourcesCitationsPanelProps) {
     const t = (key: string) => getTranslation(currentLanguage, key);
-    const statusDotClassName = hasContent
-        ? 'bg-emerald-500 dark:bg-emerald-300'
-        : 'bg-slate-300 dark:bg-slate-600';
+    const statusDotClassName = hasContent ? 'bg-emerald-500 dark:bg-emerald-300' : 'bg-slate-300 dark:bg-slate-600';
 
     return (
         <aside
             data-testid="workspace-sources-citations-panel"
-            className="nbu-shell-panel nbu-shell-surface-context-rail space-y-4 overflow-hidden p-4 lg:min-h-0"
+            className="nbu-shell-panel nbu-shell-surface-context-rail space-y-3 overflow-hidden p-3 lg:min-h-0"
         >
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                     <p className="nbu-section-eyebrow">{t('workspacePanelSourceTrailEyebrow')}</p>
-                    <h2 className="mt-1 text-lg font-black text-slate-900 dark:text-slate-100">
+                    <h2 className="mt-1 text-[15px] font-black text-slate-900 dark:text-slate-100">
                         {t('workspaceInsightsSourcesCitations')}
                     </h2>
                 </div>
                 <span className="nbu-status-pill inline-flex items-center gap-2 whitespace-nowrap">
-                    <span
-                        aria-hidden="true"
-                        className={`h-2 w-2 rounded-full ${statusDotClassName}`}
-                    />
+                    <span aria-hidden="true" className={`h-2 w-2 rounded-full ${statusDotClassName}`} />
                     {statusLabel}
                 </span>
             </div>

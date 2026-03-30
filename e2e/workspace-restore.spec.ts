@@ -837,7 +837,6 @@ const assertStageSourceSurfaces = async (
         timelineKey?: string;
         branchLabel?: string;
         sourceLabel?: string;
-        globalLogMode?: 'minimized' | 'expanded';
     },
 ) => {
     await ensureWorkspaceInsightsExpanded(page);
@@ -862,16 +861,8 @@ const assertStageSourceSurfaces = async (
     await expect(page.getByTestId('global-log-stage-source-badge')).toHaveCount(0);
     await expect(page.getByTestId('global-log-minimized-source')).toHaveCount(0);
     await expect(page.getByTestId('global-log-source-open')).toHaveCount(0);
-    if (options.globalLogMode === 'expanded') {
-        await page.getByTestId('global-health-toggle').click();
-        await expect(page.getByTestId('global-health-panel')).toBeVisible();
-        await expect(page.getByTestId('global-health-local-api')).toContainText(tt('statusPanelLocalApi'));
-        await expect(page.getByTestId('global-health-gemini-key')).toContainText(tt('statusPanelGeminiKey'));
-        await expect(page.getByTestId('global-health-last-check')).toContainText(tt('statusPanelLastCheck'));
-    } else {
-        await expect(page.getByTestId('global-health-summary').first()).toContainText(tt('statusPanelLocalApi'));
-        await expect(page.getByTestId('global-health-summary').first()).toContainText(tt('statusPanelGeminiKey'));
-    }
+    await expect(page.getByTestId('global-health-summary').first()).toContainText(tt('statusPanelLocalApi'));
+    await expect(page.getByTestId('global-health-summary').first()).toContainText(tt('statusPanelGeminiKey'));
 };
 
 const assertFilmstripChromeLocalized = async (page: Page) => {
@@ -1880,7 +1871,6 @@ test.describe('workspace restore flows', () => {
             toastMessage: 'History turn reopened as the current stage source.',
             timelineText: 'History turn reopened as current stage source',
             branchLabel: 'Imported Branch',
-            globalLogMode: 'expanded',
         });
         await assertCurrentStageSourceCard(page, {
             sourceLabel: tt('stageOriginHistory'),

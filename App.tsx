@@ -1157,10 +1157,16 @@ const App: React.FC = () => {
         () => (
             <Suspense
                 fallback={
-                    <PanelLoadingFallback
-                        label={t('loadingHealthPanel')}
-                        className="min-w-[220px] rounded-full border border-gray-200/80 bg-white/70 px-4 py-2 text-center text-xs text-gray-500 dark:border-gray-700 dark:bg-[#141922] dark:text-gray-400"
-                    />
+                    <div data-testid="global-health-summary" className="flex items-center gap-1.5 sm:gap-2">
+                        <div className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-slate-200/80 bg-white/78 px-2 py-1 text-[10px] font-semibold text-slate-600 dark:border-white/10 dark:bg-[#141922]/82 dark:text-slate-200 sm:px-2.5">
+                            <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500"></span>
+                            <span>{t('statusPanelLocalApi')}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-slate-200/80 bg-white/78 px-2 py-1 text-[10px] font-semibold text-slate-600 dark:border-white/10 dark:bg-[#141922]/82 dark:text-slate-200 sm:px-2.5">
+                            <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500"></span>
+                            <span>{t('statusPanelGeminiKey')}</span>
+                        </div>
+                    </div>
                 }
             >
                 <WorkspaceHealthPanel
@@ -1382,9 +1388,9 @@ const App: React.FC = () => {
         currentLanguage: currentLang,
         renderHistoryActionButton,
     });
-    const shellPanelClassName = 'nbu-shell-panel nbu-shell-surface-stage-hero p-4';
+    const shellPanelClassName = 'nbu-shell-panel nbu-shell-surface-stage-hero p-3';
     const stagePanelClassName =
-        'nbu-shell-panel nbu-shell-surface-stage-hero min-h-[440px] overflow-hidden p-4 lg:min-h-0 lg:flex-1';
+        'nbu-shell-panel nbu-shell-surface-stage-hero min-h-[440px] overflow-hidden p-3 lg:min-h-0 lg:flex-1';
     const responseTextPlaceholder =
         effectiveStructuredOutputMode !== 'off'
             ? t('workspaceViewerStructuredOutput')
@@ -1436,7 +1442,7 @@ const App: React.FC = () => {
                 fallback={
                     <PanelLoadingFallback
                         label={t('loadingPrepareProvenancePanel')}
-                        className="nbu-dashed-panel px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-300"
+                        className="nbu-dashed-panel px-3 py-5 text-center text-sm text-slate-500 dark:text-slate-300"
                     />
                 }
             >
@@ -1460,7 +1466,7 @@ const App: React.FC = () => {
                     fallback={
                         <PanelLoadingFallback
                             label={t('loadingStageSurface')}
-                            className="nbu-dashed-panel flex h-full min-h-[420px] items-center justify-center rounded-[28px] text-sm text-gray-500 dark:text-gray-400"
+                            className="nbu-dashed-panel flex h-full min-h-[420px] items-center justify-center rounded-[24px] text-sm text-gray-500 dark:text-gray-400"
                         />
                     }
                 >
@@ -1564,12 +1570,12 @@ const App: React.FC = () => {
             />
 
             <div className="relative z-10 mx-auto flex min-h-screen max-w-[1560px] flex-col px-4 pb-6 pt-4 lg:px-6 lg:pb-8">
-                <main className="mt-4 flex flex-1 flex-col gap-5">
+                <main className="mt-4 flex flex-1 flex-col gap-4">
                     <WorkspaceTopHeader {...workspaceTopHeaderProps} />
 
                     <section
                         data-testid="workspace-insights-collapsible"
-                        className="grid gap-5 xl:grid-cols-[minmax(280px,0.92fr)_minmax(0,1.16fr)_minmax(280px,0.98fr)] xl:items-start"
+                        className="grid gap-4 xl:grid-cols-[minmax(280px,0.92fr)_minmax(0,1.16fr)_minmax(280px,0.98fr)] xl:items-start"
                     >
                         <WorkspaceInsightsSidebar
                             {...workspaceInsightsSidebarProps}
@@ -1598,8 +1604,8 @@ const App: React.FC = () => {
                         </WorkspaceSourcesCitationsPanel>
                     </section>
 
-                    <section className="grid gap-5">
-                        <div className="flex min-w-0 flex-col gap-5">
+                    <section className="grid gap-4">
+                        <div className="flex min-w-0 flex-col gap-4">
                             <WorkspaceHistoryCanvas
                                 currentLanguage={currentLang}
                                 recentLane={recentLane}

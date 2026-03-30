@@ -124,12 +124,7 @@ const workspacePanelStatusKeys = [
     'workspacePanelStatusReserved',
 ] as const;
 
-const loadingStateKeys = [
-    'loadingHealthPanel',
-    'loadingPrepareSketchPad',
-    'loadingPrepareUltraEditor',
-    'loadingStageSurface',
-] as const;
+const loadingStateKeys = ['loadingPrepareSketchPad', 'loadingPrepareUltraEditor', 'loadingStageSurface'] as const;
 
 const stageGroundingKeys = ['stageGroundingResultStatus', 'stageGroundingResultSummary'] as const;
 
@@ -147,7 +142,6 @@ const workspacePanelStatusFallbackSensitiveKeys = [
 ] as const;
 
 const loadingStateFallbackSensitiveKeys = [
-    'loadingHealthPanel',
     'loadingPrepareSketchPad',
     'loadingPrepareUltraEditor',
     'loadingStageSurface',
@@ -2474,42 +2468,36 @@ const ruWorkspacePanelStatusBaseline = {
 } as const;
 
 const jaLoadingStateBaseline = {
-    loadingHealthPanel: 'ヘルスパネルを読み込み中...',
     loadingPrepareSketchPad: 'SketchPadを準備中...',
     loadingPrepareUltraEditor: 'Ultra Editorを準備中...',
     loadingStageSurface: 'ステージ画面を読み込み中...',
 } as const;
 
 const koLoadingStateBaseline = {
-    loadingHealthPanel: '상태 패널을 불러오는 중...',
     loadingPrepareSketchPad: 'SketchPad를 준비하는 중...',
     loadingPrepareUltraEditor: 'Ultra Editor를 준비하는 중...',
     loadingStageSurface: '스테이지 화면을 불러오는 중...',
 } as const;
 
 const esLoadingStateBaseline = {
-    loadingHealthPanel: 'Cargando el panel de salud...',
     loadingPrepareSketchPad: 'Preparando SketchPad...',
     loadingPrepareUltraEditor: 'Preparando Ultra Editor...',
     loadingStageSurface: 'Cargando la superficie del escenario...',
 } as const;
 
 const frLoadingStateBaseline = {
-    loadingHealthPanel: 'Chargement du panneau de sante...',
     loadingPrepareSketchPad: 'Preparation de SketchPad...',
     loadingPrepareUltraEditor: 'Preparation de Ultra Editor...',
     loadingStageSurface: 'Chargement de la surface de scene...',
 } as const;
 
 const deLoadingStateBaseline = {
-    loadingHealthPanel: 'Statusbereich wird geladen...',
     loadingPrepareSketchPad: 'SketchPad wird vorbereitet...',
     loadingPrepareUltraEditor: 'Ultra Editor wird vorbereitet...',
     loadingStageSurface: 'Stage-Oberflache wird geladen...',
 } as const;
 
 const ruLoadingStateBaseline = {
-    loadingHealthPanel: 'Загрузка панели состояния...',
     loadingPrepareSketchPad: 'Подготовка SketchPad...',
     loadingPrepareUltraEditor: 'Подготовка Ultra Editor...',
     loadingStageSurface: 'Загрузка поверхности сцены...',

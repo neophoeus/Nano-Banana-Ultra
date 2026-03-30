@@ -92,27 +92,27 @@ export default function WorkspaceViewerOverlay({
     return (
         <div
             data-testid="workspace-viewer-overlay"
-            className="fixed inset-0 flex items-center justify-center bg-black/88 p-4 backdrop-blur-sm"
+            className="fixed inset-0 flex items-center justify-center bg-black/88 p-3 backdrop-blur-sm"
             style={{ zIndex: WORKSPACE_OVERLAY_Z_INDEX.viewer }}
             onClick={onClose}
             role="presentation"
         >
             <div
                 ref={dialogRef}
-                className="flex h-full max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-[#05070b] shadow-2xl"
+                className="flex h-full max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-[28px] border border-white/10 bg-[#05070b] shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
                 role="dialog"
                 aria-modal="true"
                 tabIndex={-1}
             >
-                <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 text-white">
+                <div className="flex items-center justify-between border-b border-white/10 px-4 py-3.5 text-white">
                     <div>
-                        <h2 data-testid="workspace-viewer-title" className="text-lg font-bold">
+                        <h2 data-testid="workspace-viewer-title" className="text-[17px] font-black">
                             {t('workspaceViewerTitle')}
                         </h2>
                         <div
                             data-testid="workspace-viewer-desc-details"
-                            className="mt-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2"
+                            className="mt-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5"
                         >
                             <div
                                 data-testid="workspace-viewer-desc-summary"
@@ -122,7 +122,7 @@ export default function WorkspaceViewerOverlay({
                             </div>
                             <div
                                 data-testid="workspace-viewer-desc"
-                                className="mt-3 flex flex-wrap gap-2 border-t border-white/10 pt-3"
+                                className="mt-2.5 flex flex-wrap gap-2 border-t border-white/10 pt-2.5"
                             >
                                 {[
                                     t('workspaceViewerPrompt'),
@@ -145,25 +145,25 @@ export default function WorkspaceViewerOverlay({
                     <button
                         ref={closeButtonRef}
                         onClick={onClose}
-                        className="rounded-xl border border-white/15 px-3 py-2 text-sm text-white/80 hover:bg-white/5"
+                        className="rounded-lg border border-white/15 px-3 py-1.5 text-[13px] text-white/80 hover:bg-white/5"
                     >
                         {t('workspaceViewerClose')}
                     </button>
                 </div>
 
                 <div className="grid min-h-0 flex-1 gap-0 lg:grid-cols-[minmax(0,1fr)_320px]">
-                    <div className="relative flex min-h-0 items-center justify-center bg-[radial-gradient(circle_at_center,_rgba(245,158,11,0.15),_transparent_35%),linear-gradient(180deg,_#0c1118_0%,_#040608_100%)] p-4">
+                    <div className="relative flex min-h-0 items-center justify-center bg-[radial-gradient(circle_at_center,_rgba(245,158,11,0.15),_transparent_35%),linear-gradient(180deg,_#0c1118_0%,_#040608_100%)] p-3">
                         {generatedImageCount > 1 && (
                             <>
                                 <button
                                     onClick={() => onMoveViewer('prev')}
-                                    className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/15 bg-black/45 px-3 py-3 text-white/80 hover:bg-black/65"
+                                    className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/15 bg-black/45 px-2.5 py-2.5 text-white/80 hover:bg-black/65"
                                 >
                                     ‹
                                 </button>
                                 <button
                                     onClick={() => onMoveViewer('next')}
-                                    className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/15 bg-black/45 px-3 py-3 text-white/80 hover:bg-black/65"
+                                    className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/15 bg-black/45 px-2.5 py-2.5 text-white/80 hover:bg-black/65"
                                 >
                                     ›
                                 </button>
@@ -178,7 +178,7 @@ export default function WorkspaceViewerOverlay({
                     </div>
 
                     <div className="flex min-h-0 flex-col border-l border-white/10 bg-[#0a0d12] text-white">
-                        <div className="space-y-4 p-5">
+                        <div className="space-y-3.5 p-4">
                             <div>
                                 <div
                                     data-testid="workspace-viewer-prompt-label"
@@ -195,22 +195,22 @@ export default function WorkspaceViewerOverlay({
                             </div>
 
                             <div className="grid grid-cols-2 gap-2 text-xs text-white/70">
-                                <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+                                <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5">
                                     {t('workspaceViewerRatio')}
                                     <br />
                                     <span className="mt-1 block text-sm font-semibold text-white">{aspectRatio}</span>
                                 </div>
-                                <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+                                <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5">
                                     {t('workspaceViewerSize')}
                                     <br />
                                     <span className="mt-1 block text-sm font-semibold text-white">{size}</span>
                                 </div>
-                                <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+                                <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5">
                                     {t('workspaceViewerStyle')}
                                     <br />
                                     <span className="mt-1 block text-sm font-semibold text-white">{styleLabel}</span>
                                 </div>
-                                <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+                                <div className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5">
                                     {t('workspaceViewerModel')}
                                     <br />
                                     <span className="mt-1 block text-sm font-semibold text-white">{model}</span>
@@ -247,7 +247,7 @@ export default function WorkspaceViewerOverlay({
                                         />
                                     )}
                                 </div>
-                                <div className="mt-2 rounded-2xl border border-dashed border-white/10 bg-white/5 px-3 py-3 text-sm text-white/75">
+                                <div className="mt-2 rounded-2xl border border-dashed border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/75">
                                     <StructuredOutputDisplay
                                         currentLanguage={currentLanguage}
                                         structuredData={structuredData}
@@ -264,7 +264,7 @@ export default function WorkspaceViewerOverlay({
                             <div data-testid="workspace-viewer-thoughts-details">
                                 <div
                                     data-testid="workspace-viewer-thoughts-summary"
-                                    className="flex items-start justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-3"
+                                    className="flex items-start justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5"
                                 >
                                     <div className="min-w-0 flex-1">
                                         <div className="text-xs font-bold uppercase tracking-[0.16em] text-white/45">
@@ -277,7 +277,7 @@ export default function WorkspaceViewerOverlay({
                                 </div>
                                 <div
                                     data-testid="workspace-viewer-thoughts-body"
-                                    className="mt-2 rounded-2xl border border-dashed border-white/10 bg-white/5 px-3 py-3 text-sm text-white/75"
+                                    className="mt-2 rounded-2xl border border-dashed border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/75"
                                 >
                                     {thoughtsValue}
                                 </div>
@@ -293,7 +293,7 @@ export default function WorkspaceViewerOverlay({
                             <div data-testid="workspace-viewer-session-hints-details">
                                 <div
                                     data-testid="workspace-viewer-session-hints-summary"
-                                    className="flex items-start justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-3"
+                                    className="flex items-start justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5"
                                 >
                                     <div className="min-w-0 flex-1">
                                         <div
@@ -319,7 +319,7 @@ export default function WorkspaceViewerOverlay({
                                 </div>
                                 <div
                                     data-testid="workspace-viewer-session-hints"
-                                    className="mt-2 space-y-2 rounded-2xl border border-dashed border-white/10 bg-white/5 px-3 py-3 text-sm text-white/75"
+                                    className="mt-2 space-y-2 rounded-2xl border border-dashed border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white/75"
                                 >
                                     {sessionHintEntries.length > 0
                                         ? sessionHintEntries.map(([key, value]) => (

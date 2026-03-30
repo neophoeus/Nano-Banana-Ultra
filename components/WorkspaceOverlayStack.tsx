@@ -85,19 +85,22 @@ export default function WorkspaceOverlayStack({
                     title={sketchReplaceTitle}
                     description={sketchReplaceMessage}
                     headerExtra={
-                        <div className="mt-4 flex items-center gap-3">
-                            <ThemeToggle currentLanguage={pickerSheetProps.currentLanguage} className="h-9 w-9" />
+                        <div className="mt-3 flex items-center gap-2.5">
+                            <ThemeToggle
+                                currentLanguage={pickerSheetProps.currentLanguage}
+                                className="h-8 w-8 shadow-none"
+                            />
                         </div>
                     }
                     hideCloseButton
                     backdropClassName="bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.1),_transparent_32%),rgba(15,23,42,0.74)] backdrop-blur-md"
-                    panelClassName="nbu-overlay-panel-warm p-6"
-                    headerClassName="border-b border-amber-200/80 px-0 pb-5 dark:border-amber-500/18"
+                    panelClassName="nbu-overlay-panel-warm p-5"
+                    headerClassName="border-b border-amber-200/80 px-0 pb-4 dark:border-amber-500/18"
                 >
-                    <div className="space-y-4 pt-2">
+                    <div className="space-y-3.5 pt-2">
                         <div
                             data-testid="workspace-sketch-replace-summary"
-                            className="nbu-overlay-card-warm rounded-[28px] border p-5"
+                            className="nbu-overlay-card-warm rounded-[24px] border p-4"
                         >
                             <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-200">
                                 {sketchReplaceTitle}
@@ -108,21 +111,21 @@ export default function WorkspaceOverlayStack({
                         </div>
                         <div
                             data-testid="workspace-sketch-replace-actions"
-                            className="nbu-overlay-card-neutral rounded-[28px] border p-5"
+                            className="nbu-overlay-card-neutral rounded-[24px] border p-4"
                         >
                             <div className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
                                 {sketchReplaceActionsTitle}
                             </div>
-                            <div className="mt-4 flex gap-3 border-t border-gray-200/80 pt-5 dark:border-gray-800">
+                            <div className="mt-3 flex gap-2.5 border-t border-gray-200/80 pt-4 dark:border-gray-800">
                                 <button
                                     onClick={onSketchReplaceCancel}
-                                    className="nbu-control-button flex-1 rounded-2xl px-4 py-2 text-sm font-semibold"
+                                    className="nbu-control-button flex-1 rounded-xl px-3.5 py-2 text-[13px] font-semibold"
                                 >
                                     {sketchReplaceCancelLabel}
                                 </button>
                                 <button
                                     onClick={onSketchReplaceConfirm}
-                                    className="flex-1 rounded-2xl bg-amber-500 px-4 py-2 text-sm font-semibold text-white"
+                                    className="flex-1 rounded-xl bg-amber-500 px-3.5 py-2 text-[13px] font-semibold text-white"
                                 >
                                     {sketchReplaceConfirmLabel}
                                 </button>

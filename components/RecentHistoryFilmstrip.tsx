@@ -81,13 +81,13 @@ function RecentHistoryFilmstrip({
         .replace('{1}', String(branchCount));
 
     return (
-        <div className="nbu-stage-hero-filmstrip-shell rounded-[24px] border p-3">
-            <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+        <div className="nbu-stage-hero-filmstrip-shell rounded-[24px] border p-2.5">
+            <div className="mb-2.5 flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                         <h3
                             data-testid="filmstrip-title"
-                            className="text-sm font-bold uppercase tracking-[0.14em] text-gray-500 dark:text-gray-400"
+                            className="text-[15px] font-black text-slate-900 dark:text-slate-100"
                         >
                             {t('historyFilmstripTitle')}
                         </h3>
@@ -102,20 +102,20 @@ function RecentHistoryFilmstrip({
                     {activeBranchSummary ? (
                         <span
                             data-testid="filmstrip-active-branch"
-                            className={`rounded-full border px-3 py-1 text-[11px] font-semibold ${getBranchAccentClassName(activeBranchSummary.branchOriginId, activeBranchLabel || t('historyBranchMain'))}`}
+                            className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${getBranchAccentClassName(activeBranchSummary.branchOriginId, activeBranchLabel || t('historyBranchMain'))}`}
                         >
                             {t('workspaceInsightsActiveBranch')} · {activeBranchLabel}
                         </span>
                     ) : null}
                     <span
                         data-testid="filmstrip-summary"
-                        className="nbu-stage-hero-filmstrip-summary rounded-full border px-3 py-1 text-[11px] font-semibold text-gray-500 dark:text-gray-300"
+                        className="nbu-stage-hero-filmstrip-summary rounded-full border px-2.5 py-1 text-[10px] font-semibold text-gray-500 dark:text-gray-300"
                     >
                         {summaryLabel}
                     </span>
                     <button
                         onClick={onClear}
-                        className="rounded-full border border-gray-200/80 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:border-red-300 hover:text-red-600 dark:border-gray-700 dark:text-gray-300 dark:hover:border-red-500/40 dark:hover:text-red-300"
+                        className="rounded-full border border-gray-200/80 px-2.5 py-1 text-[11px] font-semibold text-gray-600 hover:border-red-300 hover:text-red-600 dark:border-gray-700 dark:text-gray-300 dark:hover:border-red-500/40 dark:hover:text-red-300"
                     >
                         {t('clear')}
                     </button>
@@ -123,7 +123,7 @@ function RecentHistoryFilmstrip({
             </div>
 
             {recentHistory.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                <div className="rounded-2xl border border-dashed border-gray-300 px-3 py-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
                     {t('historyFilmstripEmpty')}
                 </div>
             ) : (

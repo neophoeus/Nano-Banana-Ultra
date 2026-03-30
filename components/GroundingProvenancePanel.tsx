@@ -165,10 +165,10 @@ function GroundingProvenancePanel({
     const getProvenanceTestId = (baseId: string) => (scope === 'primary' ? baseId : `${baseId}-${scope}`);
     const wrapperClassName =
         tone === 'dark'
-            ? 'space-y-3 rounded-2xl border border-dashed border-white/10 bg-white/5 px-3 py-3 text-sm text-white/75'
-                        : scope === 'primary'
-                            ? 'space-y-3 text-sm text-gray-600 dark:text-gray-300'
-            : 'nbu-dashed-panel space-y-3 px-4 py-3 text-sm text-gray-600 dark:text-gray-300';
+            ? 'space-y-2.5 rounded-2xl border border-dashed border-white/10 bg-white/5 px-3 py-3 text-sm text-white/75'
+            : scope === 'primary'
+              ? 'space-y-2.5 text-sm text-gray-600 dark:text-gray-300'
+              : 'nbu-dashed-panel space-y-2.5 px-3 py-2.5 text-sm text-gray-600 dark:text-gray-300';
     const sectionLabelClassName =
         tone === 'dark'
             ? 'text-[11px] font-bold uppercase tracking-[0.16em] text-white/45'

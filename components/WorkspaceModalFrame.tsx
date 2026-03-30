@@ -38,8 +38,8 @@ export default function WorkspaceModalFrame({
     children,
     backdropClassName = 'bg-black/60 backdrop-blur-sm',
     panelClassName = 'border border-gray-200 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.2)] dark:border-gray-800 dark:bg-[#0d1117]',
-    headerClassName = 'border-b border-gray-200 px-6 py-5 dark:border-gray-800',
-    closeButtonClassName = 'nbu-control-button px-3 py-2 text-sm',
+    headerClassName = 'border-b border-gray-200 px-5 py-4 dark:border-gray-800',
+    closeButtonClassName = 'nbu-control-button px-3 py-1.5 text-[11px] font-semibold',
     closeButtonTestId,
     hideCloseButton = false,
     containerClassName = 'items-center justify-center',
@@ -56,27 +56,27 @@ export default function WorkspaceModalFrame({
     return (
         <div
             data-testid={dataTestId}
-            className={`fixed inset-0 flex p-4 ${containerClassName} ${backdropClassName}`}
+            className={`fixed inset-0 flex p-3 ${containerClassName} ${backdropClassName}`}
             style={{ zIndex }}
             onClick={closeOnBackdropClick ? onClose : undefined}
             role="presentation"
         >
             <div
                 ref={dialogRef}
-                className={`w-full overflow-hidden rounded-[32px] ${maxWidthClass} ${panelClassName}`}
+                className={`w-full overflow-hidden rounded-[28px] ${maxWidthClass} ${panelClassName}`}
                 onClick={(event) => event.stopPropagation()}
                 role="dialog"
                 aria-modal="true"
                 tabIndex={-1}
             >
-                <div className={`flex flex-wrap items-start justify-between gap-4 ${headerClassName}`}>
+                <div className={`flex flex-wrap items-start justify-between gap-3 ${headerClassName}`}>
                     <div>
                         {eyebrow && (
                             <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-600 dark:text-amber-300">
                                 {eyebrow}
                             </div>
                         )}
-                        <h3 className="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
+                        <h3 className="mt-1 text-[17px] font-black text-gray-900 dark:text-gray-100">{title}</h3>
                         {description && (
                             <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-500 dark:text-gray-400">
                                 {description}

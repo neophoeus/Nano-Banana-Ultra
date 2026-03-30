@@ -99,9 +99,9 @@ Nano Banana Ultra currently supports three Gemini image-model paths, each presen
 
 ## Version Overview
 
-### Latest Release: 3.1.0
+### Latest Release: 3.1.1
 
-Latest release: 3.1.0. This is the release where the workspace fully shifts away from engineering-oriented shell framing and into a clearer product-facing flow. The header is health-only, `Current Work` owns live process and thoughts, `Answer` owns result delivery, `Sources & Citations` stays evidence-first, and versions live with history. See `CHANGELOG.md` for details.
+Latest release: 3.1.1. This is primarily a layout-refinement patch on top of the 3.1 product-facing workspace baseline. History, stage, composer, answer placeholders, and overlay surfaces now share a tighter visual contract, while the existing restore, viewer, import, and reuse flows remain validated. See `CHANGELOG.md` for details.
 
 ### 3.1
 
@@ -264,9 +264,9 @@ Nano Banana Ultra 目前支援三條 Gemini 影像模型路徑，並會依模型
 
 ## 版本總覽
 
-### 最新版本：3.1.0
+### 最新版本：3.1.1
 
-最新版本：3.1.0。這一版正式把工作區從工程導向 shell 收斂成產品導向流程：頂部只保留健康狀態，`目前工作` 擁有流程與思考摘要，`回答` 專注輸出內容，`來源與引用` 回到證據面，版本導覽則回到歷史區。詳細內容請見 `CHANGELOG.md`。
+最新版本：3.1.1。這一版主要是建立在 3.1 產品導向工作區基線上的版面微調與密度收斂：歷史、主圖、composer、回答 placeholder 與各種 overlay 現在共用更一致的視覺契約，同時既有的 restore、viewer、import 與重用流程都已重新驗證。詳細內容請見 `CHANGELOG.md`。
 
 ### 3.1
 
