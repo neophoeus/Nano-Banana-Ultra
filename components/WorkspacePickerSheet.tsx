@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React from 'react';
 import { IMAGE_MODELS, MODEL_CAPABILITIES } from '../constants';
 import { MAX_DISPLAY_HISTORY, PROMPT_TEMPLATES, PromptHistoryItem } from '../hooks/usePromptHistory';
 import { Language } from '../utils/translations';
@@ -14,11 +14,9 @@ import ThemeToggle from './ThemeToggle';
 import WorkspaceModalFrame from './WorkspaceModalFrame';
 import WorkspaceSecondaryNav from './WorkspaceSecondaryNav';
 
-const HistoryPanel = lazy(() => import('./HistoryPanel'));
 export type PickerSheet =
     | 'prompt'
     | 'history'
-    | 'gallery'
     | 'templates'
     | 'styles'
     | 'model'
@@ -39,7 +37,6 @@ type WorkspacePickerSheetProps = {
     isEnhancingPrompt: boolean;
     closePickerSheet: () => void;
     openPromptSheet: () => void;
-    openGallerySheet: () => void;
     openTemplatesSheet: () => void;
     openHistorySheet: () => void;
     openReferencesSheet: () => void;
@@ -111,7 +108,6 @@ export default function WorkspacePickerSheet({
     isEnhancingPrompt,
     closePickerSheet,
     openPromptSheet,
-    openGallerySheet,
     openTemplatesSheet,
     openHistorySheet,
     openReferencesSheet,
@@ -170,12 +166,6 @@ export default function WorkspacePickerSheet({
             label: t('promptLabel'),
             onClick: openPromptSheet,
             isActive: activePickerSheet === 'prompt',
-        },
-        {
-            id: 'gallery',
-            label: t('workspaceSheetTitleGallery'),
-            onClick: openGallerySheet,
-            isActive: activePickerSheet === 'gallery',
         },
         {
             id: 'history',
@@ -293,32 +283,6 @@ export default function WorkspacePickerSheet({
                             {t('workspacePickerClearPromptHistory')}
                         </button>
                     )}
-                </div>
-            );
-        }
-
-        if (activePickerSheet === 'gallery') {
-            return history.length > 0 ? (
-                <Suspense fallback={renderPanelLoadingState(t('workspacePickerLoading'))}>
-                    <HistoryPanel
-                        history={history}
-                        onSelect={(item) => {
-                            handleHistorySelect(item);
-                            closePickerSheet();
-                        }}
-                        onRenameBranch={handleRenameBranch}
-                        isPromotedContinuationSource={isPromotedContinuationSource}
-                        getContinueActionLabel={getContinueActionLabel}
-                        branchNameOverrides={branchNameOverrides}
-                        selectedId={selectedHistoryId || undefined}
-                        currentLanguage={currentLanguage}
-                        onClear={handleClearGalleryHistory}
-                        title={t('workspacePickerFullGallery')}
-                    />
-                </Suspense>
-            ) : (
-                <div className="nbu-overlay-card-neutral rounded-2xl border border-dashed px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">
-                    {t('workspacePickerEmptyGallery')}
                 </div>
             );
         }

@@ -19,8 +19,10 @@ import RecentHistoryFilmstrip from './components/RecentHistoryFilmstrip';
 import ComposerAdvancedSettingsDialog from './components/ComposerAdvancedSettingsDialog';
 import ComposerSettingsPanel from './components/ComposerSettingsPanel';
 import PanelLoadingFallback from './components/PanelLoadingFallback';
+import QueuedBatchJobsPanel from './components/QueuedBatchJobsPanel';
 import SurfaceLoadingFallback from './components/SurfaceLoadingFallback';
 import WorkspaceDetailModal from './components/WorkspaceDetailModal';
+import WorkspaceGalleryCard from './components/WorkspaceGalleryCard';
 import WorkspaceHistoryCanvas from './components/WorkspaceHistoryCanvas';
 import WorkspaceInsightsSidebar from './components/WorkspaceInsightsSidebar';
 import WorkspaceOverlayStack from './components/WorkspaceOverlayStack';
@@ -98,6 +100,55 @@ type WorkflowThoughtEntry = {
     prompt: string | null;
     thoughts: string;
     createdAtLabel: string;
+    createdAtMs: number | null;
+};
+
+const parseWorkflowTimestampMs = (timestamp: string | null | undefined, anchorMs: number): number | null => {
+    if (!timestamp) {
+        return null;
+    }
+
+    const match = timestamp.match(/^(\d{2}):(\d{2}):(\d{2})$/);
+    if (!match) {
+        return null;
+    }
+
+    const parsedDate = new Date(anchorMs);
+    parsedDate.setHours(Number(match[1]), Number(match[2]), Number(match[3]), 0);
+
+    let parsedMs = parsedDate.getTime();
+    if (parsedMs - anchorMs > 12 * 60 * 60 * 1000) {
+        parsedMs -= 24 * 60 * 60 * 1000;
+    }
+
+    return parsedMs;
+};
+
+const TopLauncherSignal = ({ active, dataTestId }: { active: boolean; dataTestId: string }) => {
+    const activeOuterClassName =
+        'bg-amber-300/60 shadow-[0_0_18px_rgba(251,191,36,0.52)] dark:bg-amber-300/40 dark:shadow-[0_0_20px_rgba(251,191,36,0.36)]';
+    const activeInnerClassName = 'bg-amber-400 ring-2 ring-amber-100/90 dark:bg-amber-300 dark:ring-amber-400/30';
+
+    return (
+        <span
+            data-testid={dataTestId}
+            aria-hidden="true"
+            className="relative inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center"
+        >
+            <span
+                className={`absolute inset-0 rounded-full transition-all duration-300 ${
+                    active
+                        ? `${activeOuterClassName} animate-pulse opacity-100`
+                        : 'bg-white/90 ring-1 ring-slate-300/80 opacity-100 dark:bg-slate-100/10 dark:ring-slate-500/70'
+                }`}
+            />
+            <span
+                className={`relative h-1.5 w-1.5 rounded-full transition-all duration-300 ${
+                    active ? activeInnerClassName : 'bg-slate-400 dark:bg-slate-200'
+                }`}
+            />
+        </span>
+    );
 };
 
 const App: React.FC = () => {
@@ -108,7 +159,7 @@ const App: React.FC = () => {
     const [currentLang, setCurrentLang] = useState<Language>('en');
     const [isEditing, setIsEditing] = useState(false);
     const [activeWorkspaceDetailModal, setActiveWorkspaceDetailModal] = useState<
-        'workflow' | 'answer' | 'sources' | 'versions' | null
+        'workflow' | 'answer' | 'sources' | 'versions' | 'queued-jobs' | null
     >(null);
     const [editingImageSource, setEditingImageSource] = useState<string | null>(null);
     const [batchProgress, setBatchProgress] = useState({ completed: 0, total: 0 });
@@ -1039,7 +1090,6 @@ const App: React.FC = () => {
             getContinueActionLabel,
             handleStartNewConversation,
             openPromptSheet: () => setActivePickerSheet('prompt'),
-            openGallerySheet: () => setActivePickerSheet('gallery'),
             openPromptHistorySheet: () => setActivePickerSheet('history'),
             openReferencesSheet: () => setActivePickerSheet('references'),
             workspaceImportReview,
@@ -1079,6 +1129,9 @@ const App: React.FC = () => {
     }, []);
     const handleOpenVersionsDetails = useCallback(() => {
         setActiveWorkspaceDetailModal('versions');
+    }, []);
+    const handleOpenQueuedBatchJobs = useCallback(() => {
+        setActiveWorkspaceDetailModal('queued-jobs');
     }, []);
     const composerSettingsPanelProps = useComposerSettingsPanelProps({
         prompt,
@@ -1120,6 +1173,7 @@ const App: React.FC = () => {
         toggleEnterToSubmit,
         handleGenerate,
         handleQueueBatchJob,
+        handleOpenQueuedBatchJobs,
         handleCancelGeneration,
         handleStartNewConversation,
         handleFollowUpGenerate,
@@ -1321,7 +1375,6 @@ const App: React.FC = () => {
         isEnhancingPrompt,
         closePickerSheet,
         openPromptSheet: () => setActivePickerSheet('prompt'),
-        openGallerySheet: () => setActivePickerSheet('gallery'),
         openTemplatesSheet: () => setActivePickerSheet('templates'),
         openHistorySheet: () => setActivePickerSheet('history'),
         openReferencesSheet: () => setActivePickerSheet('references'),
@@ -1391,29 +1444,55 @@ const App: React.FC = () => {
         currentLanguage: currentLang,
         renderHistoryActionButton,
     });
+    const gallerySupportSurface = useMemo(
+        () => (
+            <WorkspaceGalleryCard
+                currentLanguage={currentLang}
+                history={history}
+                onSelect={handleHistorySelect}
+                onRenameBranch={handleRenameBranch}
+                isPromotedContinuationSource={isPromotedContinuationSource}
+                getContinueActionLabel={getContinueActionLabel}
+                branchNameOverrides={branchNameOverrides}
+                selectedHistoryId={selectedHistoryId}
+                onClear={handleClearGalleryHistory}
+            />
+        ),
+        [
+            branchNameOverrides,
+            currentLang,
+            getContinueActionLabel,
+            handleClearGalleryHistory,
+            handleHistorySelect,
+            handleRenameBranch,
+            history,
+            isPromotedContinuationSource,
+            selectedHistoryId,
+        ],
+    );
     const shellPanelClassName = 'min-w-0 nbu-shell-panel nbu-shell-surface-stage-hero p-3';
     const stagePanelClassName =
         'min-w-0 nbu-shell-panel nbu-shell-surface-stage-hero min-h-[440px] overflow-hidden p-3 lg:min-h-0 lg:flex-1';
+    const topLauncherCompactButtonClassName =
+        'group nbu-shell-panel flex h-full min-w-0 items-center justify-center px-3 py-2 text-center transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_18px_40px_rgba(2,6,23,0.38)] lg:h-[54px] lg:min-h-[54px]';
+    const topLauncherCompactLabelClassName =
+        'whitespace-nowrap text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400';
     const responseTextPlaceholder =
         effectiveStructuredOutputMode !== 'off'
             ? t('workspaceViewerStructuredOutput')
             : viewSettings.outputFormat === 'images-and-text'
               ? t('workspacePanelResultTextReady')
               : t('workspacePanelResultTextReserved');
-    const answerLauncherSummary = formattedStructuredOutput
-        ? t('workspaceViewerStructuredOutput')
-        : effectiveResultText?.trim() || responseTextPlaceholder;
-    const hasAnswerContent = Boolean(formattedStructuredOutput || effectiveResultText?.trim());
-    const workflowTimelineEntries = useMemo(
-        () =>
-            buildWorkflowTimeline(logs, 14)
-                .slice()
-                .reverse()
-                .map((entry) => ({
-                    ...entry,
-                    displayMessage: renderWorkflowMessage(entry.message, t),
-                })),
-        [logs, t],
+    const hasResponseInfo = Boolean(
+        effectiveResultText?.trim() || (effectiveStructuredData && Object.keys(effectiveStructuredData).length > 0),
+    );
+    const hasSourceTrailInfo = Boolean(
+        groundingQueries.length > 0 ||
+        selectedSources.length > 0 ||
+        selectedSupportBundles.length > 0 ||
+        Boolean(searchEntryPointRenderedContent?.trim()) ||
+        effectiveSessionHints?.groundingMetadataReturned ||
+        effectiveSessionHints?.groundingSupportsReturned,
     );
     const workflowThoughtEntries = useMemo<WorkflowThoughtEntry[]>(() => {
         const historyTurns =
@@ -1438,6 +1517,7 @@ const App: React.FC = () => {
                 shortId: getShortTurnId(turn.id),
                 prompt: turn.prompt || null,
                 thoughts: turn.thoughts!.trim(),
+                createdAtMs: turn.createdAt,
                 createdAtLabel: new Date(turn.createdAt).toLocaleTimeString([], {
                     hour: '2-digit',
                     minute: '2-digit',
@@ -1461,6 +1541,7 @@ const App: React.FC = () => {
                 shortId: getShortTurnId(currentStageSourceTurn?.id || workspaceSession.sourceHistoryId),
                 prompt: prompt || null,
                 thoughts: fallbackThoughts,
+                createdAtMs: workspaceSession.updatedAt || null,
                 createdAtLabel: sessionUpdatedLabel,
             },
         ];
@@ -1475,11 +1556,44 @@ const App: React.FC = () => {
         workspaceSession.conversationTurnIds,
         workspaceSession.sourceHistoryId,
     ]);
+    const workflowTimelineAnchorMs = useMemo(() => {
+        const candidates = [
+            workspaceSession.updatedAt,
+            currentStageSourceTurn?.createdAt,
+            currentStageBranchSummary?.updatedAt,
+            activeBranchSummary?.updatedAt,
+            history[0]?.createdAt,
+        ].filter((value): value is number => typeof value === 'number' && value > 0);
+
+        return candidates.length > 0 ? Math.max(...candidates) : Date.now();
+    }, [
+        activeBranchSummary?.updatedAt,
+        currentStageBranchSummary?.updatedAt,
+        currentStageSourceTurn?.createdAt,
+        history,
+        workspaceSession.updatedAt,
+    ]);
+    const workflowTimelineEntries = useMemo(
+        () =>
+            buildWorkflowTimeline(logs, 14)
+                .slice()
+                .reverse()
+                .map((entry, index, timelineEntries) => ({
+                    ...entry,
+                    displayMessage: renderWorkflowMessage(entry.message, t),
+                    sortTimestampMs: parseWorkflowTimestampMs(entry.timestamp, workflowTimelineAnchorMs),
+                    sortOrder: timelineEntries.length - index,
+                })),
+        [logs, t, workflowTimelineAnchorMs],
+    );
     const workflowDetailContextPanel = useMemo(
         () => (
             <WorkspaceInsightsSidebar
                 currentLanguage={currentLang}
                 showHeader={false}
+                compact={true}
+                showWorkflowSummary={false}
+                showThoughtsSection={false}
                 latestWorkflowEntry={latestWorkflowEntry}
                 isGenerating={isGenerating}
                 batchProgress={batchProgress}
@@ -1562,21 +1676,6 @@ const App: React.FC = () => {
             handleOpenUploadDialog,
         ],
     );
-    const contextProvenanceStatusLabel =
-        viewSettings.googleSearch || viewSettings.imageSearch
-            ? t('workspacePanelStatusPrepared')
-            : t('workspacePanelStatusReserved');
-    const hasSourcesCitationsContent =
-        displayedSources.length > 0 ||
-        displayedSupportBundles.length > 0 ||
-        uncitedSources.length > 0 ||
-        attributionOverviewRows.length > 0 ||
-        groundingQueries.length > 0 ||
-        Boolean(searchEntryPointRenderedContent) ||
-        Boolean(provenanceSourceTurn);
-    const sourcesCitationsStatusLabel = hasSourcesCitationsContent
-        ? t('workspacePanelStatusEnabled')
-        : contextProvenanceStatusLabel;
     const contextProvenanceDetailPanel = useMemo(
         () => (
             <Suspense
@@ -1639,6 +1738,7 @@ const App: React.FC = () => {
                 title={t('workflowStatusLabel')}
                 closeLabel={t('workspaceViewerClose')}
                 onClose={handleCloseWorkspaceDetailModal}
+                compact={true}
             >
                 <WorkspaceWorkflowDetailPanel
                     currentLanguage={currentLang}
@@ -1689,6 +1789,34 @@ const App: React.FC = () => {
                 onClose={handleCloseWorkspaceDetailModal}
             >
                 <WorkspaceVersionsDetailPanel {...versionsDetailPanelProps} showHeader={false} />
+            </WorkspaceDetailModal>
+        ) : activeWorkspaceDetailModal === 'queued-jobs' ? (
+            <WorkspaceDetailModal
+                dataTestId="workspace-queued-batch-detail-modal"
+                title={t('queuedBatchJobsTitle')}
+                closeLabel={t('workspaceViewerClose')}
+                onClose={handleCloseWorkspaceDetailModal}
+                description={t('queuedBatchJobsDesc')}
+            >
+                <QueuedBatchJobsPanel
+                    currentLanguage={currentLang}
+                    queuedJobs={queuedJobs}
+                    surface="embedded"
+                    queueBatchConversationNotice={queueBatchConversationNotice}
+                    getLineageActionLabel={getLineageActionLabel}
+                    getImportedQueuedResultCount={getImportedQueuedResultCount}
+                    getImportedQueuedHistoryItems={getImportedQueuedHistoryItems}
+                    activeImportedQueuedHistoryId={selectedHistoryId}
+                    onImportAllQueuedJobs={handleImportAllQueuedJobs}
+                    onPollAllQueuedJobs={handlePollAllQueuedJobs}
+                    onPollQueuedJob={handlePollQueuedJob}
+                    onCancelQueuedJob={handleCancelQueuedJob}
+                    onImportQueuedJob={handleImportQueuedJob}
+                    onOpenImportedQueuedJob={handleOpenImportedQueuedJob}
+                    onOpenLatestImportedQueuedJob={handleOpenLatestImportedQueuedJob}
+                    onOpenImportedQueuedHistoryItem={handleOpenImportedQueuedHistoryItem}
+                    onRemoveQueuedJob={handleRemoveQueuedJob}
+                />
             </WorkspaceDetailModal>
         ) : null;
     const recentLane = useMemo(
@@ -1810,13 +1938,13 @@ const App: React.FC = () => {
                 viewerOverlayProps={workspaceViewerOverlayProps}
             />
 
-            <div className="relative z-10 mx-auto flex min-h-screen max-w-[1560px] flex-col px-4 pb-6 pt-4 lg:px-6 lg:pb-8">
-                <main className="mt-4 flex flex-1 flex-col gap-4">
+            <div className="relative z-10 mx-auto flex min-h-screen max-w-[1560px] flex-col px-4 pb-6 pt-0 lg:px-6 lg:pb-8">
+                <main className="mt-0 flex flex-1 flex-col gap-2.5">
                     <WorkspaceTopHeader {...workspaceTopHeaderProps} />
 
                     <section
                         data-testid="workspace-insights-collapsible"
-                        className="grid gap-4 xl:grid-cols-[minmax(0,1.8fr)_minmax(260px,0.9fr)] xl:items-start"
+                        className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_144px_176px] lg:items-stretch"
                     >
                         <WorkspaceWorkflowCard
                             currentLanguage={currentLang}
@@ -1826,56 +1954,42 @@ const App: React.FC = () => {
                             onOpenDetails={handleOpenWorkflowDetails}
                         />
 
-                        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-                            <button
-                                type="button"
-                                data-testid="workspace-answer-open-details"
-                                onClick={handleOpenAnswerDetails}
-                                className="nbu-shell-panel nbu-shell-surface-output-strip flex min-w-0 items-start justify-between gap-3 px-4 py-4 text-left transition-colors hover:border-emerald-300 dark:hover:border-emerald-500/30"
-                            >
-                                <div className="min-w-0 flex-1">
-                                    <p className="nbu-section-eyebrow">{t('workspacePanelResponseEyebrow')}</p>
-                                    <h2 className="mt-1 text-[15px] font-black text-slate-900 dark:text-slate-100">
-                                        {t('workspacePanelResponseEyebrow')}
-                                    </h2>
-                                    <div className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                                        {answerLauncherSummary}
-                                    </div>
-                                </div>
-                                <span className="nbu-status-pill shrink-0">
-                                    {hasAnswerContent
-                                        ? t('workspacePanelStatusEnabled')
-                                        : t('workspacePanelStatusReserved')}
+                        <button
+                            type="button"
+                            data-testid="workspace-answer-open-details"
+                            onClick={handleOpenAnswerDetails}
+                            className={`${topLauncherCompactButtonClassName} nbu-shell-surface-output-strip hover:border-emerald-300 dark:hover:border-emerald-500/30`}
+                        >
+                            <span className="flex min-w-0 items-center gap-2">
+                                <TopLauncherSignal active={hasResponseInfo} dataTestId="workspace-answer-signal" />
+                                <span className={topLauncherCompactLabelClassName}>
+                                    {t('workspacePanelResponseEyebrow')}
                                 </span>
-                            </button>
+                            </span>
+                        </button>
 
-                            <button
-                                type="button"
-                                data-testid="workspace-sources-open-details"
-                                onClick={handleOpenSourceDetails}
-                                className="nbu-shell-panel nbu-shell-surface-provenance-summary flex min-w-0 items-start justify-between gap-3 px-4 py-4 text-left transition-colors hover:border-sky-300 dark:hover:border-sky-500/30"
-                            >
-                                <div className="min-w-0 flex-1">
-                                    <p className="nbu-section-eyebrow">{t('workspacePanelSourceTrailEyebrow')}</p>
-                                    <h2 className="mt-1 text-[15px] font-black text-slate-900 dark:text-slate-100">
-                                        {t('workspacePanelSourceTrailEyebrow')}
-                                    </h2>
-                                    <div className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                                        {sourcesCitationsStatusLabel}
-                                    </div>
-                                </div>
-                                <span className="nbu-status-pill shrink-0">{sourcesCitationsStatusLabel}</span>
-                            </button>
-                        </div>
+                        <button
+                            type="button"
+                            data-testid="workspace-sources-open-details"
+                            onClick={handleOpenSourceDetails}
+                            className={`${topLauncherCompactButtonClassName} nbu-shell-surface-provenance-summary hover:border-sky-300 dark:hover:border-sky-500/30`}
+                        >
+                            <span className="flex min-w-0 items-center gap-2">
+                                <TopLauncherSignal active={hasSourceTrailInfo} dataTestId="workspace-sources-signal" />
+                                <span className={topLauncherCompactLabelClassName}>
+                                    {t('workspacePanelSourceTrailEyebrow')}
+                                </span>
+                            </span>
+                        </button>
                     </section>
 
-                    <section className="grid gap-4">
-                        <div className="flex min-w-0 flex-col gap-4">
+                    <section className="grid gap-2.5">
+                        <div className="flex min-w-0 flex-col gap-2.5">
                             <WorkspaceHistoryCanvas
                                 currentLanguage={currentLang}
                                 recentLane={recentLane}
                                 focusSurface={focusSurface}
-                                supportSurface={sideToolPanel}
+                                supportSurface={gallerySupportSurface}
                                 activeBranchSummary={activeBranchSummary}
                                 recentBranchSummaries={recentBranchSummaries}
                                 branchSummariesCount={branchSummaries.length}
@@ -1897,9 +2011,15 @@ const App: React.FC = () => {
                         </div>
                     </section>
 
-                    <div className="order-4 xl:order-none">
-                        <ComposerSettingsPanel {...composerSettingsPanelProps} />
-                    </div>
+                    <section
+                        data-testid="workspace-actions-composer-row"
+                        className="grid gap-2.5 xl:mr-auto xl:max-w-[1320px] xl:grid-cols-[minmax(280px,320px)_minmax(0,1fr)] xl:items-start"
+                    >
+                        <div className="order-2 xl:order-1">{sideToolPanel}</div>
+                        <div className="order-1 min-w-0 xl:order-2">
+                            <ComposerSettingsPanel {...composerSettingsPanelProps} />
+                        </div>
+                    </section>
                 </main>
             </div>
         </div>

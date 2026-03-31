@@ -30,6 +30,12 @@ describe('QueuedBatchJobsPanel', () => {
                         googleSearch: false,
                         imageSearch: false,
                         batchSize: 2,
+                        batchStats: {
+                            requestCount: 2,
+                            successfulRequestCount: 0,
+                            failedRequestCount: 0,
+                            pendingRequestCount: 2,
+                        },
                         objectImageCount: 0,
                         characterImageCount: 0,
                         createdAt: 1710400000000,
@@ -60,6 +66,12 @@ describe('QueuedBatchJobsPanel', () => {
                         googleSearch: false,
                         imageSearch: false,
                         batchSize: 1,
+                        batchStats: {
+                            requestCount: 1,
+                            successfulRequestCount: 1,
+                            failedRequestCount: 0,
+                            pendingRequestCount: 0,
+                        },
                         objectImageCount: 1,
                         characterImageCount: 1,
                         createdAt: 1710400010000,
@@ -192,7 +204,7 @@ describe('QueuedBatchJobsPanel', () => {
         expect(markup).toContain('4 tracked');
         expect(markup).toContain('Continuity note');
         expect(markup).toContain(
-            'Tracked official Gemini Batch API jobs stay here while pending or running, so status checks, imports, and cleanup stay in one workflow.',
+            'Tracked official Gemini Batch API jobs stay here while pending or running. Batch API targets completion within 24 hours, but image jobs can continue until the service expires them after 48 hours.',
         );
         expect(markup).toContain('Import ready results');
         expect(markup).toContain('queued-batch-panel-monitor-group');
@@ -200,8 +212,11 @@ describe('QueuedBatchJobsPanel', () => {
         expect(markup).toContain('queued-batch-panel-results-count');
         expect(markup).toContain('Pending panorama batch');
         expect(markup).toContain('Pending');
+        expect(markup).toContain('queued-batch-job-job-pending-batch-stats');
+        expect(markup).toContain('0 Succeeded · 2 Pending · 0 Failed');
         expect(markup).toContain('Ready character batch');
         expect(markup).toContain('Succeeded');
+        expect(markup).toContain('1 Succeeded · 0 Pending · 0 Failed');
         expect(markup).toContain('Imported archive batch');
         expect(markup).toContain('Imported');
         expect(markup).toContain('2x');
@@ -256,6 +271,161 @@ describe('QueuedBatchJobsPanel', () => {
         expect(markup).not.toContain('queued-batch-job-job-failed-poll');
         expect(markup).toContain('queued-batch-job-job-failed-restored-history');
         expect(markup).toContain('queued-batch-job-job-failed-restored-history-note');
+    });
+
+    it('shows queue age warnings after the 24h target and near the 48h expiry window', () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(1710562000000);
+
+        try {
+            const markup = renderToStaticMarkup(
+                <QueuedBatchJobsPanel
+                    currentLanguage="en"
+                    queueBatchConversationNotice={null}
+                    queuedJobs={
+                        [
+                            {
+                                localId: 'job-target',
+                                name: 'batches/job-target',
+                                displayName: 'Over target batch',
+                                state: 'JOB_STATE_PENDING',
+                                model: 'gemini-3.1-flash-image-preview',
+                                prompt: 'Prompt',
+                                generationMode: 'Text to Image',
+                                aspectRatio: '1:1',
+                                imageSize: '1K',
+                                style: 'None',
+                                outputFormat: 'images-only',
+                                temperature: 1,
+                                thinkingLevel: 'minimal',
+                                includeThoughts: true,
+                                googleSearch: false,
+                                imageSearch: false,
+                                batchSize: 1,
+                                objectImageCount: 0,
+                                characterImageCount: 0,
+                                createdAt: 1710472000000,
+                                updatedAt: 1710562000000,
+                                startedAt: null,
+                                completedAt: null,
+                                lastPolledAt: null,
+                                importedAt: null,
+                                error: null,
+                            },
+                            {
+                                localId: 'job-near-expiry',
+                                name: 'batches/job-near-expiry',
+                                displayName: 'Near expiry batch',
+                                state: 'JOB_STATE_RUNNING',
+                                model: 'gemini-3.1-flash-image-preview',
+                                prompt: 'Prompt',
+                                generationMode: 'Text to Image',
+                                aspectRatio: '1:1',
+                                imageSize: '1K',
+                                style: 'None',
+                                outputFormat: 'images-only',
+                                temperature: 1,
+                                thinkingLevel: 'minimal',
+                                includeThoughts: true,
+                                googleSearch: false,
+                                imageSearch: false,
+                                batchSize: 1,
+                                objectImageCount: 0,
+                                characterImageCount: 0,
+                                createdAt: 1710400000000,
+                                updatedAt: 1710562000000,
+                                startedAt: 1710401000000,
+                                completedAt: null,
+                                lastPolledAt: 1710562000000,
+                                importedAt: null,
+                                error: null,
+                            },
+                        ] as any
+                    }
+                    getLineageActionLabel={(action) => action || 'root'}
+                    getImportedQueuedResultCount={() => 0}
+                    getImportedQueuedHistoryItems={() => []}
+                    activeImportedQueuedHistoryId={null}
+                    onImportAllQueuedJobs={vi.fn()}
+                    onPollAllQueuedJobs={vi.fn()}
+                    onPollQueuedJob={vi.fn()}
+                    onCancelQueuedJob={vi.fn()}
+                    onImportQueuedJob={vi.fn()}
+                    onOpenImportedQueuedJob={vi.fn()}
+                    onOpenLatestImportedQueuedJob={vi.fn()}
+                    onOpenImportedQueuedHistoryItem={vi.fn()}
+                    onRemoveQueuedJob={vi.fn()}
+                />,
+            );
+
+            expect(markup).toContain('queued-batch-job-job-target-age-warning');
+            expect(markup).toContain('25h old · past 24h target');
+            expect(markup).toContain('queued-batch-job-job-near-expiry-age-warning');
+            expect(markup).toContain('45h old · near 48h expiry');
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('suppresses duplicate title guidance in embedded mode and keeps bottom breathing room', () => {
+        const markup = renderToStaticMarkup(
+            <QueuedBatchJobsPanel
+                currentLanguage="en"
+                surface="embedded"
+                queueBatchConversationNotice="Queued batch jobs keep source lineage, but they do not send official multi-turn conversation history."
+                queuedJobs={[
+                    {
+                        localId: 'job-embedded',
+                        name: 'batches/job-embedded',
+                        displayName: 'Embedded batch',
+                        state: 'JOB_STATE_PENDING',
+                        model: 'gemini-3.1-flash-image-preview',
+                        prompt: 'Prompt',
+                        generationMode: 'Text to Image',
+                        aspectRatio: '1:1',
+                        imageSize: '1K',
+                        style: 'None',
+                        outputFormat: 'images-only',
+                        temperature: 1,
+                        thinkingLevel: 'minimal',
+                        includeThoughts: true,
+                        googleSearch: false,
+                        imageSearch: false,
+                        batchSize: 1,
+                        objectImageCount: 0,
+                        characterImageCount: 0,
+                        createdAt: 1710400000000,
+                        updatedAt: 1710400000000,
+                        startedAt: null,
+                        completedAt: null,
+                        lastPolledAt: null,
+                        importedAt: null,
+                        error: null,
+                    },
+                ]}
+                getLineageActionLabel={(action) => action || 'root'}
+                getImportedQueuedResultCount={() => 0}
+                getImportedQueuedHistoryItems={() => []}
+                activeImportedQueuedHistoryId={null}
+                onImportAllQueuedJobs={vi.fn()}
+                onPollAllQueuedJobs={vi.fn()}
+                onPollQueuedJob={vi.fn()}
+                onCancelQueuedJob={vi.fn()}
+                onImportQueuedJob={vi.fn()}
+                onOpenImportedQueuedJob={vi.fn()}
+                onOpenLatestImportedQueuedJob={vi.fn()}
+                onOpenImportedQueuedHistoryItem={vi.fn()}
+                onRemoveQueuedJob={vi.fn()}
+            />,
+        );
+
+        expect(markup).toContain('min-w-0 pb-4');
+        expect(markup).toContain('queued-batch-panel-notice');
+        expect(markup).toContain('Continuity note');
+        expect(markup).not.toContain('queued-batch-panel-guidance');
+        expect(markup).not.toContain(
+            'Tracked official Gemini Batch API jobs stay here while pending or running. Batch API targets completion within 24 hours, but image jobs can continue until the service expires them after 48 hours.',
+        );
     });
 
     it('renders every queue state label and localizes generation modes', () => {

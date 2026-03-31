@@ -20,12 +20,12 @@ const buildTurn = (overrides: Partial<GeneratedImage> = {}): GeneratedImage => (
 });
 
 describe('WorkspacePickerSheet', () => {
-    it('keeps gallery sheet history actions on open-plus-rename instead of continue-or-branch', () => {
+    it('removes the gallery picker route now that gallery lives in the main workspace rail', () => {
         const t = (key: string) => getTranslation('en', key);
         const markup = renderToStaticMarkup(
             <WorkspacePickerSheet
-                activePickerSheet="gallery"
-                activeSheetTitle="Gallery"
+                activePickerSheet="history"
+                activeSheetTitle="Prompt History"
                 pickerSheetZIndex={120}
                 prompt="Prompt"
                 setPrompt={vi.fn()}
@@ -34,7 +34,6 @@ describe('WorkspacePickerSheet', () => {
                 isEnhancingPrompt={false}
                 closePickerSheet={vi.fn()}
                 openPromptSheet={vi.fn()}
-                openGallerySheet={vi.fn()}
                 openTemplatesSheet={vi.fn()}
                 openHistorySheet={vi.fn()}
                 openReferencesSheet={vi.fn()}
@@ -85,10 +84,9 @@ describe('WorkspacePickerSheet', () => {
             />,
         );
 
-        expect(markup).toContain('Gallery');
-        expect(markup).toContain(t('workspacePickerLoading'));
-        expect(markup).not.toContain('history-open-turn-1');
-        expect(markup).not.toContain('history-rename-turn-1');
+        expect(markup).toContain('Prompt History');
+        expect(markup).toContain(t('workspacePickerNoSavedPrompts'));
+        expect(markup).not.toContain(t('workspaceSheetTitleGallery'));
     });
 
     it('keeps references-sheet editor-base and stage-source copy summary-first', () => {
@@ -105,7 +103,6 @@ describe('WorkspacePickerSheet', () => {
                 isEnhancingPrompt={false}
                 closePickerSheet={vi.fn()}
                 openPromptSheet={vi.fn()}
-                openGallerySheet={vi.fn()}
                 openTemplatesSheet={vi.fn()}
                 openHistorySheet={vi.fn()}
                 openReferencesSheet={vi.fn()}

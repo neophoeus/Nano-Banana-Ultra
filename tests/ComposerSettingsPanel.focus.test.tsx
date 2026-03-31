@@ -46,13 +46,13 @@ const baseProps = {
     onToggleEnterToSubmit: vi.fn(),
     onGenerate: vi.fn(),
     onQueueBatchJob: vi.fn(),
+    onOpenQueuedBatchJobs: vi.fn(),
     onCancelGeneration: vi.fn(),
     onStartNewConversation: vi.fn(),
     onFollowUpGenerate: vi.fn(),
     onOpenEditor: vi.fn(),
     onSurpriseMe: vi.fn(),
     onSmartRewrite: vi.fn(),
-    onOpenGallery: vi.fn(),
     onOpenPromptHistory: vi.fn(),
     onOpenTemplates: vi.fn(),
     onOpenStyles: vi.fn(),
@@ -152,5 +152,58 @@ describe('ComposerSettingsPanel prompt focus wiring', () => {
         expect(onOpenSizePicker).toHaveBeenCalledTimes(1);
         expect(onOpenBatchPicker).toHaveBeenCalledTimes(1);
         expect(onOpenReferences).toHaveBeenCalledTimes(1);
+    });
+
+    it('opens the queued jobs modal from the status button when tracked jobs exist', () => {
+        const onOpenQueuedBatchJobs = vi.fn();
+
+        act(() => {
+            root.render(
+                <ComposerSettingsPanel
+                    {...baseProps}
+                    queuedJobs={[
+                        {
+                            localId: 'job-ready',
+                            name: 'batches/job-ready',
+                            displayName: 'Ready queue job',
+                            state: 'JOB_STATE_SUCCEEDED',
+                            model: 'gemini-3.1-flash-image-preview',
+                            prompt: 'Import later',
+                            generationMode: 'Text to Image',
+                            aspectRatio: '1:1',
+                            imageSize: '1K',
+                            style: 'None',
+                            outputFormat: 'images-only',
+                            temperature: 1,
+                            thinkingLevel: 'minimal',
+                            includeThoughts: true,
+                            googleSearch: false,
+                            imageSearch: false,
+                            batchSize: 1,
+                            objectImageCount: 0,
+                            characterImageCount: 0,
+                            createdAt: 1710400000000,
+                            updatedAt: 1710400010000,
+                            startedAt: 1710400005000,
+                            completedAt: 1710400010000,
+                            lastPolledAt: 1710400010000,
+                            importedAt: null,
+                            error: null,
+                        },
+                    ] as any}
+                    onOpenQueuedBatchJobs={onOpenQueuedBatchJobs}
+                />,
+            );
+        });
+
+        const queueStatusButton = container.querySelector(
+            '[data-testid="composer-queue-status-button"]',
+        ) as HTMLButtonElement;
+
+        act(() => {
+            queueStatusButton.click();
+        });
+
+        expect(onOpenQueuedBatchJobs).toHaveBeenCalledTimes(1);
     });
 });

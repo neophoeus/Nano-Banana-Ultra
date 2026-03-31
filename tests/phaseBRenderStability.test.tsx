@@ -354,4 +354,67 @@ describe('Phase B render stability', () => {
             'WorkspaceHistoryCanvas',
         );
     });
+
+    it('keeps image tools outside the history canvas and before the composer in the bottom row', async () => {
+        const historyCanvas = await waitFor(() =>
+            document.querySelector('[data-testid="mock-workspace-history-canvas"]'),
+        );
+        const actionsComposerRow = await waitFor(() =>
+            document.querySelector('[data-testid="workspace-actions-composer-row"]'),
+        );
+        const sideToolPanel = await waitFor(() =>
+            document.querySelector('[data-testid="mock-workspace-side-tool-panel"]'),
+        );
+        const composerSettingsPanel = await waitFor(() =>
+            document.querySelector('[data-testid="mock-composer-settings-panel"]'),
+        );
+
+        expect(actionsComposerRow).toBeTruthy();
+        expect(historyCanvas?.querySelector('[data-testid="mock-workspace-side-tool-panel"]')).toBeNull();
+        expect(actionsComposerRow?.contains(sideToolPanel)).toBe(true);
+        expect(actionsComposerRow?.contains(composerSettingsPanel)).toBe(true);
+        expect(
+            sideToolPanel && composerSettingsPanel
+                ? sideToolPanel.compareDocumentPosition(composerSettingsPanel) & Node.DOCUMENT_POSITION_FOLLOWING
+                : 0,
+        ).not.toBe(0);
+    });
+
+    it('keeps the top launchers on one row and trims response and source launchers to title-only buttons', async () => {
+        const topLauncherRow = await waitFor(() =>
+            document.querySelector('[data-testid="workspace-insights-collapsible"]'),
+        );
+        const workflowButton = await waitFor(() => document.querySelector('[data-testid="workspace-workflow-card"]'));
+        const answerButton = await waitFor(() =>
+            document.querySelector('[data-testid="workspace-answer-open-details"]'),
+        );
+        const sourceButton = await waitFor(() =>
+            document.querySelector('[data-testid="workspace-sources-open-details"]'),
+        );
+        const normalizeText = (value: string | null | undefined) => (value || '').replace(/\s+/g, ' ').trim();
+
+        expect(
+            Array.from(topLauncherRow?.children || []).map((element) => element.getAttribute('data-testid')),
+        ).toEqual(['workspace-workflow-card', 'workspace-answer-open-details', 'workspace-sources-open-details']);
+        expect(normalizeText(answerButton?.textContent)).toBe('Response');
+        expect(normalizeText(sourceButton?.textContent)).toBe('Source Trail');
+        expect(normalizeText(answerButton?.textContent)).not.toContain('Existing output');
+        const answerSignal = answerButton?.querySelector('[data-testid="workspace-answer-signal"]');
+        const sourceSignal = sourceButton?.querySelector('[data-testid="workspace-sources-signal"]');
+
+        expect(answerSignal).toBeTruthy();
+        expect(answerSignal?.getAttribute('class')).toContain('h-3.5');
+        expect(answerSignal?.innerHTML).toContain('animate-pulse');
+        expect(answerSignal?.innerHTML).toContain('bg-amber-300/60');
+        expect(sourceSignal).toBeTruthy();
+        expect(sourceSignal?.innerHTML).not.toContain('animate-pulse');
+        expect(sourceSignal?.innerHTML).toContain('bg-white/90');
+        expect(topLauncherRow?.getAttribute('class')).toContain('lg:grid-cols-[minmax(0,1fr)_144px_176px]');
+        expect(workflowButton?.getAttribute('class')).toContain('lg:h-[54px]');
+        expect(workflowButton?.getAttribute('class')).toContain('hover:-translate-y-0.5');
+        expect(answerButton?.getAttribute('class')).toContain('lg:h-[54px]');
+        expect(answerButton?.getAttribute('class')).toContain('hover:-translate-y-0.5');
+        expect(sourceButton?.getAttribute('class')).toContain('lg:h-[54px]');
+        expect(sourceButton?.getAttribute('class')).toContain('hover:-translate-y-0.5');
+    });
 });

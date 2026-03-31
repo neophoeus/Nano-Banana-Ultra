@@ -1594,12 +1594,12 @@ const zhCnQueuedBatchWordingBaseline = {
 
 const zhTwQueuedBatchDescBaseline = {
     queuedBatchJobsDesc:
-        '已保存的官方 Gemini 批次 API 工作會在這裡持續追蹤，待處理或執行中時可沿著狀態檢查、結果匯入與清理流程完成。',
+        '已保存的官方 Gemini 批次 API 工作會在這裡持續追蹤。官方 Batch API 的目標是 24 小時內完成，但圖像批次最長可能要到 48 小時後才會過期。',
 } as const;
 
 const zhCnQueuedBatchDescBaseline = {
     queuedBatchJobsDesc:
-        '已保存的官方 Gemini 批处理 API 任务会在这里持续跟踪，待处理或运行中时可沿着状态检查、结果导入与清理流程完成。',
+        '已保存的官方 Gemini 批处理 API 任务会在这里持续跟踪。官方 Batch API 的目标是 24 小时内完成，但图像批处理最长可能要到 48 小时后才会过期。',
 } as const;
 
 const jaQueuedBatchWordingBaseline = {

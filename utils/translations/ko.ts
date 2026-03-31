@@ -298,6 +298,8 @@ export const ko = {
     queuedBatchJobsRefreshAll: '모두 새로고침',
     queuedBatchJobsTrackedCount: '추적 중 {0}',
     queuedBatchJobsImportedTag: '가져옴',
+    queuedBatchJobsPastTargetWarning: '{0}시간 경과 · 24시간 목표 초과',
+    queuedBatchJobsNearExpiryWarning: '{0}시간 경과 · 48시간 만료 임박',
     queuedBatchJobsRestoredHistoryTag: '복원 기록',
     queuedBatchJobsRestoredHistoryHint:
         '이 종료된 항목은 복원된 작업공간 스냅샷에서 온 기록입니다. 현재 라이브 큐 실패가 아니라 기록으로 보존됩니다.',

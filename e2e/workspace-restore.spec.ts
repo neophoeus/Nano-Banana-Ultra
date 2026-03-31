@@ -877,6 +877,15 @@ const openGalleryPanel = async (page: Page) => {
         return;
     }
 
+    const embeddedGalleryCard = page.locator('[data-testid="workspace-gallery-card"]');
+    if ((await embeddedGalleryCard.count()) > 0) {
+        const embeddedGalleryEmptyState = page.locator('[data-testid="workspace-gallery-empty"]');
+        if ((await embeddedGalleryEmptyState.count()) > 0) {
+            await expect(embeddedGalleryEmptyState.first()).toBeVisible();
+            return;
+        }
+    }
+
     const galleryOpeners = [
         page.getByRole('button', { name: tt('workspaceSheetTitleGallery') }),
         page.getByRole('button', { name: tt('workspaceInsightsOpenGallery') }),

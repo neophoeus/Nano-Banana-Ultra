@@ -12,6 +12,14 @@ export type BatchJobResponsePayload = {
     endTime?: string;
     error?: string | null;
     hasInlinedResponses: boolean;
+    batchStats?: BatchJobStatsPayload | null;
+};
+
+export type BatchJobStatsPayload = {
+    requestCount: number;
+    successfulRequestCount: number;
+    failedRequestCount: number;
+    pendingRequestCount: number;
 };
 
 export type BatchImportResultGrounding = {
@@ -63,6 +71,43 @@ export function resolveBatchJobStateName(state: unknown): string {
     return 'JOB_STATE_PENDING';
 }
 
+function parseBatchStatCount(value: unknown): number {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+        return Math.max(0, Math.floor(value));
+    }
+
+    if (typeof value === 'string' && value.trim().length > 0) {
+        const parsed = Number(value);
+        if (Number.isFinite(parsed)) {
+            return Math.max(0, Math.floor(parsed));
+        }
+    }
+
+    return 0;
+}
+
+function serializeBatchJobStats(batchStats: any): BatchJobStatsPayload | null {
+    if (!batchStats) {
+        return null;
+    }
+
+    const requestCount = parseBatchStatCount(batchStats.requestCount);
+    const successfulRequestCount = parseBatchStatCount(batchStats.successfulRequestCount);
+    const failedRequestCount = parseBatchStatCount(batchStats.failedRequestCount);
+    const pendingRequestCount = parseBatchStatCount(batchStats.pendingRequestCount);
+
+    if (requestCount === 0 && successfulRequestCount === 0 && failedRequestCount === 0 && pendingRequestCount === 0) {
+        return null;
+    }
+
+    return {
+        requestCount,
+        successfulRequestCount,
+        failedRequestCount,
+        pendingRequestCount,
+    };
+}
+
 export function serializeBatchJob(batchJob: any): BatchJobResponsePayload {
     return {
         name: String(batchJob?.name || ''),
@@ -74,6 +119,7 @@ export function serializeBatchJob(batchJob: any): BatchJobResponsePayload {
         startTime: typeof batchJob?.startTime === 'string' ? batchJob.startTime : undefined,
         endTime: typeof batchJob?.endTime === 'string' ? batchJob.endTime : undefined,
         error: batchJob?.error?.message || batchJob?.error?.details || null,
+        batchStats: serializeBatchJobStats(batchJob?.batchStats),
         hasInlinedResponses:
             Array.isArray(batchJob?.dest?.inlinedResponses) && batchJob.dest.inlinedResponses.length > 0,
     };

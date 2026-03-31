@@ -1,4 +1,4 @@
-import type { ImageModel, StructuredOutputMode } from '../../types';
+import type { AspectRatio, ImageModel, ImageSize, StructuredOutputMode } from '../../types';
 import { buildGroundingToolConfig, deriveGroundingMode } from '../../utils/groundingMode';
 import { MODEL_CAPABILITIES } from '../../utils/modelCapabilities';
 import { getStructuredOutputDefinition, normalizeStructuredOutputMode } from '../../utils/structuredOutputs';
@@ -27,6 +27,14 @@ export function validateCapabilityRequest(model: string, body: ImageGenerateBody
     const structuredOutputMode = normalizeStructuredOutputMode(body.structuredOutputMode);
     if (!capability.outputFormats.includes(requestedFormat)) {
         return `${model} does not support output format ${requestedFormat}.`;
+    }
+
+    if (body.aspectRatio && !capability.supportedRatios.includes(body.aspectRatio as AspectRatio)) {
+        return `${model} does not support aspect ratio ${body.aspectRatio}.`;
+    }
+
+    if (body.imageSize && !capability.supportedSizes.includes(body.imageSize as ImageSize)) {
+        return `${model} does not support image size ${body.imageSize}.`;
     }
 
     if (structuredOutputMode !== 'off' && !capability.supportsStructuredOutputs) {

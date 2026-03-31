@@ -1,4 +1,4 @@
-import { GenerateOptions, GenerateResponse, ImageStyle } from '../types';
+import { GenerateOptions, GenerateResponse, ImageStyle, QueuedBatchJobStats } from '../types';
 
 const jsonHeaders = {
     'Content-Type': 'application/json',
@@ -310,6 +310,7 @@ export type RemoteQueuedBatchJob = {
     endTime?: string;
     error?: string | null;
     hasInlinedResponses: boolean;
+    batchStats?: QueuedBatchJobStats | null;
 };
 
 export type QueuedBatchImportResult = {
@@ -337,7 +338,7 @@ export const submitQueuedBatchJob = async (options: SubmitQueuedBatchOptions): P
             prompt: options.prompt,
             model: options.model,
             aspectRatio: options.aspectRatio,
-            imageSize: options.imageSize,
+            imageSize: options.model === 'gemini-2.5-flash-image' ? undefined : options.imageSize,
             editingInput: options.editingInput,
             objectImageInputs: options.objectImageInputs,
             characterImageInputs: options.characterImageInputs,

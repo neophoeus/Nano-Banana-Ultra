@@ -299,6 +299,8 @@ export const ja = {
     queuedBatchJobsRefreshAll: 'すべて更新',
     queuedBatchJobsTrackedCount: '追跡中 {0}',
     queuedBatchJobsImportedTag: 'インポート済み',
+    queuedBatchJobsPastTargetWarning: '{0}時間経過 · 24時間目標を超過',
+    queuedBatchJobsNearExpiryWarning: '{0}時間経過 · 48時間失効が近い',
     queuedBatchJobsRestoredHistoryTag: '復元履歴',
     queuedBatchJobsRestoredHistoryHint:
         'この終了済み項目は復元したワークスペースのスナップショット由来です。履歴として保持されており、現在のライブキュー障害ではありません。',

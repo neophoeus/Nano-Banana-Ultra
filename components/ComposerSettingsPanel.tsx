@@ -1,7 +1,6 @@
 import React from 'react';
 import Button from './Button';
 import InfoTooltip from './InfoTooltip';
-import QueuedBatchJobsPanel from './QueuedBatchJobsPanel';
 import { MODEL_CAPABILITIES, OUTPUT_FORMATS, STRUCTURED_OUTPUT_MODES, THINKING_LEVELS } from '../constants';
 import { getGroundingModeLabel } from '../utils/groundingMode';
 import { STRUCTURED_OUTPUT_FIELD_LABEL_KEYS } from '../utils/structuredOutputPresentation';
@@ -61,12 +60,12 @@ export type ComposerSettingsPanelProps = {
     onToggleEnterToSubmit: () => void;
     onGenerate: () => void;
     onQueueBatchJob: () => void;
+    onOpenQueuedBatchJobs: () => void;
     onCancelGeneration: () => void;
     onStartNewConversation: () => void;
     onFollowUpGenerate: () => void;
     onSurpriseMe: () => void;
     onSmartRewrite: () => void;
-    onOpenGallery: () => void;
     onOpenPromptHistory: () => void;
     onOpenTemplates: () => void;
     onOpenStyles: () => void;
@@ -190,12 +189,12 @@ function ComposerSettingsPanel({
     onToggleEnterToSubmit,
     onGenerate,
     onQueueBatchJob,
+    onOpenQueuedBatchJobs,
     onCancelGeneration,
     onStartNewConversation,
     onFollowUpGenerate,
     onSurpriseMe,
     onSmartRewrite,
-    onOpenGallery,
     onOpenPromptHistory,
     onOpenTemplates,
     onOpenStyles,
@@ -360,16 +359,19 @@ function ComposerSettingsPanel({
         t('composerAdvancedGroundingGuideFlashImage'),
         t('composerAdvancedGroundingGuideProGoogle'),
     ];
-    const renderDisclosureChevron = () => (
-        <svg
-            aria-hidden="true"
-            viewBox="0 0 20 20"
-            fill="none"
-            className="h-4 w-4 text-gray-400 transition-transform group-open:rotate-180 dark:text-gray-500"
-        >
-            <path d="M5 7.5 10 12.5 15 7.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        </svg>
-    );
+    const runningQueueCount = queuedJobs.filter(
+        (job) => job.state === 'JOB_STATE_PENDING' || job.state === 'JOB_STATE_RUNNING',
+    ).length;
+    const importReadyQueueCount = queuedJobs.filter(
+        (job) => job.state === 'JOB_STATE_SUCCEEDED' && !job.importedAt,
+    ).length;
+    const issueQueueCount = queuedJobs.filter(
+        (job) => job.state === 'JOB_STATE_FAILED' || job.state === 'JOB_STATE_CANCELLED' || job.state === 'JOB_STATE_EXPIRED',
+    ).length;
+    const trackedQueueCount = queuedJobs.length;
+    const settledQueueCount = trackedQueueCount - runningQueueCount;
+    const queueProgressPercent =
+        trackedQueueCount > 0 ? Math.max(0, Math.min(100, Math.round((settledQueueCount / trackedQueueCount) * 100))) : 0;
 
     return (
         <section className="nbu-shell-panel nbu-shell-surface-composer-dock shrink-0 p-3 md:p-4">
@@ -436,9 +438,6 @@ function ComposerSettingsPanel({
                         className={`${toolbarButtonClassName} disabled:opacity-50`}
                     >
                         {t('rewrite')}
-                    </button>
-                    <button onClick={onOpenGallery} className={toolbarButtonClassName}>
-                        {t('workspaceSheetTitleGallery')}
                     </button>
                     <button onClick={onOpenPromptHistory} className={toolbarButtonClassName}>
                         {t('workspacePickerPromptHistoryTitle')}
@@ -604,54 +603,51 @@ function ComposerSettingsPanel({
                             </Button>
                         )}
                     </div>
-                    {queueBatchConversationNotice && (
-                        <details
-                            data-testid="composer-queue-summary-details"
-                            className="group mt-2.5 rounded-[20px] border border-amber-200/70 bg-[linear-gradient(180deg,rgba(255,250,235,0.96),rgba(255,243,214,0.92))] px-3 py-2.5 text-xs leading-5 text-amber-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] dark:border-amber-300/20 dark:bg-[linear-gradient(180deg,rgba(58,36,8,0.78),rgba(37,23,6,0.9))] dark:text-amber-100 dark:shadow-[inset_0_1px_0_rgba(255,244,214,0.06)]"
-                        >
-                            <summary
-                                data-testid="composer-queue-summary-summary"
-                                className="flex cursor-pointer list-none items-start justify-between gap-3 marker:hidden"
-                            >
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-700 dark:text-amber-100/80">
-                                        {t('queuedBatchJobsTitle')}
-                                    </p>
-                                    <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-amber-700 dark:text-amber-100/80">
-                                        {t('queuedBatchJobsConversationNoticeLabel')}
-                                    </p>
-                                </div>
-                                <span className="mt-0.5 shrink-0">{renderDisclosureChevron()}</span>
-                            </summary>
-                            <p
-                                data-testid="composer-queue-summary-notice"
-                                className="mt-2 text-amber-700/90 dark:text-amber-200/90"
-                            >
-                                {queueBatchConversationNotice}
-                            </p>
-                        </details>
-                    )}
                 </div>
             </div>
-
-            <QueuedBatchJobsPanel
-                currentLanguage={currentLanguage}
-                queuedJobs={queuedJobs}
-                queueBatchConversationNotice={queueBatchConversationNotice}
-                getLineageActionLabel={getLineageActionLabel}
-                getImportedQueuedResultCount={getImportedQueuedResultCount}
-                getImportedQueuedHistoryItems={getImportedQueuedHistoryItems}
-                activeImportedQueuedHistoryId={activeImportedQueuedHistoryId}
-                onImportAllQueuedJobs={onImportAllQueuedJobs}
-                onPollAllQueuedJobs={onPollAllQueuedJobs}
-                onPollQueuedJob={onPollQueuedJob}
-                onCancelQueuedJob={onCancelQueuedJob}
-                onImportQueuedJob={onImportQueuedJob}
-                onOpenImportedQueuedJob={onOpenImportedQueuedJob}
-                onOpenLatestImportedQueuedJob={onOpenLatestImportedQueuedJob}
-                onOpenImportedQueuedHistoryItem={onOpenImportedQueuedHistoryItem}
-                onRemoveQueuedJob={onRemoveQueuedJob}
-            />
+            {trackedQueueCount > 0 ? (
+                <button
+                    type="button"
+                    aria-haspopup="dialog"
+                    data-testid="composer-queue-status-button"
+                    onClick={onOpenQueuedBatchJobs}
+                    className="nbu-inline-panel mt-3 flex w-full items-center gap-3 px-3 py-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
+                >
+                    <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                                {t('queuedBatchJobsTitle')}
+                            </span>
+                            <span className="nbu-chip">
+                                {t('queuedBatchJobsTrackedCount').replace('{0}', trackedQueueCount.toString())}
+                            </span>
+                        </div>
+                        <div
+                            data-testid="composer-queue-status-progress"
+                            className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-slate-800/80"
+                        >
+                            <div
+                                className="h-full rounded-full bg-[linear-gradient(90deg,rgba(245,158,11,0.95),rgba(16,185,129,0.95))] transition-all duration-300"
+                                style={{ width: `${queueProgressPercent}%` }}
+                            />
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                            <span className="nbu-chip">
+                                {t('queuedBatchJobsActiveCount').replace('{0}', runningQueueCount.toString())}
+                            </span>
+                            <span className="nbu-chip">
+                                {t('queuedBatchJobsImportReadyCount').replace('{0}', importReadyQueueCount.toString())}
+                            </span>
+                            <span className="nbu-chip">
+                                {t('queuedBatchJobsClosedIssuesCount').replace('{0}', issueQueueCount.toString())}
+                            </span>
+                        </div>
+                    </div>
+                    <span className="nbu-control-button shrink-0 px-3 py-1.5 text-[11px] font-semibold">
+                        {t('workspacePanelViewDetails')}
+                    </span>
+                </button>
+            ) : null}
         </section>
     );
 }

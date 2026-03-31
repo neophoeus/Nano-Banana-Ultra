@@ -301,6 +301,8 @@ export const ru = {
     queuedBatchJobsRefreshAll: 'Обновить все',
     queuedBatchJobsTrackedCount: 'Отслеживается: {0}',
     queuedBatchJobsImportedTag: 'Импортировано',
+    queuedBatchJobsPastTargetWarning: '{0} ч в очереди · дольше цели 24 ч',
+    queuedBatchJobsNearExpiryWarning: '{0} ч в очереди · близко к истечению 48 ч',
     queuedBatchJobsRestoredHistoryTag: 'Восстановленная история',
     queuedBatchJobsRestoredHistoryHint:
         'Этот закрытый элемент пришел из восстановленного снимка рабочего пространства. Он сохранен как история, а не как текущая ошибка живой очереди.',

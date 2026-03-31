@@ -303,6 +303,8 @@ export const de = {
     queuedBatchJobsRefreshAll: 'Alle aktualisieren',
     queuedBatchJobsTrackedCount: '{0} verfolgt',
     queuedBatchJobsImportedTag: 'Importiert',
+    queuedBatchJobsPastTargetWarning: '{0} Std. alt · uber dem 24-Std.-Ziel',
+    queuedBatchJobsNearExpiryWarning: '{0} Std. alt · nahe an der 48-Std.-Ablauffrist',
     queuedBatchJobsRestoredHistoryTag: 'Wiederhergestellte Historie',
     queuedBatchJobsRestoredHistoryHint:
         'Dieser geschlossene Eintrag stammt aus einem wiederhergestellten Arbeitsbereich. Er bleibt als Verlauf erhalten und ist kein aktiver Queue-Fehler.',

@@ -301,6 +301,8 @@ export const es = {
     queuedBatchJobsRefreshAll: 'Actualizar todo',
     queuedBatchJobsTrackedCount: '{0} seguidos',
     queuedBatchJobsImportedTag: 'Importado',
+    queuedBatchJobsPastTargetWarning: '{0} h transcurridas · supera el objetivo de 24 h',
+    queuedBatchJobsNearExpiryWarning: '{0} h transcurridas · cerca de la expiracion de 48 h',
     queuedBatchJobsRestoredHistoryTag: 'Historial restaurado',
     queuedBatchJobsRestoredHistoryHint:
         'Este elemento cerrado proviene de un espacio de trabajo restaurado. Se conserva como historial y no como un fallo activo de la cola.',

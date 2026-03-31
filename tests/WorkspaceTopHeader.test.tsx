@@ -12,6 +12,8 @@ describe('WorkspaceTopHeader', () => {
         expect(markup).toContain('Nano Banana Ultra');
         expect(markup).toContain('workspace-brand-logo');
         expect(markup).toContain('console');
+        expect(markup).toContain('rounded-t-none');
+        expect(markup).toContain('rounded-b-[24px]');
         expect(markup).not.toContain('>NBU<');
         expect(markup).not.toContain('Ratio:');
         expect(markup).not.toContain('Reference Tray');

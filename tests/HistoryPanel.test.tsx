@@ -71,4 +71,19 @@ describe('HistoryPanel', () => {
 
         expect((markup.match(/Queued Batch Result/g) || []).length).toBe(1);
     });
+
+    it('renders a placeholder instead of an empty-src img when a history turn has no media url', () => {
+        const markup = renderToStaticMarkup(
+            <HistoryPanel
+                history={[buildTurn({ url: '' })]}
+                onSelect={vi.fn()}
+                onContinueFromTurn={vi.fn()}
+                onBranchFromTurn={vi.fn()}
+                currentLanguage="en"
+            />,
+        );
+
+        expect(markup).toContain('history-card-turn-1-missing-media');
+        expect(markup).not.toContain('src=""');
+    });
 });

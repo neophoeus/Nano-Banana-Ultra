@@ -75,6 +75,7 @@ type UseComposerSettingsPanelPropsArgs = {
     toggleEnterToSubmit: () => void;
     handleGenerate: () => void;
     handleQueueBatchJob: () => void;
+    handleOpenQueuedBatchJobs: () => void;
     handleCancelGeneration: () => void;
     handleStartNewConversation: () => void;
     handleFollowUpGenerate: () => void;
@@ -143,6 +144,7 @@ export function useComposerSettingsPanelProps({
     toggleEnterToSubmit,
     handleGenerate,
     handleQueueBatchJob,
+    handleOpenQueuedBatchJobs,
     handleCancelGeneration,
     handleStartNewConversation,
     handleFollowUpGenerate,
@@ -192,6 +194,7 @@ export function useComposerSettingsPanelProps({
         toggleEnterToSubmit,
         handleGenerate,
         handleQueueBatchJob,
+        handleOpenQueuedBatchJobs,
         handleCancelGeneration,
         handleStartNewConversation,
         handleFollowUpGenerate,
@@ -229,6 +232,7 @@ export function useComposerSettingsPanelProps({
             toggleEnterToSubmit,
             handleGenerate,
             handleQueueBatchJob,
+            handleOpenQueuedBatchJobs,
             handleCancelGeneration,
             handleStartNewConversation,
             handleFollowUpGenerate,
@@ -264,6 +268,7 @@ export function useComposerSettingsPanelProps({
         toggleEnterToSubmit,
         handleGenerate,
         handleQueueBatchJob,
+        handleOpenQueuedBatchJobs,
         handleCancelGeneration,
         handleStartNewConversation,
         handleFollowUpGenerate,
@@ -339,12 +344,12 @@ export function useComposerSettingsPanelProps({
             onToggleEnterToSubmit: () => latestHandlersRef.current.toggleEnterToSubmit(),
             onGenerate: () => latestHandlersRef.current.handleGenerate(),
             onQueueBatchJob: () => latestHandlersRef.current.handleQueueBatchJob(),
+            onOpenQueuedBatchJobs: () => latestHandlersRef.current.handleOpenQueuedBatchJobs(),
             onCancelGeneration: () => latestHandlersRef.current.handleCancelGeneration(),
             onStartNewConversation: () => latestHandlersRef.current.handleStartNewConversation(),
             onFollowUpGenerate: () => latestHandlersRef.current.handleFollowUpGenerate(),
             onSurpriseMe: () => latestHandlersRef.current.handleSurpriseMe(),
             onSmartRewrite: () => latestHandlersRef.current.handleSmartRewrite(),
-            onOpenGallery: () => latestHandlersRef.current.setActivePickerSheet('gallery'),
             onOpenPromptHistory: () => latestHandlersRef.current.setActivePickerSheet('history'),
             onOpenTemplates: () => latestHandlersRef.current.setActivePickerSheet('templates'),
             onOpenStyles: () => latestHandlersRef.current.setActivePickerSheet('styles'),

@@ -24,6 +24,9 @@ type LineageRootGroup = {
 type WorkspaceInsightsSidebarProps = {
     currentLanguage: Language;
     showHeader?: boolean;
+    compact?: boolean;
+    showWorkflowSummary?: boolean;
+    showThoughtsSection?: boolean;
     provenancePanel?: React.ReactNode;
     provenanceStatusLabel?: string | null;
     latestWorkflowEntry: WorkflowEntryLike | null;
@@ -93,6 +96,9 @@ type WorkspaceInsightsSidebarProps = {
 function WorkspaceInsightsSidebar({
     currentLanguage,
     showHeader = true,
+    compact = false,
+    showWorkflowSummary = true,
+    showThoughtsSection = true,
     provenancePanel,
     provenanceStatusLabel,
     latestWorkflowEntry,
@@ -126,14 +132,30 @@ function WorkspaceInsightsSidebar({
     const t = (key: string) => getTranslation(currentLanguage, key);
     const activeQueueStates = new Set(['JOB_STATE_PENDING', 'JOB_STATE_RUNNING']);
     const issueQueueStates = new Set(['JOB_STATE_FAILED', 'JOB_STATE_CANCELLED', 'JOB_STATE_EXPIRED']);
-    const sourceActionShellClassName = 'nbu-dashed-panel p-2.5';
-    const sectionCardClassName = 'nbu-soft-well px-3 py-2.5';
-    const collapsibleSectionClassName = 'group nbu-inline-panel px-3 py-2.5';
-    const detailSurfaceClassName =
-        'nbu-inline-panel px-3 py-2.5 shadow-[0_8px_24px_rgba(15,23,42,0.05)] dark:shadow-none';
-    const inlineSurfaceClassName = 'nbu-inline-panel px-3 py-2.5';
-    const dashedSurfaceClassName = 'nbu-dashed-panel p-2.5';
+    const rootPanelClassName = compact
+        ? 'nbu-shell-panel nbu-shell-surface-context-rail overflow-hidden p-2.5 lg:min-h-0'
+        : 'nbu-shell-panel nbu-shell-surface-context-rail overflow-hidden p-3 lg:min-h-0';
+    const rootStackClassName = compact ? 'space-y-3' : 'space-y-4';
+    const currentWorkSectionClassName = compact
+        ? 'space-y-2.5 text-sm text-gray-600 dark:text-gray-300'
+        : 'space-y-3 text-sm text-gray-600 dark:text-gray-300';
+    const sourceActionShellClassName = compact ? 'nbu-dashed-panel p-2' : 'nbu-dashed-panel p-2.5';
+    const sectionCardClassName = compact ? 'nbu-soft-well px-2.5 py-2' : 'nbu-soft-well px-3 py-2.5';
+    const collapsibleSectionClassName = compact
+        ? 'group nbu-inline-panel px-2.5 py-2'
+        : 'group nbu-inline-panel px-3 py-2.5';
+    const detailSurfaceClassName = compact
+        ? 'nbu-inline-panel px-2.5 py-2 shadow-[0_8px_24px_rgba(15,23,42,0.05)] dark:shadow-none'
+        : 'nbu-inline-panel px-3 py-2.5 shadow-[0_8px_24px_rgba(15,23,42,0.05)] dark:shadow-none';
+    const inlineSurfaceClassName = compact ? 'nbu-inline-panel px-2.5 py-2' : 'nbu-inline-panel px-3 py-2.5';
+    const dashedSurfaceClassName = compact ? 'nbu-dashed-panel p-2' : 'nbu-dashed-panel p-2.5';
     const quietMonoPillClassName = 'nbu-quiet-pill px-2 py-0.5 text-[10px] font-mono';
+    const compactSourceDetailsClassName = compact ? 'mt-2 space-y-2' : 'mt-2.5 space-y-2.5';
+    const compactSourceGridClassName = compact ? 'space-y-2.5' : 'space-y-3';
+    const continuitySourceSectionClassName = compact ? 'mt-2.5 space-y-2.5' : 'mt-3 space-y-3';
+    const provenanceSectionClassName = compact
+        ? `${sectionCardClassName} space-y-2.5`
+        : `${sectionCardClassName} space-y-3`;
     const activeQueueCount = queuedJobs.filter((job) => activeQueueStates.has(job.state)).length;
     const importReadyQueueCount = queuedJobs.filter(
         (job) => job.state === 'JOB_STATE_SUCCEEDED' && job.importedAt == null,
@@ -196,7 +218,7 @@ function WorkspaceInsightsSidebar({
         badges: React.ReactNode;
         actionRow?: React.ReactNode;
     }) => (
-        <div data-testid={testId} className={`mt-2.5 ${collapsibleSectionClassName} space-y-2.5`}>
+        <div data-testid={testId} className={`${compactSourceDetailsClassName} ${collapsibleSectionClassName}`}>
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                     {eyebrow ? (
@@ -334,18 +356,15 @@ function WorkspaceInsightsSidebar({
     );
 
     return (
-        <aside
-            data-testid="context-system-panel"
-            className="nbu-shell-panel nbu-shell-surface-context-rail overflow-hidden p-3 lg:min-h-0"
-        >
-            <div className="space-y-4">
+        <aside data-testid="context-system-panel" className={rootPanelClassName}>
+            <div className={rootStackClassName}>
                 {showHeader ? (
                     <div className="flex items-start justify-between gap-3">
                         <WorkspaceInsightsHeaderSummary currentLanguage={currentLanguage} />
                         <span className="nbu-status-pill">{t('workspaceInsightsPhaseLabel')}</span>
                     </div>
                 ) : null}
-                <div data-testid="current-work-section" className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+                <div data-testid="current-work-section" className={currentWorkSectionClassName}>
                     <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                             <p className="nbu-section-eyebrow">{t('workflowStatusLabel')}</p>
@@ -356,86 +375,91 @@ function WorkspaceInsightsSidebar({
                         <span className="nbu-status-pill">{workflowStatusLabel || t('workflowStatusIdle')}</span>
                     </div>
 
-                    <div data-testid="context-workflow-summary" className={inlineSurfaceClassName}>
-                        <div className="flex items-center justify-between gap-3">
-                            <div className="text-xs uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">
-                                {t('workflowStatusLabel')}
+                    {showWorkflowSummary ? (
+                        <div data-testid="context-workflow-summary" className={inlineSurfaceClassName}>
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="text-xs uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">
+                                    {t('workflowStatusLabel')}
+                                </div>
+                                {latestWorkflowEntry ? (
+                                    <span className="nbu-status-pill">{workflowStatusLabel}</span>
+                                ) : null}
                             </div>
-                            {latestWorkflowEntry ? (
-                                <span className="nbu-status-pill">{workflowStatusLabel}</span>
-                            ) : null}
+                            <div className="mt-2.5 space-y-2.5">
+                                <div>
+                                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                        {workflowHeadline}
+                                    </div>
+                                    {shouldShowWorkflowDetailMessage && (
+                                        <div
+                                            data-testid="context-workflow-message"
+                                            className="mt-2 text-xs leading-5 text-gray-500 dark:text-gray-400"
+                                        >
+                                            {workflowDetailMessage}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex flex-wrap gap-2 text-xs">
+                                    {batchProgress.total > 0 && (
+                                        <span
+                                            data-testid="context-workflow-progress"
+                                            className="nbu-chip border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200"
+                                        >
+                                            {batchProgress.completed}/{batchProgress.total}
+                                        </span>
+                                    )}
+                                    {activeQueueCount > 0 && (
+                                        <span data-testid="context-workflow-active-queue" className="nbu-chip">
+                                            {t('queuedBatchJobsActiveCount').replace('{0}', String(activeQueueCount))}
+                                        </span>
+                                    )}
+                                    {importReadyQueueCount > 0 && (
+                                        <span data-testid="context-workflow-import-ready-queue" className="nbu-chip">
+                                            {t('queuedBatchJobsImportReadyCount').replace(
+                                                '{0}',
+                                                String(importReadyQueueCount),
+                                            )}
+                                        </span>
+                                    )}
+                                    {issueQueueCount > 0 && (
+                                        <span data-testid="context-workflow-issue-queue" className="nbu-chip">
+                                            {t('queuedBatchJobsClosedIssuesCount').replace(
+                                                '{0}',
+                                                String(issueQueueCount),
+                                            )}
+                                        </span>
+                                    )}
+                                </div>
+                                {resultStatusSummary && (
+                                    <div data-testid="context-workflow-result-status" className={resultStatusClassName}>
+                                        <span className="mr-2 inline-flex rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-current dark:bg-black/20">
+                                            {t('stageGroundingResultStatus')}
+                                        </span>
+                                        <span>{resultStatusSummary}</span>
+                                    </div>
+                                )}
+                                {hasQueueWorkflowSummary && (
+                                    <div data-testid="context-workflow-queue-hint" className={dashedSurfaceClassName}>
+                                        <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">
+                                            {t('queuedBatchJobsTitle')}
+                                        </div>
+                                        <div className="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+                                            {t('queuedBatchJobsWorkflowHint')}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        <div className="mt-2.5 space-y-2.5">
-                            <div>
-                                <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                    {workflowHeadline}
-                                </div>
-                                {shouldShowWorkflowDetailMessage && (
-                                    <div
-                                        data-testid="context-workflow-message"
-                                        className="mt-2 text-xs leading-5 text-gray-500 dark:text-gray-400"
-                                    >
-                                        {workflowDetailMessage}
-                                    </div>
-                                )}
-                            </div>
-                            <div className="flex flex-wrap gap-2 text-xs">
-                                {batchProgress.total > 0 && (
-                                    <span
-                                        data-testid="context-workflow-progress"
-                                        className="nbu-chip border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200"
-                                    >
-                                        {batchProgress.completed}/{batchProgress.total}
-                                    </span>
-                                )}
-                                {activeQueueCount > 0 && (
-                                    <span data-testid="context-workflow-active-queue" className="nbu-chip">
-                                        {t('queuedBatchJobsActiveCount').replace('{0}', String(activeQueueCount))}
-                                    </span>
-                                )}
-                                {importReadyQueueCount > 0 && (
-                                    <span data-testid="context-workflow-import-ready-queue" className="nbu-chip">
-                                        {t('queuedBatchJobsImportReadyCount').replace(
-                                            '{0}',
-                                            String(importReadyQueueCount),
-                                        )}
-                                    </span>
-                                )}
-                                {issueQueueCount > 0 && (
-                                    <span data-testid="context-workflow-issue-queue" className="nbu-chip">
-                                        {t('queuedBatchJobsClosedIssuesCount').replace('{0}', String(issueQueueCount))}
-                                    </span>
-                                )}
-                            </div>
-                            {resultStatusSummary && (
-                                <div data-testid="context-workflow-result-status" className={resultStatusClassName}>
-                                    <span className="mr-2 inline-flex rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-current dark:bg-black/20">
-                                        {t('stageGroundingResultStatus')}
-                                    </span>
-                                    <span>{resultStatusSummary}</span>
-                                </div>
-                            )}
-                            {hasQueueWorkflowSummary && (
-                                <div data-testid="context-workflow-queue-hint" className={dashedSurfaceClassName}>
-                                    <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">
-                                        {t('queuedBatchJobsTitle')}
-                                    </div>
-                                    <div className="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
-                                        {t('queuedBatchJobsWorkflowHint')}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    ) : null}
 
-                    {thoughtsBodyText ? (
+                    {showThoughtsSection && thoughtsBodyText ? (
                         <div data-testid="current-work-thoughts-section" className={inlineSurfaceClassName}>
                             <div className="text-xs uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">
                                 {t('workspaceInsightsLatestThoughts')}
                             </div>
                             <div
                                 data-testid="current-work-thoughts-body"
-                                className="mt-2.5 whitespace-pre-wrap text-sm leading-6 text-gray-700 dark:text-gray-300"
+                                className={`whitespace-pre-wrap text-sm leading-6 text-gray-700 dark:text-gray-300 ${compact ? 'mt-2' : 'mt-2.5'}`}
                             >
                                 {thoughtsBodyText}
                             </div>
@@ -460,7 +484,7 @@ function WorkspaceInsightsSidebar({
                                     )}
                                 </span>
                             </div>
-                            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                            <div className={`${compact ? 'mt-2' : 'mt-2.5'} flex flex-wrap items-center gap-2`}>
                                 <span
                                     className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${getBranchAccentClassName(activeBranchSummary.branchOriginId, activeBranchSummary.branchLabel)}`}
                                 >
@@ -470,7 +494,9 @@ function WorkspaceInsightsSidebar({
                                     {getShortTurnId(activeBranchSummary.latestTurn.id)}
                                 </span>
                             </div>
-                            <div className="mt-2 line-clamp-2 text-xs leading-5 text-gray-500 dark:text-gray-400">
+                            <div
+                                className={`${compact ? 'mt-1.5' : 'mt-2'} line-clamp-2 text-xs leading-5 text-gray-500 dark:text-gray-400`}
+                            >
                                 {activeBranchSummary.latestTurn.prompt}
                             </div>
                         </button>
@@ -483,7 +509,7 @@ function WorkspaceInsightsSidebar({
                             </div>
                         </div>
                         {currentStageAsset ? (
-                            <div className="mt-2.5 space-y-2.5">
+                            <div className={compactSourceDetailsClassName}>
                                 <div className="flex flex-wrap items-center gap-2">
                                     <span className="nbu-chip text-[10px] font-bold uppercase tracking-[0.16em]">
                                         {getStageOriginLabel(currentStageAsset.origin)}
@@ -548,7 +574,7 @@ function WorkspaceInsightsSidebar({
                         <div className="text-xs uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">
                             {t('workspaceInsightsSessionContinuity')}
                         </div>
-                        <div className="mt-3 flex flex-wrap gap-2">
+                        <div className={`${compact ? 'mt-2.5' : 'mt-3'} flex flex-wrap gap-2`}>
                             {sessionContinuitySignals.length > 0 ? (
                                 sessionContinuitySignals.map((signal) => (
                                     <span key={signal} className="nbu-chip">
@@ -562,7 +588,7 @@ function WorkspaceInsightsSidebar({
                             )}
                         </div>
                         {continuitySourceCount > 0 && (
-                            <div data-testid="continuity-source-section" className="mt-3 space-y-3">
+                            <div data-testid="continuity-source-section" className={continuitySourceSectionClassName}>
                                 {continuitySourceCount > 1 ? (
                                     <div
                                         className={`flex items-start justify-between gap-3 ${collapsibleSectionClassName}`}
@@ -580,13 +606,13 @@ function WorkspaceInsightsSidebar({
                                         </span>
                                     </div>
                                 ) : null}
-                                <div className="space-y-3">{continuitySourceCards}</div>
+                                <div className={compactSourceGridClassName}>{continuitySourceCards}</div>
                             </div>
                         )}
                     </div>
                 </div>
                 {provenancePanel ? (
-                    <div data-testid="context-provenance-section" className={`${sectionCardClassName} space-y-3`}>
+                    <div data-testid="context-provenance-section" className={provenanceSectionClassName}>
                         <div className="flex items-center justify-between gap-3">
                             <div className="text-xs uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500">
                                 {t('workspaceInsightsSourcesCitations')}

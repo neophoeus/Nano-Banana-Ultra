@@ -5,7 +5,6 @@ import { EMPTY_WORKSPACE_CONVERSATION_STATE } from '../utils/conversationState';
 type PickerSheet =
     | 'prompt'
     | 'history'
-    | 'gallery'
     | 'templates'
     | 'styles'
     | 'model'
@@ -44,8 +43,6 @@ export function useWorkspaceResetActions({
     setConversationState,
     setSelectedHistoryId,
 }: UseWorkspaceResetActionsArgs) {
-    const isGalleryPickerOpen = activePickerSheet === 'gallery';
-
     const handleClearCurrentStage = useCallback(() => {
         handleClearResults();
         clearAssetRoles(['stage-source']);
@@ -61,15 +58,10 @@ export function useWorkspaceResetActions({
         lastPromotedHistoryIdRef.current = null;
         resetWorkspaceSession();
         clearAssetRoles(['stage-source']);
-
-        if (isGalleryPickerOpen) {
-            closePickerSheet();
-        }
     }, [
         clearAssetRoles,
         closePickerSheet,
         handleClearHistory,
-        isGalleryPickerOpen,
         lastPromotedHistoryIdRef,
         resetSelectedOutputState,
         resetWorkspaceSession,

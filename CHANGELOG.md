@@ -4,7 +4,16 @@ This changelog is compiled from the repository's local git tags plus the publish
 
 ## Unreleased
 
-- no unreleased changes tracked yet
+## v3.1.5 - 2026-03-31
+
+- Release title: Nano Banana Ultra 3.1.5 - Shell Polish & Queue Modal Cleanup
+- Release prep summary:
+    - tightened the top workspace launcher strip into a denser summary-first row, clarified the `Current Work` / `Response` / `Source Trail` ownership model, split their active-signal logic, renamed the English `Answer` surface to `Response`, and reduced the remaining shell gutters so the workspace reads as one tighter product shell
+    - reorganized the right-side workspace support flow by moving `Recent Turns` above `Versions`, restyling and compacting the `Versions` summary actions, promoting `Gallery` out of the composer and then embedding the gallery surface directly into the support rail instead of keeping it behind the old modal launcher
+    - simplified workflow detail ownership by compacting the reused context rail inside the detail modal and removing repeated workflow summary and latest-thought blocks, while merging returned thoughts into the main chronological workflow event stream
+    - promoted `Queued Batch Jobs` into its own detail modal and hardened the queue workflow end to end: documented the verified 24-hour target versus 48-hour expiry contract in the local Gemini skill, surfaced active age warnings for long-running jobs, tightened queued image request validation, and cleaned up the modal framing so the shared title/description no longer repeat while the embedded panel keeps extra bottom breathing room
+    - hardened restored workspace media handling by filtering empty viewer image URLs out of snapshots and replacing missing history, filmstrip, and queued-result thumbnails with explicit placeholders instead of letting restored browsers hit the empty-`img src` path
+    - expanded focused regression coverage around the compact launcher contract, launcher signal behavior, workflow thought ordering, and queued batch panel rendering while repeatedly revalidating the product shell with `npm run build`
 
 ## v3.1.4 - 2026-03-31
 

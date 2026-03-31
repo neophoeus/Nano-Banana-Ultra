@@ -279,7 +279,7 @@ export const en = {
         'Queued batch jobs keep source lineage, but they do not send official multi-turn conversation history. Use Generate for chat continuation.',
     queuedBatchJobsTitle: 'Queued Batch Jobs',
     queuedBatchJobsDesc:
-        'Tracked official Gemini Batch API jobs stay here while pending or running, so status checks, imports, and cleanup stay in one workflow.',
+        'Tracked official Gemini Batch API jobs stay here while pending or running. Batch API targets completion within 24 hours, but image jobs can continue until the service expires them after 48 hours.',
     queuedBatchJobsWorkflowHint:
         'Check status here, import finished results into history when they are ready, then remove the entry when the workflow is done.',
     queuedBatchJobsConversationNoticeLabel: 'Continuity note',
@@ -290,6 +290,8 @@ export const en = {
     queuedBatchJobsRefreshAll: 'Check all statuses',
     queuedBatchJobsTrackedCount: '{0} tracked',
     queuedBatchJobsImportedTag: 'Imported',
+    queuedBatchJobsPastTargetWarning: '{0}h old · past 24h target',
+    queuedBatchJobsNearExpiryWarning: '{0}h old · near 48h expiry',
     queuedBatchJobsRestoredHistoryTag: 'Restored history',
     queuedBatchJobsRestoredHistoryHint:
         'Restored from a saved workspace. This closed item is kept as history, not a live queue failure.',
@@ -903,7 +905,7 @@ export const en = {
     workspacePanelStatusEnabled: 'Enabled',
     workspacePanelStatusPrepared: 'Prepared',
     workspacePanelStatusReserved: 'Standby',
-    workspacePanelResponseEyebrow: 'Answer',
+    workspacePanelResponseEyebrow: 'Response',
     workspacePanelSourceTrailEyebrow: 'Source Trail',
     workspacePanelViewDetails: 'View details',
     workspacePanelResultTextReady:

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import WorkspaceResponseRail from '../components/WorkspaceResponseRail';
 
 describe('WorkspaceResponseRail', () => {
-    it('renders the answer rail without a thoughts block', () => {
+    it('renders the response rail without a thoughts block', () => {
         const markup = renderToStaticMarkup(
             <WorkspaceResponseRail
                 currentLanguage="en"
@@ -18,7 +18,7 @@ describe('WorkspaceResponseRail', () => {
 
         expect(markup).toContain('workspace-response-rail');
         expect(markup).toContain('workspace-model-output-card');
-        expect(markup).toContain('Answer');
+        expect(markup).toContain('Response');
         expect(markup).toContain('Result Text');
         expect(markup).toContain('Fresh response text from the model.');
         expect(markup).not.toContain('Thoughts');
@@ -32,7 +32,7 @@ describe('WorkspaceResponseRail', () => {
         expect(markup).toContain('bg-emerald-500');
     });
 
-    it('shows the answer placeholder once without rendering a thoughts fallback block', () => {
+    it('shows the response placeholder once without rendering a thoughts fallback block', () => {
         const placeholder = 'Result placeholder';
         const markup = renderToStaticMarkup(
             <WorkspaceResponseRail

@@ -28,7 +28,7 @@ type UseWorkspaceOverlayAuxiliaryPropsArgs = {
     isAdvancedSettingsOpen: boolean;
     isEditing: boolean;
     activeSurfaceSheetLabel: string;
-    activePickerSheet: SurfaceSharedControlsProps['activePickerSheet'] | 'history' | 'gallery' | 'templates';
+    activePickerSheet: SurfaceSharedControlsProps['activePickerSheet'] | 'history' | 'templates';
     surfacePromptPreview: string;
     totalReferenceCount: number;
     imageStyle: ImageStyle;
@@ -60,7 +60,6 @@ type UseWorkspaceOverlayAuxiliaryPropsArgs = {
     getContinueActionLabel: (item: GeneratedImage) => string;
     handleStartNewConversation: () => void;
     openPromptSheet: () => void;
-    openGallerySheet: () => void;
     openPromptHistorySheet: () => void;
     openReferencesSheet: () => void;
     workspaceImportReview: WorkspaceImportReviewProps['review'] | null;
@@ -124,7 +123,6 @@ export function useWorkspaceOverlayAuxiliaryProps({
     getContinueActionLabel,
     handleStartNewConversation,
     openPromptSheet,
-    openGallerySheet,
     openPromptHistorySheet,
     openReferencesSheet,
     workspaceImportReview,
@@ -154,7 +152,6 @@ export function useWorkspaceOverlayAuxiliaryProps({
                       activeSheetLabel: activeSurfaceSheetLabel,
                       activePickerSheet:
                           activePickerSheet === 'history' ||
-                          activePickerSheet === 'gallery' ||
                           activePickerSheet === 'templates'
                               ? null
                               : activePickerSheet,
@@ -301,7 +298,6 @@ export function useWorkspaceOverlayAuxiliaryProps({
             maxObjects,
             objectImageCount,
             onLanguageChange,
-            openGallerySheet,
             openPromptHistorySheet,
             openPromptSheet,
             openReferencesSheet,

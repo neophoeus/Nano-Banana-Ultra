@@ -145,6 +145,13 @@ export type QueuedBatchJobState =
     | 'JOB_STATE_CANCELLED'
     | 'JOB_STATE_EXPIRED';
 
+export interface QueuedBatchJobStats {
+    requestCount: number;
+    successfulRequestCount: number;
+    failedRequestCount: number;
+    pendingRequestCount: number;
+}
+
 export interface QueuedBatchJob {
     localId: string;
     name: string;
@@ -165,6 +172,7 @@ export interface QueuedBatchJob {
     googleSearch: boolean;
     imageSearch: boolean;
     batchSize: number;
+    batchStats?: QueuedBatchJobStats | null;
     objectImageCount: number;
     characterImageCount: number;
     createdAt: number;

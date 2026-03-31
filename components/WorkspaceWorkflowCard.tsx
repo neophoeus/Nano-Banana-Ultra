@@ -20,14 +20,14 @@ type WorkspaceWorkflowCardProps = {
 const LightbulbIcon = ({ hasThoughts }: { hasThoughts: boolean }) => (
     <span
         data-testid="workspace-workflow-thoughts-indicator"
-        className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl border transition-all ${
+        className={`inline-flex h-7 w-7 items-center justify-center rounded-lg border transition-all ${
             hasThoughts
                 ? 'border-amber-300/70 bg-amber-100/90 text-amber-500 shadow-[0_0_18px_rgba(251,191,36,0.42)] dark:border-amber-400/40 dark:bg-amber-500/12 dark:text-amber-300 dark:shadow-[0_0_20px_rgba(251,191,36,0.28)]'
                 : 'border-slate-200 bg-slate-100 text-slate-400 grayscale dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-500'
         }`}
         aria-hidden="true"
     >
-        <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.8">
+        <svg viewBox="0 0 24 24" fill="none" className="h-3 w-3" stroke="currentColor" strokeWidth="1.8">
             <path
                 d="M9 18h6M10 21h4M8.2 14.7C6.85 13.58 6 11.89 6 10a6 6 0 1 1 12 0c0 1.89-.85 3.58-2.2 4.7-.87.72-1.3 1.5-1.3 2.3H9.5c0-.8-.43-1.58-1.3-2.3Z"
                 strokeLinecap="round"
@@ -58,26 +58,28 @@ function WorkspaceWorkflowCard({
             type="button"
             data-testid="workspace-workflow-card"
             onClick={onOpenDetails}
-            className="group min-w-0 nbu-shell-panel nbu-shell-surface-context-rail flex w-full items-center gap-4 overflow-hidden px-4 py-4 text-left transition-colors hover:border-amber-300 dark:hover:border-amber-500/30 xl:min-h-[108px]"
+            className="group min-w-0 nbu-shell-panel nbu-shell-surface-context-rail flex h-full w-full items-center gap-2.5 overflow-hidden px-3 py-2 text-left transition-all hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-[0_18px_40px_rgba(15,23,42,0.12)] dark:hover:border-amber-500/30 dark:hover:shadow-[0_18px_40px_rgba(2,6,23,0.38)] lg:h-[54px] lg:min-h-[54px]"
         >
-            <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                    <p className="nbu-section-eyebrow">{t('workspaceInsightsCurrentWork')}</p>
-                    <span className="nbu-status-pill">{workflowStatusLabel}</span>
+            <div className="min-w-0 flex flex-1 items-center gap-2">
+                <div className="shrink-0 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                    {t('workspaceInsightsCurrentWork')}
                 </div>
-                <div
-                    data-testid="context-workflow-summary"
-                    className="mt-2 truncate text-sm font-semibold text-slate-900 dark:text-slate-100"
-                >
-                    {workflowHeadline}
+                <div className="min-w-0 flex flex-1 items-center gap-1.5">
+                    <span className="nbu-status-pill">{workflowStatusLabel}</span>
+                    <div
+                        data-testid="context-workflow-summary"
+                        className="min-w-0 flex-1 truncate text-[12px] font-semibold text-slate-900 dark:text-slate-100 sm:text-[13px]"
+                    >
+                        {workflowHeadline}
+                    </div>
                 </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-3">
+            <div className="flex shrink-0 items-center gap-2">
                 <LightbulbIcon hasThoughts={hasThoughts} />
                 <span
                     data-testid="workspace-workflow-open-details"
-                    className="hidden text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 transition-colors group-hover:text-amber-600 dark:text-slate-500 dark:group-hover:text-amber-300 sm:inline"
+                    className="hidden text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 transition-colors group-hover:text-amber-600 dark:text-slate-500 dark:group-hover:text-amber-300 2xl:inline"
                 >
                     {t('workspacePanelViewDetails')}
                 </span>

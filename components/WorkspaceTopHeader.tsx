@@ -25,7 +25,7 @@ function BananaMark() {
 function WorkspaceTopHeader({ headerConsole, currentLanguage, onLanguageChange }: WorkspaceTopHeaderProps) {
     return (
         <header className="relative z-30 shrink-0">
-            <div className="nbu-shell-panel relative z-30 flex h-12 w-full min-w-0 items-center gap-2 rounded-[24px] px-3 sm:gap-3 sm:px-4">
+            <div className="nbu-shell-panel relative z-30 flex h-12 w-full min-w-0 items-center gap-2 rounded-b-[24px] rounded-t-none px-3 sm:gap-3 sm:px-4">
                 <div className="flex min-w-0 items-center gap-2 sm:gap-3">
                     <div className="flex min-w-0 items-center gap-2">
                         <BananaMark />

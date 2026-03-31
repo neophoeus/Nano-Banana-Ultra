@@ -11,6 +11,7 @@ import {
     GenerationLineageContext,
     ImageModel,
     QueuedBatchJob,
+    QueuedBatchJobStats,
     QueuedBatchJobState,
     StageAsset,
     StructuredOutputMode,
@@ -105,6 +106,7 @@ type RemoteQueuedJob = {
     startTime?: string;
     endTime?: string;
     error?: string | null;
+    batchStats?: QueuedBatchJobStats | null;
 };
 
 type UseQueuedBatchWorkflowArgs = {
@@ -265,6 +267,7 @@ export function useQueuedBatchWorkflow({
                 googleSearch: seed.googleSearch,
                 imageSearch: seed.imageSearch,
                 batchSize: seed.batchSize,
+                batchStats: remoteJob.batchStats || null,
                 objectImageCount: seed.objectImageCount,
                 characterImageCount: seed.characterImageCount,
                 createdAt,

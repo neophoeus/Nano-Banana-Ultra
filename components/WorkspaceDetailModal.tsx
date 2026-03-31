@@ -9,6 +9,7 @@ type WorkspaceDetailModalProps = {
     onClose: () => void;
     children: React.ReactNode;
     description?: string;
+    compact?: boolean;
 };
 
 export default function WorkspaceDetailModal({
@@ -18,6 +19,7 @@ export default function WorkspaceDetailModal({
     onClose,
     children,
     description,
+    compact = false,
 }: WorkspaceDetailModalProps) {
     return (
         <WorkspaceModalFrame
@@ -30,11 +32,25 @@ export default function WorkspaceDetailModal({
             description={description}
             backdropClassName="bg-[radial-gradient(circle_at_top,_rgba(148,163,184,0.16),_transparent_34%),rgba(15,23,42,0.74)] backdrop-blur-md"
             panelClassName="nbu-overlay-panel-neutral max-h-[88vh]"
-            headerClassName="border-b border-gray-200/80 px-5 py-4 dark:border-gray-700/80"
+            headerClassName={
+                compact
+                    ? 'border-b border-gray-200/80 px-4 py-3 dark:border-gray-700/80'
+                    : 'border-b border-gray-200/80 px-5 py-4 dark:border-gray-700/80'
+            }
             closeButtonClassName="nbu-control-button px-3 py-1.5 text-[11px] font-semibold"
-            containerClassName="items-start justify-center py-4 md:py-6"
+            containerClassName={
+                compact ? 'items-start justify-center py-3 md:py-4' : 'items-start justify-center py-4 md:py-6'
+            }
         >
-            <div className="nbu-scrollbar-subtle max-h-[calc(88vh-88px)] overflow-y-auto p-5">{children}</div>
+            <div
+                className={
+                    compact
+                        ? 'nbu-scrollbar-subtle max-h-[calc(88vh-78px)] overflow-y-auto p-4'
+                        : 'nbu-scrollbar-subtle max-h-[calc(88vh-88px)] overflow-y-auto p-5'
+                }
+            >
+                {children}
+            </div>
         </WorkspaceModalFrame>
     );
 }

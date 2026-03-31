@@ -265,7 +265,7 @@ export const zh_TW = {
         '佇列批次工作會保留來源延續脈絡，但不會送出官方多輪對話歷史。若要延續對話，請使用開始生成。',
     queuedBatchJobsTitle: '佇列批次工作',
     queuedBatchJobsDesc:
-        '已保存的官方 Gemini 批次 API 工作會在這裡持續追蹤，待處理或執行中時可沿著狀態檢查、結果匯入與清理流程完成。',
+        '已保存的官方 Gemini 批次 API 工作會在這裡持續追蹤。官方 Batch API 的目標是 24 小時內完成，但圖像批次最長可能要到 48 小時後才會過期。',
     queuedBatchJobsWorkflowHint: '先在這裡追蹤佇列狀態，結果就緒後匯入歷史，流程完成後再清除這筆工作。',
     queuedBatchJobsConversationNoticeLabel: '延續提醒',
     queuedBatchJobsActiveCount: '{0} 個進行中',
@@ -275,6 +275,8 @@ export const zh_TW = {
     queuedBatchJobsRefreshAll: '全部刷新',
     queuedBatchJobsTrackedCount: '追蹤中 {0} 個',
     queuedBatchJobsImportedTag: '已匯入',
+    queuedBatchJobsPastTargetWarning: '{0} 小時 · 已超過 24 小時目標',
+    queuedBatchJobsNearExpiryWarning: '{0} 小時 · 接近 48 小時過期',
     queuedBatchJobsRestoredHistoryTag: '還原歷史',
     queuedBatchJobsRestoredHistoryHint:
         '這筆已結束項目來自已還原的工作區快照，會保留為歷史記錄，不代表目前的即時佇列失敗。',

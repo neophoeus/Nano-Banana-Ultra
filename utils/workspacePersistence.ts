@@ -89,6 +89,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
     typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const isInlineAssetUrl = (value: string): boolean => value.startsWith(INLINE_ASSET_URL_PREFIX);
+const isNonEmptyAssetUrl = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 
 const buildLoadImageUrl = (savedFilename: string): string =>
     `${LOAD_IMAGE_ENDPOINT}?filename=${encodeURIComponent(savedFilename)}`;
@@ -537,7 +538,7 @@ const sanitizeWorkspaceViewState = (value: unknown): WorkspaceViewState => {
     }
 
     const generatedImageUrls = Array.isArray(value.generatedImageUrls)
-        ? value.generatedImageUrls.filter((item): item is string => typeof item === 'string')
+        ? value.generatedImageUrls.filter(isNonEmptyAssetUrl)
         : [];
     const selectedImageIndex =
         typeof value.selectedImageIndex === 'number' && Number.isFinite(value.selectedImageIndex)

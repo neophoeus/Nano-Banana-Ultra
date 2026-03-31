@@ -42,13 +42,13 @@ const baseProps = {
     onToggleEnterToSubmit: vi.fn(),
     onGenerate: vi.fn(),
     onQueueBatchJob: vi.fn(),
+    onOpenQueuedBatchJobs: vi.fn(),
     onCancelGeneration: vi.fn(),
     onStartNewConversation: vi.fn(),
     onFollowUpGenerate: vi.fn(),
     onOpenEditor: vi.fn(),
     onSurpriseMe: vi.fn(),
     onSmartRewrite: vi.fn(),
-    onOpenGallery: vi.fn(),
     onOpenPromptHistory: vi.fn(),
     onOpenTemplates: vi.fn(),
     onOpenStyles: vi.fn(),
@@ -100,12 +100,67 @@ describe('ComposerSettingsPanel toolbar layout', () => {
         expect(markup).toContain('Objects 1/4');
         expect(markup).toContain('Characters 1/2');
         expect(markup).toContain('Advanced settings');
+        expect(markup).not.toContain('Gallery');
         expect(markup).toContain('composer-queue-batch-mode-hint-trigger');
         expect(markup).toContain('composer-queue-batch-mode-hint');
+        expect(markup).not.toContain('composer-queue-status-button');
+        expect(markup).not.toContain('composer-queue-summary-details');
+        expect(markup).not.toContain('composer-queue-summary-summary');
+        expect(markup).not.toContain('composer-queue-summary-notice');
         expect(markup).not.toContain('composer-workspace-tools');
         expect(markup).not.toContain('Export Workspace');
         expect(markup).not.toContain('Import Workspace');
         expect(markup).not.toContain('border-amber-200 bg-amber-50');
+    });
+
+    it('replaces the inline queued jobs panel with a compact status button when tracked jobs exist', () => {
+        const markup = renderToStaticMarkup(
+            <ComposerSettingsPanel
+                {...baseProps}
+                queuedJobs={[
+                    {
+                        localId: 'job-running',
+                        name: 'batches/job-running',
+                        displayName: 'Running queue job',
+                        state: 'JOB_STATE_RUNNING',
+                        model: 'gemini-3.1-flash-image-preview',
+                        prompt: 'Track the queue',
+                        generationMode: 'Text to Image',
+                        aspectRatio: '1:1',
+                        imageSize: '1K',
+                        style: 'None',
+                        outputFormat: 'images-only',
+                        temperature: 1,
+                        thinkingLevel: 'minimal',
+                        includeThoughts: true,
+                        googleSearch: false,
+                        imageSearch: false,
+                        batchSize: 1,
+                        objectImageCount: 0,
+                        characterImageCount: 0,
+                        createdAt: 1710400000000,
+                        updatedAt: 1710400010000,
+                        startedAt: 1710400005000,
+                        completedAt: null,
+                        lastPolledAt: 1710400010000,
+                        importedAt: null,
+                        error: null,
+                    },
+                ] as any}
+                groundingMode="off"
+                imageModel="gemini-3.1-flash-image-preview"
+                capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
+            />,
+        );
+
+        expect(markup).toContain('composer-queue-status-button');
+        expect(markup).toContain('composer-queue-status-progress');
+        expect(markup).toContain('Queued Batch Jobs');
+        expect(markup).toContain('1 tracked');
+        expect(markup).toContain('1 active');
+        expect(markup).toContain('0 ready to import');
+        expect(markup).toContain('0 closed with issues');
+        expect(markup).not.toContain('queued-batch-panel');
     });
 });
 

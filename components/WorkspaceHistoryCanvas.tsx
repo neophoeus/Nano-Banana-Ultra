@@ -73,12 +73,46 @@ function WorkspaceHistoryCanvas(props: WorkspaceHistoryCanvasProps) {
         sessionUpdatedLabel,
         selectedHistoryId,
         lineageRootGroups,
+        onExportWorkspace,
+        onImportWorkspace,
         onOpenVersionsDetails,
         getShortTurnId,
     } = props;
     const t = (key: string) => getTranslation(currentLanguage, key);
     const { isDesktop, isOpen, setIsOpen } = useResponsivePanelState();
     const currentTurnId = selectedHistoryId || activeBranchSummary?.latestTurn.id || null;
+    const versionsSummaryChipClassName =
+        'nbu-stage-hero-filmstrip-summary rounded-full border px-2.5 py-1 text-[10px] font-semibold text-gray-500 dark:text-gray-300';
+    const versionsStatCardClassName =
+        'min-w-0 rounded-[20px] border border-gray-200/80 bg-white/92 px-3 py-2.5 shadow-[0_12px_28px_rgba(15,23,42,0.05)] dark:border-gray-800 dark:bg-[#0f141b]/92';
+    const versionsStatLabelClassName =
+        'text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400 dark:text-gray-500';
+    const versionsStatValueClassName = 'mt-2 break-words text-sm font-semibold text-gray-900 dark:text-gray-100';
+    const versionsActionButtonClassName =
+        'rounded-full border border-gray-200/80 px-2.5 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-amber-300 hover:text-amber-700 dark:border-gray-700 dark:text-gray-300 dark:hover:border-amber-500/40 dark:hover:text-amber-200';
+    const versionsInlineActions = (
+        <div
+            data-testid="history-versions-quick-actions"
+            className="ml-auto flex flex-wrap items-center justify-end gap-2"
+        >
+            <button
+                type="button"
+                data-testid="history-import-workspace"
+                onClick={onImportWorkspace}
+                className={versionsActionButtonClassName}
+            >
+                {t('composerToolbarImportWorkspace')}
+            </button>
+            <button
+                type="button"
+                data-testid="history-export-workspace"
+                onClick={onExportWorkspace}
+                className={versionsActionButtonClassName}
+            >
+                {t('composerToolbarExportWorkspace')}
+            </button>
+        </div>
+    );
 
     const renderDisclosureChevron = () => (
         <svg
@@ -97,16 +131,16 @@ function WorkspaceHistoryCanvas(props: WorkspaceHistoryCanvasProps) {
     );
 
     return (
-        <section data-testid="workspace-history-canvas" className="grid min-w-0 gap-4 lg:min-h-0">
-            <div data-testid="workspace-history-recent-lane">{recentLane}</div>
+        <section data-testid="workspace-history-canvas" className="grid min-w-0 gap-2.5 lg:min-h-0">
             <div
                 data-testid="workspace-history-focus-grid"
-                className="grid gap-4 lg:min-h-0 xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.78fr)]"
+                className="grid gap-2.5 lg:min-h-0 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
             >
                 <div data-testid="workspace-history-focus-state" className="min-w-0">
                     {focusSurface}
                 </div>
-                <aside data-testid="workspace-history-support-rail" className="grid min-w-0 content-start gap-3">
+                <aside data-testid="workspace-history-support-rail" className="grid min-w-0 content-start gap-2.5">
+                    <div data-testid="workspace-history-recent-lane">{recentLane}</div>
                     <details
                         data-testid="history-versions-section"
                         open={isOpen}
@@ -117,28 +151,60 @@ function WorkspaceHistoryCanvas(props: WorkspaceHistoryCanvasProps) {
 
                             setIsOpen(event.currentTarget.open);
                         }}
-                        className="group min-w-0 nbu-soft-well overflow-hidden xl:h-[264px] xl:min-h-0"
+                        className="group min-w-0 w-full max-w-full overflow-hidden rounded-[24px] border p-2.5 nbu-stage-hero-filmstrip-shell"
                     >
                         <summary
                             data-testid="history-versions-summary"
-                            className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 text-left xl:hidden [&::-webkit-details-marker]:hidden"
+                            className="flex w-full max-w-full cursor-pointer list-none items-center justify-between gap-3 px-0.5 py-0.5 text-left xl:hidden [&::-webkit-details-marker]:hidden"
                         >
-                            <span className="text-[15px] font-black text-slate-900 dark:text-slate-100">
-                                {t('workspaceInsightsVersions')}
-                            </span>
-                            {renderDisclosureChevron()}
+                            <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-[15px] font-black text-slate-900 dark:text-slate-100">
+                                        {t('workspaceInsightsVersions')}
+                                    </span>
+                                    <span className={versionsSummaryChipClassName}>
+                                        {t('workspaceInsightsBranchesCount').replace(
+                                            '{0}',
+                                            String(branchSummariesCount),
+                                        )}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className={`${versionsSummaryChipClassName} hidden sm:inline-flex`}>
+                                    {sessionUpdatedLabel}
+                                </span>
+                                {renderDisclosureChevron()}
+                            </div>
                         </summary>
 
-                        <div data-testid="history-versions-shell" className="flex h-full min-h-0 flex-col px-3 pb-3">
-                            <div className="flex items-start justify-between gap-3 pt-3 xl:pt-0">
-                                <div className="min-w-0 flex-1">
+                        <div
+                            data-testid="history-versions-shell"
+                            className="flex h-full min-h-0 w-full max-w-full flex-col"
+                        >
+                            <div
+                                data-testid="history-versions-header"
+                                className="mb-2.5 flex min-w-0 items-start justify-end gap-3 xl:justify-between"
+                            >
+                                <div className="hidden min-w-0 flex-1 xl:block">
                                     <h2 className="text-[15px] font-black text-slate-900 dark:text-slate-100">
                                         {t('workspaceInsightsVersions')}
                                     </h2>
                                 </div>
-                                <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 text-right text-[11px] text-gray-400 dark:text-gray-500">
-                                    <span>{sessionUpdatedLabel}</span>
-                                    <span>
+                                <div
+                                    data-testid="history-versions-toolbar"
+                                    className="flex min-w-0 flex-wrap items-center justify-end gap-2 text-right"
+                                >
+                                    <button
+                                        type="button"
+                                        data-testid="history-versions-open-details"
+                                        onClick={onOpenVersionsDetails}
+                                        className={versionsActionButtonClassName}
+                                    >
+                                        {t('workspacePanelViewDetails')}
+                                    </button>
+                                    <span className={versionsSummaryChipClassName}>{sessionUpdatedLabel}</span>
+                                    <span className={versionsSummaryChipClassName}>
                                         {t('workspaceInsightsBranchesCount').replace(
                                             '{0}',
                                             String(branchSummariesCount),
@@ -147,35 +213,35 @@ function WorkspaceHistoryCanvas(props: WorkspaceHistoryCanvasProps) {
                                 </div>
                             </div>
 
-                            <div className="mt-3 flex flex-1 min-h-0 flex-col">
-                                <div className="nbu-scrollbar-subtle min-h-0 flex-1 overflow-x-hidden overflow-y-auto pr-1">
-                                    <div className="nbu-inline-panel space-y-3 px-3 py-3">
-                                        <div className="grid gap-2 sm:grid-cols-3">
-                                            <div className="min-w-0 rounded-2xl border border-gray-200 bg-white px-3 py-2 dark:border-gray-800 dark:bg-[#0f141b]">
-                                                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400 dark:text-gray-500">
+                            <div className="flex flex-1 min-h-0 flex-col">
+                                <div className="nbu-scrollbar-subtle min-h-0 flex-1 overflow-x-hidden overflow-y-auto pr-0.5">
+                                    <div className="space-y-2.5 px-0.5 py-0.5">
+                                        <div className="grid gap-2.5 sm:grid-cols-3">
+                                            <div className={versionsStatCardClassName}>
+                                                <div className={versionsStatLabelClassName}>
                                                     {t('workspaceInsightsActiveBranch')}
                                                 </div>
-                                                <div className="mt-2 break-words text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                                <div className={versionsStatValueClassName}>
                                                     {activeBranchSummary?.branchLabel ||
                                                         t('workspaceInsightsBranchesEmpty')}
                                                 </div>
                                             </div>
-                                            <div className="min-w-0 rounded-2xl border border-gray-200 bg-white px-3 py-2 dark:border-gray-800 dark:bg-[#0f141b]">
-                                                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400 dark:text-gray-500">
+                                            <div className={versionsStatCardClassName}>
+                                                <div className={versionsStatLabelClassName}>
                                                     {t('historyFilmstripTitle')}
                                                 </div>
-                                                <div className="mt-2 break-all text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                                <div className={`${versionsStatValueClassName} break-all`}>
                                                     {currentTurnId ? getShortTurnId(currentTurnId) : '--------'}
                                                 </div>
                                             </div>
-                                            <div className="min-w-0 rounded-2xl border border-gray-200 bg-white px-3 py-2 dark:border-gray-800 dark:bg-[#0f141b]">
-                                                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400 dark:text-gray-500">
+                                            <div className={versionsStatCardClassName}>
+                                                <div className={versionsStatLabelClassName}>
                                                     {t('workspaceInsightsBranchesCount').replace(
                                                         '{0}',
                                                         String(branchSummariesCount),
                                                     )}
                                                 </div>
-                                                <div className="mt-2 break-words text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                                <div className={versionsStatValueClassName}>
                                                     {t('workspaceInsightsRootsCount').replace(
                                                         '{0}',
                                                         String(lineageRootGroups.length),
@@ -183,33 +249,28 @@ function WorkspaceHistoryCanvas(props: WorkspaceHistoryCanvasProps) {
                                                 </div>
                                             </div>
                                         </div>
-                                        {activeBranchSummary ? (
-                                            <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
-                                                <span
-                                                    className={`rounded-full border px-2.5 py-1 font-bold uppercase tracking-[0.16em] ${props.getBranchAccentClassName(activeBranchSummary.branchOriginId, activeBranchSummary.branchLabel)}`}
-                                                >
-                                                    {activeBranchSummary.branchLabel}
-                                                </span>
-                                                <span>
-                                                    {t('workspaceInsightsTurnsCount').replace(
-                                                        '{0}',
-                                                        String(activeBranchSummary.turnCount),
-                                                    )}
-                                                </span>
-                                            </div>
-                                        ) : null}
+                                        <div
+                                            data-testid="history-versions-branch-row"
+                                            className="flex flex-wrap items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400"
+                                        >
+                                            {activeBranchSummary ? (
+                                                <>
+                                                    <span
+                                                        className={`rounded-full border px-2.5 py-1 font-bold uppercase tracking-[0.16em] ${props.getBranchAccentClassName(activeBranchSummary.branchOriginId, activeBranchSummary.branchLabel)}`}
+                                                    >
+                                                        {activeBranchSummary.branchLabel}
+                                                    </span>
+                                                    <span>
+                                                        {t('workspaceInsightsTurnsCount').replace(
+                                                            '{0}',
+                                                            String(activeBranchSummary.turnCount),
+                                                        )}
+                                                    </span>
+                                                </>
+                                            ) : null}
+                                            {versionsInlineActions}
+                                        </div>
                                     </div>
-                                </div>
-
-                                <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-200/80 pt-3 dark:border-gray-800">
-                                    <button
-                                        type="button"
-                                        data-testid="history-versions-open-details"
-                                        onClick={onOpenVersionsDetails}
-                                        className="nbu-control-button px-3 py-1.5 text-[11px] font-semibold"
-                                    >
-                                        {t('workspacePanelViewDetails')}
-                                    </button>
                                 </div>
                             </div>
                         </div>

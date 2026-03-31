@@ -6,6 +6,7 @@ import InfoTooltip from './InfoTooltip';
 type QueuedBatchJobsPanelProps = {
     currentLanguage: Language;
     queuedJobs: QueuedBatchJob[];
+    surface?: 'default' | 'embedded';
     queueBatchConversationNotice: string | null;
     getLineageActionLabel: (action?: QueuedBatchJob['lineageAction']) => string;
     getImportedQueuedResultCount: (job: QueuedBatchJob) => number;
@@ -42,8 +43,51 @@ const formatCompactTime = (timestamp: number) =>
         minute: '2-digit',
     });
 
+const HOUR_MS = 60 * 60 * 1000;
+const QUEUED_BATCH_TARGET_WINDOW_MS = 24 * HOUR_MS;
+const QUEUED_BATCH_EXPIRY_WINDOW_MS = 48 * HOUR_MS;
+const QUEUED_BATCH_NEAR_EXPIRY_WINDOW_MS = QUEUED_BATCH_EXPIRY_WINDOW_MS - 6 * HOUR_MS;
+
 const isQueuedJobClosedIssue = (job: QueuedBatchJob) =>
     job.state === 'JOB_STATE_FAILED' || job.state === 'JOB_STATE_CANCELLED' || job.state === 'JOB_STATE_EXPIRED';
+
+const formatBatchStatsSummary = (job: QueuedBatchJob, t: (key: string) => string) => {
+    if (!job.batchStats) {
+        return null;
+    }
+
+    return [
+        `${job.batchStats.successfulRequestCount} ${t('queuedBatchStateSucceeded')}`,
+        `${job.batchStats.pendingRequestCount} ${t('queuedBatchStatePending')}`,
+        `${job.batchStats.failedRequestCount} ${t('queuedBatchStateFailed')}`,
+    ].join(' · ');
+};
+
+const getQueuedJobAgeWarning = (job: QueuedBatchJob, t: (key: string) => string, currentTimestamp: number) => {
+    if (job.state !== 'JOB_STATE_PENDING' && job.state !== 'JOB_STATE_RUNNING') {
+        return null;
+    }
+
+    const ageMs = currentTimestamp - job.createdAt;
+    if (!Number.isFinite(ageMs) || ageMs < QUEUED_BATCH_TARGET_WINDOW_MS) {
+        return null;
+    }
+
+    const ageHours = Math.max(24, Math.floor(ageMs / HOUR_MS)).toString();
+    if (ageMs >= QUEUED_BATCH_NEAR_EXPIRY_WINDOW_MS) {
+        return {
+            label: t('queuedBatchJobsNearExpiryWarning').replace('{0}', ageHours),
+            className:
+                'rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-semibold text-rose-700 dark:bg-rose-500/10 dark:text-rose-300',
+        };
+    }
+
+    return {
+        label: t('queuedBatchJobsPastTargetWarning').replace('{0}', ageHours),
+        className:
+            'rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
+    };
+};
 
 const buildJobTimeline = (job: QueuedBatchJob, t: (key: string) => string): JobTimelineEvent[] => {
     const events: JobTimelineEvent[] = [
@@ -98,6 +142,7 @@ const buildJobTimeline = (job: QueuedBatchJob, t: (key: string) => string): JobT
 export default function QueuedBatchJobsPanel({
     currentLanguage,
     queuedJobs,
+    surface = 'default',
     queueBatchConversationNotice,
     getLineageActionLabel,
     getImportedQueuedResultCount,
@@ -114,6 +159,10 @@ export default function QueuedBatchJobsPanel({
     onRemoveQueuedJob,
 }: QueuedBatchJobsPanelProps) {
     const t = (key: string) => getTranslation(currentLanguage, key);
+    const isEmbedded = surface === 'embedded';
+    const showTitleAndGuidance = !isEmbedded;
+    const showConversationNoticeInline = Boolean(queueBatchConversationNotice);
+    const showHeaderMetaRow = showTitleAndGuidance || showConversationNoticeInline;
     const getTranslatedGenerationModeLabel = (mode?: string | null) => {
         if (!mode) return t('modeTextToImg');
         if (mode.includes('Inpaint') || mode.includes('Retouch')) return t('modeInpaint');
@@ -177,6 +226,7 @@ export default function QueuedBatchJobsPanel({
         (job) => job.state === 'JOB_STATE_PENDING' || job.state === 'JOB_STATE_RUNNING',
     ).length;
     const failedCount = queuedJobs.filter((job) => isQueuedJobClosedIssue(job)).length;
+    const currentTimestamp = Date.now();
 
     const getQueuedJobStateLabel = (job: QueuedBatchJob) => {
         if (job.state === 'JOB_STATE_PENDING') return t('queuedBatchStatePending');
@@ -189,36 +239,58 @@ export default function QueuedBatchJobsPanel({
     };
 
     if (queuedJobs.length === 0) {
+        if (isEmbedded) {
+            return (
+                <div
+                    data-testid="queued-batch-panel-empty"
+                    className="nbu-overlay-card-neutral rounded-[24px] border border-dashed px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
+                >
+                    <div>{t('queuedBatchJobsTrackedCount').replace('{0}', '0')}</div>
+                    <div className="mt-2 text-xs leading-6 text-gray-500 dark:text-gray-400">
+                        {t('queuedBatchJobsWorkflowHint')}
+                    </div>
+                </div>
+            );
+        }
+
         return null;
     }
 
     return (
-        <div data-testid="queued-batch-panel" className="nbu-floating-panel mt-4 p-4">
+        <div data-testid="queued-batch-panel" className={isEmbedded ? 'min-w-0 pb-4' : 'nbu-floating-panel mt-4 p-4'}>
             <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
-                            {t('queuedBatchJobsTitle')}
-                        </h3>
-                        <InfoTooltip
-                            content={t('queuedBatchJobsDesc')}
-                            buttonLabel={t('queuedBatchJobsTitle')}
-                            dataTestId="queued-batch-panel-guidance"
-                        />
-                        {queueBatchConversationNotice && (
-                            <>
-                                <span className="text-[11px] font-medium text-amber-700 dark:text-amber-300">
-                                    {t('queuedBatchJobsConversationNoticeLabel')}
-                                </span>
-                                <InfoTooltip
-                                    content={queueBatchConversationNotice}
-                                    buttonLabel={t('queuedBatchJobsConversationNoticeLabel')}
-                                    dataTestId="queued-batch-panel-notice"
-                                />
-                            </>
-                        )}
-                    </div>
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">
+                    {showHeaderMetaRow && (
+                        <div className="flex flex-wrap items-center gap-2">
+                            {showTitleAndGuidance && (
+                                <>
+                                    <h3 className="text-sm font-bold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
+                                        {t('queuedBatchJobsTitle')}
+                                    </h3>
+                                    <InfoTooltip
+                                        content={t('queuedBatchJobsDesc')}
+                                        buttonLabel={t('queuedBatchJobsTitle')}
+                                        dataTestId="queued-batch-panel-guidance"
+                                    />
+                                </>
+                            )}
+                            {queueBatchConversationNotice && (
+                                <>
+                                    <span className="text-[11px] font-medium text-amber-700 dark:text-amber-300">
+                                        {t('queuedBatchJobsConversationNoticeLabel')}
+                                    </span>
+                                    <InfoTooltip
+                                        content={queueBatchConversationNotice}
+                                        buttonLabel={t('queuedBatchJobsConversationNoticeLabel')}
+                                        dataTestId="queued-batch-panel-notice"
+                                    />
+                                </>
+                            )}
+                        </div>
+                    )}
+                    <div
+                        className={`${showHeaderMetaRow ? 'mt-2 ' : ''}flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400`}
+                    >
                         <span data-testid="queued-batch-active-count" className="nbu-quiet-pill">
                             {t('queuedBatchJobsActiveCount').replace('{0}', runningCount.toString())}
                         </span>
@@ -307,6 +379,8 @@ export default function QueuedBatchJobsPanel({
                               ? 'text-rose-700 dark:text-rose-300'
                               : 'text-amber-700 dark:text-amber-300';
                     const timelineEvents = buildJobTimeline(job, t);
+                    const batchStatsSummary = formatBatchStatsSummary(job, t);
+                    const ageWarning = getQueuedJobAgeWarning(job, t, currentTimestamp);
                     const monitorActions: React.ReactNode[] = [];
 
                     if (!isRestoredHistoricalIssue) {
@@ -425,6 +499,14 @@ export default function QueuedBatchJobsPanel({
                                         >
                                             {getQueuedJobStateLabel(job)}
                                         </span>
+                                        {ageWarning && (
+                                            <span
+                                                data-testid={`queued-batch-job-${job.localId}-age-warning`}
+                                                className={ageWarning.className}
+                                            >
+                                                {ageWarning.label}
+                                            </span>
+                                        )}
                                         {job.importedAt && (
                                             <span
                                                 data-testid={`queued-batch-job-${job.localId}-imported`}
@@ -459,6 +541,14 @@ export default function QueuedBatchJobsPanel({
                                         <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                             {t('queuedBatchJobsLinkedSource')} {job.sourceHistoryId.slice(0, 8)}
                                             {job.lineageAction ? ` · ${getLineageActionLabel(job.lineageAction)}` : ''}
+                                        </div>
+                                    )}
+                                    {batchStatsSummary && (
+                                        <div
+                                            data-testid={`queued-batch-job-${job.localId}-batch-stats`}
+                                            className="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                                        >
+                                            {batchStatsSummary}
                                         </div>
                                     )}
                                     <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -610,11 +700,17 @@ export default function QueuedBatchJobsPanel({
                                                                 className={`group w-28 shrink-0 snap-start overflow-hidden rounded-2xl border text-left transition-colors ${isActiveImportedItem ? activeImportedPreviewClassName : 'border-gray-200 bg-gray-50 hover:border-sky-400 dark:border-gray-700 dark:bg-[#0b0f15] dark:hover:border-sky-500/50'}`}
                                                             >
                                                                 <div className="relative h-16 w-full overflow-hidden bg-gray-200 dark:bg-gray-900">
-                                                                    <img
-                                                                        src={item.url}
-                                                                        alt={item.prompt}
-                                                                        className="h-full w-full object-cover"
-                                                                    />
+                                                                    {item.url ? (
+                                                                        <img
+                                                                            src={item.url}
+                                                                            alt={item.prompt}
+                                                                            className="h-full w-full object-cover"
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="flex h-full w-full items-center justify-center text-[9px] font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-300">
+                                                                            {t('historyActionOpen')}
+                                                                        </div>
+                                                                    )}
                                                                     <span className="absolute bottom-1 left-1 rounded-full bg-black/70 px-1.5 py-0.5 text-[9px] font-semibold text-white">
                                                                         {positionLabel}
                                                                     </span>

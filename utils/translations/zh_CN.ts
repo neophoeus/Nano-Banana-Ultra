@@ -301,7 +301,7 @@ export const zh_CN = {
         '队列批处理任务会保留来源延续脉络，但不会发送官方多轮对话历史。若要继续对话，请使用开始生成。',
     queuedBatchJobsTitle: '队列批处理任务',
     queuedBatchJobsDesc:
-        '已保存的官方 Gemini 批处理 API 任务会在这里持续跟踪，待处理或运行中时可沿着状态检查、结果导入与清理流程完成。',
+        '已保存的官方 Gemini 批处理 API 任务会在这里持续跟踪。官方 Batch API 的目标是 24 小时内完成，但图像批处理最长可能要到 48 小时后才会过期。',
     queuedBatchJobsWorkflowHint: '先在这里跟踪队列状态，结果就绪后导入历史，流程完成后再清除这条任务。',
     queuedBatchJobsConversationNoticeLabel: '延续提醒',
     queuedBatchJobsActiveCount: '{0} 个进行中',
@@ -311,6 +311,8 @@ export const zh_CN = {
     queuedBatchJobsRefreshAll: '全部刷新',
     queuedBatchJobsTrackedCount: '追踪中 {0} 个',
     queuedBatchJobsImportedTag: '已导入',
+    queuedBatchJobsPastTargetWarning: '{0} 小时 · 已超过 24 小时目标',
+    queuedBatchJobsNearExpiryWarning: '{0} 小时 · 接近 48 小时过期',
     queuedBatchJobsRestoredHistoryTag: '还原历史',
     queuedBatchJobsRestoredHistoryHint:
         '这笔已结束项目来自已还原的工作区快照，会保留为历史记录，不代表当前实时队列失败。',

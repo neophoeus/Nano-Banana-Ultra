@@ -62,6 +62,12 @@ describe('RecentHistoryFilmstrip', () => {
         expect(markup).toContain('filmstrip-active-branch');
         expect(markup).toContain('Current version · Main');
         expect(markup).toContain('Recent Turns');
+        expect(markup).toContain('filmstrip-grid');
+        expect(markup).toContain('overflow-x-auto');
+        expect(markup).toContain('grid-cols-[repeat(4,minmax(96px,96px))]');
+        expect(markup).toContain('xl:grid-cols-[repeat(6,minmax(96px,96px))]');
+        expect(markup).toContain('xl:justify-center');
+        expect(markup).toContain('h-24 w-24 shrink-0');
         expect(markup).not.toContain('Open gallery');
     });
 
@@ -101,5 +107,38 @@ describe('RecentHistoryFilmstrip', () => {
         );
 
         expect((markup.match(/Queued Batch Result/g) || []).length).toBe(1);
+    });
+
+    it('renders a placeholder instead of an empty-src img when a turn has no media url', () => {
+        const markup = renderToStaticMarkup(
+            <RecentHistoryFilmstrip
+                recentHistory={[buildTurn({ url: '' })]}
+                branchCount={1}
+                activeStageImageUrl={null}
+                currentStageSourceHistoryId={null}
+                branchOriginIdByTurnId={{ 'turn-1': 'turn-1' }}
+                branchLabelByTurnId={{ 'turn-1': 'Main' }}
+                branchSummaryByOriginId={{}}
+                activeBranchOriginId={null}
+                onClear={vi.fn()}
+                onHistorySelect={vi.fn()}
+                onContinueFromHistoryTurn={vi.fn()}
+                onBranchFromHistoryTurn={vi.fn()}
+                isPromotedContinuationSource={() => false}
+                getContinueActionLabel={() => 'Continue'}
+                getBranchAccentClassName={() => 'border-gray-200 bg-white text-gray-700'}
+                getLineageActionLabel={() => 'Continue'}
+                getQueuedBatchPositionLabel={() => null}
+                currentLanguage="en"
+                renderHistoryActionButton={({ label, testId }) => (
+                    <button key={testId} data-testid={testId}>
+                        {label}
+                    </button>
+                )}
+            />,
+        );
+
+        expect(markup).toContain('filmstrip-card-turn-1-missing-media');
+        expect(markup).not.toContain('src=""');
     });
 });

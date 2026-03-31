@@ -284,6 +284,51 @@ describe('WorkspaceInsightsSidebar', () => {
         expect(markup).not.toContain('workspace-insights-header-summary');
     });
 
+    it('supports a compact density mode for workflow detail modal context', () => {
+        const markup = renderToStaticMarkup(
+            <WorkspaceInsightsSidebar
+                {...buildSidebarProps({
+                    showHeader: false,
+                    compact: true,
+                    thoughtsText: 'Compact workflow context should stay readable while using less vertical space.',
+                })}
+            />,
+        );
+
+        expect(markup).toContain(
+            'context-system-panel" class="nbu-shell-panel nbu-shell-surface-context-rail overflow-hidden p-2.5 lg:min-h-0"',
+        );
+        expect(markup).toContain('current-work-section" class="space-y-2.5 text-sm text-gray-600 dark:text-gray-300"');
+        expect(markup).toContain('current-work-thoughts-section');
+        expect(markup).toContain('Compact workflow context should stay readable while using less vertical space.');
+        expect(markup).not.toContain('workspace-insights-header-summary');
+    });
+
+    it('can suppress duplicated workflow summary and latest thoughts for workflow detail modal side context', () => {
+        const markup = renderToStaticMarkup(
+            <WorkspaceInsightsSidebar
+                {...buildSidebarProps({
+                    showHeader: false,
+                    compact: true,
+                    showWorkflowSummary: false,
+                    showThoughtsSection: false,
+                    thoughtsText: 'This thought should only live in the main workflow event list.',
+                    latestWorkflowEntry: {
+                        displayMessage: 'Result returned.',
+                        label: 'Output',
+                        stage: 'output',
+                        timestamp: '10:12',
+                    },
+                })}
+            />,
+        );
+
+        expect(markup).toContain('current-work-section');
+        expect(markup).not.toContain('context-workflow-summary');
+        expect(markup).not.toContain('current-work-thoughts-section');
+        expect(markup).not.toContain('This thought should only live in the main workflow event list.');
+    });
+
     it('renders a single continuity source without a nested disclosure summary', () => {
         const markup = renderToStaticMarkup(
             <WorkspaceInsightsSidebar

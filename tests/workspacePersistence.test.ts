@@ -184,6 +184,20 @@ describe('workspacePersistence', () => {
         expect(restored.queuedJobs).toEqual(incomingSnapshot.queuedJobs);
     });
 
+    it('drops empty generated image urls from restored view state', () => {
+        const restored = sanitizeWorkspaceSnapshot({
+            ...EMPTY_WORKSPACE_SNAPSHOT,
+            viewState: {
+                ...EMPTY_WORKSPACE_SNAPSHOT.viewState,
+                generatedImageUrls: ['', '   ', 'https://example.com/view.png'],
+                selectedImageIndex: 2,
+            },
+        });
+
+        expect(restored.viewState.generatedImageUrls).toEqual(['https://example.com/view.png']);
+        expect(restored.viewState.selectedImageIndex).toBe(0);
+    });
+
     it('strips oversized thought signatures from restored history and session hints', () => {
         const opaqueThoughtSignature = 'A'.repeat(512);
         const restored = sanitizeWorkspaceSnapshot({

@@ -301,6 +301,8 @@ export const fr = {
     queuedBatchJobsRefreshAll: 'Tout actualiser',
     queuedBatchJobsTrackedCount: '{0} suivis',
     queuedBatchJobsImportedTag: 'Importe',
+    queuedBatchJobsPastTargetWarning: '{0} h ecoulees · au-dela de l objectif de 24 h',
+    queuedBatchJobsNearExpiryWarning: '{0} h ecoulees · proche de l expiration a 48 h',
     queuedBatchJobsRestoredHistoryTag: 'Historique restaure',
     queuedBatchJobsRestoredHistoryHint:
         'Cet element clos provient d un espace de travail restaure. Il est conserve comme historique, pas comme un echec actif de la file.',

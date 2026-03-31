@@ -20,6 +20,7 @@ interface HistoryPanelProps {
     title?: string;
     currentLanguage?: Language;
     onClear?: () => void;
+    surface?: 'default' | 'embedded';
 }
 
 const HistoryPanel: React.FC<HistoryPanelProps> = ({
@@ -37,6 +38,7 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
     title,
     currentLanguage = 'en' as Language,
     onClear,
+    surface = 'default',
 }) => {
     const [page, setPage] = useState(0);
     const [showConfirm, setShowConfirm] = useState(false);
@@ -104,6 +106,17 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
 
     const historyActionButtonClassName =
         'nbu-control-button rounded-md px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em]';
+    const isEmbedded = surface === 'embedded';
+    const panelClassName = isEmbedded
+        ? `transition-opacity duration-300 ${disabled ? 'opacity-40 pointer-events-none select-none' : ''}`
+        : `mt-8 animate-[fadeIn_0.5s_ease-out] border-t border-gray-200 dark:border-gray-800 pt-6 transition-opacity duration-300 ${disabled ? 'opacity-40 pointer-events-none select-none' : ''}`;
+    const headerClassName = isEmbedded
+        ? 'mb-3 flex items-center justify-between gap-3 px-0.5'
+        : 'mb-4 flex items-center justify-between px-1';
+    const titleClassName = isEmbedded
+        ? 'flex items-center gap-2 text-[15px] font-black text-slate-900 dark:text-slate-100'
+        : 'text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-2';
+    const titleIconClassName = isEmbedded ? 'h-4 w-4 text-slate-400 dark:text-slate-500' : 'h-4 w-4';
 
     const getModeColor = (mode?: string, status?: string) => {
         if (status === 'failed')
@@ -155,14 +168,12 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
     };
 
     return (
-        <div
-            className={`mt-8 animate-[fadeIn_0.5s_ease-out] border-t border-gray-200 dark:border-gray-800 pt-6 transition-opacity duration-300 ${disabled ? 'opacity-40 pointer-events-none select-none' : ''}`}
-        >
-            <div className="flex items-center justify-between mb-4 px-1">
-                <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-2">
+        <div className={panelClassName}>
+            <div className={headerClassName}>
+                <h3 className={titleClassName}>
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
+                        className={titleIconClassName}
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -263,6 +274,7 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
                     const isQueuedBatchHistoryItem = item.executionMode === 'queued-batch-job';
                     const queuedBatchPositionLabel = queuedBatchPositionLabelByHistoryId[item.id];
                     const branchLabel = branchLabelByTurnId[item.id] || t('historyBranchMain');
+                    const hasPreviewImage = Boolean(item.url);
 
                     return (
                         <div
@@ -313,6 +325,13 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
                                     <span className="text-[10px] text-red-600 dark:text-red-300 font-bold uppercase tracking-wider">
                                         {t('lblHistoryFailed')}
                                     </span>
+                                </div>
+                            ) : !hasPreviewImage ? (
+                                <div
+                                    data-testid={`history-card-${item.id}-missing-media`}
+                                    className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800 text-[10px] text-slate-500 dark:text-slate-300 font-bold uppercase tracking-wider"
+                                >
+                                    {getTranslatedModeLabel(item.mode)}
                                 </div>
                             ) : (
                                 <img
