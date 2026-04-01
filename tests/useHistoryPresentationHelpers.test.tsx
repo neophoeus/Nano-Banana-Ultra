@@ -123,4 +123,288 @@ describe('useHistoryPresentationHelpers', () => {
 
         expect((markup.match(/Queued Batch Result/g) || []).length).toBe(1);
     });
+
+    it('builds selected-item summary strip props in the frozen canonical order', () => {
+        const earlierQueuedTurn = buildTurn({
+            id: 'turn-queued-1',
+            executionMode: 'queued-batch-job',
+            variantGroupId: 'batch-1',
+            metadata: { batchResultIndex: 0 },
+            createdAt: 1,
+        });
+        const selectedQueuedTurn = buildTurn({
+            id: 'turn-queued-2',
+            executionMode: 'queued-batch-job',
+            variantGroupId: 'batch-1',
+            metadata: { batchResultIndex: 1 },
+            createdAt: 2,
+            status: 'failed',
+            lineageAction: 'branch',
+            mode: 'Remix',
+        });
+
+        let summaryStripProps: ReturnType<
+            ReturnType<typeof useHistoryPresentationHelpers>['buildSelectedItemSummaryStripProps']
+        > | null = null;
+
+        const TestView = () => {
+            const { buildSelectedItemSummaryStripProps } = useHistoryPresentationHelpers({
+                history: [earlierQueuedTurn, selectedQueuedTurn],
+                effectiveBranchContinuationSourceByBranchOriginId: { 'turn-root': 'turn-queued-2' },
+                getBranchAccentClassName: () => 'border-gray-200 bg-white text-gray-700',
+                getContinueActionLabel: () => 'Continue',
+                getLineageActionLabel: (action) => {
+                    if (action === 'branch') {
+                        return 'Branch';
+                    }
+
+                    return 'Root';
+                },
+                getShortTurnId: (historyId) => historyId?.slice(0, 8) || 'none',
+                handleBranchFromHistoryTurn: vi.fn(),
+                handleContinueFromHistoryTurn: vi.fn(),
+                handleHistorySelect: vi.fn(),
+                handleRenameBranch: vi.fn(),
+                isPromotedContinuationSource: () => false,
+                t: (key) =>
+                    ({
+                        lblHistoryFailed: 'Failed',
+                        workspacePickerStageSource: 'Stage source',
+                        historyBranchContinuationSource: 'Continuation source',
+                        historyModeImage: 'Image',
+                        workspaceImportReviewExecutionQueuedBatchJob: 'Queued batch job',
+                    })[key] || key,
+            });
+
+            summaryStripProps = buildSelectedItemSummaryStripProps({
+                source: 'selected-history',
+                historyId: selectedQueuedTurn.id,
+                item: selectedQueuedTurn,
+                shortId: 'queued-2',
+                branchOriginId: 'turn-root',
+                branchLabel: 'Branch 2',
+                continuationSourceHistoryId: 'turn-queued-2',
+                isStageSource: true,
+                isContinuationSource: true,
+            });
+
+            return null;
+        };
+
+        renderToStaticMarkup(<TestView />);
+
+        expect(summaryStripProps?.chips.map((chip) => chip.key)).toEqual([
+            'failed',
+            'stage-source',
+            'continuation-source',
+            'branch',
+            'lineage-action',
+            'model',
+            'size',
+            'aspect-ratio',
+            'queued-batch-position',
+            'execution-mode',
+            'mode',
+            'created-at',
+        ]);
+        expect(summaryStripProps?.chips.find((chip) => chip.key === 'model')?.label).toBe('Banana 2');
+        expect(summaryStripProps?.chips.find((chip) => chip.key === 'queued-batch-position')?.label).toBe('#2/2');
+    });
+
+    it('builds the selected-item summary strip state matrix for standard, stage, continuation, and aligned source turns', () => {
+        const selectedTurn = buildTurn({
+            id: 'turn-matrix',
+            createdAt: 3,
+            lineageAction: 'continue',
+        });
+
+        let standardKeys: string[] = [];
+        let stageKeys: string[] = [];
+        let continuationKeys: string[] = [];
+        let alignedKeys: string[] = [];
+
+        const TestView = () => {
+            const { buildSelectedItemSummaryStripProps } = useHistoryPresentationHelpers({
+                history: [selectedTurn],
+                effectiveBranchContinuationSourceByBranchOriginId: { 'turn-root': 'turn-matrix' },
+                getBranchAccentClassName: () => 'border-gray-200 bg-white text-gray-700',
+                getContinueActionLabel: () => 'Continue',
+                getLineageActionLabel: () => 'Continue',
+                getShortTurnId: (historyId) => historyId?.slice(0, 8) || 'none',
+                handleBranchFromHistoryTurn: vi.fn(),
+                handleContinueFromHistoryTurn: vi.fn(),
+                handleHistorySelect: vi.fn(),
+                handleRenameBranch: vi.fn(),
+                isPromotedContinuationSource: () => false,
+                t: (key) =>
+                    ({
+                        workspacePickerStageSource: 'Stage source',
+                        historyBranchContinuationSource: 'Continuation source',
+                        historyModeImage: 'Image',
+                    })[key] || key,
+            });
+
+            const baseSelectedItem = {
+                source: 'selected-history' as const,
+                historyId: selectedTurn.id,
+                item: selectedTurn,
+                shortId: 'matrix',
+                branchOriginId: 'turn-root',
+                branchLabel: 'Main',
+                continuationSourceHistoryId: 'turn-matrix',
+            };
+
+            standardKeys =
+                buildSelectedItemSummaryStripProps({
+                    ...baseSelectedItem,
+                    isStageSource: false,
+                    isContinuationSource: false,
+                })?.chips.map((chip) => chip.key) || [];
+            stageKeys =
+                buildSelectedItemSummaryStripProps({
+                    ...baseSelectedItem,
+                    isStageSource: true,
+                    isContinuationSource: false,
+                })?.chips.map((chip) => chip.key) || [];
+            continuationKeys =
+                buildSelectedItemSummaryStripProps({
+                    ...baseSelectedItem,
+                    isStageSource: false,
+                    isContinuationSource: true,
+                })?.chips.map((chip) => chip.key) || [];
+            alignedKeys =
+                buildSelectedItemSummaryStripProps({
+                    ...baseSelectedItem,
+                    isStageSource: true,
+                    isContinuationSource: true,
+                })?.chips.map((chip) => chip.key) || [];
+
+            return null;
+        };
+
+        renderToStaticMarkup(<TestView />);
+
+        expect(standardKeys).toEqual(['branch', 'lineage-action', 'model', 'size', 'aspect-ratio', 'created-at']);
+        expect(stageKeys).toEqual([
+            'stage-source',
+            'branch',
+            'lineage-action',
+            'model',
+            'size',
+            'aspect-ratio',
+            'created-at',
+        ]);
+        expect(continuationKeys).toEqual([
+            'continuation-source',
+            'branch',
+            'lineage-action',
+            'model',
+            'size',
+            'aspect-ratio',
+            'created-at',
+        ]);
+        expect(alignedKeys).toEqual([
+            'stage-source',
+            'continuation-source',
+            'branch',
+            'lineage-action',
+            'model',
+            'size',
+            'aspect-ratio',
+            'created-at',
+        ]);
+    });
+
+    it('builds selected-item action bar props with Rename Branch only when a branch rename target exists', () => {
+        const originTurn = buildTurn({ id: 'turn-origin', createdAt: 1 });
+        const latestTurn = buildTurn({
+            id: 'turn-latest',
+            parentHistoryId: 'turn-origin',
+            rootHistoryId: 'turn-origin',
+            lineageAction: 'continue',
+            createdAt: 2,
+        });
+        const failedTurn = buildTurn({
+            id: 'turn-failed',
+            parentHistoryId: 'turn-latest',
+            rootHistoryId: 'turn-origin',
+            status: 'failed',
+            createdAt: 3,
+        });
+
+        let offStageActionKeys: Array<string> = [];
+        let onStageActionKeys: Array<string> = [];
+        let unavailableRenameActionKeys: Array<string> = [];
+
+        const TestView = () => {
+            const { buildSelectedItemActionBarProps } = useHistoryPresentationHelpers({
+                history: [originTurn, latestTurn, failedTurn],
+                effectiveBranchContinuationSourceByBranchOriginId: {},
+                getBranchAccentClassName: () => 'border-gray-200 bg-white text-gray-700',
+                getContinueActionLabel: () => 'Continue',
+                getLineageActionLabel: () => 'Continue',
+                getShortTurnId: (historyId) => historyId || 'none',
+                handleBranchFromHistoryTurn: vi.fn(),
+                handleContinueFromHistoryTurn: vi.fn(),
+                handleHistorySelect: vi.fn(),
+                handleRenameBranch: vi.fn(),
+                isPromotedContinuationSource: () => false,
+                t: (key) =>
+                    ({
+                        historyActionOpen: 'Open',
+                        historyActionBranch: 'Branch',
+                        historyActionRename: 'Rename',
+                        historyContinueFromTurn: 'Continue from turn',
+                        lineageActionContinue: 'Continue',
+                    })[key] || key,
+            });
+
+            offStageActionKeys =
+                buildSelectedItemActionBarProps({
+                    source: 'selected-history',
+                    historyId: originTurn.id,
+                    item: originTurn,
+                    shortId: 'selected',
+                    branchOriginId: 'turn-origin',
+                    branchLabel: 'Main',
+                    continuationSourceHistoryId: 'turn-origin',
+                    isStageSource: false,
+                    isContinuationSource: false,
+                })?.actions.map((action) => action.key) || [];
+
+            onStageActionKeys =
+                buildSelectedItemActionBarProps({
+                    source: 'stage-source',
+                    historyId: originTurn.id,
+                    item: originTurn,
+                    shortId: 'selected',
+                    branchOriginId: 'turn-origin',
+                    branchLabel: 'Main',
+                    continuationSourceHistoryId: 'turn-origin',
+                    isStageSource: true,
+                    isContinuationSource: false,
+                })?.actions.map((action) => action.key) || [];
+
+            unavailableRenameActionKeys =
+                buildSelectedItemActionBarProps({
+                    source: 'selected-history',
+                    historyId: failedTurn.id,
+                    item: failedTurn,
+                    shortId: 'failed',
+                    branchOriginId: 'turn-failed',
+                    branchLabel: 'Failed branch',
+                    continuationSourceHistoryId: 'turn-latest',
+                    isStageSource: false,
+                    isContinuationSource: false,
+                })?.actions.map((action) => action.key) || [];
+
+            return null;
+        };
+
+        renderToStaticMarkup(<TestView />);
+
+        expect(offStageActionKeys).toEqual(['open', 'continue', 'branch', 'rename-branch']);
+        expect(onStageActionKeys).toEqual(['continue', 'branch', 'rename-branch']);
+        expect(unavailableRenameActionKeys).toEqual(['open', 'continue', 'branch']);
+    });
 });

@@ -1,18 +1,49 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Button from './Button';
 import HexagonHUD from './HexagonHUD';
 import { AspectRatio, ExecutionMode, ImageSize, ImageStyle } from '../types';
 import { Language, getTranslation } from '../utils/translations';
-import { getExecutionModeLabel } from '../utils/executionMode';
+
+export type StageTopRightChipKey = 'stage-source' | 'origin' | 'branch' | 'continuation-differs' | 'result-status';
+export type StageTopRightChipTone = 'source' | 'branch' | 'divergence' | 'warning' | 'success';
+
+export interface StageTopRightChip {
+    key: StageTopRightChipKey;
+    label: string;
+    tone: StageTopRightChipTone;
+}
+
+export type StageTopRightActionKey =
+    | 'continue-from-here'
+    | 'edit'
+    | 'open-viewer'
+    | 'add-object-reference'
+    | 'add-character-reference'
+    | 'branch-from-here'
+    | 'clear'
+    | 'generating';
+
+export type StageTopRightActionEmphasis = 'primary' | 'secondary' | 'passive' | 'destructive';
+
+export interface StageTopRightAction {
+    key: StageTopRightActionKey;
+    label: string;
+    emphasis: StageTopRightActionEmphasis;
+    onClick?: () => void;
+}
+
+export interface StageTopRightModel {
+    contextChips: StageTopRightChip[];
+    overflowContextChips: StageTopRightChip[];
+    visibleActions: StageTopRightAction[];
+    overflowActions: StageTopRightAction[];
+}
 
 interface GeneratedImageProps {
     imageUrls: string[];
     isLoading: boolean;
     prompt?: string;
     error?: string | null;
-    actualOutputLabel?: string | null;
-    resultStatusSummary?: string | null;
-    resultStatusTone?: 'warning' | 'success' | null;
     settings?: {
         aspectRatio: AspectRatio;
         size: ImageSize;
@@ -36,27 +67,48 @@ interface GeneratedImageProps {
     currentLanguage?: Language;
     currentLog?: string;
     onOpenViewer?: () => void;
+    stageTopRight?: StageTopRightModel | null;
 }
+
+const stageTopRightChipClassNameByTone: Record<StageTopRightChipTone, string> = {
+    source: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-500/25 dark:bg-amber-950/30 dark:text-amber-100',
+    branch: 'border-slate-200/80 bg-white/92 text-slate-700 dark:border-slate-700/80 dark:bg-slate-900/88 dark:text-slate-100',
+    divergence:
+        'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-950/30 dark:text-emerald-100',
+    warning:
+        'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-500/25 dark:bg-amber-950/30 dark:text-amber-100',
+    success:
+        'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-950/30 dark:text-emerald-100',
+};
+
+const stageTopRightVisibleActionClassNameByEmphasis: Record<
+    Exclude<StageTopRightActionEmphasis, 'destructive'>,
+    string
+> = {
+    primary:
+        'border-amber-500 bg-amber-500 text-white shadow-[0_10px_24px_rgba(217,119,6,0.28)] hover:border-amber-600 hover:bg-amber-600',
+    secondary:
+        'border-slate-200/80 bg-white/92 text-slate-700 hover:border-amber-300 hover:text-amber-700 dark:border-slate-700/80 dark:bg-slate-900/88 dark:text-slate-100 dark:hover:border-amber-500/35 dark:hover:text-amber-200',
+    passive:
+        'cursor-default border-slate-200/80 bg-slate-50 text-slate-500 dark:border-slate-700/80 dark:bg-slate-900/88 dark:text-slate-300',
+};
+
+const resolveStageOverflowActionClassName = (action: StageTopRightAction) =>
+    action.emphasis === 'destructive'
+        ? 'text-rose-700 hover:bg-rose-50 dark:text-rose-200 dark:hover:bg-rose-950/30'
+        : 'text-slate-700 hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-800/70';
+
+const resolveStageOverflowChipClassName = (chip: StageTopRightChip) =>
+    `inline-flex w-fit items-center rounded-full border px-2 py-1 text-[10px] font-semibold leading-none whitespace-nowrap ${stageTopRightChipClassNameByTone[chip.tone]}`;
 
 const GeneratedImage: React.FC<GeneratedImageProps> = ({
     imageUrls,
     isLoading,
     prompt,
     error,
-    actualOutputLabel,
-    resultStatusSummary,
-    resultStatusTone,
     settings,
-    aspectRatio,
-    imageSize,
-    imageStyle,
     batchSize,
     generationMode = 'Text to Image',
-    executionMode = 'single-turn',
-    onEdit,
-    onGenerate,
-    onAddToObjectReference,
-    onAddToCharacterReference,
     onUpload,
     onClear,
     onSelectImage,
@@ -64,20 +116,11 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
     currentLanguage = 'en' as Language,
     currentLog = '',
     onOpenViewer,
+    stageTopRight,
 }) => {
-    const [isHovered, setIsHovered] = useState(false);
-    const resolvedAspectRatio = aspectRatio ?? settings?.aspectRatio;
-    const resolvedImageSize = imageSize ?? settings?.size;
-    const resolvedImageStyle = imageStyle ?? settings?.style;
     const resolvedBatchSize = batchSize ?? settings?.batchSize;
 
     const t = (key: string) => getTranslation(currentLanguage, key);
-
-    // Helper to translate style name - remove non-alphanumeric to match translations.ts keys
-    const getStyleLabel = (style: string) => {
-        const key = 'style' + style.replace(/[^a-zA-Z0-9]/g, '');
-        return t(key);
-    };
 
     const activeImage = selectedImageUrl || (imageUrls.length > 0 ? imageUrls[0] : '');
 
@@ -126,10 +169,6 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
         return mode;
     };
 
-    const resultStatusClassName =
-        resultStatusTone === 'warning'
-            ? 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100'
-            : 'border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-100';
     const stageFrameStyle: React.CSSProperties = {
         maxWidth: 'min(100%, calc(100vh - 15rem))',
     };
@@ -142,75 +181,111 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
         </div>
     );
 
-    // Unified Control Panel (Info + Actions) - Top Right
-    const ControlPanel = () => (
-        <div className="pointer-events-none absolute left-3 right-3 top-3 z-30 flex flex-col items-end gap-2 transition-opacity duration-300 sm:left-auto sm:right-4 sm:top-4">
-            {/* Row 1: Metadata Badges */}
-            <div className="nbu-overlay-shell pointer-events-auto flex max-w-full self-stretch cursor-default flex-wrap items-center justify-end gap-x-1 gap-y-1 px-3 py-1.5 text-[10px] font-bold text-gray-700 transition-colors sm:max-w-[calc(100%-1rem)] sm:self-auto sm:text-xs dark:text-gray-200">
-                <span className="text-amber-600 dark:text-amber-400">{resolvedAspectRatio}</span>
-                <span className="mx-1.5 opacity-30">|</span>
-                <span className="text-amber-500 dark:text-amber-200">{resolvedImageSize}</span>
-                {actualOutputLabel && (
-                    <>
-                        <span className="mx-1.5 opacity-30">|</span>
-                        <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-                            {t('groundingProvenanceInsightActualOutput')}: {actualOutputLabel}
-                        </span>
-                    </>
-                )}
-                {resolvedImageStyle !== 'None' && resolvedImageStyle && (
-                    <>
-                        <span className="mx-1.5 opacity-30">|</span>
-                        <span className="text-gray-900 dark:text-white opacity-90">
-                            {getStyleLabel(resolvedImageStyle)}
-                        </span>
-                    </>
-                )}
-                {resolvedBatchSize && resolvedBatchSize > 1 && (
-                    <>
-                        <span className="mx-1.5 opacity-30">|</span>
-                        <span className="text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10 px-1 rounded">
-                            {resolvedBatchSize}x
-                        </span>
-                    </>
-                )}
-                <>
-                    <span className="mx-1.5 opacity-30">|</span>
-                    <span className="text-sky-700 dark:text-sky-300">{getExecutionModeLabel(executionMode)}</span>
-                </>
-            </div>
+    const StageTopRightCluster = () => {
+        if (!stageTopRight || !activeImage) {
+            return null;
+        }
 
-            {/* Row 2: Actions (Only show if images exist) */}
-            {imageUrls.length > 0 && (
-                <div className="pointer-events-auto flex max-w-full self-stretch flex-wrap items-center justify-end gap-2 animate-[fadeIn_0.2s_ease-out] sm:self-auto">
-                    {onClear && (
-                        <div className="nbu-overlay-shell flex max-w-full items-center gap-0.5 p-1 transition-colors">
-                            <button
-                                onClick={onClear}
-                                className="p-1.5 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-all"
-                                title={t('clearResults')}
+        return (
+            <div
+                data-testid="stage-top-right-cluster"
+                className="pointer-events-none absolute left-3 right-3 top-3 z-30 flex flex-col items-end gap-2 sm:left-auto sm:right-4 sm:top-4"
+            >
+                {stageTopRight.contextChips.length > 0 ? (
+                    <div
+                        data-testid="stage-top-right-context-row"
+                        className="pointer-events-auto flex w-full max-w-[240px] flex-wrap items-center justify-end gap-1.5 sm:max-w-[320px]"
+                    >
+                        {stageTopRight.contextChips.map((chip) => (
+                            <span
+                                key={chip.key}
+                                data-testid={`stage-top-right-chip-${chip.key}`}
+                                className={`inline-flex h-5 shrink-0 items-center rounded-full border px-2 text-[10px] font-semibold leading-none whitespace-nowrap ${stageTopRightChipClassNameByTone[chip.tone]}`}
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="h-4 w-4"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
+                                {chip.label}
+                            </span>
+                        ))}
+                    </div>
+                ) : null}
+
+                {stageTopRight.visibleActions.length > 0 ||
+                stageTopRight.overflowActions.length > 0 ||
+                stageTopRight.overflowContextChips.length > 0 ? (
+                    <div
+                        data-testid="stage-top-right-actions-row"
+                        className="pointer-events-auto flex w-full max-w-[240px] items-center justify-end gap-2 sm:max-w-[320px]"
+                    >
+                        {stageTopRight.visibleActions.map((action) =>
+                            action.emphasis === 'passive' ? (
+                                <span
+                                    key={action.key}
+                                    data-testid={`stage-top-right-action-${action.key}`}
+                                    className={`inline-flex h-7 shrink-0 items-center justify-center rounded-full border px-3 text-[11px] font-semibold whitespace-nowrap ${stageTopRightVisibleActionClassNameByEmphasis.passive}`}
                                 >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    )}
-                </div>
-            )}
-        </div>
-    );
+                                    {action.label}
+                                </span>
+                            ) : (
+                                <button
+                                    key={action.key}
+                                    type="button"
+                                    data-testid={`stage-top-right-action-${action.key}`}
+                                    onClick={action.onClick}
+                                    className={`inline-flex h-7 shrink-0 items-center justify-center rounded-full border px-3 text-[11px] font-semibold whitespace-nowrap transition-colors ${stageTopRightVisibleActionClassNameByEmphasis[action.emphasis]}`}
+                                >
+                                    {action.label}
+                                </button>
+                            ),
+                        )}
+
+                        {stageTopRight.overflowActions.length > 0 || stageTopRight.overflowContextChips.length > 0 ? (
+                            <details data-testid="stage-top-right-overflow" className="relative shrink-0">
+                                <summary
+                                    data-testid="stage-top-right-overflow-trigger"
+                                    aria-label={t('stageActionMore')}
+                                    title={t('stageActionMore')}
+                                    className="inline-flex h-7 w-7 cursor-pointer list-none items-center justify-center rounded-full border border-slate-200/80 bg-white/92 text-sm font-semibold text-slate-700 transition-colors hover:border-amber-300 hover:text-amber-700 dark:border-slate-700/80 dark:bg-slate-900/88 dark:text-slate-100 dark:hover:border-amber-500/35 dark:hover:text-amber-200 [&::-webkit-details-marker]:hidden"
+                                >
+                                    •••
+                                </summary>
+                                <div
+                                    data-testid="stage-top-right-overflow-menu"
+                                    className="nbu-overlay-shell absolute right-0 top-full mt-2 grid min-w-[220px] gap-1 rounded-2xl border p-2 shadow-2xl"
+                                >
+                                    {stageTopRight.overflowContextChips.length > 0 ? (
+                                        <div
+                                            data-testid="stage-top-right-overflow-context"
+                                            className="mb-1 grid gap-1 border-b border-slate-200/80 pb-2 dark:border-slate-700/80"
+                                        >
+                                            {stageTopRight.overflowContextChips.map((chip) => (
+                                                <span
+                                                    key={chip.key}
+                                                    data-testid={`stage-top-right-overflow-chip-${chip.key}`}
+                                                    className={resolveStageOverflowChipClassName(chip)}
+                                                >
+                                                    {chip.label}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    ) : null}
+                                    {stageTopRight.overflowActions.map((action) => (
+                                        <button
+                                            key={action.key}
+                                            type="button"
+                                            data-testid={`stage-top-right-overflow-action-${action.key}`}
+                                            onClick={action.onClick}
+                                            className={`inline-flex w-full items-center justify-start rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors ${resolveStageOverflowActionClassName(action)}`}
+                                        >
+                                            {action.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </details>
+                        ) : null}
+                    </div>
+                ) : null}
+            </div>
+        );
+    };
 
     // --- FULL LOADING SCREEN (0 images yet) ---
     if (showFullLoading) {
@@ -229,8 +304,6 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
             animation: scan 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
           }
         `}</style>
-
-                        <ControlPanel />
 
                         {/* Cinematic Background Animation */}
                         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-200 via-gray-100 to-gray-50 dark:from-gray-900 dark:via-black dark:to-black animate-pulse opacity-50 dark:opacity-100"></div>
@@ -266,8 +339,6 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
             <div className="flex min-w-0 h-full w-full flex-col transition-colors duration-500">
                 <StageFrame>
                     <div className="nbu-stage-surface relative flex h-full w-full flex-col items-center justify-center p-8">
-                        <ControlPanel />
-
                         {/* Subtle Background Pattern for Errors */}
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#fee2e2_0%,_#f9fafb_70%)] dark:bg-[radial-gradient(circle_at_center,_#3f1010_0%,_#000000_70%)] opacity-50"></div>
                         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEgMWgydjJIMUMxeiIgZmlsbD0iIzQwMCIgZmlsbC1vcGFjaXR5PSIwLjEiLz48L3N2Zz4=')] opacity-5 dark:opacity-20"></div>
@@ -329,7 +400,6 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
             <div className="flex min-w-0 h-full w-full flex-col transition-colors duration-500">
                 <StageFrame>
                     <div className="nbu-empty-state-panel group relative flex h-full w-full flex-col items-center justify-center overflow-hidden border-2 border-dashed text-gray-500">
-                        <ControlPanel />
                         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-200/50 dark:to-black/40 pointer-events-none"></div>
 
                         <div className="z-10 flex flex-col items-center text-center px-6">
@@ -386,11 +456,7 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
         <div className="flex min-w-0 h-full w-full flex-col transition-colors duration-500">
             {/* Main Image Display */}
             <StageFrame>
-                <div
-                    className="nbu-stage-surface relative h-full w-full group shadow-2xl"
-                    onMouseEnter={() => setIsHovered(true)}
-                    onMouseLeave={() => setIsHovered(false)}
-                >
+                <div className="nbu-stage-surface relative h-full w-full group shadow-2xl">
                     <style>{`
             @keyframes scan {
                 0% { top: 0%; opacity: 0; }
@@ -403,7 +469,7 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
             }
           `}</style>
 
-                    <ControlPanel />
+                    <StageTopRightCluster />
 
                     {/* SCANNING OVERLAY (Active during generation of next batch) */}
                     {isLoading && (
@@ -435,7 +501,7 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
 
                     <img
                         src={activeImage}
-                        alt={prompt || t('stageGeneratedImageAlt')}
+                        alt={t('stageGeneratedImageAlt')}
                         className={`h-full w-full object-contain transition-transform duration-700 ease-out ${onOpenViewer ? 'cursor-zoom-in' : ''}`}
                         style={{
                             filter: isLoading ? 'grayscale(30%) contrast(110%)' : 'none',
@@ -447,38 +513,8 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
                             }
                         }}
                     />
-
-                    {onOpenViewer && !isLoading && activeImage && (
-                        <button
-                            data-testid="stage-open-viewer"
-                            onClick={onOpenViewer}
-                            className={`nbu-overlay-shell absolute bottom-4 left-4 max-w-[calc(100%-2rem)] rounded-full px-3 py-2 text-xs font-semibold text-gray-700 transition-all dark:text-gray-200 ${isHovered ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
-                        >
-                            {t('stageOpenViewer')}
-                        </button>
-                    )}
-
-                    {/* Top Overlay */}
-                    <div
-                        className={`absolute top-0 left-0 right-0 pt-16 pb-6 px-6 bg-gradient-to-b from-white/95 via-white/60 dark:from-black/95 dark:via-black/60 to-transparent transition-opacity duration-300 pointer-events-none ${isHovered && !isLoading ? 'opacity-100' : 'opacity-0'}`}
-                    >
-                        <p className="text-gray-800 dark:text-gray-200 text-sm font-light italic leading-relaxed drop-shadow-md text-center pt-8 max-w-2xl mx-auto">
-                            "{prompt}"
-                        </p>
-                    </div>
                 </div>
             </StageFrame>
-
-            {resultStatusSummary && !isLoading && (
-                <div
-                    className={`mt-3 rounded-2xl border px-4 py-3 text-xs leading-relaxed shadow-sm ${resultStatusClassName}`}
-                >
-                    <span className="nbu-stage-hero-status-pill mr-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-current">
-                        {t('stageGroundingResultStatus')}
-                    </span>
-                    <span>{resultStatusSummary}</span>
-                </div>
-            )}
 
             {/* Thumbnail Strip */}
             {(imageUrls.length > 1 || (isLoading && imageUrls.length > 0)) && (

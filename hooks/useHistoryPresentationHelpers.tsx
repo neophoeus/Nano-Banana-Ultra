@@ -1,7 +1,15 @@
 import { useCallback, useMemo } from 'react';
-import { getExecutionModeLabel } from '../utils/executionMode';
-import { BranchSummary } from '../utils/lineage';
-import { GeneratedImage, TurnLineageAction } from '../types';
+import { getExecutionModeLabel, inferExecutionModeFromHistoryItem } from '../utils/executionMode';
+import { BranchSummary, buildBranchSummaries } from '../utils/lineage';
+import {
+    GeneratedImage,
+    SelectedItemActionBarAction,
+    SelectedItemActionBarProps,
+    SelectedItemModel,
+    SelectedItemSummaryStripChip,
+    SelectedItemSummaryStripProps,
+    TurnLineageAction,
+} from '../types';
 
 type HistoryActionButtonVariant = 'primary' | 'secondary' | 'compactPrimary' | 'compactSecondary';
 
@@ -66,6 +74,12 @@ const historyActionButtonClassNames = {
     compactPrimary: 'rounded bg-amber-500 px-1.5 py-0.5 font-semibold text-white',
     compactSecondary: 'rounded border border-white/20 bg-black/35 px-1.5 py-0.5 font-semibold text-white',
 } as const;
+
+const compactSelectedItemModelLabelByModel: Record<GeneratedImage['model'], string> = {
+    'gemini-2.5-flash-image': 'Banana',
+    'gemini-3.1-flash-image-preview': 'Banana 2',
+    'gemini-3-pro-image-preview': 'Banana Pro',
+};
 
 export function useHistoryPresentationHelpers({
     history,
@@ -141,6 +155,26 @@ export function useHistoryPresentationHelpers({
 
         return labels;
     }, [history]);
+
+    const branchSummaryByOriginId = useMemo(
+        () =>
+            buildBranchSummaries(history).reduce<Record<string, BranchSummary>>((accumulator, branchSummary) => {
+                accumulator[branchSummary.branchOriginId] = branchSummary;
+                return accumulator;
+            }, {}),
+        [history],
+    );
+
+    const getQueuedBatchPositionLabel = useCallback(
+        (historyId?: string | null) => {
+            if (!historyId) {
+                return null;
+            }
+
+            return queuedBatchPositionLabelByHistoryId[historyId] || null;
+        },
+        [queuedBatchPositionLabelByHistoryId],
+    );
 
     const renderHistoryActionButton = useCallback(
         ({ label, onClick, testId, variant = 'secondary', stopPropagation = false }: RenderHistoryActionButtonArgs) => (
@@ -430,7 +464,169 @@ export function useHistoryPresentationHelpers({
         ],
     );
 
+    const buildSelectedItemActionBarProps = useCallback(
+        (selectedItem: SelectedItemModel | null): SelectedItemActionBarProps | null => {
+            if (!selectedItem) {
+                return null;
+            }
+
+            const actions: SelectedItemActionBarAction[] = [];
+            const renameTarget = branchSummaryByOriginId[selectedItem.branchOriginId]?.latestTurn || null;
+
+            if (!selectedItem.isStageSource) {
+                actions.push({
+                    key: 'open',
+                    label: t('historyActionOpen'),
+                    emphasis: 'secondary',
+                    onClick: () => handleHistorySelect(selectedItem.item),
+                });
+            }
+
+            actions.push({
+                key: 'continue',
+                label: resolveContinueLabel(selectedItem.item),
+                emphasis: 'primary',
+                onClick: () => handleContinueFromHistoryTurn(selectedItem.item),
+            });
+            actions.push({
+                key: 'branch',
+                label: t('historyActionBranch'),
+                emphasis: 'secondary',
+                onClick: () => handleBranchFromHistoryTurn(selectedItem.item),
+            });
+            if (renameTarget) {
+                actions.push({
+                    key: 'rename-branch',
+                    label: t('historyActionRename'),
+                    emphasis: 'tertiary',
+                    onClick: () => handleRenameBranch(renameTarget),
+                });
+            }
+
+            return {
+                selectedItem,
+                isSelectedItemOnStage: selectedItem.isStageSource,
+                actions,
+            };
+        },
+        [
+            branchSummaryByOriginId,
+            handleBranchFromHistoryTurn,
+            handleContinueFromHistoryTurn,
+            handleHistorySelect,
+            handleRenameBranch,
+            resolveContinueLabel,
+            t,
+        ],
+    );
+
+    const buildSelectedItemSummaryStripProps = useCallback(
+        (selectedItem: SelectedItemModel | null): SelectedItemSummaryStripProps | null => {
+            if (!selectedItem) {
+                return null;
+            }
+
+            const chips: SelectedItemSummaryStripChip[] = [];
+
+            if (selectedItem.item.status === 'failed') {
+                chips.push({
+                    key: 'failed',
+                    group: 'status',
+                    label: t('lblHistoryFailed'),
+                });
+            }
+
+            if (selectedItem.isStageSource) {
+                chips.push({
+                    key: 'stage-source',
+                    group: 'status',
+                    label: t('workspacePickerStageSource'),
+                });
+            }
+
+            if (selectedItem.isContinuationSource) {
+                chips.push({
+                    key: 'continuation-source',
+                    group: 'status',
+                    label: t('historyBranchContinuationSource'),
+                });
+            }
+
+            chips.push(
+                {
+                    key: 'branch',
+                    group: 'core',
+                    label: selectedItem.branchLabel,
+                },
+                {
+                    key: 'lineage-action',
+                    group: 'core',
+                    label: getLineageActionLabel(selectedItem.item.lineageAction),
+                },
+                {
+                    key: 'model',
+                    group: 'core',
+                    label: compactSelectedItemModelLabelByModel[selectedItem.item.model] || selectedItem.item.model,
+                },
+                {
+                    key: 'size',
+                    group: 'core',
+                    label: selectedItem.item.size,
+                },
+                {
+                    key: 'aspect-ratio',
+                    group: 'core',
+                    label: selectedItem.item.aspectRatio,
+                },
+            );
+
+            const queuedBatchPositionLabel = getQueuedBatchPositionLabel(selectedItem.historyId);
+            if (queuedBatchPositionLabel) {
+                chips.push({
+                    key: 'queued-batch-position',
+                    group: 'tail',
+                    label: queuedBatchPositionLabel,
+                });
+            }
+
+            const executionMode = inferExecutionModeFromHistoryItem(selectedItem.item);
+            if (executionMode !== 'single-turn') {
+                chips.push({
+                    key: 'execution-mode',
+                    group: 'tail',
+                    label: getExecutionModeLabel(executionMode),
+                });
+            }
+
+            const modeLabel = selectedItem.item.mode?.trim();
+            if (modeLabel && modeLabel !== t('historyModeImage')) {
+                chips.push({
+                    key: 'mode',
+                    group: 'tail',
+                    label: modeLabel,
+                });
+            }
+
+            chips.push({
+                key: 'created-at',
+                group: 'tail',
+                label: new Date(selectedItem.item.createdAt).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                }),
+            });
+
+            return {
+                selectedItem,
+                chips,
+            };
+        },
+        [getLineageActionLabel, getQueuedBatchPositionLabel, t],
+    );
+
     return {
+        buildSelectedItemActionBarProps,
+        buildSelectedItemSummaryStripProps,
         renderHistoryActionButton,
         renderHistoryTurnSnapshotContent,
         renderHistoryTurnActionRow,

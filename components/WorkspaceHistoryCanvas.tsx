@@ -15,6 +15,7 @@ type LineageRootGroup = {
 
 type WorkspaceHistoryCanvasProps = {
     currentLanguage: Language;
+    selectedItemDock?: React.ReactNode;
     recentLane: React.ReactNode;
     focusSurface: React.ReactNode;
     supportSurface: React.ReactNode;
@@ -65,6 +66,7 @@ type WorkspaceHistoryCanvasProps = {
 function WorkspaceHistoryCanvas(props: WorkspaceHistoryCanvasProps) {
     const {
         currentLanguage,
+        selectedItemDock,
         recentLane,
         focusSurface,
         supportSurface,
@@ -140,6 +142,11 @@ function WorkspaceHistoryCanvas(props: WorkspaceHistoryCanvasProps) {
                     {focusSurface}
                 </div>
                 <aside data-testid="workspace-history-support-rail" className="grid min-w-0 content-start gap-2.5">
+                    {selectedItemDock ? (
+                        <div data-testid="workspace-history-selected-item-dock" className="min-w-0">
+                            {selectedItemDock}
+                        </div>
+                    ) : null}
                     <div data-testid="workspace-history-recent-lane">{recentLane}</div>
                     <details
                         data-testid="history-versions-section"

@@ -359,6 +359,63 @@ export interface GeneratedImage {
     lineageDepth?: number;
 }
 
+export type SelectedItemDerivationSource = 'selected-history' | 'stage-source';
+
+export interface SelectedItemModel {
+    source: SelectedItemDerivationSource;
+    historyId: string;
+    item: GeneratedImage;
+    shortId: string;
+    branchOriginId: string;
+    branchLabel: string;
+    continuationSourceHistoryId: string | null;
+    isStageSource: boolean;
+    isContinuationSource: boolean;
+}
+
+export type SelectedItemActionBarActionKey = 'open' | 'continue' | 'branch' | 'rename-branch';
+export type SelectedItemActionBarActionEmphasis = 'primary' | 'secondary' | 'tertiary';
+
+export interface SelectedItemActionBarAction {
+    key: SelectedItemActionBarActionKey;
+    label: string;
+    emphasis: SelectedItemActionBarActionEmphasis;
+    onClick: () => void;
+}
+
+export interface SelectedItemActionBarProps {
+    selectedItem: SelectedItemModel;
+    isSelectedItemOnStage: boolean;
+    actions: SelectedItemActionBarAction[];
+}
+
+export type SelectedItemSummaryStripChipKey =
+    | 'failed'
+    | 'stage-source'
+    | 'continuation-source'
+    | 'branch'
+    | 'lineage-action'
+    | 'model'
+    | 'size'
+    | 'aspect-ratio'
+    | 'queued-batch-position'
+    | 'execution-mode'
+    | 'mode'
+    | 'created-at';
+
+export type SelectedItemSummaryStripChipGroup = 'status' | 'core' | 'tail';
+
+export interface SelectedItemSummaryStripChip {
+    key: SelectedItemSummaryStripChipKey;
+    group: SelectedItemSummaryStripChipGroup;
+    label: string;
+}
+
+export interface SelectedItemSummaryStripProps {
+    selectedItem: SelectedItemModel;
+    chips: SelectedItemSummaryStripChip[];
+}
+
 export interface WorkspacePersistenceSnapshot {
     history: GeneratedImage[];
     stagedAssets: StageAsset[];

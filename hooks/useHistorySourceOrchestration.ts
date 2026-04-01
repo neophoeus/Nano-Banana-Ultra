@@ -45,6 +45,7 @@ type UseHistorySourceOrchestrationArgs = {
     selectedImageIndex: number;
     selectedHistoryId: string | null;
     isGenerating: boolean;
+    currentStageSourceHistoryId: string | null;
     currentStageLineageAction?: TurnLineageAction;
     workspaceSession: WorkspaceSessionState;
     conversationState: WorkspaceConversationState;
@@ -84,11 +85,51 @@ type UseHistorySourceOrchestrationArgs = {
     clearActivePickerSheet: () => void;
 };
 
+type ResolveViewerStageSourceSyncArgs = {
+    currentViewerImage: string;
+    selectedHistoryId: string | null;
+    currentStageSourceHistoryId: string | null;
+    currentStageLineageAction?: TurnLineageAction;
+    selectedHistoryLineageAction?: TurnLineageAction;
+    getHistoryTurnById: (historyId?: string | null) => GeneratedImageType | null;
+};
+
+export const resolveViewerStageSourceSyncArgs = ({
+    currentViewerImage,
+    selectedHistoryId,
+    currentStageSourceHistoryId,
+    currentStageLineageAction,
+    selectedHistoryLineageAction,
+    getHistoryTurnById,
+}: ResolveViewerStageSourceSyncArgs) => {
+    if (!currentViewerImage) {
+        return null;
+    }
+
+    const selectedHistoryItem = selectedHistoryId ? getHistoryTurnById(selectedHistoryId) : null;
+    const shouldUseSelectedHistory = Boolean(
+        selectedHistoryId &&
+        selectedHistoryItem &&
+        (currentStageSourceHistoryId === selectedHistoryId || selectedHistoryItem.url === currentViewerImage),
+    );
+    const nextSourceHistoryId = shouldUseSelectedHistory ? selectedHistoryId : currentStageSourceHistoryId;
+    const nextHistoryItem = nextSourceHistoryId ? getHistoryTurnById(nextSourceHistoryId) : null;
+
+    return {
+        origin: nextSourceHistoryId ? ('history' as const) : ('generated' as const),
+        url: currentViewerImage,
+        savedFilename: nextHistoryItem?.savedFilename,
+        sourceHistoryId: nextSourceHistoryId || undefined,
+        lineageAction: shouldUseSelectedHistory ? selectedHistoryLineageAction : currentStageLineageAction,
+    };
+};
+
 export function useHistorySourceOrchestration({
     generatedImageUrls,
     selectedImageIndex,
     selectedHistoryId,
     isGenerating,
+    currentStageSourceHistoryId,
     currentStageLineageAction,
     workspaceSession,
     conversationState,
@@ -352,20 +393,22 @@ export function useHistorySourceOrchestration({
             return;
         }
 
-        const nextSourceHistoryId = selectedHistoryId || undefined;
-        const nextHistoryItem = nextSourceHistoryId ? getHistoryTurnById(nextSourceHistoryId) : null;
-        const preservedLineageAction = nextSourceHistoryId
-            ? selectedHistoryLineageActionRef.current
-            : currentStageLineageAction;
-
-        upsertViewerStageSource({
-            origin: selectedHistoryId ? 'history' : 'generated',
-            url: currentViewerImage,
-            savedFilename: nextHistoryItem?.savedFilename,
-            sourceHistoryId: nextSourceHistoryId,
-            lineageAction: preservedLineageAction,
+        const nextStageSource = resolveViewerStageSourceSyncArgs({
+            currentViewerImage,
+            selectedHistoryId,
+            currentStageSourceHistoryId,
+            currentStageLineageAction,
+            selectedHistoryLineageAction: selectedHistoryLineageActionRef.current,
+            getHistoryTurnById,
         });
+
+        if (!nextStageSource) {
+            return;
+        }
+
+        upsertViewerStageSource(nextStageSource);
     }, [
+        currentStageSourceHistoryId,
         currentStageLineageAction,
         generatedImageUrls,
         getHistoryTurnById,

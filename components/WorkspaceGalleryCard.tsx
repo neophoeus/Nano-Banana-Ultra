@@ -12,6 +12,7 @@ type WorkspaceGalleryCardProps = {
     getContinueActionLabel: (item: GeneratedImage) => string;
     branchNameOverrides: BranchNameOverrides;
     selectedHistoryId: string | null;
+    currentStageSourceHistoryId?: string | null;
     onClear: () => void;
 };
 
@@ -24,6 +25,7 @@ function WorkspaceGalleryCard({
     getContinueActionLabel,
     branchNameOverrides,
     selectedHistoryId,
+    currentStageSourceHistoryId,
     onClear,
 }: WorkspaceGalleryCardProps) {
     const t = (key: string) => getTranslation(currentLanguage, key);
@@ -43,6 +45,7 @@ function WorkspaceGalleryCard({
                     getContinueActionLabel={getContinueActionLabel}
                     branchNameOverrides={branchNameOverrides}
                     selectedId={selectedHistoryId || undefined}
+                    currentStageSourceHistoryId={currentStageSourceHistoryId}
                     currentLanguage={currentLanguage}
                     onClear={onClear}
                     title={t('workspacePickerFullGallery')}

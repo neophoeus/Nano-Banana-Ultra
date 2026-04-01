@@ -8,6 +8,7 @@ describe('WorkspaceHistoryCanvas', () => {
         const markup = renderToStaticMarkup(
             <WorkspaceHistoryCanvas
                 currentLanguage="en"
+                selectedItemDock={<div data-testid="selected-item-dock-content">Selected item dock</div>}
                 recentLane={<div data-testid="recent-lane-content">Recent lane</div>}
                 focusSurface={<div data-testid="focus-surface-content">Focus surface</div>}
                 supportSurface={<div data-testid="support-surface-content">Support surface</div>}
@@ -88,6 +89,7 @@ describe('WorkspaceHistoryCanvas', () => {
         expect(markup).toContain('workspace-history-recent-lane');
         expect(markup).toContain('workspace-history-focus-state');
         expect(markup).toContain('workspace-history-support-rail');
+        expect(markup).toContain('workspace-history-selected-item-dock');
         expect(markup).toContain('xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]');
         expect(markup).toContain('history-versions-shell');
         expect(markup).toContain('nbu-stage-hero-filmstrip-shell');
@@ -115,6 +117,7 @@ describe('WorkspaceHistoryCanvas', () => {
         expect(markup).toContain('support-surface-content');
         expect(markup).not.toContain('session-stack-section');
         expect(markup.indexOf('focus-surface-content')).toBeLessThan(markup.indexOf('recent-lane-content'));
+        expect(markup.indexOf('selected-item-dock-content')).toBeLessThan(markup.indexOf('recent-lane-content'));
         expect(markup.indexOf('recent-lane-content')).toBeLessThan(markup.indexOf('history-versions-shell'));
         expect(markup.indexOf('history-versions-open-details')).toBeLessThan(
             markup.indexOf('history-import-workspace'),

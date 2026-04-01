@@ -17,42 +17,54 @@ const buildTurn = (overrides: Partial<GeneratedImage> = {}): GeneratedImage => (
     ...overrides,
 });
 
+const getVisibleText = (markup: string) =>
+    markup
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
 describe('HistoryPanel', () => {
-    it('uses translated fallbacks for lineage and branch labels', () => {
+    it('uses translated source markers on compact history tokens while keeping prompt text out of the gallery cards', () => {
         const markup = renderToStaticMarkup(
             <HistoryPanel
-                history={[buildTurn({ lineageAction: 'continue' })]}
+                history={[
+                    buildTurn({
+                        id: 'turn-stage',
+                        url: 'https://example.com/stage.png',
+                        prompt: 'Stage prompt should stay hidden.',
+                    }),
+                    buildTurn({
+                        id: 'turn-continuation',
+                        url: 'https://example.com/continuation.png',
+                        prompt: 'Continuation prompt should stay hidden.',
+                    }),
+                ]}
                 onSelect={vi.fn()}
-                onContinueFromTurn={vi.fn()}
-                onBranchFromTurn={vi.fn()}
+                isPromotedContinuationSource={(item) => item.id === 'turn-continuation'}
+                currentStageSourceHistoryId="turn-stage"
+                selectedId="turn-stage"
                 currentLanguage="zh_TW"
             />,
         );
+        const visibleText = getVisibleText(markup);
 
-        expect(markup).toContain('提示詞歷史');
-        expect(markup).toContain('延續');
-        expect(markup).toContain('主線');
-        expect(markup).toContain('分支');
-        expect(markup).not.toContain('Continue');
-        expect(markup).not.toContain('Main');
+        expect(visibleText).toContain('提示詞歷史');
+        expect(visibleText).toContain('階段來源');
+        expect(visibleText).toContain('延續來源');
+        expect(markup).toContain('history-stage-source-turn-stage');
+        expect(markup).toContain('history-continuation-source-turn-continuation');
+        expect(markup).not.toContain('history-stage-source-turn-continuation');
+        expect(markup).not.toContain('history-continuation-source-turn-stage');
+        expect(markup).toContain('history-selected-turn-stage');
+        expect(markup).not.toContain('Stage prompt should stay hidden.');
+        expect(markup).not.toContain('Continuation prompt should stay hidden.');
+        expect(visibleText).not.toContain('Stage prompt should stay hidden.');
+        expect(visibleText).not.toContain('Continuation prompt should stay hidden.');
+        expect(markup).not.toContain('Stage source');
+        expect(markup).not.toContain('Continuation source');
     });
 
-    it('uses contextual continue wording for plain turns', () => {
-        const markup = renderToStaticMarkup(
-            <HistoryPanel
-                history={[buildTurn({ lineageAction: 'continue' })]}
-                onSelect={vi.fn()}
-                onContinueFromTurn={vi.fn()}
-                onBranchFromTurn={vi.fn()}
-                getContinueActionLabel={() => 'Continue'}
-                currentLanguage="en"
-            />,
-        );
-
-        expect(markup).toContain('Continue from turn');
-    });
-
-    it('renders queued history items with one queued-batch result badge', () => {
+    it('removes per-card actions and queued metadata from history tokens', () => {
         const markup = renderToStaticMarkup(
             <HistoryPanel
                 history={[
@@ -65,11 +77,18 @@ describe('HistoryPanel', () => {
                 onSelect={vi.fn()}
                 onContinueFromTurn={vi.fn()}
                 onBranchFromTurn={vi.fn()}
+                onRenameBranch={vi.fn()}
+                getContinueActionLabel={() => 'Continue'}
                 currentLanguage="en"
             />,
         );
 
-        expect((markup.match(/Queued Batch Result/g) || []).length).toBe(1);
+        expect(markup).not.toContain('history-open-turn-1');
+        expect(markup).not.toContain('history-continue-turn-1');
+        expect(markup).not.toContain('history-branch-turn-1');
+        expect(markup).not.toContain('history-rename-turn-1');
+        expect(markup).not.toContain('Continue from turn');
+        expect(markup).not.toContain('Queued Batch Result');
     });
 
     it('renders a placeholder instead of an empty-src img when a history turn has no media url', () => {

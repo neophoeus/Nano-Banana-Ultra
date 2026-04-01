@@ -1,5 +1,4 @@
 import React from 'react';
-import { getExecutionModeLabel } from '../utils/executionMode';
 import { getTranslation, Language } from '../utils/translations';
 import { GeneratedImage } from '../types';
 import InfoTooltip from './InfoTooltip';
@@ -15,6 +14,7 @@ type RecentHistoryFilmstripProps = {
     recentHistory: GeneratedImage[];
     branchCount: number;
     activeStageImageUrl: string | null;
+    selectedHistoryId: string | null;
     currentStageSourceHistoryId: string | null;
     branchOriginIdByTurnId: Record<string, string>;
     branchLabelByTurnId: Record<string, string>;
@@ -43,33 +43,18 @@ function RecentHistoryFilmstrip({
     recentHistory,
     branchCount,
     activeStageImageUrl,
+    selectedHistoryId,
     currentStageSourceHistoryId,
-    branchOriginIdByTurnId,
     branchLabelByTurnId,
     branchSummaryByOriginId,
     activeBranchOriginId,
     onClear,
     onHistorySelect,
-    onContinueFromHistoryTurn,
-    onBranchFromHistoryTurn,
     isPromotedContinuationSource,
-    getContinueActionLabel,
     getBranchAccentClassName,
-    getLineageActionLabel,
-    getQueuedBatchPositionLabel,
     currentLanguage,
-    renderHistoryActionButton,
 }: RecentHistoryFilmstripProps) {
     const t = (key: string) => getTranslation(currentLanguage, key);
-    const getFilmstripContinueLabel = (item: GeneratedImage) => {
-        const continueLabel = getContinueActionLabel(item);
-
-        if (!item.variantGroupId && continueLabel === t('lineageActionContinue')) {
-            return t('historyContinueFromTurn');
-        }
-
-        return continueLabel;
-    };
     const activeBranchSummary = activeBranchOriginId ? branchSummaryByOriginId[activeBranchOriginId] || null : null;
     const activeBranchLabel = activeBranchSummary
         ? activeBranchSummary.branchLabel ||
@@ -134,15 +119,14 @@ function RecentHistoryFilmstrip({
                         <div data-testid="filmstrip-grid" className={filmstripGridClassName}>
                             {recentHistory.map((item) => {
                                 const isFailed = item.status === 'failed';
-                                const isActive = !isFailed && activeStageImageUrl === item.url;
+                                const selectedHistoryOwnerId = selectedHistoryId || currentStageSourceHistoryId || null;
+                                const isSelected =
+                                    !isFailed &&
+                                    (selectedHistoryOwnerId
+                                        ? selectedHistoryOwnerId === item.id
+                                        : activeStageImageUrl === item.url);
                                 const isCurrentStageSource = currentStageSourceHistoryId === item.id;
-                                const isQueuedBatchHistoryItem = item.executionMode === 'queued-batch-job';
-                                const queuedBatchPositionLabel = getQueuedBatchPositionLabel(item);
-                                const branchOriginId = branchOriginIdByTurnId[item.id] || item.id;
-                                const branchLabel = branchLabelByTurnId[item.id] || t('historyBranchMain');
-                                const branchSummary = branchSummaryByOriginId[branchOriginId];
-                                const isActiveBranch = activeBranchOriginId === branchOriginId;
-                                const isPromotedSource = isPromotedContinuationSource(item);
+                                const isContinuationSource = isPromotedContinuationSource(item);
                                 const hasPreviewImage = Boolean(item.url);
 
                                 return (
@@ -158,122 +142,52 @@ function RecentHistoryFilmstrip({
                                         }}
                                         role="button"
                                         tabIndex={0}
-                                        className={`group relative h-24 w-24 shrink-0 overflow-hidden rounded-[20px] border transition-all ${isActive ? 'border-amber-500 shadow-[0_0_14px_rgba(245,158,11,0.2)]' : isActiveBranch ? 'border-sky-300 shadow-[0_0_12px_rgba(14,165,233,0.14)] dark:border-sky-500/50' : 'border-gray-200/80 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600'}`}
+                                        className={`relative h-24 w-24 shrink-0 overflow-hidden rounded-[18px] border bg-white/90 transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 dark:bg-slate-950/70 ${isSelected ? 'border-amber-500 shadow-[0_10px_22px_rgba(15,23,42,0.18)]' : isFailed ? 'border-red-300 dark:border-red-800' : 'border-gray-200/80 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600'}`}
                                     >
                                         {isFailed ? (
-                                            <div className="flex h-full w-full items-center justify-center bg-red-50 text-xs font-semibold text-red-600 dark:bg-red-950/20 dark:text-red-300">
+                                            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-red-50 to-rose-100 px-2 text-center text-[10px] font-bold uppercase tracking-[0.14em] text-red-600 dark:from-red-950/30 dark:to-rose-950/20 dark:text-red-300">
                                                 {t('lblHistoryFailed')}
                                             </div>
                                         ) : !hasPreviewImage ? (
                                             <div
                                                 data-testid={`filmstrip-card-${item.id}-missing-media`}
-                                                className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-[9px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:from-slate-900 dark:to-slate-800 dark:text-slate-300"
+                                                className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800"
                                             >
-                                                {getExecutionModeLabel(item.executionMode)}
+                                                <div className="h-8 w-8 rounded-2xl border border-slate-300/70 bg-white/70 shadow-inner dark:border-slate-700 dark:bg-slate-900/60" />
                                             </div>
                                         ) : (
                                             <img
                                                 src={item.url}
-                                                alt={item.prompt}
+                                                alt={t('stageGeneratedImageAlt')}
                                                 className="h-full w-full object-cover"
                                             />
                                         )}
-                                        {!isFailed && (
-                                            <div className="absolute inset-x-0 top-0 flex items-start justify-between px-1.5 py-1.5">
-                                                <span
-                                                    className={`rounded-full border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.14em] backdrop-blur-sm ${getBranchAccentClassName(branchOriginId, branchLabel)}`}
-                                                >
-                                                    {branchLabel}
-                                                </span>
-                                                <div className="flex flex-col items-end gap-1">
-                                                    {isPromotedSource && (
-                                                        <span className="rounded-full bg-emerald-500/90 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.14em] text-white">
-                                                            {t('workspaceSourceBadge')}
-                                                        </span>
-                                                    )}
-                                                    {isCurrentStageSource && (
-                                                        <span
-                                                            data-testid="filmstrip-stage-source-badge"
-                                                            className="rounded-full bg-amber-500/90 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.14em] text-white"
-                                                        >
-                                                            {t('workspacePickerStageSource')}
-                                                        </span>
-                                                    )}
-                                                    {isActiveBranch && (
-                                                        <span className="rounded-full bg-black/55 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.14em] text-white">
-                                                            {t('statusPanelLive')}
-                                                        </span>
-                                                    )}
-                                                </div>
+                                        {!isFailed && (isCurrentStageSource || isContinuationSource) && (
+                                            <div className="pointer-events-none absolute left-1.5 top-1.5 z-10 flex max-w-[calc(100%-0.75rem)] flex-col items-start gap-1">
+                                                {isCurrentStageSource && (
+                                                    <span
+                                                        data-testid={`filmstrip-stage-source-${item.id}`}
+                                                        className="rounded-full bg-amber-500/95 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.14em] text-white shadow-lg whitespace-nowrap"
+                                                    >
+                                                        {t('workspacePickerStageSource')}
+                                                    </span>
+                                                )}
+                                                {isContinuationSource && (
+                                                    <span
+                                                        data-testid={`filmstrip-continuation-source-${item.id}`}
+                                                        className="rounded-full bg-emerald-500/95 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.14em] text-white shadow-lg whitespace-nowrap"
+                                                    >
+                                                        {t('historyBranchContinuationSource')}
+                                                    </span>
+                                                )}
                                             </div>
                                         )}
-                                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/88 via-black/50 to-transparent px-2 py-1.5 text-left text-[10px] text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-                                            <div>{item.mode || t('historyModeImage')}</div>
-                                            {!isQueuedBatchHistoryItem && (
-                                                <div className="mt-1 text-[9px] text-white/72">
-                                                    {getExecutionModeLabel(item.executionMode)}
-                                                </div>
-                                            )}
-                                            {!isFailed && (
-                                                <div className="mt-1 flex flex-wrap gap-1 text-[9px] text-white/80">
-                                                    {isCurrentStageSource && (
-                                                        <span className="rounded bg-amber-500/90 px-1.5 py-0.5 font-semibold text-white">
-                                                            {t('workspacePickerStageSource')}
-                                                        </span>
-                                                    )}
-                                                    {isPromotedSource && (
-                                                        <span className="rounded bg-emerald-500/90 px-1.5 py-0.5 font-semibold text-white">
-                                                            {t('workspaceSourceBadge')}
-                                                        </span>
-                                                    )}
-                                                    {isQueuedBatchHistoryItem && (
-                                                        <span className="rounded bg-sky-500/90 px-1.5 py-0.5 font-semibold text-white">
-                                                            {t('workspaceImportReviewExecutionQueuedBatchJob')}
-                                                        </span>
-                                                    )}
-                                                    {queuedBatchPositionLabel && (
-                                                        <span className="rounded bg-white/10 px-1.5 py-0.5 font-semibold text-white">
-                                                            {queuedBatchPositionLabel}
-                                                        </span>
-                                                    )}
-                                                    {!isPromotedSource &&
-                                                        item.variantGroupId &&
-                                                        !isQueuedBatchHistoryItem && (
-                                                            <span className="rounded bg-violet-500/90 px-1.5 py-0.5 font-semibold text-white">
-                                                                {t('historyBadgeCandidate')}
-                                                            </span>
-                                                        )}
-                                                    <span className="rounded bg-white/10 px-1.5 py-0.5 font-semibold">
-                                                        {getLineageActionLabel(item.lineageAction)}
-                                                    </span>
-                                                </div>
-                                            )}
-                                            {!isFailed && (
-                                                <div className="mt-1 flex flex-wrap gap-1">
-                                                    {renderHistoryActionButton({
-                                                        label: t('historyActionOpen'),
-                                                        testId: `filmstrip-open-${item.id}`,
-                                                        onClick: () => onHistorySelect(item),
-                                                        variant: 'compactSecondary',
-                                                        stopPropagation: true,
-                                                    })}
-                                                    {renderHistoryActionButton({
-                                                        label: getFilmstripContinueLabel(item),
-                                                        testId: `filmstrip-continue-${item.id}`,
-                                                        onClick: () => onContinueFromHistoryTurn(item),
-                                                        variant: 'compactPrimary',
-                                                        stopPropagation: true,
-                                                    })}
-                                                    {renderHistoryActionButton({
-                                                        label: t('historyActionBranch'),
-                                                        testId: `filmstrip-branch-${item.id}`,
-                                                        onClick: () => onBranchFromHistoryTurn(item),
-                                                        variant: 'compactSecondary',
-                                                        stopPropagation: true,
-                                                    })}
-                                                </div>
-                                            )}
-                                        </div>
+                                        {isSelected && !isFailed && (
+                                            <span
+                                                data-testid={`filmstrip-selected-${item.id}`}
+                                                className="absolute bottom-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-white/80 shadow-[0_0_10px_rgba(250,204,21,0.85)] dark:ring-slate-950/80"
+                                            />
+                                        )}
                                     </div>
                                 );
                             })}

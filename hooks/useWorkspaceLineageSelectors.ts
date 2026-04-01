@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { BranchNameOverrides, GeneratedImage, WorkspaceSessionState } from '../types';
+import { BranchNameOverrides, GeneratedImage, SelectedItemModel } from '../types';
 import { BranchSummary, buildBranchSummaries, buildLineagePresentation } from '../utils/lineage';
 import {
     getContinueActionLabel as getContinueActionLabelForItem,
@@ -168,8 +168,41 @@ export function useWorkspaceLineageSelectors({
         const activeBranchSummary = activeBranchOriginId
             ? collection.branchSummaries.find((branch) => branch.branchOriginId === activeBranchOriginId) || null
             : collection.branchSummaries[0] || null;
-        const currentStageSourceHistoryId =
-            currentStageAssetSourceHistoryId || selectedHistoryId || workspaceSessionSourceHistoryId || null;
+        const exactCurrentStageSourceHistoryId = currentStageAssetSourceHistoryId || null;
+        const selectedItemHistoryId = selectedHistoryId || exactCurrentStageSourceHistoryId || null;
+        const selectedItemSource = selectedHistoryId
+            ? 'selected-history'
+            : exactCurrentStageSourceHistoryId
+              ? 'stage-source'
+              : null;
+        const selectedItemTurn = getHistoryTurnById(selectedItemHistoryId);
+        const selectedItemBranchOriginId = selectedItemHistoryId
+            ? collection.branchOriginIdByTurnId[selectedItemHistoryId] || selectedItemHistoryId
+            : null;
+        const selectedItemBranchLabel = selectedItemBranchOriginId
+            ? collection.branchLabelByOriginId[selectedItemBranchOriginId] ||
+              (selectedItemTurn ? collection.branchLabelByTurnId[selectedItemTurn.id] : undefined) ||
+              collection.autoBranchLabelByOriginId[selectedItemBranchOriginId] ||
+              getShortTurnId(selectedItemBranchOriginId)
+            : null;
+        const selectedItemContinuationSourceHistoryId = selectedItemBranchOriginId
+            ? collection.effectiveBranchContinuationSourceByBranchOriginId[selectedItemBranchOriginId] || null
+            : null;
+        const selectedItemModel: SelectedItemModel | null =
+            selectedItemSource && selectedItemTurn && selectedItemBranchOriginId && selectedItemBranchLabel
+                ? {
+                      source: selectedItemSource,
+                      historyId: selectedItemTurn.id,
+                      item: selectedItemTurn,
+                      shortId: getShortTurnId(selectedItemTurn.id),
+                      branchOriginId: selectedItemBranchOriginId,
+                      branchLabel: selectedItemBranchLabel,
+                      continuationSourceHistoryId: selectedItemContinuationSourceHistoryId,
+                      isStageSource: selectedItemTurn.id === exactCurrentStageSourceHistoryId,
+                      isContinuationSource: selectedItemTurn.id === selectedItemContinuationSourceHistoryId,
+                  }
+                : null;
+        const currentStageSourceHistoryId = exactCurrentStageSourceHistoryId;
         const currentStageSourceTurn = getHistoryTurnById(currentStageSourceHistoryId);
         const currentStageBranchOriginId = currentStageSourceHistoryId
             ? collection.branchOriginIdByTurnId[currentStageSourceHistoryId] || currentStageSourceHistoryId
@@ -214,6 +247,7 @@ export function useWorkspaceLineageSelectors({
             latestSuccessfulRestorableTurn,
             activeBranchOriginId,
             activeBranchSummary,
+            selectedItemModel,
             currentStageSourceHistoryId,
             currentStageSourceTurn,
             currentStageBranchSummary,

@@ -50,6 +50,8 @@ export default defineConfig(({ mode }) => {
             },
         },
         test: {
+            include: ['tests/**/*.test.{ts,tsx}', 'tests/**/*.spec.{ts,tsx}'],
+            exclude: ['e2e/**'],
             setupFiles: ['./tests/setupTranslations.ts'],
         },
     };

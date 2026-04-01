@@ -4,6 +4,17 @@ This changelog is compiled from the repository's local git tags plus the publish
 
 ## Unreleased
 
+## v3.1.6 - 2026-04-01
+
+- Release title: Nano Banana Ultra 3.1.6 - Compact Thumbnail & Stage Context Completion
+- Release prep summary:
+    - completed the compact-thumbnail and stage-context slice by turning `Recent Turns` and embedded `Gallery` history cards into scan-and-switch tokens, removing prompt preview from the main workspace surfaces, and keeping prompt detail viewer-owned instead of letting thumbnails or the stage act like mini detail cards
+    - added the selected-item dock beside the history area so history-turn metadata and history-turn actions now live in dedicated `Selected Item Summary Strip` and `Selected Item Action Bar` surfaces rather than staying embedded in thumbnail overlays, while restoring branch-rename applicability so `Rename Branch` only appears when a real rename target exists
+    - upgraded the main stage top-right into a compact current-stage context and quick-action cluster, preserved source and branch context during active generation, and finished the responsive overflow contract so both the selected-item dock and the stage cluster now follow explicit wide / medium / compact visibility priorities instead of relying on scroll-only or breakpoint-only fallbacks
+    - tightened selection and source ownership across restore and browsing flows by aligning filmstrip selection to `selectedHistoryId`, preserving exact staged-source semantics when browsing diverges from the current stage, fixing the failed-history selection crash path, and removing prompt leakage from stage, filmstrip, and gallery image `alt` surfaces
+    - closed the remaining validation and tooling tail work by constraining bare Vitest discovery to the `tests/` tree, excluding `e2e/**`, realigning the formal restore Playwright suite to the current selected-item-dock, workflow-detail, and queued-batch contracts, and fixing the modal-lifecycle helper so queued-batch restore assertions no longer lose their previously open detail modal context
+    - revalidated the completed slice with focused Vitest coverage for generated-image, history, filmstrip, selected-item surfaces, lineage selectors, stage-viewer logic, and orchestration helpers, a full bare `npm exec vitest run` pass at `63 passed` / `602 tests`, the formal restore Playwright suite at `62 passed`, compact-width browser verification, and a broader restore-fixture sweep across real snapshot fixtures
+
 ## v3.1.5 - 2026-03-31
 
 - Release title: Nano Banana Ultra 3.1.5 - Shell Polish & Queue Modal Cleanup

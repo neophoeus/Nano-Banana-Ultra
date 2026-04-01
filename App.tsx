@@ -11,6 +11,8 @@ import {
     ThinkingLevel,
     GroundingMetadata,
     ProvenanceContinuityMode,
+    SelectedItemActionBarProps,
+    SelectedItemSummaryStripProps,
     StageAsset,
     ResultArtifacts,
     SessionContinuitySource,
@@ -20,6 +22,8 @@ import ComposerAdvancedSettingsDialog from './components/ComposerAdvancedSetting
 import ComposerSettingsPanel from './components/ComposerSettingsPanel';
 import PanelLoadingFallback from './components/PanelLoadingFallback';
 import QueuedBatchJobsPanel from './components/QueuedBatchJobsPanel';
+import SelectedItemActionBar from './components/SelectedItemActionBar';
+import SelectedItemSummaryStrip from './components/SelectedItemSummaryStrip';
 import SurfaceLoadingFallback from './components/SurfaceLoadingFallback';
 import WorkspaceDetailModal from './components/WorkspaceDetailModal';
 import WorkspaceGalleryCard from './components/WorkspaceGalleryCard';
@@ -425,6 +429,7 @@ const App: React.FC = () => {
         latestRestorableTurn,
         latestSuccessfulRestorableTurn,
         activeBranchSummary,
+        selectedItemModel,
         currentStageSourceHistoryId,
         currentStageSourceTurn,
         currentStageBranchSummary,
@@ -797,6 +802,7 @@ const App: React.FC = () => {
         selectedImageIndex,
         selectedHistoryId,
         isGenerating,
+        currentStageSourceHistoryId: currentStageAsset?.sourceHistoryId || null,
         currentStageLineageAction: currentStageAsset?.lineageAction,
         workspaceSession,
         conversationState,
@@ -867,6 +873,8 @@ const App: React.FC = () => {
         t,
     });
     const {
+        buildSelectedItemActionBarProps,
+        buildSelectedItemSummaryStripProps,
         renderHistoryActionButton,
         renderHistoryTurnSnapshotContent,
         renderHistoryTurnActionRow,
@@ -886,6 +894,28 @@ const App: React.FC = () => {
         isPromotedContinuationSource,
         t,
     });
+    const selectedItemActionBarProps = useMemo<SelectedItemActionBarProps | null>(
+        () => buildSelectedItemActionBarProps(selectedItemModel),
+        [buildSelectedItemActionBarProps, selectedItemModel],
+    );
+    const selectedItemSummaryStripProps = useMemo<SelectedItemSummaryStripProps | null>(
+        () => buildSelectedItemSummaryStripProps(selectedItemModel),
+        [buildSelectedItemSummaryStripProps, selectedItemModel],
+    );
+    const selectedItemDock = useMemo(
+        () =>
+            selectedItemSummaryStripProps || selectedItemActionBarProps ? (
+                <div data-testid="selected-item-dock" className="grid min-w-0 gap-1.5">
+                    {selectedItemSummaryStripProps ? (
+                        <SelectedItemSummaryStrip currentLanguage={currentLang} {...selectedItemSummaryStripProps} />
+                    ) : null}
+                    {selectedItemActionBarProps ? (
+                        <SelectedItemActionBar currentLanguage={currentLang} {...selectedItemActionBarProps} />
+                    ) : null}
+                </div>
+            ) : null,
+        [currentLang, selectedItemActionBarProps, selectedItemSummaryStripProps],
+    );
 
     const {
         viewSettings,
@@ -1167,7 +1197,7 @@ const App: React.FC = () => {
         queueBatchConversationNotice,
         getImportedQueuedResultCount,
         getImportedQueuedHistoryItems,
-        activeImportedQueuedHistoryId: selectedHistoryId,
+        activeImportedQueuedHistoryId: currentStageSourceHistoryId,
         promptTextareaRef: composerPromptTextareaRef,
         setPrompt,
         toggleEnterToSubmit,
@@ -1311,6 +1341,37 @@ const App: React.FC = () => {
         }),
         [viewSettings.aspectRatio, viewSettings.batchSize, viewSettings.model, viewSettings.size, viewSettings.style],
     );
+    const currentStageLinkedHistoryId = currentStageAsset?.sourceHistoryId || null;
+    const currentStageHasLinkedHistoryTurn = Boolean(
+        currentStageLinkedHistoryId &&
+        currentStageSourceTurn &&
+        currentStageSourceTurn.id === currentStageLinkedHistoryId,
+    );
+    const currentStageLinkedBranchSummary = currentStageHasLinkedHistoryTurn ? currentStageBranchSummary : null;
+    const currentStageContinuationSourceHistoryId = currentStageLinkedBranchSummary
+        ? effectiveBranchContinuationSourceByBranchOriginId[currentStageLinkedBranchSummary.branchOriginId] || null
+        : null;
+    const currentStageContinuationDiffers = Boolean(
+        currentStageHasLinkedHistoryTurn &&
+        currentStageSourceTurn &&
+        currentStageContinuationSourceHistoryId &&
+        currentStageContinuationSourceHistoryId !== currentStageSourceTurn.id,
+    );
+    const currentStageOriginLabel = currentStageAsset
+        ? getStageOriginLabel(currentStageAsset.origin)
+        : generatedImageUrls.length > 0
+          ? getStageOriginLabel('generated')
+          : null;
+    const handleContinueFromStageSource = useCallback(() => {
+        if (currentStageHasLinkedHistoryTurn && currentStageSourceTurn) {
+            handleContinueFromHistoryTurn(currentStageSourceTurn);
+        }
+    }, [currentStageHasLinkedHistoryTurn, currentStageSourceTurn, handleContinueFromHistoryTurn]);
+    const handleBranchFromStageSource = useCallback(() => {
+        if (currentStageHasLinkedHistoryTurn && currentStageSourceTurn) {
+            handleBranchFromHistoryTurn(currentStageSourceTurn);
+        }
+    }, [currentStageHasLinkedHistoryTurn, currentStageSourceTurn, handleBranchFromHistoryTurn]);
     const darkProvenancePanel = useMemo(
         () => (
             <Suspense
@@ -1335,7 +1396,6 @@ const App: React.FC = () => {
         isGenerating,
         prompt: viewSettings.prompt,
         error,
-        actualOutputLabel: actualOutputSizeLabel || actualOutputDimensions,
         resultStatusSummary: groundingResolutionStatusSummary,
         resultStatusTone: groundingResolutionStatusTone,
         settings: stageViewerSettings,
@@ -1347,8 +1407,14 @@ const App: React.FC = () => {
         onClear: handleClearCurrentStage,
         onAddToObjectReference: handleAddToObjectReference,
         onAddToCharacterReference: capability.maxCharacters > 0 ? handleAddToCharacterReference : undefined,
+        onContinueFromStageSource: currentStageHasLinkedHistoryTurn ? handleContinueFromStageSource : undefined,
+        onBranchFromStageSource: currentStageHasLinkedHistoryTurn ? handleBranchFromStageSource : undefined,
         currentLanguage: currentLang,
         currentLog: logs.length > 0 ? logs[logs.length - 1] : '',
+        currentStageOriginLabel,
+        currentStageBranchLabel: currentStageLinkedBranchSummary?.branchLabel || null,
+        currentStageHasLinkedHistoryTurn,
+        currentStageContinuationDiffers,
         styleLabel: getStyleLabel(viewSettings.style),
         modelLabel: getModelLabel(viewSettings.model),
         effectiveResultText,
@@ -1427,6 +1493,7 @@ const App: React.FC = () => {
         recentHistory,
         branchCount: branchSummaries.length,
         activeStageImageUrl: activeViewerImage || null,
+        selectedHistoryId,
         currentStageSourceHistoryId,
         branchOriginIdByTurnId,
         branchLabelByTurnId,
@@ -1455,12 +1522,14 @@ const App: React.FC = () => {
                 getContinueActionLabel={getContinueActionLabel}
                 branchNameOverrides={branchNameOverrides}
                 selectedHistoryId={selectedHistoryId}
+                currentStageSourceHistoryId={currentStageSourceHistoryId}
                 onClear={handleClearGalleryHistory}
             />
         ),
         [
             branchNameOverrides,
             currentLang,
+            currentStageSourceHistoryId,
             getContinueActionLabel,
             handleClearGalleryHistory,
             handleHistorySelect,
@@ -1806,7 +1875,7 @@ const App: React.FC = () => {
                     getLineageActionLabel={getLineageActionLabel}
                     getImportedQueuedResultCount={getImportedQueuedResultCount}
                     getImportedQueuedHistoryItems={getImportedQueuedHistoryItems}
-                    activeImportedQueuedHistoryId={selectedHistoryId}
+                    activeImportedQueuedHistoryId={currentStageSourceHistoryId}
                     onImportAllQueuedJobs={handleImportAllQueuedJobs}
                     onPollAllQueuedJobs={handlePollAllQueuedJobs}
                     onPollQueuedJob={handlePollQueuedJob}
@@ -1987,6 +2056,7 @@ const App: React.FC = () => {
                         <div className="flex min-w-0 flex-col gap-2.5">
                             <WorkspaceHistoryCanvas
                                 currentLanguage={currentLang}
+                                selectedItemDock={selectedItemDock}
                                 recentLane={recentLane}
                                 focusSurface={focusSurface}
                                 supportSurface={gallerySupportSurface}

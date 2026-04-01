@@ -659,8 +659,13 @@ const visibleProvenancePanel = (scope: Page | Locator) =>
         .locator('[data-testid="provenance-panel-light"]:visible, [data-testid="provenance-panel-dark"]:visible')
         .first();
 const visibleFilmstripCard = (page: Page) => page.locator('[data-testid^="filmstrip-card-"]:visible').first();
+const visibleFilmstripStageSourceBadge = (page: Page) =>
+    page.locator('[data-testid^="filmstrip-stage-source-"]:visible').first();
 const currentStageSourceCard = (scope: Page | Locator) =>
     scope.locator('[data-testid="current-stage-source"]:visible').first();
+const selectedItemBranchChip = (page: Page) => page.getByTestId('selected-item-summary-chip-branch').first();
+const workflowDetailThoughtEntry = (page: Page) =>
+    page.locator('[data-testid^="workspace-workflow-detail-thought-entry-"]:visible').first();
 const activeBranchCard = (page: Page) =>
     page
         .locator(
@@ -726,6 +731,18 @@ const openWorkflowDetailModal = async (page: Page) => {
     await expect(page.getByTestId('workspace-workflow-detail-modal')).toBeVisible();
 };
 
+const openQueuedBatchDetailModal = async (page: Page) => {
+    const modal = page.getByTestId('workspace-queued-batch-detail-modal');
+    if (await isLocatorVisible(modal)) {
+        return;
+    }
+
+    const opener = page.getByTestId('composer-queue-status-button').first();
+    await expect(opener).toBeVisible();
+    await opener.click();
+    await expect(modal).toBeVisible();
+};
+
 const closeVersionsDetailModal = async (page: Page) => {
     const modal = page.getByTestId('workspace-versions-detail-modal');
     if (!(await isLocatorVisible(modal))) {
@@ -774,6 +791,51 @@ const closeAnswerDetailModal = async (page: Page) => {
     await expect(page.getByTestId('workspace-answer-detail-modal')).toHaveCount(0);
 };
 
+type WorkspaceDetailModalName = 'versions' | 'sources' | 'answer' | 'workflow' | 'queued-jobs';
+
+const getVisibleWorkspaceDetailModal = async (page: Page): Promise<WorkspaceDetailModalName | null> => {
+    if (await isLocatorVisible(page.getByTestId('workspace-workflow-detail-modal'))) {
+        return 'workflow';
+    }
+
+    if (await isLocatorVisible(page.getByTestId('workspace-answer-detail-modal'))) {
+        return 'answer';
+    }
+
+    if (await isLocatorVisible(page.getByTestId('workspace-sources-detail-modal'))) {
+        return 'sources';
+    }
+
+    if (await isLocatorVisible(page.getByTestId('workspace-versions-detail-modal'))) {
+        return 'versions';
+    }
+
+    if (await isLocatorVisible(page.getByTestId('workspace-queued-batch-detail-modal'))) {
+        return 'queued-jobs';
+    }
+
+    return null;
+};
+
+const reopenWorkspaceDetailModal = async (page: Page, modalName: WorkspaceDetailModalName | null) => {
+    switch (modalName) {
+        case 'versions':
+            await openVersionsDetailModal(page);
+            return;
+        case 'sources':
+            await openSourcesDetailModal(page);
+            return;
+        case 'answer':
+            await openAnswerDetailModal(page);
+            return;
+        case 'queued-jobs':
+            await openQueuedBatchDetailModal(page);
+            return;
+        default:
+            return;
+    }
+};
+
 const ensureWorkspaceInsightsExpanded = async (page: Page) => {
     const details = page.getByTestId('workspace-insights-collapsible').first();
     if ((await details.count()) === 0) {
@@ -810,8 +872,8 @@ const ensureDetailsExpanded = async (scope: Page | Locator, testId: string) => {
 };
 
 const withWorkflowDetailModal = async <T>(page: Page, callback: (workflowModal: Locator) => Promise<T>): Promise<T> => {
-    const modal = page.getByTestId('workspace-workflow-detail-modal');
-    const wasOpen = await isLocatorVisible(modal);
+    const previouslyVisibleModal = await getVisibleWorkspaceDetailModal(page);
+    const wasOpen = previouslyVisibleModal === 'workflow';
 
     if (!wasOpen) {
         await openWorkflowDetailModal(page);
@@ -821,6 +883,7 @@ const withWorkflowDetailModal = async <T>(page: Page, callback: (workflowModal: 
 
     if (!wasOpen) {
         await closeWorkflowDetailModal(page);
+        await reopenWorkspaceDetailModal(page, previouslyVisibleModal);
     }
 
     return result;
@@ -869,6 +932,25 @@ const clickFirstVisible = async (locator: Locator) => {
 
 const clickSummary = async (locator: Locator) => {
     await locator.first().evaluate((element: HTMLElement) => element.click());
+};
+
+const clickSelectedItemAction = async (page: Page, actionKey: 'open' | 'continue' | 'branch' | 'rename-branch') => {
+    const directAction = page.getByTestId(`selected-item-action-${actionKey}`).first();
+    if (await isLocatorVisible(directAction)) {
+        await directAction.click();
+        return;
+    }
+
+    const overflowTrigger = page.getByTestId('selected-item-action-overflow-trigger').first();
+    if (await isLocatorVisible(overflowTrigger)) {
+        await overflowTrigger.click();
+        const overflowAction = page.getByTestId(`selected-item-action-overflow-action-${actionKey}`).first();
+        await expect(overflowAction).toBeVisible();
+        await overflowAction.click();
+        return;
+    }
+
+    await expect(directAction).toBeVisible();
 };
 
 const openGalleryPanel = async (page: Page) => {
@@ -1020,7 +1102,7 @@ const assertStageSourceSurfaces = async (
         actionLabel: options.followUpSource,
         branchLabel: options.branchLabel,
     });
-    await expect(page.getByTestId('filmstrip-stage-source-badge')).toContainText(localizedText('Stage Source'));
+    await expect(visibleFilmstripStageSourceBadge(page)).toContainText(localizedText('Stage Source'));
     await expect(page.locator('[data-testid="context-workflow-summary"]:visible').first()).toContainText(timelineText);
     await expect(page.getByTestId('global-log-stage-source-entry')).toHaveCount(0);
     await expect(page.getByTestId('global-log-stage-source-badge')).toHaveCount(0);
@@ -1098,7 +1180,7 @@ const assertBranchLabelPropagates = async (page: Page, branchLabel: string) => {
         await expect(stageSourceCard).toContainText(branchLabel);
     });
     await expect(page.locator('[data-testid="history-versions-shell"]:visible').first()).toContainText(branchLabel);
-    await expect(visibleFilmstripCard(page)).toContainText(branchLabel);
+    await expect(selectedItemBranchChip(page)).toContainText(branchLabel);
 };
 
 const assertBranchLabelCleared = async (page: Page, branchLabel: string) => {
@@ -1106,7 +1188,7 @@ const assertBranchLabelCleared = async (page: Page, branchLabel: string) => {
         await expect(stageSourceCard).not.toContainText(branchLabel);
     });
     await expect(page.locator('[data-testid="history-versions-shell"]:visible').first()).not.toContainText(branchLabel);
-    await expect(visibleFilmstripCard(page)).not.toContainText(branchLabel);
+    await expect(selectedItemBranchChip(page)).not.toContainText(branchLabel);
 };
 
 const assertProvenanceSummary = async (
@@ -1620,8 +1702,8 @@ const openFirstHistoryRenameDialog = async (page: Page) => {
     await openGalleryPanel(page);
     const firstCard = page.locator('[data-testid^="history-card-"]').first();
     await expect(firstCard).toBeVisible();
-    await firstCard.hover();
-    await firstCard.locator('[data-testid^="history-rename-"]').click();
+    await firstCard.click();
+    await clickSelectedItemAction(page, 'rename-branch');
     await expect(page.getByTestId('branch-rename-dialog')).toBeVisible();
     return page.getByTestId('branch-rename-dialog').locator('form').first();
 };
@@ -2096,8 +2178,10 @@ test.describe('workspace restore flows', () => {
         });
 
         await openVersionsDetailModal(page);
-        await expect(bravoVariantCard).toContainText(localizedText('Candidate'));
-        await expect(alphaVariantCard).toContainText(localizedText('Candidate'));
+        await expect(bravoVariantCard.getByTestId('filmstrip-stage-source-bravo-v2-turn')).toBeVisible();
+        await expect(alphaVariantCard.locator('[data-testid="filmstrip-stage-source-alpha-v1-turn"]')).toHaveCount(0);
+        await expect(bravoVariantCard).not.toContainText(localizedText('Candidate'));
+        await expect(alphaVariantCard).not.toContainText(localizedText('Candidate'));
         await expect(activeBranchCard(page)).toContainText(`${localizedText('Continuation source ')}--------`);
         await expect(page.locator('[data-testid="active-branch-continue-latest"]:visible').first()).toContainText(
             localizedText('Promote Variant'),
@@ -2123,7 +2207,8 @@ test.describe('workspace restore flows', () => {
         );
         await closeVersionsDetailModal(page);
 
-        await page.locator('[data-testid="filmstrip-continue-alpha-v1-turn"]:visible').first().click();
+        await alphaVariantCard.click();
+        await clickSelectedItemAction(page, 'continue');
 
         await expect(
             page.getByText(localizedText('Variant promoted as the active continuation source.'), { exact: true }),
@@ -2132,6 +2217,8 @@ test.describe('workspace restore flows', () => {
             await expect(stageSourceCard).toContainText('Variant candidate A');
             await expect(stageSourceCard).toContainText(localizedText('Source'));
         });
+        await expect(alphaVariantCard.getByTestId('filmstrip-stage-source-alpha-v1-turn')).toBeVisible();
+        await expect(bravoVariantCard.locator('[data-testid="filmstrip-stage-source-bravo-v2-turn"]')).toHaveCount(0);
         await expect(alphaVariantCard).toBeVisible();
         await expect(bravoVariantCard).toBeVisible();
 
@@ -2152,8 +2239,8 @@ test.describe('workspace restore flows', () => {
         await assertFilmstripChromeLocalized(page);
 
         const firstFilmstripCard = visibleFilmstripCard(page);
-        await firstFilmstripCard.hover();
-        await firstFilmstripCard.locator('[data-testid^="filmstrip-continue-"]').click();
+        await firstFilmstripCard.click();
+        await clickSelectedItemAction(page, 'continue');
 
         await assertStageSourceSurfaces(page, {
             composerValue: 'Imported branch turn',
@@ -2174,13 +2261,9 @@ test.describe('workspace restore flows', () => {
         await assertFilmstripChromeLocalized(page);
 
         const firstFilmstripCard = visibleFilmstripCard(page);
-        await firstFilmstripCard.hover();
-        await expect(firstFilmstripCard.locator('[data-testid^="filmstrip-continue-"]')).toContainText(
-            tt('historyContinueFromTurn'),
-        );
-        await expect(firstFilmstripCard.locator('[data-testid^="filmstrip-branch-"]')).toContainText(
-            tt('historyActionBranch'),
-        );
+        await firstFilmstripCard.click();
+        await expect(page.getByTestId('selected-item-action-continue')).toContainText(tt('historyContinueFromTurn'));
+        await expect(page.getByTestId('selected-item-action-branch')).toContainText(tt('historyActionBranch'));
     });
 
     test('restore notice stays open while its language switch updates both the notice and the main-page language state', async ({
@@ -2218,9 +2301,7 @@ test.describe('workspace restore flows', () => {
         await dismissRestoreNotice(page);
         await composer(page).fill('Filmstrip branch draft');
 
-        const firstFilmstripCard = visibleFilmstripCard(page);
-        await firstFilmstripCard.hover();
-        await firstFilmstripCard.locator('[data-testid^="filmstrip-branch-"]').click();
+        await clickSelectedItemAction(page, 'branch');
 
         await assertStageSourceSurfaces(page, {
             composerValue: 'Filmstrip branch draft',
@@ -2335,11 +2416,11 @@ test.describe('workspace restore flows', () => {
         await expect(composer(page)).toHaveValue('Imported branch turn');
         await assertCurrentStageSourceCard(page, {
             sourceLabel: tt('stageOriginHistory'),
-            actionLabel: 'Continue',
+            actionLabel: 'Reopen',
             branchLabel: 'Imported Branch',
             expectOpenAction: true,
         });
-        await expect(page.getByTestId('filmstrip-stage-source-badge')).toContainText(localizedText('Stage Source'));
+        await expect(visibleFilmstripStageSourceBadge(page)).toContainText(localizedText('Stage Source'));
     });
 
     test('lineage map open reopens the selected turn across source surfaces', async ({ page }) => {
@@ -2437,13 +2518,17 @@ test.describe('workspace restore flows', () => {
         await openGalleryPanel(page);
         const firstCard = page.locator('[data-testid^="history-card-"]').first();
 
-        await firstCard.hover();
-        await expect(firstCard.locator('[data-testid^="history-open-"]')).toBeVisible();
-        await expect(firstCard.locator('[data-testid^="history-rename-"]')).toBeVisible();
+        await expect(firstCard.locator('[data-testid^="history-open-"]')).toHaveCount(0);
+        await expect(firstCard.locator('[data-testid^="history-rename-"]')).toHaveCount(0);
         await expect(firstCard.locator('[data-testid^="history-continue-"]')).toHaveCount(0);
         await expect(firstCard.locator('[data-testid^="history-branch-"]')).toHaveCount(0);
 
-        await firstCard.locator('[data-testid^="history-open-"]').click();
+        await firstCard.click();
+        await expect(page.getByTestId('selected-item-action-bar')).toBeVisible();
+        await expect(page.getByTestId('selected-item-action-on-stage')).toBeVisible();
+        await expect(page.getByTestId('selected-item-action-continue')).toBeVisible();
+        await expect(page.getByTestId('selected-item-action-branch')).toBeVisible();
+        await expect(page.getByTestId('selected-item-action-rename-branch')).toBeVisible();
         await expect(page.getByTestId('picker-sheet-close')).toHaveCount(0);
     });
 
@@ -2454,7 +2539,7 @@ test.describe('workspace restore flows', () => {
 
         await openVersionsDetailModal(page);
         const downloadPromise = page.waitForEvent('download');
-        await page.getByTestId('history-export-workspace').click();
+        await page.locator('[data-testid="history-export-workspace"]:visible').first().click();
         const download = await downloadPromise;
 
         expect(download.suggestedFilename()).toMatch(/^nano-banana-workspace-.*\.json$/);
@@ -2559,7 +2644,8 @@ test.describe('workspace restore flows', () => {
         const restoredHistoryImage = restoredPage
             .locator('[data-testid^="history-card-"]')
             .first()
-            .getByRole('img', { name: 'File-backed restored turn' });
+            .locator('img')
+            .first();
 
         await expect(restoredHistoryImage).toBeVisible();
         await expect(restoredHistoryImage).toHaveAttribute('src', /\/api\/load-image\?filename=file-backed-turn\.png/);
@@ -2568,7 +2654,9 @@ test.describe('workspace restore flows', () => {
         await restoredPage.close();
     });
 
-    test('queue batch submit from a file-backed restored stage keeps the browser payload file-backed', async ({ page }) => {
+    test('queue batch submit from a file-backed restored stage keeps the browser payload file-backed', async ({
+        page,
+    }) => {
         let queuedBatchRequestBody: Record<string, unknown> | null = null;
 
         await page.route('**/api/batches/create', async (route) => {
@@ -2608,7 +2696,10 @@ test.describe('workspace restore flows', () => {
         expect(String(queuedBatchRequestBody?.editingInput || '')).not.toContain('data:image/');
 
         await expect(page.getByText(tt('queuedBatchSubmittedNotice'), { exact: true })).toBeVisible();
-        await expect(page.getByTestId('queued-batch-panel')).toContainText('File-backed queue job');
+        await openQueuedBatchDetailModal(page);
+        await expect(
+            page.getByTestId('workspace-queued-batch-detail-modal').getByTestId('queued-batch-panel'),
+        ).toContainText('File-backed queue job');
     });
 
     test('replace imported inherited provenance exposes continuity summary and recovered sources', async ({ page }) => {
@@ -2806,10 +2897,12 @@ test.describe('workspace restore flows', () => {
         await installQueuedBatchGetFixtureRoute(page, queuedBatchPanelSnapshot);
         await openWorkspaceWithSnapshot(page, queuedBatchPanelSnapshot);
         await dismissRestoreNoticeIfPresent(page);
+        await openQueuedBatchDetailModal(page);
 
-        const panel = page.getByTestId('queued-batch-panel');
+        const queuedBatchModal = page.getByTestId('workspace-queued-batch-detail-modal');
+        const panel = queuedBatchModal.getByTestId('queued-batch-panel');
         await expect(panel).toBeVisible();
-        await expect(panel).toContainText(tt('queuedBatchJobsTitle'));
+        await expect(queuedBatchModal).toContainText(tt('queuedBatchJobsTitle'));
         await expect(panel.getByTestId('queued-batch-active-count')).toContainText(
             tt('queuedBatchJobsActiveCount', '1'),
         );
@@ -2898,32 +2991,6 @@ test.describe('workspace restore flows', () => {
             `${tt('historyActionOpenLatest')} #2/2`,
         );
 
-        await panel.getByTestId('queued-batch-job-job-imported-preview-next').click();
-        await withWorkflowStageSourceCard(page, async (stageSourceCard) => {
-            await expect(stageSourceCard).toContainText('#2/2');
-            await expect(stageSourceCard).toContainText('Imported queued results alternate angle');
-        });
-        await expect(panel.getByTestId('queued-batch-job-job-imported-preview-1-active')).toContainText(
-            tt('workspacePickerStageSource'),
-        );
-        await expect(panel.getByTestId('queued-batch-job-job-imported-preview-active-cue')).toContainText(
-            'Imported queued batch result text two',
-        );
-        await expect(panel.getByTestId('queued-batch-job-job-imported-preview-active-prompt')).toContainText(
-            'Imported queued results alternate angle',
-        );
-
-        await panel.getByTestId('queued-batch-job-job-imported-preview-prev').click();
-        await withWorkflowStageSourceCard(page, async (stageSourceCard) => {
-            await expect(stageSourceCard).toContainText('#1/2');
-        });
-        await expect(panel.getByTestId('queued-batch-job-job-imported-preview-0-active')).toContainText(
-            tt('workspacePickerStageSource'),
-        );
-        await expect(panel.getByTestId('queued-batch-job-job-imported-preview-active-cue')).toContainText(
-            'Imported queued batch result text',
-        );
-
         await panel.getByTestId('queued-batch-job-job-imported-open').click();
         await withWorkflowStageSourceCard(page, async (stageSourceCard) => {
             await expect(stageSourceCard).toContainText(tt('workspaceImportReviewExecutionQueuedBatchJob'));
@@ -2933,9 +3000,9 @@ test.describe('workspace restore flows', () => {
 
         const filmstripCard = page.getByTestId('filmstrip-card-queued-imported-turn');
         await expect(filmstripCard).toBeVisible();
-        await filmstripCard.hover();
-        await expect(filmstripCard).toContainText(tt('workspaceImportReviewExecutionQueuedBatchJob'));
-        await expect(filmstripCard).toContainText('#1/2');
+        await expect(filmstripCard.getByTestId('filmstrip-stage-source-queued-imported-turn')).toBeVisible();
+        await expect(filmstripCard).not.toContainText(tt('workspaceImportReviewExecutionQueuedBatchJob'));
+        await expect(filmstripCard).not.toContainText('#1/2');
         await expect(filmstripCard).not.toContainText(localizedText('Candidate'));
 
         const historyCard = page.getByTestId('history-card-queued-imported-turn');
@@ -2943,11 +3010,14 @@ test.describe('workspace restore flows', () => {
             await openGalleryPanel(page);
         }
         await expect(historyCard).toBeVisible();
-        await historyCard.hover();
-        await expect(historyCard).toContainText(tt('workspaceImportReviewExecutionQueuedBatchJob'));
-        await expect(historyCard).toContainText('#1/2');
+        await expect(historyCard.getByTestId('history-stage-source-queued-imported-turn')).toBeVisible();
+        await expect(historyCard).not.toContainText(tt('workspaceImportReviewExecutionQueuedBatchJob'));
+        await expect(historyCard).not.toContainText('#1/2');
         await expect(historyCard).not.toContainText(localizedText('Candidate'));
-        await page.getByTestId('picker-sheet-close').click();
+        const pickerSheetClose = page.getByTestId('picker-sheet-close');
+        if (await isLocatorVisible(pickerSheetClose)) {
+            await pickerSheetClose.click();
+        }
 
         await panel.getByTestId('queued-batch-job-job-imported-open-latest').click();
         await withWorkflowStageSourceCard(page, async (stageSourceCard) => {
@@ -3398,9 +3468,7 @@ test.describe('workspace restore flows', () => {
             localizedMessageByKey('workspaceSnapshotImportedLog', 'ui-import-provenance-live-workspace.json', '1'),
         );
         await openWorkflowDetailModal(page);
-        await expect(
-            page.getByTestId('workspace-workflow-detail-modal').getByTestId('workspace-workflow-detail-thoughts'),
-        ).toBeVisible();
+        await expect(workflowDetailThoughtEntry(page)).toBeVisible();
         await closeWorkflowDetailModal(page);
     });
 
@@ -3449,9 +3517,7 @@ test.describe('workspace restore flows', () => {
             localizedMessageByKey('workspaceSnapshotImportedLog', 'ui-import-provenance-live-workspace.json', '1'),
         );
         await openWorkflowDetailModal(page);
-        await expect(
-            page.getByTestId('workspace-workflow-detail-modal').getByTestId('workspace-workflow-detail-thoughts'),
-        ).toBeVisible();
+        await expect(workflowDetailThoughtEntry(page)).toBeVisible();
         await closeWorkflowDetailModal(page);
 
         await page.getByRole('button', { name: tt('composerToolbarAdvancedSettings') }).click();
@@ -3584,15 +3650,10 @@ test.describe('workspace restore flows', () => {
 
         await ensureWorkspaceInsightsExpanded(page);
         await openWorkflowDetailModal(page);
-        await expect(
-            page.getByTestId('workspace-workflow-detail-modal').getByTestId('workspace-workflow-detail-thoughts'),
-        ).toBeVisible();
+        await expect(workflowDetailThoughtEntry(page)).toBeVisible();
         await closeWorkflowDetailModal(page);
 
-        await page
-            .getByTestId('workspace-history-focus-state')
-            .getByRole('img', { name: 'Viewer owner structured output prompt' })
-            .click();
+        await page.getByTestId('workspace-history-focus-state').locator('img').first().click();
 
         const viewer = page.getByTestId('workspace-viewer-overlay');
         await expect(viewer).toBeVisible();

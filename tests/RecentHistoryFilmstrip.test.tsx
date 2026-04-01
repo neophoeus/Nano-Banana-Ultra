@@ -18,29 +18,42 @@ const buildTurn = (overrides: Partial<GeneratedImage> = {}): GeneratedImage => (
     ...overrides,
 });
 
+const getVisibleText = (markup: string) =>
+    markup
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
 describe('RecentHistoryFilmstrip', () => {
-    it('uses contextual continue wording for plain turns', () => {
+    it('keeps selection aligned to the selected history turn while preserving independent stage and continuation cues', () => {
         const markup = renderToStaticMarkup(
             <RecentHistoryFilmstrip
-                recentHistory={[buildTurn({ lineageAction: 'continue' })]}
-                branchCount={1}
-                activeStageImageUrl={null}
-                currentStageSourceHistoryId={null}
-                branchOriginIdByTurnId={{ 'turn-1': 'turn-1' }}
-                branchLabelByTurnId={{ 'turn-1': 'Main' }}
-                branchSummaryByOriginId={{
-                    'turn-1': {
-                        branchOriginId: 'turn-1',
-                        turnCount: 1,
-                        latestTurn: buildTurn({ lineageAction: 'continue' }),
-                    },
-                }}
-                activeBranchOriginId="turn-1"
+                recentHistory={[
+                    buildTurn({
+                        id: 'turn-stage',
+                        url: 'https://example.com/stage.png',
+                        prompt: 'Visible prompt must stay out of the filmstrip.',
+                    }),
+                    buildTurn({
+                        id: 'turn-continuation',
+                        url: 'https://example.com/continuation.png',
+                        prompt: 'Second prompt must stay out of the filmstrip.',
+                        lineageAction: 'continue',
+                    }),
+                ]}
+                branchCount={2}
+                activeStageImageUrl="https://example.com/stage.png"
+                selectedHistoryId="turn-continuation"
+                currentStageSourceHistoryId="turn-stage"
+                branchOriginIdByTurnId={{ 'turn-stage': 'turn-stage', 'turn-continuation': 'turn-stage' }}
+                branchLabelByTurnId={{ 'turn-stage': 'Main', 'turn-continuation': 'Branch 2' }}
+                branchSummaryByOriginId={{}}
+                activeBranchOriginId={null}
                 onClear={vi.fn()}
                 onHistorySelect={vi.fn()}
                 onContinueFromHistoryTurn={vi.fn()}
                 onBranchFromHistoryTurn={vi.fn()}
-                isPromotedContinuationSource={() => false}
+                isPromotedContinuationSource={(item) => item.id === 'turn-continuation'}
                 getContinueActionLabel={() => 'Continue'}
                 getBranchAccentClassName={() => 'border-gray-200 bg-white text-gray-700'}
                 getLineageActionLabel={() => 'Continue'}
@@ -53,25 +66,36 @@ describe('RecentHistoryFilmstrip', () => {
                 )}
             />,
         );
+        const visibleText = getVisibleText(markup);
 
-        expect(markup).toContain('Continue from turn');
+        expect(markup).toContain('filmstrip-stage-source-turn-stage');
+        expect(markup).toContain('filmstrip-continuation-source-turn-continuation');
+        expect(markup).not.toContain('filmstrip-stage-source-turn-continuation');
+        expect(markup).not.toContain('filmstrip-continuation-source-turn-stage');
+        expect(markup).toContain('filmstrip-selected-turn-continuation');
+        expect(markup).not.toContain('filmstrip-selected-turn-stage');
         expect(markup).toContain('filmstrip-desc');
         expect(markup).toContain('filmstrip-desc-trigger');
         expect(markup).not.toContain('filmstrip-desc-details');
         expect(markup).not.toContain('filmstrip-desc-summary');
-        expect(markup).toContain('filmstrip-active-branch');
-        expect(markup).toContain('Current version · Main');
         expect(markup).toContain('Recent Turns');
         expect(markup).toContain('filmstrip-grid');
         expect(markup).toContain('overflow-x-auto');
         expect(markup).toContain('grid-cols-[repeat(4,minmax(96px,96px))]');
         expect(markup).toContain('xl:grid-cols-[repeat(6,minmax(96px,96px))]');
         expect(markup).toContain('xl:justify-center');
-        expect(markup).toContain('h-24 w-24 shrink-0');
+        expect(markup).toContain('rounded-[18px]');
+        expect(markup).not.toContain('Visible prompt must stay out of the filmstrip.');
+        expect(markup).not.toContain('Second prompt must stay out of the filmstrip.');
+        expect(visibleText).not.toContain('Visible prompt must stay out of the filmstrip.');
+        expect(visibleText).not.toContain('Second prompt must stay out of the filmstrip.');
+        expect(markup).not.toContain('filmstrip-open-turn-stage');
+        expect(markup).not.toContain('filmstrip-continue-turn-stage');
+        expect(markup).not.toContain('filmstrip-branch-turn-stage');
         expect(markup).not.toContain('Open gallery');
     });
 
-    it('renders queued filmstrip items with one queued-batch result badge', () => {
+    it('removes queued-batch metadata from filmstrip tokens', () => {
         const markup = renderToStaticMarkup(
             <RecentHistoryFilmstrip
                 recentHistory={[
@@ -83,6 +107,7 @@ describe('RecentHistoryFilmstrip', () => {
                 ]}
                 branchCount={1}
                 activeStageImageUrl={null}
+                selectedHistoryId={null}
                 currentStageSourceHistoryId={null}
                 branchOriginIdByTurnId={{ 'turn-1': 'turn-1' }}
                 branchLabelByTurnId={{ 'turn-1': 'Main' }}
@@ -96,7 +121,7 @@ describe('RecentHistoryFilmstrip', () => {
                 getContinueActionLabel={() => 'Continue'}
                 getBranchAccentClassName={() => 'border-gray-200 bg-white text-gray-700'}
                 getLineageActionLabel={() => 'Continue'}
-                getQueuedBatchPositionLabel={() => null}
+                getQueuedBatchPositionLabel={() => '#1/2'}
                 currentLanguage="en"
                 renderHistoryActionButton={({ label, testId }) => (
                     <button key={testId} data-testid={testId}>
@@ -106,7 +131,8 @@ describe('RecentHistoryFilmstrip', () => {
             />,
         );
 
-        expect((markup.match(/Queued Batch Result/g) || []).length).toBe(1);
+        expect(markup).not.toContain('Queued Batch Result');
+        expect(markup).not.toContain('#1/2');
     });
 
     it('renders a placeholder instead of an empty-src img when a turn has no media url', () => {
@@ -115,6 +141,7 @@ describe('RecentHistoryFilmstrip', () => {
                 recentHistory={[buildTurn({ url: '' })]}
                 branchCount={1}
                 activeStageImageUrl={null}
+                selectedHistoryId={null}
                 currentStageSourceHistoryId={null}
                 branchOriginIdByTurnId={{ 'turn-1': 'turn-1' }}
                 branchLabelByTurnId={{ 'turn-1': 'Main' }}

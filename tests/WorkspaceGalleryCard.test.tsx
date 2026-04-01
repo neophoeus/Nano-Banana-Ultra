@@ -3,6 +3,12 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import WorkspaceGalleryCard from '../components/WorkspaceGalleryCard';
 
+const getVisibleText = (markup: string) =>
+    markup
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
 describe('WorkspaceGalleryCard', () => {
     it('renders the embedded gallery history surface instead of a launcher button', () => {
         const markup = renderToStaticMarkup(
@@ -12,37 +18,45 @@ describe('WorkspaceGalleryCard', () => {
                     {
                         id: 'turn-a',
                         url: 'https://example.com/a.png',
-                        prompt: 'Prompt A',
+                        prompt: 'Prompt A should stay hidden.',
                         status: 'success',
                     } as any,
                     {
                         id: 'turn-b',
                         url: 'https://example.com/b.png',
-                        prompt: 'Prompt B',
+                        prompt: 'Prompt B should stay hidden.',
                         status: 'success',
                     } as any,
                     {
                         id: 'turn-c',
                         url: 'https://example.com/c.png',
-                        prompt: 'Prompt C',
+                        prompt: 'Prompt C should stay hidden.',
                         status: 'success',
                     } as any,
                 ]}
                 onSelect={vi.fn()}
                 onRenameBranch={vi.fn()}
-                isPromotedContinuationSource={() => false}
+                isPromotedContinuationSource={(item) => item.id === 'turn-b'}
                 getContinueActionLabel={() => 'Continue from turn'}
                 branchNameOverrides={{}}
                 selectedHistoryId={null}
+                currentStageSourceHistoryId="turn-a"
                 onClear={vi.fn()}
             />,
         );
+        const visibleText = getVisibleText(markup);
 
         expect(markup).toContain('workspace-gallery-card');
         expect(markup).toContain('history-card-turn-a');
-        expect(markup).toContain('history-open-turn-a');
-        expect(markup).toContain('history-rename-turn-a');
+        expect(markup).toContain('history-stage-source-turn-a');
+        expect(markup).toContain('history-continuation-source-turn-b');
+        expect(markup).not.toContain('history-stage-source-turn-b');
         expect(markup).toContain('Gallery');
+        expect(visibleText).not.toContain('Prompt A should stay hidden.');
+        expect(visibleText).not.toContain('Prompt B should stay hidden.');
+        expect(visibleText).not.toContain('Prompt C should stay hidden.');
+        expect(markup).not.toContain('history-open-turn-a');
+        expect(markup).not.toContain('history-rename-turn-a');
         expect(markup).not.toContain('workspace-gallery-open');
         expect(markup).not.toContain('workspace-gallery-empty');
     });
