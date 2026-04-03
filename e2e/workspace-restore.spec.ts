@@ -108,7 +108,6 @@ const editorSharedContextFixturePath = fileURLToPath(
 const queuedImportedFixtureDataUrl = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 const editorSharedControlsPrompt = 'Editor surface prompt';
 const sketchSharedControlsPrompt = 'Sketch surface prompt';
-const sketchSharedControlsUpdatedPrompt = 'Updated from sketch shared controls';
 const restoredOfficialConversationSnapshot = {
     history: [
         {
@@ -1617,7 +1616,7 @@ const openWorkspaceWithSnapshotQuotaFailure = async (page: Page, snapshot: Recor
 };
 
 const openSharedControlsFromSurface = async (page: Page) => {
-    await page.getByTestId('shared-controls-toggle').click();
+    await expect(page.getByTestId('shared-controls-toggle')).toBeVisible();
     await expect(page.getByTestId('shared-controls-panel')).toBeVisible();
 };
 
@@ -1721,40 +1720,61 @@ const openFirstHistoryRenameDialog = async (page: Page) => {
 };
 
 test.describe('workspace restore flows', () => {
-    test('editor floating shared controls expose the shared composer state', async ({ page }) => {
+    test('editor floating shared controls show compact settings summary and button-only actions', async ({ page }) => {
         await openFreshWorkspace(page);
         await composer(page).fill(editorSharedControlsPrompt);
         await page.locator('#global-upload-input').setInputFiles(editorSharedContextFixturePath);
 
         await expect(page.getByTestId('image-editor')).toBeVisible();
         await openSharedControlsFromSurface(page);
-        await expect(page.getByTestId('shared-controls-panel')).toContainText(
+        await expect(page.getByTestId('shared-controls-toggle')).toContainText(
+            tt('surfaceSharedControlsSettingsTitle'),
+        );
+        await expect(page.getByTestId('shared-controls-toggle')).toContainText(tt('promptLabel'));
+        await expect(page.getByTestId('shared-controls-toggle')).toContainText(tt('workspaceSurfacePromptEmpty'));
+        await expect(page.getByTestId('shared-controls-panel')).not.toContainText(
             tt('surfaceSharedControlsStateDescEditor', tt('editorTitle')),
         );
-        await expect(page.getByTestId('shared-controls-panel')).toContainText(tt('surfaceSharedControlsCurrentPrompt'));
-        await expect(page.getByTestId('shared-controls-panel')).toContainText(tt('workspaceSurfacePromptEmpty'));
-        await expect(page.getByTestId('shared-controls-panel')).toContainText(tt('surfaceSharedControlsWorkspace'));
-        await expect(page.getByTestId('shared-controls-panel')).toContainText(tt('editorTitle'));
+        await expect(page.getByTestId('shared-controls-panel')).not.toContainText(
+            tt('surfaceSharedControlsCurrentPrompt'),
+        );
+        await expect(page.getByTestId('shared-controls-panel')).not.toContainText(tt('surfaceSharedControlsWorkspace'));
+        await expect(page.getByTestId('shared-control-prompt')).toBeVisible();
+        await expect(page.getByTestId('shared-control-settings')).toBeVisible();
+        await expect(page.getByTestId('shared-control-advanced-settings')).toBeVisible();
+        await expect(page.getByTestId('shared-control-prompt')).toBeVisible();
+        await expect(page.getByTestId('shared-control-references')).toBeVisible();
     });
 
-    test('sketchpad floating shared controls keep prompt edits in the main composer', async ({ page }) => {
+    test('sketchpad floating shared controls expose only model and ratio actions', async ({ page }) => {
         await openFreshWorkspace(page);
         await composer(page).fill(sketchSharedControlsPrompt);
         await page.locator('[data-testid="side-tools-open-sketchpad"]:visible').click();
 
         await expect(page.getByTestId('sketchpad')).toBeVisible();
         await openSharedControlsFromSurface(page);
-        await expect(page.getByTestId('shared-controls-panel')).toContainText(
-            tt('surfaceSharedControlsStateDesc', tt('sketchTitle')),
+        await expect(page.getByTestId('shared-controls-toggle')).toContainText(
+            tt('surfaceSharedControlsSettingsTitle'),
         );
-        await page.getByTestId('shared-control-prompt').click();
-        await expect(page.getByTestId('shared-prompt-input')).toHaveValue(sketchSharedControlsPrompt);
-        await page.getByTestId('shared-prompt-input').fill(sketchSharedControlsUpdatedPrompt);
-        await closeSharedPromptSheet(page);
+        await expect(page.getByTestId('shared-control-model')).toBeVisible();
+        await expect(page.getByTestId('shared-control-ratio')).toBeVisible();
+        await expect(page.getByTestId('shared-control-prompt')).toHaveCount(0);
+        await expect(page.getByTestId('shared-control-settings')).toHaveCount(0);
+        await expect(page.getByTestId('shared-control-advanced-settings')).toHaveCount(0);
+        await expect(page.getByTestId('shared-control-references')).toHaveCount(0);
+
+        await page.getByTestId('shared-control-model').click();
+        await expect(page.getByRole('heading', { name: tt('workspaceSheetTitleModel') })).toBeVisible();
+        await page.getByTestId('picker-sheet-close').click();
+
+        await openSharedControlsFromSurface(page);
+        await page.getByTestId('shared-control-ratio').click();
+        await expect(page.getByRole('heading', { name: tt('workspaceSheetTitleRatio') })).toBeVisible();
+        await page.getByTestId('picker-sheet-close').click();
         await page.getByTestId('sketchpad-close').click();
 
         await expect(page.getByTestId('sketchpad')).toHaveCount(0);
-        await expect(composer(page)).toHaveValue('Updated from sketch shared controls');
+        await expect(composer(page)).toHaveValue(sketchSharedControlsPrompt);
     });
 
     test('editor shared controls can open advanced settings as the dedicated modal', async ({ page }) => {
@@ -1765,7 +1785,6 @@ test.describe('workspace restore flows', () => {
         await page
             .getByTestId('shared-control-advanced-settings')
             .evaluate((button: HTMLButtonElement) => button.click());
-        await expect(page.getByTestId('shared-controls-panel')).toHaveCount(0);
 
         const dialog = await expectAdvancedSettingsDialogVisible(page);
         await expect(dialog).toContainText(tt('composerAdvancedGroundingSectionTitle'));
@@ -1778,42 +1797,28 @@ test.describe('workspace restore flows', () => {
         await expect(composer(page)).toHaveValue('Editor advanced settings prompt');
     });
 
-    test('sketch shared controls can open advanced settings as the dedicated modal', async ({ page }) => {
+    test('sketch shared controls keep advanced settings unavailable', async ({ page }) => {
         await openFreshWorkspace(page);
         await composer(page).fill('Sketch advanced settings prompt');
         await page.locator('[data-testid="side-tools-open-sketchpad"]:visible').click();
 
         await expect(page.getByTestId('sketchpad')).toBeVisible();
         await openSharedControlsFromSurface(page);
-        await page
-            .getByTestId('shared-control-advanced-settings')
-            .evaluate((button: HTMLButtonElement) => button.click());
-        await expect(page.getByTestId('shared-controls-panel')).toHaveCount(0);
-
-        const dialog = await expectAdvancedSettingsDialogVisible(page);
-        await expect(dialog).toContainText(tt('composerAdvancedGroundingSectionTitle'));
-
-        await dialog
-            .getByTestId('composer-advanced-settings-close')
-            .evaluate((button: HTMLButtonElement) => button.click());
-        await expect(page.getByTestId('composer-advanced-settings-dialog')).toHaveCount(0);
+        await expect(page.getByTestId('shared-control-advanced-settings')).toHaveCount(0);
         await expect(page.getByTestId('sketchpad')).toBeVisible();
         await expect(composer(page)).toHaveValue('Sketch advanced settings prompt');
     });
 
-    test('shared controls advanced settings changes persist after closing and reopening the modal', async ({
+    test('editor shared controls advanced settings changes persist after closing and reopening the modal', async ({
         page,
     }) => {
         await openFreshWorkspace(page);
-        await composer(page).fill('Sketch advanced settings persistence prompt');
-        await page.locator('[data-testid="side-tools-open-sketchpad"]:visible').click();
+        await openEditorFromUpload(page, 'Editor advanced settings persistence prompt');
+        await closeSharedPromptSheet(page);
 
-        await expect(page.getByTestId('sketchpad')).toBeVisible();
-        await openSharedControlsFromSurface(page);
         await page
             .getByTestId('shared-control-advanced-settings')
             .evaluate((button: HTMLButtonElement) => button.click());
-        await expect(page.getByTestId('shared-controls-panel')).toHaveCount(0);
 
         const firstDialog = await expectAdvancedSettingsDialogVisible(page);
         await firstDialog.getByTestId('composer-advanced-output-format').selectOption('images-and-text');
@@ -1857,15 +1862,19 @@ test.describe('workspace restore flows', () => {
             .getByTestId('composer-advanced-settings-close')
             .evaluate((button: HTMLButtonElement) => button.click());
         await expect(page.getByTestId('composer-advanced-settings-dialog')).toHaveCount(0);
-        await expect(page.getByTestId('sketchpad')).toBeVisible();
-        await expect(composer(page)).toHaveValue('Sketch advanced settings persistence prompt');
+        await expect(page.getByTestId('image-editor')).toBeVisible();
+        await expect(composer(page)).toHaveValue('Editor advanced settings persistence prompt');
     });
 
-    test('editor close keeps shared composer context when only shared settings changed', async ({ page }) => {
+    test('editor prompt close discards draft changes and keeps shared composer context intact', async ({ page }) => {
         await openFreshWorkspace(page);
         await openEditorFromUpload(page, 'Shared prompt from main composer');
 
         await page.getByTestId('shared-prompt-input').fill('Updated prompt from editor');
+        await closeSharedPromptSheet(page);
+        await openSharedControlsFromSurface(page);
+        await page.getByTestId('shared-control-prompt').click();
+        await expect(page.getByTestId('shared-prompt-input')).toHaveValue('');
         await closeSharedPromptSheet(page);
         await page.getByTestId('editor-close').click();
 
@@ -1877,9 +1886,27 @@ test.describe('workspace restore flows', () => {
         );
         await page.locator('#global-upload-input').setInputFiles(editorSharedContextFixturePath);
         await expect(page.getByTestId('image-editor')).toBeVisible();
-        await page.getByTestId('shared-controls-toggle').click();
+        await openSharedControlsFromSurface(page);
         await page.getByTestId('shared-control-prompt').click();
         await expect(page.getByTestId('shared-prompt-input')).toHaveValue('');
+    });
+
+    test('editor prompt apply keeps the committed prompt local to the editor', async ({ page }) => {
+        await openFreshWorkspace(page);
+        await openEditorFromUpload(page, 'Main composer prompt');
+
+        await page.getByTestId('shared-prompt-input').fill('Applied editor prompt');
+        await page.getByTestId('shared-prompt-apply').click();
+        await expect(page.getByTestId('shared-prompt-input')).toHaveCount(0);
+
+        await openSharedControlsFromSurface(page);
+        await page.getByTestId('shared-control-prompt').click();
+        await expect(page.getByTestId('shared-prompt-input')).toHaveValue('Applied editor prompt');
+        await closeSharedPromptSheet(page);
+
+        await page.getByTestId('editor-close').click();
+        await expect(page.getByTestId('image-editor')).toHaveCount(0);
+        await expect(composer(page)).toHaveValue('Main composer prompt');
     });
 
     test('editor discard restores shared composer context after local canvas edits', async ({ page }) => {
@@ -2670,7 +2697,7 @@ test.describe('workspace restore flows', () => {
         await openFreshWorkspace(page);
         await openEditorFromUpload(page, 'Composer prompt stays outside editor');
         await closeSharedPromptSheet(page);
-        await page.getByTestId('shared-controls-toggle').click();
+        await openSharedControlsFromSurface(page);
 
         const editorQueueButton = page.getByTestId('editor-queue-batch');
         await expect(editorQueueButton).toBeVisible();
@@ -3108,7 +3135,9 @@ test.describe('workspace restore flows', () => {
         await assertOfficialConversationPostGenerateState(page, prompt);
     });
 
-    test('startup restore preserves official conversation continuity without an extra restore action', async ({ page }) => {
+    test('startup restore preserves official conversation continuity without an extra restore action', async ({
+        page,
+    }) => {
         await openWorkspaceWithSnapshot(page, restoredOfficialConversationSnapshot);
 
         await expect(page.getByTestId('workspace-restore-notice')).toHaveCount(0);
@@ -3360,8 +3389,18 @@ test.describe('workspace restore flows', () => {
         const sideTools = page.locator('[data-testid="workspace-side-tool-panel"]:visible').first();
         await expect(sideTools).toBeVisible();
         await expect(sideTools.getByTestId('workspace-side-tools-actions')).toBeVisible();
-        await expect(sideTools.locator('label').filter({ hasText: tt('objectRefs') }).first()).toBeVisible();
-        await expect(sideTools.locator('label').filter({ hasText: tt('characterRefs') }).first()).toBeVisible();
+        await expect(
+            sideTools
+                .locator('label')
+                .filter({ hasText: tt('objectRefs') })
+                .first(),
+        ).toBeVisible();
+        await expect(
+            sideTools
+                .locator('label')
+                .filter({ hasText: tt('characterRefs') })
+                .first(),
+        ).toBeVisible();
         await expect(page.getByTestId('composer-reference-context-button')).toHaveCount(0);
 
         await sideTools.getByTestId('side-tools-open-sketchpad').click();

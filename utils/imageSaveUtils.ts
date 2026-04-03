@@ -17,6 +17,47 @@ export type PreparedImageAsset = {
 export const buildSavedImageLoadUrl = (savedFilename: string): string =>
     `${LOAD_IMAGE_ENDPOINT}?filename=${encodeURIComponent(savedFilename)}`;
 
+export const constrainImageDimensions = (
+    width: number,
+    height: number,
+    maxDimension = 4096,
+): { width: number; height: number; wasResized: boolean } => {
+    if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+        return { width: 0, height: 0, wasResized: false };
+    }
+
+    if (width <= maxDimension && height <= maxDimension) {
+        return { width, height, wasResized: false };
+    }
+
+    if (width > height) {
+        return {
+            width: maxDimension,
+            height: Math.round((height * maxDimension) / width),
+            wasResized: true,
+        };
+    }
+
+    return {
+        width: Math.round((width * maxDimension) / height),
+        height: maxDimension,
+        wasResized: true,
+    };
+};
+
+export const loadImageDimensions = (imageSource: string): Promise<{ width: number; height: number }> =>
+    new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => {
+            resolve({
+                width: image.width,
+                height: image.height,
+            });
+        };
+        image.onerror = () => reject(new Error('Failed to load image dimensions.'));
+        image.src = imageSource;
+    });
+
 export const readFileAsDataUrl = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -33,20 +74,13 @@ export const normalizeImageDataUrl = (
     new Promise((resolve, reject) => {
         const image = new Image();
         image.onload = () => {
-            let width = image.width;
-            let height = image.height;
+            const constrained = constrainImageDimensions(image.width, image.height, maxDimension);
+            let width = constrained.width;
+            let height = constrained.height;
             let normalizedDataUrl = dataUrl;
-            let wasResized = false;
+            const wasResized = constrained.wasResized;
 
-            if (width > maxDimension || height > maxDimension) {
-                if (width > height) {
-                    height = Math.round((height * maxDimension) / width);
-                    width = maxDimension;
-                } else {
-                    width = Math.round((width * maxDimension) / height);
-                    height = maxDimension;
-                }
-
+            if (wasResized) {
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
                 canvas.height = height;
@@ -58,7 +92,6 @@ export const normalizeImageDataUrl = (
 
                 context.drawImage(image, 0, 0, width, height);
                 normalizedDataUrl = canvas.toDataURL(mimeType);
-                wasResized = true;
             }
 
             resolve({

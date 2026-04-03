@@ -1,4 +1,11 @@
-import { AspectRatio } from '../types';
+import { AspectRatio, ImageSize } from '../types';
+
+const IMAGE_SIZE_MAX_DIMENSIONS: Record<ImageSize, number> = {
+    '512': 512,
+    '1K': 1024,
+    '2K': 2048,
+    '4K': 4096,
+};
 
 export interface WorkspacePoint {
     x: number;
@@ -63,6 +70,22 @@ export const findClosestAspectRatio = (
     });
 
     return bestRatio as AspectRatio;
+};
+
+export const findClosestImageSize = (width: number, height: number): ImageSize => {
+    const longestEdge = Math.max(width, height);
+    let bestSize: ImageSize = '1K';
+    let smallestDiff = Infinity;
+
+    Object.entries(IMAGE_SIZE_MAX_DIMENSIONS).forEach(([size, maxDimension]) => {
+        const diff = Math.abs(longestEdge - maxDimension);
+        if (diff < smallestDiff) {
+            smallestDiff = diff;
+            bestSize = size as ImageSize;
+        }
+    });
+
+    return bestSize;
 };
 
 export const fitImageToViewport = (

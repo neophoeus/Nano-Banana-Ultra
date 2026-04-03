@@ -13,6 +13,7 @@ export type AspectRatio =
     | '4:1'
     | '1:8'
     | '8:1';
+export type EditorMode = 'inpaint' | 'outpaint';
 export type ImageSize = '512' | '1K' | '2K' | '4K';
 
 export type ImageStyleCategory = 'All' | 'Photo' | 'Classic' | 'Digital' | 'Stylized' | 'Craft' | 'Design';
@@ -94,6 +95,17 @@ export type StructuredOutputMode =
     | 'revision-brief'
     | 'variation-compare';
 export type GroundingMode = 'off' | 'google-search' | 'image-search' | 'google-search-plus-image-search';
+export type WorkspaceSettingsDraft = {
+    imageModel: ImageModel;
+    aspectRatio: AspectRatio;
+    imageSize: ImageSize;
+    batchSize: number;
+    outputFormat: OutputFormat;
+    structuredOutputMode: StructuredOutputMode;
+    temperature: number;
+    thinkingLevel: ThinkingLevel;
+    groundingMode: GroundingMode;
+};
 export type ExecutionMode = 'single-turn' | 'interactive-batch-variants' | 'chat-continuation' | 'queued-batch-job';
 export type StageAssetRole = 'object' | 'character' | 'stage-source';
 export type StageAssetOrigin = 'upload' | 'sketch' | 'generated' | 'history' | 'editor';

@@ -79,7 +79,7 @@ describe('useWorkspaceTransientUiState', () => {
         expect(latestActiveGroundingSelection).toBeNull();
     });
 
-    it('clears linked focus and editor snapshot when transient state resets', () => {
+    it('starts editor references empty from the snapshot and clears local editor state on exit', () => {
         renderHook();
 
         act(() => {
@@ -100,10 +100,23 @@ describe('useWorkspaceTransientUiState', () => {
                 googleSearch: false,
                 imageSearch: false,
             });
-            latestHook?.setEditorPrompt('temporary editor prompt');
         });
+
         expect(latestHook?.editorInitialState.prompt).toBe('snapshot prompt');
+        expect(latestHook?.editorInitialState.objectImages).toEqual([]);
+        expect(latestHook?.editorInitialState.characterImages).toEqual([]);
+        expect(latestHook?.editorObjectImages).toEqual([]);
+        expect(latestHook?.editorCharacterImages).toEqual([]);
+
+        act(() => {
+            latestHook?.setEditorPrompt('temporary editor prompt');
+            latestHook?.setEditorObjectImages(['local-object']);
+            latestHook?.setEditorCharacterImages(['local-character']);
+        });
+
         expect(latestHook?.editorPrompt).toBe('temporary editor prompt');
+        expect(latestHook?.editorObjectImages).toEqual(['local-object']);
+        expect(latestHook?.editorCharacterImages).toEqual(['local-character']);
 
         act(() => {
             latestActiveGroundingSelection = null;
@@ -115,6 +128,8 @@ describe('useWorkspaceTransientUiState', () => {
         expect(latestHook?.editorContextSnapshot).toBeNull();
         expect(latestHook?.editorInitialState.prompt).toBe('');
         expect(latestHook?.editorPrompt).toBe('');
+        expect(latestHook?.editorObjectImages).toEqual([]);
+        expect(latestHook?.editorCharacterImages).toEqual([]);
         expect(latestHook?.editorInitialState.batchSize).toBe(3);
     });
 });

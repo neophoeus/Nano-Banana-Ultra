@@ -179,6 +179,7 @@ export const en = {
 
     // --- NEW LOGS & NOTIFICATIONS ---
     autoRatioSet: 'Ratio auto-set to {0}',
+    editorRetouchModelAutoSwitch: 'Retouch locked {1}, so the model switched to {0}.',
     errEnterIdea: 'Enter an idea to enhance.',
     errInvalidImage: 'Invalid image file.',
     msgImageResized: 'Image optimized to 4K limit.',
@@ -363,13 +364,14 @@ export const en = {
     workspaceTopHeaderObjectRefs: '{0} object refs',
     workspaceTopHeaderCharacterRefs: '{0} character refs',
     surfaceSharedControlsBadge: 'Shared',
+    surfaceSharedControlsSettingsTitle: 'Settings',
     surfaceSharedControlsOpen: 'Open Shared Controls',
     surfaceSharedControlsHide: 'Hide Shared Controls',
     surfaceSharedControlsRefsCount: '{0} refs',
     surfaceSharedControlsStateTitle: 'Shared Composer State',
     surfaceSharedControlsStateDesc: 'Main-page settings stay live here while {0} is open.',
     surfaceSharedControlsStateDescEditor:
-        'Shared settings stay live here while {0} is open. Prompt stays local to the editor.',
+        'Model and generation settings stay live here while {0} is open. Prompt and references stay local to the editor.',
     surfaceSharedControlsCurrentPrompt: 'Current Prompt',
     surfaceSharedControlsPromptDetail: 'Templates, rewrite, history',
     surfaceSharedControlsQuantityDetail: '{0} image(s)',
@@ -653,8 +655,7 @@ export const en = {
     composerAdvancedGenerationSectionDesc:
         'Keep output, temperature, and thought behavior together so model-level changes stay readable.',
     composerAdvancedStructuredOutput: 'Structured output',
-    composerAdvancedStructuredOutputDesc:
-        'Return the text channel as schema-checked JSON so downstream review and automation can rely on stable fields.',
+    composerAdvancedStructuredOutputDesc: 'Return text as schema-checked JSON for more reliable review and automation.',
     composerDefaultTemp: 'Default temp {0}',
     composerAdvancedReturnThoughtsDesc:
         'Supported Gemini 3 image models now always request visible thought summaries so provenance and reasoning stay available in the workspace.',
@@ -662,19 +663,14 @@ export const en = {
     composerAdvancedGroundingSectionDesc:
         'Resolution behavior is runtime-validated separately from the request contract, so this section keeps the known grounded paths visible.',
     composerAdvancedGroundingMode: 'Grounding mode',
-    composerAdvancedGroundingDesc:
-        'Choose exactly how grounding should run for this model instead of combining separate toggles manually.',
+    composerAdvancedGroundingDesc: 'Pick one grounding path for this model.',
     composerAdvancedGroundingResolutionWarningFlashImageSearch:
         'Nano Banana 2 image search may fall back to 1K even when 2K or 4K is requested.',
     composerAdvancedGroundingGuideTitle: 'Runtime guide',
-    composerAdvancedGroundingGuideDesc:
-        'These grounded size notes are based on live checks in the current product path.',
-    composerAdvancedGroundingGuideFlashGoogle:
-        'Nano Banana 2 + Google Search: requested 2K and 4K stayed at the requested size.',
-    composerAdvancedGroundingGuideFlashImage:
-        'Nano Banana 2 + Image Search: requested 2K and 4K may return 1K actual output.',
-    composerAdvancedGroundingGuideProGoogle:
-        'Nano Banana Pro + Google Search: requested 2K and 4K stayed at the requested size.',
+    composerAdvancedGroundingGuideDesc: 'Live notes for grounded size behavior.',
+    composerAdvancedGroundingGuideFlashGoogle: 'Nano Banana 2 + Google Search: 2K/4K stayed at the requested size.',
+    composerAdvancedGroundingGuideFlashImage: 'Nano Banana 2 + Image Search: 2K/4K may fall back to 1K.',
+    composerAdvancedGroundingGuideProGoogle: 'Nano Banana Pro + Google Search: 2K/4K stayed at the requested size.',
     composerGroundingImageSearchUpgradeNotice:
         'Image search grounding now upgrades output to Images & text so attribution metadata can be returned.',
     composerStructuredOutputUpgradeNotice:
@@ -682,12 +678,10 @@ export const en = {
     composerActionPanelTitle: 'Create',
     composerActionPanelDesc: 'Generate stays primary. Follow-up and workspace actions stay close, but quieter.',
     composerAdvancedEyebrow: 'Deep Controls',
-    composerAdvancedStructuredOutputGuideOff:
-        'Choose Off when you only want the normal response text and image result.',
+    composerAdvancedStructuredOutputGuideOff: 'Choose Off for the normal text-plus-image response.',
     composerAdvancedStructuredOutputGuideSceneBrief:
-        'Use Scene brief when you want a compact production summary of subject, style, palette, and composition.',
-    composerAdvancedStructuredOutputGuidePromptKit:
-        'Use Prompt kit when you want reusable prompt ingredients you can paste into the next iteration.',
+        'Use Scene brief for a compact subject, style, color, and composition summary.',
+    composerAdvancedStructuredOutputGuidePromptKit: 'Use Prompt kit to break the result into reusable prompt parts.',
     composerAdvancedStructuredOutputGuideQualityCheck:
         'Use Quality check when you want strengths, issues, and revision priorities called out explicitly.',
     composerAdvancedStructuredOutputGuideShotPlan:

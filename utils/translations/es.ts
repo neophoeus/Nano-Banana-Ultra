@@ -190,6 +190,7 @@ export const es = {
 
     // --- NEW LOGS & NOTIFICATIONS ---
     autoRatioSet: 'Ratio ajustado a {0}',
+    editorRetouchModelAutoSwitch: 'Retouch bloqueo {1}, por eso el modelo cambio automaticamente a {0}.',
     errEnterIdea: 'Introduce una idea para mejorar.',
     errInvalidImage: 'Archivo de imagen inválido.',
     msgImageResized: 'Imagen ajustada a límite 4K.',
@@ -551,6 +552,7 @@ export const es = {
     structuredOutputFieldRecommendedNextMove: 'Siguiente paso recomendado',
     structuredOutputFieldTestPrompts: 'Prompts de prueba',
     surfaceSharedControlsBadge: 'Compartido',
+    surfaceSharedControlsSettingsTitle: 'Ajustes',
     surfaceSharedControlsOpen: 'Abrir controles compartidos',
     surfaceSharedControlsHide: 'Ocultar controles compartidos',
     surfaceSharedControlsRefsCount: '{0} refs',

@@ -1,4 +1,5 @@
 import React from 'react';
+import Button from './Button';
 import WorkspaceModalFrame from './WorkspaceModalFrame';
 import ComposerAdvancedSettingsContent from './ComposerAdvancedSettingsContent';
 import type { ComposerSettingsPanelProps } from './ComposerSettingsPanel';
@@ -8,16 +9,25 @@ import { getTranslation } from '../utils/translations';
 type ComposerAdvancedSettingsDialogProps = ComposerSettingsPanelProps & {
     isOpen: boolean;
     onClose: () => void;
+    onApply?: () => void;
+};
+
+type AdvancedSettingsDraft = {
+    outputFormat: ComposerSettingsPanelProps['outputFormat'];
+    structuredOutputMode: ComposerSettingsPanelProps['structuredOutputMode'];
+    temperature: ComposerSettingsPanelProps['temperature'];
+    thinkingLevel: ComposerSettingsPanelProps['thinkingLevel'];
+    groundingMode: ComposerSettingsPanelProps['groundingMode'];
 };
 
 export default function ComposerAdvancedSettingsDialog({
     isOpen,
     onClose,
+    onApply,
     currentLanguage,
     outputFormat,
     structuredOutputMode,
     thinkingLevel,
-    includeThoughts,
     groundingMode,
     imageModel,
     capability,
@@ -29,11 +39,67 @@ export default function ComposerAdvancedSettingsDialog({
     onThinkingLevelChange,
     onGroundingModeChange,
 }: ComposerAdvancedSettingsDialogProps) {
+    const t = (key: string) => getTranslation(currentLanguage, key);
+    const usesControlledDraft = Boolean(onApply);
+    const [localDraft, setLocalDraft] = React.useState<AdvancedSettingsDraft>({
+        outputFormat,
+        structuredOutputMode,
+        temperature,
+        thinkingLevel,
+        groundingMode,
+    });
+    const draft = usesControlledDraft
+        ? {
+              outputFormat,
+              structuredOutputMode,
+              temperature,
+              thinkingLevel,
+              groundingMode,
+          }
+        : localDraft;
+
+    React.useEffect(() => {
+        if (!isOpen || usesControlledDraft) {
+            return;
+        }
+
+        setLocalDraft({
+            outputFormat,
+            structuredOutputMode,
+            temperature,
+            thinkingLevel,
+            groundingMode,
+        });
+    }, [groundingMode, isOpen, outputFormat, structuredOutputMode, temperature, thinkingLevel, usesControlledDraft]);
+
+    const handleApply = () => {
+        if (onApply) {
+            onApply();
+            return;
+        }
+
+        if (draft.outputFormat !== outputFormat) {
+            onOutputFormatChange(draft.outputFormat);
+        }
+        if (draft.structuredOutputMode !== structuredOutputMode) {
+            onStructuredOutputModeChange(draft.structuredOutputMode);
+        }
+        if (draft.temperature !== temperature) {
+            onTemperatureChange(draft.temperature);
+        }
+        if (draft.thinkingLevel !== thinkingLevel) {
+            onThinkingLevelChange(draft.thinkingLevel);
+        }
+        if (draft.groundingMode !== groundingMode) {
+            onGroundingModeChange(draft.groundingMode);
+        }
+
+        onClose();
+    };
+
     if (!isOpen) {
         return null;
     }
-
-    const t = (key: string) => getTranslation(currentLanguage, key);
 
     return (
         <WorkspaceModalFrame
@@ -41,33 +107,74 @@ export default function ComposerAdvancedSettingsDialog({
             zIndex={WORKSPACE_OVERLAY_Z_INDEX.advancedSettings}
             maxWidthClass="max-w-6xl"
             onClose={onClose}
-            closeLabel={t('workspaceViewerClose')}
+            closeLabel={t('clearHistoryCancel')}
             closeButtonTestId="composer-advanced-settings-close"
-            eyebrow={t('composerAdvancedEyebrow')}
             title={t('composerAdvancedTitle')}
             backdropClassName="bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.14),_transparent_34%),rgba(15,23,42,0.76)] backdrop-blur-md"
             panelClassName="nbu-overlay-panel-neutral max-h-[88vh]"
             headerClassName="border-b border-gray-200/80 px-5 py-4 dark:border-gray-700/80"
             closeButtonClassName="nbu-control-button px-3 py-1.5 text-[11px] font-semibold"
         >
-            <div className="max-h-[calc(88vh-96px)] overflow-y-auto p-5">
-                <ComposerAdvancedSettingsContent
-                    currentLanguage={currentLanguage}
-                    outputFormat={outputFormat}
-                    structuredOutputMode={structuredOutputMode}
-                    thinkingLevel={thinkingLevel}
-                    includeThoughts={includeThoughts}
-                    groundingMode={groundingMode}
-                    imageModel={imageModel}
-                    capability={capability}
-                    availableGroundingModes={availableGroundingModes}
-                    temperature={temperature}
-                    onOutputFormatChange={onOutputFormatChange}
-                    onStructuredOutputModeChange={onStructuredOutputModeChange}
-                    onTemperatureChange={onTemperatureChange}
-                    onThinkingLevelChange={onThinkingLevelChange}
-                    onGroundingModeChange={onGroundingModeChange}
-                />
+            <div className="flex max-h-[calc(88vh-96px)] min-h-0 flex-col">
+                <div className="min-h-0 flex-1 overflow-y-auto p-5">
+                    <ComposerAdvancedSettingsContent
+                        currentLanguage={currentLanguage}
+                        outputFormat={draft.outputFormat}
+                        structuredOutputMode={draft.structuredOutputMode}
+                        thinkingLevel={draft.thinkingLevel}
+                        groundingMode={draft.groundingMode}
+                        imageModel={imageModel}
+                        capability={capability}
+                        availableGroundingModes={availableGroundingModes}
+                        temperature={draft.temperature}
+                        onOutputFormatChange={(value) =>
+                            usesControlledDraft
+                                ? onOutputFormatChange(value)
+                                : setLocalDraft((previous) => ({
+                                      ...previous,
+                                      outputFormat: value,
+                                  }))
+                        }
+                        onStructuredOutputModeChange={(value) =>
+                            usesControlledDraft
+                                ? onStructuredOutputModeChange(value)
+                                : setLocalDraft((previous) => ({
+                                      ...previous,
+                                      structuredOutputMode: value,
+                                  }))
+                        }
+                        onTemperatureChange={(value) =>
+                            usesControlledDraft
+                                ? onTemperatureChange(value)
+                                : setLocalDraft((previous) => ({
+                                      ...previous,
+                                      temperature: value,
+                                  }))
+                        }
+                        onThinkingLevelChange={(value) =>
+                            usesControlledDraft
+                                ? onThinkingLevelChange(value)
+                                : setLocalDraft((previous) => ({
+                                      ...previous,
+                                      thinkingLevel: value,
+                                  }))
+                        }
+                        onGroundingModeChange={(value) =>
+                            usesControlledDraft
+                                ? onGroundingModeChange(value)
+                                : setLocalDraft((previous) => ({
+                                      ...previous,
+                                      groundingMode: value,
+                                  }))
+                        }
+                    />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 border-t border-gray-200/80 px-5 py-4 dark:border-gray-700/80">
+                    <Button type="button" data-testid="composer-advanced-settings-apply" onClick={handleApply}>
+                        {t('generationSettingsApply')}
+                    </Button>
+                </div>
             </div>
         </WorkspaceModalFrame>
     );

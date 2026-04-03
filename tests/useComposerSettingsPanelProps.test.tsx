@@ -71,6 +71,8 @@ function HookHarness({ currentLanguage, getStageOriginLabel, getLineageActionLab
         handleFollowUpGenerate: vi.fn(),
         handleSurpriseMe: vi.fn(),
         handleSmartRewrite: vi.fn(),
+        openSettings: vi.fn(),
+        openAdvancedSettings: vi.fn(),
         setActivePickerSheet: vi.fn() as any,
         setIsAdvancedSettingsOpen: vi.fn() as any,
         setOutputFormat: vi.fn(),

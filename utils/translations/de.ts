@@ -191,6 +191,7 @@ export const de = {
 
     // --- NEW LOGS & NOTIFICATIONS ---
     autoRatioSet: 'Format auto-gesetzt auf {0}',
+    editorRetouchModelAutoSwitch: 'Retouch sperrt {1}, daher wurde das Modell automatisch auf {0} umgestellt.',
     errEnterIdea: 'Idee zum Optimieren eingeben.',
     errInvalidImage: 'Ungültiges Bild.',
     msgImageResized: 'Bild auf 4K-Limit angepasst.',
@@ -551,6 +552,7 @@ export const de = {
     structuredOutputFieldRecommendedNextMove: 'Empfohlener naechster Schritt',
     structuredOutputFieldTestPrompts: 'Test-Prompts',
     surfaceSharedControlsBadge: 'Gemeinsam',
+    surfaceSharedControlsSettingsTitle: 'Einstellungen',
     surfaceSharedControlsOpen: 'Gemeinsame Steuerung offnen',
     surfaceSharedControlsHide: 'Gemeinsame Steuerung ausblenden',
     surfaceSharedControlsRefsCount: '{0} Refs',

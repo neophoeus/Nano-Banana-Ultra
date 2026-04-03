@@ -190,6 +190,7 @@ export const ru = {
 
     // --- NEW LOGS & NOTIFICATIONS ---
     autoRatioSet: 'Формат авто-задан: {0}',
+    editorRetouchModelAutoSwitch: 'Retouch зафиксировал {1}, поэтому модель автоматически переключена на {0}.',
     errEnterIdea: 'Введите идею.',
     errInvalidImage: 'Неверный файл.',
     msgImageResized: 'Сжато до 4K.',
@@ -546,6 +547,7 @@ export const ru = {
     structuredOutputFieldRecommendedNextMove: 'Рекомендуемый следующий шаг',
     structuredOutputFieldTestPrompts: 'Тестовые промпты',
     surfaceSharedControlsBadge: 'Общее',
+    surfaceSharedControlsSettingsTitle: 'Настройки',
     surfaceSharedControlsOpen: 'Открыть общие элементы управления',
     surfaceSharedControlsHide: 'Скрыть общие элементы управления',
     surfaceSharedControlsRefsCount: 'рефов {0}',

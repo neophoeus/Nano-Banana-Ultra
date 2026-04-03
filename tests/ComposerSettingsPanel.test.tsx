@@ -245,11 +245,13 @@ describe('ComposerAdvancedSettingsDialog grounding warning', () => {
         expect(markup).toContain('image search may fall back to 1K');
         expect(markup).toContain('Runtime guide');
         expect(markup).toContain('Nano Banana 2 + Image Search');
-        expect(markup).toContain('composer-advanced-grounding-guide-details');
-        expect(markup).toContain('composer-advanced-grounding-guide-summary');
-        expect(markup).toContain('composer-advanced-grounding-guide-count');
-        expect(markup).toContain('group-open:rotate-180');
-        expect(markup).toContain('3 notes');
+        expect(markup).toContain('composer-advanced-grounding-guide');
+        expect(markup).not.toContain('composer-advanced-grounding-guide-details');
+        expect(markup).not.toContain('composer-advanced-grounding-guide-summary');
+        expect(markup).not.toContain('composer-advanced-grounding-guide-count');
+        expect(markup).not.toContain('group-open:rotate-180');
+        expect(markup).toContain('composer-advanced-settings-apply');
+        expect(markup).not.toContain('composer-advanced-settings-open-generation');
     });
 
     it('does not show the warning for 3 Pro Google Search grounding', () => {
@@ -269,7 +271,12 @@ describe('ComposerAdvancedSettingsDialog grounding warning', () => {
         expect(markup).toContain('Nano Banana Pro + Google Search');
         expect(markup).toContain('composer-advanced-structured-output-guide');
         expect(markup).toContain('Off');
-        expect(markup).toContain('Choose Off when you only want the normal response text and image result.');
+        expect(markup).toContain('Choose Off for the normal text-plus-image response.');
+        expect(markup).not.toContain('composer-advanced-header-hint');
+        expect(markup).not.toContain('composer-advanced-generation-hint');
+        expect(markup).not.toContain('composer-advanced-grounding-section-hint');
+        expect(markup).not.toContain('composer-advanced-grounding-guide-hint');
+        expect(markup).not.toContain('Default temp');
     });
 
     it('shows a structured output guide card when the selected model supports structured outputs', () => {
@@ -291,11 +298,6 @@ describe('ComposerAdvancedSettingsDialog grounding warning', () => {
         expect(markup).toContain(
             'Use Variation compare when you are choosing between nearby directions and want differences, tradeoffs, and the next test move.',
         );
-        expect(markup).toContain('Best for');
-        expect(markup).toContain('Choose between nearby options and line up the next test pass.');
-        expect(markup).toContain('Avoid when');
-        expect(markup).toContain('You are only reviewing one candidate and do not need comparison framing.');
-        expect(markup).toContain('Includes');
         expect(markup).toContain('composer-advanced-structured-output-next-prompt-guide');
         expect(markup).toContain('Next prompt');
         expect(markup).toContain(
@@ -305,16 +307,10 @@ describe('ComposerAdvancedSettingsDialog grounding warning', () => {
         expect(markup).toContain('Comparison summary');
         expect(markup).toContain('Tradeoffs');
         expect(markup).toContain('Test prompts');
-        expect(markup).toContain('Example shape');
-        expect(markup).toContain(
-            '&quot;comparisonSummary&quot;: &quot;Option B keeps the silhouette cleaner while Option A feels more aggressive.&quot;',
-        );
-        expect(markup).toContain(
-            '&quot;tradeoffs&quot;: [&quot;A has stronger energy but noisier lighting&quot;,&quot;B is calmer but less immediately bold&quot;]',
-        );
-        expect(markup).toContain(
-            '&quot;testPrompts&quot;: [&quot;keep Option B pose, add A-level contrast&quot;,&quot;retain B framing and sharpen rim light&quot;]',
-        );
+        expect(markup).not.toContain('Best for');
+        expect(markup).not.toContain('Avoid when');
+        expect(markup).not.toContain('Includes');
+        expect(markup).not.toContain('Example shape');
     });
 
     it('shows revision-brief guidance when that preset is selected', () => {
@@ -335,10 +331,6 @@ describe('ComposerAdvancedSettingsDialog grounding warning', () => {
         expect(markup).toContain(
             'Use Revision brief when the image is promising but still needs a clean edit plan with keep-rules, target changes, and a final revision prompt.',
         );
-        expect(markup).toContain('Best for');
-        expect(markup).toContain('Turning critique into a concrete edit pass without losing the approved core.');
-        expect(markup).toContain('Avoid when');
-        expect(markup).toContain('You only need a high-level review and are not ready to specify edit moves.');
         expect(markup).toContain('composer-advanced-structured-output-next-prompt-guide');
         expect(markup).toContain('Next prompt');
         expect(markup).toContain(
@@ -348,9 +340,9 @@ describe('ComposerAdvancedSettingsDialog grounding warning', () => {
         expect(markup).toContain('Revision goal');
         expect(markup).toContain('Edit targets');
         expect(markup).toContain('Risk checks');
-        expect(markup).toContain(
-            '&quot;revisionGoal&quot;: &quot;Open up the face, simplify the background, and keep the silhouette premium.&quot;',
-        );
+        expect(markup).not.toContain('Best for');
+        expect(markup).not.toContain('Avoid when');
+        expect(markup).not.toContain('Example shape');
     });
 
     it('localizes shell action labels outside English', () => {
@@ -368,11 +360,12 @@ describe('ComposerAdvancedSettingsDialog grounding warning', () => {
             />,
         );
 
-        expect(markup).toContain('詳細操作');
         expect(markup).toContain('機能対応の詳細設定');
-        expect(markup).toContain('閉じる');
-        expect(markup).not.toContain('>Deep Controls<');
+        expect(markup).toContain('キャンセル');
+        expect(markup).toContain('Apply');
+        expect(markup).not.toContain('詳細操作');
         expect(markup).not.toContain('>Advanced settings<');
         expect(markup).not.toContain('>Close<');
+        expect(markup).not.toContain('>閉じる<');
     });
 });

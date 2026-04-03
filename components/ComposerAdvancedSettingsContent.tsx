@@ -2,7 +2,6 @@ import React from 'react';
 import { MODEL_CAPABILITIES, OUTPUT_FORMATS, STRUCTURED_OUTPUT_MODES, THINKING_LEVELS } from '../constants';
 import { GroundingMode, ImageModel, OutputFormat, StructuredOutputMode, ThinkingLevel } from '../types';
 import { getGroundingModeLabel } from '../utils/groundingMode';
-import { getStructuredOutputDefinition } from '../utils/structuredOutputs';
 import { STRUCTURED_OUTPUT_FIELD_LABEL_KEYS } from '../utils/structuredOutputPresentation';
 import { getTranslation, Language } from '../utils/translations';
 import InfoTooltip from './InfoTooltip';
@@ -12,7 +11,6 @@ type ComposerAdvancedSettingsContentProps = {
     outputFormat: OutputFormat;
     structuredOutputMode: StructuredOutputMode;
     thinkingLevel: ThinkingLevel;
-    includeThoughts: boolean;
     groundingMode: GroundingMode;
     imageModel: ImageModel;
     capability: (typeof MODEL_CAPABILITIES)[ImageModel];
@@ -36,45 +34,6 @@ const STRUCTURED_OUTPUT_GUIDE_FIELD_KEYS: Record<StructuredOutputMode, string[]>
     'variation-compare': ['comparisonSummary', 'tradeoffs', 'testPrompts'],
 };
 
-const STRUCTURED_OUTPUT_GUIDE_EXAMPLE_VALUES: Record<StructuredOutputMode, Record<string, string | string[]>> = {
-    off: {},
-    'scene-brief': {
-        summary: 'Moody rooftop portrait with a restrained teal-orange palette.',
-        primarySubjects: ['solo runner', 'wind-tossed coat'],
-        compositionNotes: 'Keep the subject off-center with skyline depth behind the shoulder.',
-    },
-    'prompt-kit': {
-        intentSummary: 'Push the scene toward premium editorial drama without losing realism.',
-        subjectCues: ['tailored black coat', 'direct eye contact'],
-        negativeCues: ['cartoon shading', 'overblown lens flare'],
-    },
-    'quality-check': {
-        overallAssessment: 'Strong silhouette and mood, but the face contrast is still slightly heavy.',
-        issues: ['eye socket shadows feel too dense', 'background highlights compete with the subject'],
-        revisionPriorities: ['soften facial contrast first', 'quiet the brightest skyline accents second'],
-    },
-    'shot-plan': {
-        shotIntent: 'Sell a composed hero frame with quiet tension and clean subject separation.',
-        cameraFraming: 'Medium portrait from chest-up with slight low-angle emphasis.',
-        lightingPlan: ['soft key from camera left', 'subtle rim light on coat edge'],
-    },
-    'delivery-brief': {
-        deliverySummary: 'Ready for stakeholder review after one final cleanup pass.',
-        mustProtect: ['clean coat silhouette', 'muted cinematic palette'],
-        exportTargets: ['review JPG', 'master PNG'],
-    },
-    'revision-brief': {
-        revisionGoal: 'Open up the face, simplify the background, and keep the silhouette premium.',
-        editTargets: ['lift eye-area detail', 'reduce background hotspot clutter'],
-        riskChecks: ['do not flatten the moody contrast', 'avoid making skin texture look over-smoothed'],
-    },
-    'variation-compare': {
-        comparisonSummary: 'Option B keeps the silhouette cleaner while Option A feels more aggressive.',
-        tradeoffs: ['A has stronger energy but noisier lighting', 'B is calmer but less immediately bold'],
-        testPrompts: ['keep Option B pose, add A-level contrast', 'retain B framing and sharpen rim light'],
-    },
-};
-
 const STRUCTURED_OUTPUT_PROMPT_READY_FIELD_KEYS: Partial<Record<StructuredOutputMode, string[]>> = {
     'revision-brief': ['finalPrompt'],
     'variation-compare': ['recommendedNextMove', 'testPrompts'],
@@ -85,7 +44,6 @@ export default function ComposerAdvancedSettingsContent({
     outputFormat,
     structuredOutputMode,
     thinkingLevel,
-    includeThoughts,
     groundingMode,
     imageModel,
     capability,
@@ -98,16 +56,6 @@ export default function ComposerAdvancedSettingsContent({
     onGroundingModeChange,
 }: ComposerAdvancedSettingsContentProps) {
     const t = (key: string) => getTranslation(currentLanguage, key);
-    const renderDisclosureChevron = () => (
-        <svg
-            aria-hidden="true"
-            viewBox="0 0 20 20"
-            fill="none"
-            className="h-4 w-4 text-gray-400 transition-transform group-open:rotate-180 dark:text-gray-500"
-        >
-            <path d="M5 7.5 10 12.5 15 7.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        </svg>
-    );
     const getStructuredOutputModeLabel = (value: StructuredOutputMode) => {
         switch (value) {
             case 'scene-brief':
@@ -148,46 +96,6 @@ export default function ComposerAdvancedSettingsContent({
                 return t('composerAdvancedStructuredOutputGuideOff');
         }
     };
-    const getStructuredOutputModeGuideBestFor = (value: StructuredOutputMode) => {
-        switch (value) {
-            case 'scene-brief':
-                return t('composerAdvancedStructuredOutputGuideBestForSceneBrief');
-            case 'prompt-kit':
-                return t('composerAdvancedStructuredOutputGuideBestForPromptKit');
-            case 'quality-check':
-                return t('composerAdvancedStructuredOutputGuideBestForQualityCheck');
-            case 'shot-plan':
-                return t('composerAdvancedStructuredOutputGuideBestForShotPlan');
-            case 'delivery-brief':
-                return t('composerAdvancedStructuredOutputGuideBestForDeliveryBrief');
-            case 'revision-brief':
-                return t('composerAdvancedStructuredOutputGuideBestForRevisionBrief');
-            case 'variation-compare':
-                return t('composerAdvancedStructuredOutputGuideBestForVariationCompare');
-            default:
-                return null;
-        }
-    };
-    const getStructuredOutputModeGuideAvoidWhen = (value: StructuredOutputMode) => {
-        switch (value) {
-            case 'scene-brief':
-                return t('composerAdvancedStructuredOutputGuideAvoidWhenSceneBrief');
-            case 'prompt-kit':
-                return t('composerAdvancedStructuredOutputGuideAvoidWhenPromptKit');
-            case 'quality-check':
-                return t('composerAdvancedStructuredOutputGuideAvoidWhenQualityCheck');
-            case 'shot-plan':
-                return t('composerAdvancedStructuredOutputGuideAvoidWhenShotPlan');
-            case 'delivery-brief':
-                return t('composerAdvancedStructuredOutputGuideAvoidWhenDeliveryBrief');
-            case 'revision-brief':
-                return t('composerAdvancedStructuredOutputGuideAvoidWhenRevisionBrief');
-            case 'variation-compare':
-                return t('composerAdvancedStructuredOutputGuideAvoidWhenVariationCompare');
-            default:
-                return null;
-        }
-    };
     const getStructuredOutputModeGuideFields = (value: StructuredOutputMode) =>
         STRUCTURED_OUTPUT_GUIDE_FIELD_KEYS[value].map(
             (fieldKey) =>
@@ -208,29 +116,6 @@ export default function ComposerAdvancedSettingsContent({
             (fieldKey) =>
                 getTranslation(currentLanguage, STRUCTURED_OUTPUT_FIELD_LABEL_KEYS[fieldKey] || '') || fieldKey,
         );
-    const getStructuredOutputModeGuideExampleRows = (value: StructuredOutputMode) => {
-        const definition = getStructuredOutputDefinition(value);
-        const properties =
-            (definition?.responseJsonSchema?.properties as Record<string, { type?: string }> | undefined) || {};
-        const fieldKeys = STRUCTURED_OUTPUT_GUIDE_FIELD_KEYS[value];
-        const exampleValues = STRUCTURED_OUTPUT_GUIDE_EXAMPLE_VALUES[value] || {};
-
-        if (fieldKeys.length === 0) {
-            return [];
-        }
-
-        return [
-            '{',
-            ...fieldKeys.map((fieldKey, index) => {
-                const placeholder = properties[fieldKey]?.type === 'array' ? ['...', '...'] : '...';
-                const exampleValue = exampleValues[fieldKey] ?? placeholder;
-                const trailingComma = index < fieldKeys.length - 1 ? ',' : '';
-
-                return `  "${fieldKey}": ${JSON.stringify(exampleValue)}${trailingComma}`;
-            }),
-            '}',
-        ];
-    };
     const showGroundingResolutionWarning =
         imageModel === 'gemini-3.1-flash-image-preview' &&
         (groundingMode === 'image-search' || groundingMode === 'google-search-plus-image-search');
@@ -242,35 +127,7 @@ export default function ComposerAdvancedSettingsContent({
 
     return (
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(300px,0.85fr)]">
-            <div className="nbu-soft-well p-4">
-                <div className="mb-4 flex items-center justify-between gap-3">
-                    <div>
-                        <p className="nbu-section-eyebrow">{t('composerAdvancedEyebrow')}</p>
-                        <div className="mt-1 flex items-center gap-2">
-                            <h3 className="text-base font-black text-slate-900 dark:text-slate-100">
-                                {t('composerAdvancedTitle')}
-                            </h3>
-                            <InfoTooltip
-                                dataTestId="composer-advanced-header-hint"
-                                buttonLabel={t('composerAdvancedDesc')}
-                                content={t('composerAdvancedDesc')}
-                            />
-                        </div>
-                    </div>
-                    <span className="nbu-chip">{t('composerDefaultTemp').replace('{0}', temperature.toFixed(1))}</span>
-                </div>
-
-                <div className="mb-3 flex items-center gap-2">
-                    <h4 className="text-xs font-bold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
-                        {t('composerAdvancedGenerationSectionTitle')}
-                    </h4>
-                    <InfoTooltip
-                        dataTestId="composer-advanced-generation-hint"
-                        buttonLabel={t('composerAdvancedGenerationSectionDesc')}
-                        content={t('composerAdvancedGenerationSectionDesc')}
-                    />
-                </div>
-
+            <div className={`nbu-soft-well p-4 ${availableGroundingModes.length > 1 ? '' : 'xl:col-span-2'}`}>
                 <div className="grid gap-4 md:grid-cols-2">
                     {capability.outputFormats.length > 1 && (
                         <label className="space-y-2 text-sm text-gray-700 dark:text-gray-200">
@@ -295,7 +152,7 @@ export default function ComposerAdvancedSettingsContent({
                     )}
 
                     {capability.supportsStructuredOutputs && (
-                        <div className="space-y-2 text-sm text-gray-700 dark:text-gray-200">
+                        <div className="space-y-2 text-sm text-gray-700 dark:text-gray-200 md:col-span-2">
                             <div className="flex items-center gap-2">
                                 <span className="block text-xs font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
                                     {t('composerAdvancedStructuredOutput')}
@@ -307,6 +164,7 @@ export default function ComposerAdvancedSettingsContent({
                                 />
                             </div>
                             <select
+                                data-testid="composer-advanced-structured-output-select"
                                 value={structuredOutputMode}
                                 onChange={(event) =>
                                     onStructuredOutputModeChange(event.target.value as StructuredOutputMode)
@@ -329,44 +187,16 @@ export default function ComposerAdvancedSettingsContent({
                                 <div className="mt-1 text-xs leading-6 text-emerald-900 dark:text-emerald-100">
                                     {getStructuredOutputModeGuide(structuredOutputMode)}
                                 </div>
-                                {getStructuredOutputModeGuideBestFor(structuredOutputMode) &&
-                                    getStructuredOutputModeGuideAvoidWhen(structuredOutputMode) && (
-                                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                                            <div className="rounded-2xl border border-emerald-200/80 bg-white/70 px-3 py-2 dark:border-emerald-400/20 dark:bg-emerald-900/20">
-                                                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-700/70 dark:text-emerald-200/65">
-                                                    {t('composerAdvancedStructuredOutputGuideBestForLabel')}
-                                                </div>
-                                                <div className="mt-1 text-[11px] leading-5 text-emerald-900 dark:text-emerald-100">
-                                                    {getStructuredOutputModeGuideBestFor(structuredOutputMode)}
-                                                </div>
-                                            </div>
-                                            <div className="rounded-2xl border border-amber-200/80 bg-white/70 px-3 py-2 dark:border-amber-400/20 dark:bg-amber-900/10">
-                                                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-700/80 dark:text-amber-200/70">
-                                                    {t('composerAdvancedStructuredOutputGuideAvoidWhenLabel')}
-                                                </div>
-                                                <div className="mt-1 text-[11px] leading-5 text-amber-900 dark:text-amber-100">
-                                                    {getStructuredOutputModeGuideAvoidWhen(structuredOutputMode)}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
                                 {getStructuredOutputModeGuideFields(structuredOutputMode).length > 0 && (
-                                    <div className="mt-3">
-                                        <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-700/70 dark:text-emerald-200/65">
-                                            {t('composerAdvancedStructuredOutputGuideFieldsLabel')}
-                                        </div>
-                                        <div className="mt-2 flex flex-wrap gap-2">
-                                            {getStructuredOutputModeGuideFields(structuredOutputMode).map(
-                                                (fieldLabel) => (
-                                                    <span
-                                                        key={fieldLabel}
-                                                        className="rounded-full border border-emerald-200 bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-emerald-900 dark:border-emerald-400/30 dark:bg-emerald-900/30 dark:text-emerald-100"
-                                                    >
-                                                        {fieldLabel}
-                                                    </span>
-                                                ),
-                                            )}
-                                        </div>
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {getStructuredOutputModeGuideFields(structuredOutputMode).map((fieldLabel) => (
+                                            <span
+                                                key={fieldLabel}
+                                                className="rounded-full border border-emerald-200 bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-emerald-900 dark:border-emerald-400/30 dark:bg-emerald-900/30 dark:text-emerald-100"
+                                            >
+                                                {fieldLabel}
+                                            </span>
+                                        ))}
                                     </div>
                                 )}
                                 {getStructuredOutputModePromptReadyGuide(structuredOutputMode) && (
@@ -394,20 +224,6 @@ export default function ComposerAdvancedSettingsContent({
                                                 )}
                                             </div>
                                         )}
-                                    </div>
-                                )}
-                                {getStructuredOutputModeGuideExampleRows(structuredOutputMode).length > 0 && (
-                                    <div className="mt-3">
-                                        <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-700/70 dark:text-emerald-200/65">
-                                            {t('composerAdvancedStructuredOutputGuideExampleLabel')}
-                                        </div>
-                                        <div className="mt-2 overflow-x-auto rounded-2xl border border-emerald-200/80 bg-emerald-950 px-3 py-2 font-mono text-[11px] leading-5 text-emerald-50 dark:border-emerald-400/20 dark:bg-[#07130f] dark:text-emerald-100">
-                                            {getStructuredOutputModeGuideExampleRows(structuredOutputMode).map(
-                                                (exampleRow) => (
-                                                    <div key={exampleRow}>{exampleRow}</div>
-                                                ),
-                                            )}
-                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -466,38 +282,11 @@ export default function ComposerAdvancedSettingsContent({
                             </select>
                         </label>
                     )}
-
-                    {capability.supportsIncludeThoughts && (
-                        <div className="nbu-input-surface px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
-                            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
-                                <span>{t('groundingProvenanceInsightReturnThoughts')}</span>
-                                <InfoTooltip
-                                    dataTestId="composer-advanced-return-thoughts-hint"
-                                    buttonLabel={t('composerAdvancedReturnThoughtsDesc')}
-                                    content={t('composerAdvancedReturnThoughtsDesc')}
-                                />
-                            </div>
-                            <div className="mt-2 text-[11px] font-semibold text-gray-600 dark:text-gray-300">
-                                {includeThoughts ? t('composerVisibilityVisible') : t('composerVisibilityHidden')}
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
 
             {availableGroundingModes.length > 1 && (
                 <div className="nbu-soft-well p-4">
-                    <div className="mb-3 flex items-center gap-2">
-                        <h4 className="text-xs font-bold uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
-                            {t('composerAdvancedGroundingSectionTitle')}
-                        </h4>
-                        <InfoTooltip
-                            dataTestId="composer-advanced-grounding-section-hint"
-                            buttonLabel={t('composerAdvancedGroundingSectionDesc')}
-                            content={t('composerAdvancedGroundingSectionDesc')}
-                        />
-                    </div>
-
                     <label className="space-y-2 text-sm text-gray-700 dark:text-gray-200">
                         <div className="flex items-center gap-2">
                             <span className="block text-xs font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
@@ -510,6 +299,7 @@ export default function ComposerAdvancedSettingsContent({
                             />
                         </div>
                         <select
+                            data-testid="composer-advanced-grounding-mode-select"
                             value={groundingMode}
                             onChange={(event) => onGroundingModeChange(event.target.value as GroundingMode)}
                             className="nbu-input-surface w-full px-4 py-3"
@@ -528,33 +318,10 @@ export default function ComposerAdvancedSettingsContent({
                         </div>
                     )}
 
-                    <details
-                        data-testid="composer-advanced-grounding-guide-details"
-                        className="group nbu-subpanel mt-4 p-3"
-                    >
-                        <summary
-                            data-testid="composer-advanced-grounding-guide-summary"
-                            className="flex cursor-pointer list-none items-start justify-between gap-3 marker:hidden"
-                        >
-                            <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
-                                    <span>{t('composerAdvancedGroundingGuideTitle')}</span>
-                                    <InfoTooltip
-                                        dataTestId="composer-advanced-grounding-guide-hint"
-                                        buttonLabel={t('composerAdvancedGroundingGuideDesc')}
-                                        content={t('composerAdvancedGroundingGuideDesc')}
-                                        align="right"
-                                    />
-                                </div>
-                                <div
-                                    data-testid="composer-advanced-grounding-guide-count"
-                                    className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500"
-                                >
-                                    {groundingGuideRows.length} notes
-                                </div>
-                            </div>
-                            <span className="mt-1 shrink-0">{renderDisclosureChevron()}</span>
-                        </summary>
+                    <div data-testid="composer-advanced-grounding-guide" className="nbu-subpanel mt-4 p-3">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
+                            {t('composerAdvancedGroundingGuideTitle')}
+                        </div>
                         <div className="mt-3 space-y-2">
                             {groundingGuideRows.map((row) => (
                                 <div
@@ -565,7 +332,7 @@ export default function ComposerAdvancedSettingsContent({
                                 </div>
                             ))}
                         </div>
-                    </details>
+                    </div>
                 </div>
             )}
         </div>

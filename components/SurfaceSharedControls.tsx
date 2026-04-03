@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { GroundingMode, OutputFormat, StructuredOutputMode, ThinkingLevel } from '../types';
+import { getGroundingModeLabel } from '../utils/groundingMode';
 import { getTranslation, Language } from '../utils/translations';
 
 export type SurfaceSharedControlSheet =
@@ -15,14 +17,10 @@ export type SurfaceSharedControlsVariant = 'full' | 'sketch';
 
 type SurfaceSharedControlsProps = {
     currentLanguage: Language;
-    isOpen: boolean;
-    workspaceLabel: string;
-    stateDescription: string;
-    activeSheetLabel: string;
     activePickerSheet: SurfaceSharedControlSheet | null;
     isAdvancedSettingsOpen: boolean;
-    promptPreview: string;
     totalReferenceCount: number;
+    hasPrompt: boolean;
     styleLabel: string;
     modelLabel: string;
     aspectRatio: string;
@@ -33,10 +31,16 @@ type SurfaceSharedControlsProps = {
     maxObjects: number;
     maxCharacters: number;
     settingsVariant: SurfaceSharedControlsVariant;
+    showStyleControl?: boolean;
+    outputFormat: OutputFormat;
+    structuredOutputMode: StructuredOutputMode;
+    temperature: number;
+    thinkingLevel: ThinkingLevel;
+    includeThoughts: boolean;
+    groundingMode: GroundingMode;
     containerClassName: string;
     containerStyle?: React.CSSProperties;
-    onToggleOpen: () => void;
-    onClosePanel: () => void;
+    onBottomOffsetChange?: (bottom: number) => void;
     onOpenSheet: (sheet: SurfaceSharedControlSheet) => void;
     onOpenAdvancedSettings: () => void;
 };
@@ -44,259 +48,311 @@ type SurfaceSharedControlsProps = {
 type SheetButtonConfig = {
     id: string;
     title: string;
-    detail: string;
     isActive: boolean;
     onClick: () => void;
     testId?: string;
-    wide?: boolean;
-    badge?: string;
 };
 
 const buildButtonClassName = (isActive: boolean) =>
-    `${isActive ? 'rounded-2xl border px-4 py-3 text-left transition-colors' : 'nbu-control-button rounded-2xl px-4 py-3 text-left'} ${
+    `${isActive ? 'rounded-xl border px-2.5 py-1.5 text-center transition-colors' : 'nbu-control-button rounded-xl px-2.5 py-1.5 text-center'} ${
         isActive
             ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200'
             : 'text-gray-800 dark:text-gray-100'
     }`;
 
+const getSummaryModelLabel = (value: string) => value.replace(/\s*\([^)]*\)\s*$/, '').trim();
+
 const SurfaceSharedControls: React.FC<SurfaceSharedControlsProps> = ({
     currentLanguage,
-    isOpen,
-    workspaceLabel,
-    stateDescription,
-    activeSheetLabel,
     activePickerSheet,
     isAdvancedSettingsOpen,
-    promptPreview,
     totalReferenceCount,
-    styleLabel,
+    hasPrompt,
     modelLabel,
     aspectRatio,
     imageSize,
     batchSize,
-    objectImageCount,
-    characterImageCount,
-    maxObjects,
-    maxCharacters,
     settingsVariant,
+    showStyleControl = true,
+    outputFormat,
+    structuredOutputMode,
+    temperature,
+    thinkingLevel,
+    includeThoughts,
+    groundingMode,
     containerClassName,
     containerStyle,
-    onToggleOpen,
-    onClosePanel,
+    onBottomOffsetChange,
     onOpenSheet,
     onOpenAdvancedSettings,
 }) => {
     const t = (key: string) => getTranslation(currentLanguage, key);
-    const renderDisclosureChevron = () => (
-        <svg
-            aria-hidden="true"
-            viewBox="0 0 20 20"
-            fill="none"
-            className="h-4 w-4 text-gray-400 transition-transform group-open:rotate-180 dark:text-gray-500"
-        >
-            <path d="M5 7.5 10 12.5 15 7.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        </svg>
-    );
-    const renderPromptPreview = (value: string, limit = 140) => {
-        const trimmedValue = value.trim();
-        if (!trimmedValue) {
-            return t('workspaceSurfacePromptEmpty');
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const getStructuredOutputModeLabel = (value: StructuredOutputMode) => {
+        switch (value) {
+            case 'scene-brief':
+                return t('structuredOutputModeSceneBrief');
+            case 'prompt-kit':
+                return t('structuredOutputModePromptKit');
+            case 'quality-check':
+                return t('structuredOutputModeQualityCheck');
+            case 'shot-plan':
+                return t('structuredOutputModeShotPlan');
+            case 'delivery-brief':
+                return t('structuredOutputModeDeliveryBrief');
+            case 'revision-brief':
+                return t('structuredOutputModeRevisionBrief');
+            case 'variation-compare':
+                return t('structuredOutputModeVariationCompare');
+            default:
+                return t('structuredOutputModeOff');
         }
-        if (trimmedValue.length <= limit) {
-            return trimmedValue;
-        }
-        return `${trimmedValue.slice(0, limit).trimEnd()}...`;
     };
-    const settingsDetail =
-        settingsVariant === 'sketch'
-            ? `${modelLabel} · ${aspectRatio}`
-            : `${modelLabel} · ${aspectRatio} · ${imageSize} · ${t('surfaceSharedControlsQuantityDetail').replace('{0}', String(batchSize))}`;
-    const sheetButtons: SheetButtonConfig[] = [
-        {
-            id: 'prompt',
-            title: t('workspaceSheetTitlePrompt'),
-            detail: t('surfaceSharedControlsPromptDetail'),
-            isActive: activePickerSheet === 'prompt',
-            onClick: () => onOpenSheet('prompt'),
-            testId: 'shared-control-prompt',
-        },
-        {
-            id: 'styles',
-            title: t('style'),
-            detail: styleLabel,
-            isActive: activePickerSheet === 'styles',
-            onClick: () => onOpenSheet('styles'),
-        },
-        {
-            id: 'settings',
-            title: t('workspaceSheetTitleGenerationSettings'),
-            detail: settingsDetail,
-            isActive: activePickerSheet === 'settings',
-            onClick: () => onOpenSheet('settings'),
-            testId: 'shared-control-settings',
-        },
-        {
-            id: 'advanced-settings',
-            title: t('composerToolbarAdvancedSettings'),
-            detail: t('composerAdvancedDesc'),
-            isActive: isAdvancedSettingsOpen,
-            onClick: onOpenAdvancedSettings,
-            testId: 'shared-control-advanced-settings',
-        },
-        {
-            id: 'references',
-            title: t('workspaceTopHeaderReferenceTray'),
-            detail: t('surfaceSharedControlsReferenceDetail')
-                .replace('{0}', String(objectImageCount))
-                .replace('{1}', String(maxObjects))
-                .replace('{2}', String(characterImageCount))
-                .replace('{3}', String(maxCharacters)),
-            isActive: activePickerSheet === 'references',
-            onClick: () => onOpenSheet('references'),
-            wide: true,
-            badge: String(totalReferenceCount),
-        },
-    ];
+    const getOutputFormatLabel = (value: OutputFormat) =>
+        value === 'images-and-text' ? 'Images & text' : 'Images only';
+    const getThinkingLevelLabel = (value: ThinkingLevel) => {
+        switch (value) {
+            case 'minimal':
+                return 'Minimal';
+            case 'high':
+                return 'High';
+            default:
+                return t('structuredOutputModeOff');
+        }
+    };
+    const getGroundingLabel = (value: GroundingMode) => getGroundingModeLabel(value);
+    const isSketchSurface = settingsVariant === 'sketch';
+    const summaryModelLabel = getSummaryModelLabel(modelLabel);
+    const summaryItems = isSketchSurface
+        ? [
+              {
+                  id: 'model',
+                  label: t('workspaceSheetTitleModel'),
+                  value: summaryModelLabel,
+              },
+              {
+                  id: 'ratio',
+                  label: t('workspaceSheetTitleRatio'),
+                  value: aspectRatio,
+              },
+          ]
+        : [
+              {
+                  id: 'prompt',
+                  label: t('promptLabel'),
+                  value: hasPrompt ? t('workspaceSurfaceReady') : t('workspaceSurfacePromptEmpty'),
+              },
+              {
+                  id: 'model',
+                  label: t('workspaceSheetTitleModel'),
+                  value: summaryModelLabel,
+              },
+              {
+                  id: 'ratio',
+                  label: t('workspaceSheetTitleRatio'),
+                  value: aspectRatio,
+              },
+              {
+                  id: 'size',
+                  label: t('workspaceSheetTitleSize'),
+                  value: imageSize,
+              },
+              {
+                  id: 'quantity',
+                  label: t('batchSize'),
+                  value: String(batchSize),
+              },
+              {
+                  id: 'output-format',
+                  label: t('groundingProvenanceInsightOutputFormat'),
+                  value: getOutputFormatLabel(outputFormat),
+              },
+              {
+                  id: 'structured-output',
+                  label: t('composerAdvancedStructuredOutput'),
+                  value: getStructuredOutputModeLabel(structuredOutputMode),
+              },
+              {
+                  id: 'thinking-level',
+                  label: t('groundingProvenanceInsightThinkingLevel'),
+                  value: getThinkingLevelLabel(thinkingLevel),
+              },
+              {
+                  id: 'thoughts',
+                  label: t('groundingProvenanceInsightReturnThoughts'),
+                  value: includeThoughts ? t('composerVisibilityVisible') : t('composerVisibilityHidden'),
+              },
+              {
+                  id: 'grounding',
+                  label: t('groundingProvenanceInsightGrounding'),
+                  value: getGroundingLabel(groundingMode),
+              },
+              {
+                  id: 'temperature',
+                  label: t('groundingProvenanceInsightTemperature'),
+                  value: temperature.toFixed(1),
+              },
+              {
+                  id: 'references',
+                  label: t('workspaceSheetTitleReferences'),
+                  value: String(totalReferenceCount),
+              },
+          ];
+
+    const sheetButtons: SheetButtonConfig[] = isSketchSurface
+        ? [
+              {
+                  id: 'model',
+                  title: t('workspaceSheetTitleModel'),
+                  isActive: activePickerSheet === 'model',
+                  onClick: () => onOpenSheet('model'),
+                  testId: 'shared-control-model',
+              },
+              {
+                  id: 'ratio',
+                  title: t('workspaceSheetTitleRatio'),
+                  isActive: activePickerSheet === 'ratio',
+                  onClick: () => onOpenSheet('ratio'),
+                  testId: 'shared-control-ratio',
+              },
+          ]
+        : [
+              {
+                  id: 'prompt',
+                  title: t('workspaceSheetTitlePrompt'),
+                  isActive: activePickerSheet === 'prompt',
+                  onClick: () => onOpenSheet('prompt'),
+                  testId: 'shared-control-prompt',
+              },
+              ...(showStyleControl
+                  ? [
+                        {
+                            id: 'styles',
+                            title: t('style'),
+                            isActive: activePickerSheet === 'styles',
+                            onClick: () => onOpenSheet('styles'),
+                            testId: 'shared-control-styles',
+                        },
+                    ]
+                  : []),
+              {
+                  id: 'settings',
+                  title: t('workspaceSheetTitleGenerationSettings'),
+                  isActive: activePickerSheet === 'settings',
+                  onClick: () => onOpenSheet('settings'),
+                  testId: 'shared-control-settings',
+              },
+              {
+                  id: 'advanced-settings',
+                  title: t('composerToolbarAdvancedSettings'),
+                  isActive: isAdvancedSettingsOpen,
+                  onClick: onOpenAdvancedSettings,
+                  testId: 'shared-control-advanced-settings',
+              },
+              {
+                  id: 'references',
+                  title: t('workspaceTopHeaderReferenceTray'),
+                  isActive: activePickerSheet === 'references',
+                  onClick: () => onOpenSheet('references'),
+                  testId: 'shared-control-references',
+              },
+          ];
+    const layoutSignature = `${currentLanguage}:${settingsVariant}:${showStyleControl ? 'style' : 'no-style'}:${
+        activePickerSheet ?? 'none'
+    }:${isAdvancedSettingsOpen ? 'advanced' : 'base'}:${summaryItems
+        .map((item) => `${item.id}:${item.value}`)
+        .join('|')}:${sheetButtons.map((button) => button.id).join('|')}`;
+
+    const reportBottomOffset = useCallback(() => {
+        if (!onBottomOffsetChange || !containerRef.current || typeof window === 'undefined') {
+            return;
+        }
+
+        onBottomOffsetChange(Math.round(containerRef.current.getBoundingClientRect().bottom));
+    }, [onBottomOffsetChange]);
+
+    useEffect(() => {
+        if (!onBottomOffsetChange || typeof window === 'undefined') {
+            return;
+        }
+
+        const element = containerRef.current;
+        if (!element) {
+            return;
+        }
+
+        let frameId: number | null = null;
+        const scheduleReport = () => {
+            if (frameId !== null) {
+                window.cancelAnimationFrame(frameId);
+            }
+
+            frameId = window.requestAnimationFrame(() => {
+                frameId = null;
+                reportBottomOffset();
+            });
+        };
+
+        let resizeObserver: ResizeObserver | null = null;
+        if (typeof ResizeObserver !== 'undefined') {
+            resizeObserver = new ResizeObserver(() => {
+                scheduleReport();
+            });
+            resizeObserver.observe(element);
+        }
+
+        scheduleReport();
+        window.addEventListener('resize', scheduleReport);
+
+        return () => {
+            if (frameId !== null) {
+                window.cancelAnimationFrame(frameId);
+            }
+            resizeObserver?.disconnect();
+            window.removeEventListener('resize', scheduleReport);
+        };
+    }, [layoutSignature, onBottomOffsetChange, reportBottomOffset]);
 
     return (
-        <div className={containerClassName} style={containerStyle}>
-            <button
-                data-testid="shared-controls-toggle"
-                type="button"
-                onClick={onToggleOpen}
-                className="nbu-control-button rounded-[24px] px-4 py-3 text-left text-sm"
-            >
-                <div className="flex items-center gap-3">
+        <div ref={containerRef} className={containerClassName} style={containerStyle}>
+            <div data-testid="shared-controls-panel" className="nbu-floating-panel w-[min(16rem,calc(100vw-2rem))] p-3">
+                <div data-testid="shared-controls-toggle" className="min-w-0">
                     <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-amber-700 dark:bg-amber-500/15 dark:text-amber-200">
                         {t('surfaceSharedControlsBadge')}
                     </span>
-                    <div className="min-w-0">
-                        <div>{isOpen ? t('surfaceSharedControlsHide') : t('surfaceSharedControlsOpen')}</div>
-                        <div className="mt-0.5 truncate text-[11px] font-medium text-gray-500 dark:text-gray-400">
-                            {activeSheetLabel} ·{' '}
-                            {t('surfaceSharedControlsRefsCount').replace('{0}', String(totalReferenceCount))}
-                        </div>
+                    <div className="mt-1.5 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        {t('surfaceSharedControlsSettingsTitle')}
                     </div>
-                </div>
-            </button>
-
-            {isOpen && (
-                <div data-testid="shared-controls-panel" className="nbu-floating-panel w-[min(92vw,380px)] p-4">
-                    <div className="mb-4 flex items-start justify-between gap-3">
-                        <div>
-                            <details
-                                data-testid="shared-controls-state-details"
-                                className="group nbu-subpanel px-4 py-3"
+                    <div
+                        data-testid="shared-controls-summary"
+                        className="mt-1.5 flex flex-wrap items-start gap-1 text-[10px] leading-3.5"
+                    >
+                        {summaryItems.map((item) => (
+                            <span
+                                key={item.id}
+                                data-testid={`shared-controls-summary-item-${item.id}`}
+                                className="inline-flex max-w-full flex-wrap items-center gap-x-0.5 gap-y-0 rounded-full border border-gray-200/80 bg-white/85 px-2 py-px font-medium text-gray-600 dark:border-gray-700/80 dark:bg-gray-900/80 dark:text-gray-300"
                             >
-                                <summary
-                                    data-testid="shared-controls-state-summary"
-                                    className="flex cursor-pointer list-none items-start justify-between gap-3 marker:hidden"
-                                >
-                                    <div className="min-w-0 flex-1">
-                                        <div className="text-xs font-bold uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400">
-                                            {t('surfaceSharedControlsStateTitle')}
-                                        </div>
-                                        <div className="mt-2 text-sm text-gray-700 dark:text-gray-200">
-                                            {workspaceLabel}
-                                        </div>
-                                    </div>
-                                    <span className="mt-1 shrink-0">{renderDisclosureChevron()}</span>
-                                </summary>
-                                <div
-                                    data-testid="shared-controls-state-body"
-                                    className="mt-3 border-t border-gray-200/80 pt-3 text-sm text-gray-700 dark:border-gray-800 dark:text-gray-200"
-                                >
-                                    {stateDescription}
-                                </div>
-                            </details>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={onClosePanel}
-                            className="nbu-control-button rounded-xl px-3 py-2 text-xs"
-                        >
-                            {t('workspaceViewerClose')}
-                        </button>
-                    </div>
-
-                    <details data-testid="shared-controls-prompt-details" className="group nbu-subpanel mb-4 px-4 py-3">
-                        <summary
-                            data-testid="shared-controls-prompt-summary"
-                            className="flex cursor-pointer list-none items-start justify-between gap-3 marker:hidden"
-                        >
-                            <div className="min-w-0 flex-1">
-                                <div className="flex items-center justify-between gap-3 text-[11px] font-bold uppercase tracking-[0.14em] text-gray-500 dark:text-gray-400">
-                                    <span>{t('surfaceSharedControlsCurrentPrompt')}</span>
-                                    {activePickerSheet === 'prompt' && (
-                                        <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] text-amber-700 dark:bg-amber-500/15 dark:text-amber-200">
-                                            {t('historyActionOpen')}
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="mt-2 text-sm text-gray-700 dark:text-gray-200">
-                                    {renderPromptPreview(promptPreview)}
-                                </div>
-                            </div>
-                            <span className="mt-1 shrink-0">{renderDisclosureChevron()}</span>
-                        </summary>
-                        <div
-                            data-testid="shared-controls-prompt-body"
-                            className="mt-2 text-sm text-gray-700 dark:text-gray-200"
-                        >
-                            {promptPreview || t('workspaceSurfacePromptEmpty')}
-                        </div>
-                    </details>
-
-                    <div className="grid gap-2 sm:grid-cols-2">
-                        {sheetButtons.map((button) => (
-                            <button
-                                key={button.id}
-                                data-testid={button.testId}
-                                onClick={button.onClick}
-                                className={`${buildButtonClassName(button.isActive)} ${button.wide ? 'sm:col-span-2' : ''}`}
-                            >
-                                {button.badge ? (
-                                    <div className="flex items-center justify-between gap-3">
-                                        <div>
-                                            <div className="text-sm font-semibold">{button.title}</div>
-                                            <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                                {button.detail}
-                                            </div>
-                                        </div>
-                                        <div className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                                            {button.badge}
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <div className="text-sm font-semibold">{button.title}</div>
-                                        <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                            {button.detail}
-                                        </div>
-                                    </>
-                                )}
-                            </button>
+                                <span className="text-gray-500 dark:text-gray-400">{item.label}</span>
+                                <span className="text-gray-800 dark:text-gray-100">{item.value}</span>
+                            </span>
                         ))}
                     </div>
-
-                    <div className="mt-4 grid gap-2 text-xs text-gray-500 dark:text-gray-400 sm:grid-cols-2">
-                        <div className="nbu-subpanel px-3 py-3">
-                            {t('surfaceSharedControlsActiveSheet')}
-                            <br />
-                            <span className="mt-1 block text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                {activeSheetLabel}
-                            </span>
-                        </div>
-                        <div className="nbu-subpanel px-3 py-3">
-                            {t('surfaceSharedControlsWorkspace')}
-                            <br />
-                            <span className="mt-1 block text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                {workspaceLabel}
-                            </span>
-                        </div>
-                    </div>
                 </div>
-            )}
+
+                <div className="mt-2.5 grid grid-cols-2 gap-1.5">
+                    {sheetButtons.map((button) => (
+                        <button
+                            key={button.id}
+                            data-testid={button.testId}
+                            onClick={button.onClick}
+                            className={buildButtonClassName(button.isActive)}
+                        >
+                            <span className="block text-xs font-semibold leading-[13px]">{button.title}</span>
+                        </button>
+                    ))}
+                </div>
+            </div>
         </div>
     );
 };

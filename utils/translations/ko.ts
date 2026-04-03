@@ -187,6 +187,7 @@ export const ko = {
 
     // --- NEW LOGS & NOTIFICATIONS ---
     autoRatioSet: '비율 자동 설정: {0}',
+    editorRetouchModelAutoSwitch: 'Retouch 비율이 {1}로 고정되어 모델이 {0}(으)로 자동 전환되었습니다.',
     errEnterIdea: '최적화할 아이디어를 입력하세요.',
     errInvalidImage: '유효한 이미지 파일이 아닙니다.',
     msgImageResized: '이미지가 4K 제한으로 조정됨.',
@@ -530,6 +531,7 @@ export const ko = {
     structuredOutputFieldRecommendedNextMove: '권장 다음 단계',
     structuredOutputFieldTestPrompts: '테스트 프롬프트',
     surfaceSharedControlsBadge: '공유',
+    surfaceSharedControlsSettingsTitle: '설정',
     surfaceSharedControlsOpen: '공유 컨트롤 열기',
     surfaceSharedControlsHide: '공유 컨트롤 숨기기',
     surfaceSharedControlsRefsCount: '참조 {0}개',

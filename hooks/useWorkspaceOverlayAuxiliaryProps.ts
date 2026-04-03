@@ -2,7 +2,16 @@ import { Dispatch, SetStateAction, useMemo } from 'react';
 import BranchRenameDialog from '../components/BranchRenameDialog';
 import SurfaceSharedControls, { SurfaceSharedControlsVariant } from '../components/SurfaceSharedControls';
 import WorkspaceImportReview from '../components/WorkspaceImportReview';
-import { AspectRatio, ImageModel, ImageSize, ImageStyle } from '../types';
+import {
+    AspectRatio,
+    GroundingMode,
+    ImageModel,
+    ImageSize,
+    ImageStyle,
+    OutputFormat,
+    StructuredOutputMode,
+    ThinkingLevel,
+} from '../types';
 import { getTranslation, Language } from '../utils/translations';
 
 type BranchRenameDialogProps = React.ComponentProps<typeof BranchRenameDialog>;
@@ -21,32 +30,33 @@ type ImportReviewBranchActions = {
 type UseWorkspaceOverlayAuxiliaryPropsArgs = {
     currentLanguage: Language;
     isSurfaceWorkspaceOpen: boolean;
-    isSurfaceSharedControlsOpen: boolean;
     isAdvancedSettingsOpen: boolean;
     isEditing: boolean;
-    activeSurfaceSheetLabel: string;
     activePickerSheet: SurfaceSharedControlsProps['activePickerSheet'] | 'history' | 'templates';
-    surfacePromptPreview: string;
     settingsVariant: SurfaceSharedControlsVariant;
     totalReferenceCount: number;
+    hasSurfacePrompt: boolean;
     imageStyle: ImageStyle;
     imageModel: ImageModel;
     aspectRatio: AspectRatio;
     imageSize: ImageSize;
     batchSize: number;
+    outputFormat: OutputFormat;
+    structuredOutputMode: StructuredOutputMode;
+    temperature: number;
+    thinkingLevel: ThinkingLevel;
+    includeThoughts: boolean;
+    groundingMode: GroundingMode;
     objectImageCount: number;
     characterImageCount: number;
     maxObjects: number;
     maxCharacters: number;
     floatingControlsZIndex: number;
-    setIsSurfaceSharedControlsOpen: Dispatch<SetStateAction<boolean>>;
-    setIsAdvancedSettingsOpen: Dispatch<SetStateAction<boolean>>;
+    onSurfaceSharedControlsBottomChange: (bottom: number) => void;
     openSurfacePickerSheet: SurfaceSharedControlsProps['onOpenSheet'];
+    openAdvancedSettings: () => void;
     getStyleLabel: (style: ImageStyle) => string;
     getModelLabel: (model: ImageModel) => string;
-    openPromptSheet: () => void;
-    openPromptHistorySheet: () => void;
-    openReferencesSheet: () => void;
     workspaceImportReview: WorkspaceImportReviewProps['review'] | null;
     importedBranchSummaries: WorkspaceImportReviewProps['importedBranchSummaries'];
     importedLatestTurn: WorkspaceImportReviewProps['importedLatestTurn'];
@@ -71,32 +81,33 @@ type UseWorkspaceOverlayAuxiliaryPropsArgs = {
 export function useWorkspaceOverlayAuxiliaryProps({
     currentLanguage,
     isSurfaceWorkspaceOpen,
-    isSurfaceSharedControlsOpen,
     isAdvancedSettingsOpen,
     isEditing,
-    activeSurfaceSheetLabel,
     activePickerSheet,
-    surfacePromptPreview,
     settingsVariant,
     totalReferenceCount,
+    hasSurfacePrompt,
     imageStyle,
     imageModel,
     aspectRatio,
     imageSize,
     batchSize,
+    outputFormat,
+    structuredOutputMode,
+    temperature,
+    thinkingLevel,
+    includeThoughts,
+    groundingMode,
     objectImageCount,
     characterImageCount,
     maxObjects,
     maxCharacters,
     floatingControlsZIndex,
-    setIsSurfaceSharedControlsOpen,
-    setIsAdvancedSettingsOpen,
+    onSurfaceSharedControlsBottomChange,
     openSurfacePickerSheet,
+    openAdvancedSettings,
     getStyleLabel,
     getModelLabel,
-    openPromptSheet,
-    openPromptHistorySheet,
-    openReferencesSheet,
     workspaceImportReview,
     importedBranchSummaries,
     importedLatestTurn,
@@ -119,39 +130,35 @@ export function useWorkspaceOverlayAuxiliaryProps({
             surfaceSharedControlsProps: isSurfaceWorkspaceOpen
                 ? ({
                       currentLanguage,
-                      isOpen: isSurfaceSharedControlsOpen,
-                      workspaceLabel: getTranslation(currentLanguage, isEditing ? 'editorTitle' : 'sketchTitle'),
-                      stateDescription: getTranslation(
-                          currentLanguage,
-                          isEditing ? 'surfaceSharedControlsStateDescEditor' : 'surfaceSharedControlsStateDesc',
-                      ).replace('{0}', getTranslation(currentLanguage, isEditing ? 'editorTitle' : 'sketchTitle')),
-                      activeSheetLabel: activeSurfaceSheetLabel,
                       activePickerSheet:
                           activePickerSheet === 'history' || activePickerSheet === 'templates'
                               ? null
                               : activePickerSheet,
                       isAdvancedSettingsOpen,
-                      promptPreview: surfacePromptPreview,
                       totalReferenceCount,
+                      hasPrompt: hasSurfacePrompt,
                       styleLabel: getStyleLabel(imageStyle),
                       modelLabel: getModelLabel(imageModel),
                       aspectRatio,
                       imageSize,
                       batchSize,
+                      outputFormat,
+                      structuredOutputMode,
+                      temperature,
+                      thinkingLevel,
+                      includeThoughts,
+                      groundingMode,
                       objectImageCount,
                       characterImageCount,
                       maxObjects,
                       maxCharacters,
                       settingsVariant,
-                      containerClassName: 'fixed right-4 top-20 flex flex-col items-end gap-3 md:right-5 md:top-24',
+                      showStyleControl: !isEditing,
+                      containerClassName: 'fixed left-4 top-20 md:left-5 md:top-24',
                       containerStyle: { zIndex: floatingControlsZIndex },
-                      onToggleOpen: () => setIsSurfaceSharedControlsOpen((previous) => !previous),
-                      onClosePanel: () => setIsSurfaceSharedControlsOpen(false),
+                      onBottomOffsetChange: onSurfaceSharedControlsBottomChange,
                       onOpenSheet: openSurfacePickerSheet,
-                      onOpenAdvancedSettings: () => {
-                          setIsSurfaceSharedControlsOpen(false);
-                          setIsAdvancedSettingsOpen(true);
-                      },
+                      onOpenAdvancedSettings: openAdvancedSettings,
                   } satisfies SurfaceSharedControlsProps)
                 : null,
             importReviewProps: workspaceImportReview
@@ -190,7 +197,6 @@ export function useWorkspaceOverlayAuxiliaryProps({
         }),
         [
             activePickerSheet,
-            activeSurfaceSheetLabel,
             aspectRatio,
             batchSize,
             branchRenameDialog,
@@ -207,9 +213,13 @@ export function useWorkspaceOverlayAuxiliaryProps({
             handleCloseWorkspaceImportReview,
             handleMergeImportedWorkspaceSnapshot,
             handleSubmitBranchRename,
+            groundingMode,
             imageModel,
             imageSize,
             imageStyle,
+            includeThoughts,
+            onSurfaceSharedControlsBottomChange,
+            openAdvancedSettings,
             isAdvancedSettingsOpen,
             importReviewBranchActions,
             importedBranchSummaries,
@@ -217,21 +227,19 @@ export function useWorkspaceOverlayAuxiliaryProps({
             importedLatestTurn,
             isEditing,
             isImportedPromotedContinuationSource,
-            isSurfaceSharedControlsOpen,
             isSurfaceWorkspaceOpen,
             maxCharacters,
             maxObjects,
             objectImageCount,
-            openPromptHistorySheet,
-            openPromptSheet,
-            openReferencesSheet,
             openSurfacePickerSheet,
+            outputFormat,
             settingsVariant,
             setBranchRenameDraft,
-            setIsAdvancedSettingsOpen,
-            setIsSurfaceSharedControlsOpen,
-            surfacePromptPreview,
+            structuredOutputMode,
+            temperature,
+            thinkingLevel,
             totalReferenceCount,
+            hasSurfacePrompt,
             workspaceImportReview,
         ],
     );

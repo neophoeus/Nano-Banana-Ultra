@@ -188,6 +188,7 @@ export const ja = {
 
     // --- NEW LOGS & NOTIFICATIONS ---
     autoRatioSet: 'アスペクト比を {0} に自動設定',
+    editorRetouchModelAutoSwitch: 'Retouch は {1} に固定されているため、モデルを {0} に自動切替しました。',
     errEnterIdea: '推敲するためのアイデアを入力してください。',
     errInvalidImage: '有効な画像ファイルを選択してください。',
     msgImageResized: '画像を4K制限に合わせて調整しました。',
@@ -531,6 +532,7 @@ export const ja = {
     structuredOutputFieldRecommendedNextMove: '推奨する次の一手',
     structuredOutputFieldTestPrompts: 'テスト用プロンプト',
     surfaceSharedControlsBadge: '共有',
+    surfaceSharedControlsSettingsTitle: '設定',
     surfaceSharedControlsOpen: '共有コントロールを開く',
     surfaceSharedControlsHide: '共有コントロールを閉じる',
     surfaceSharedControlsRefsCount: '参照 {0} 件',

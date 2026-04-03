@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import Button from './Button';
 import { WORKSPACE_EDITOR_Z_INDEX } from '../constants/workspaceOverlays';
-import { ImageSize, AspectRatio, ImageModel } from '../types';
+import { EditorMode, ImageSize, AspectRatio, ImageModel } from '../types';
 import { Language, getTranslation } from '../utils/translations';
 import { MODEL_CAPABILITIES } from '../constants';
 import {
@@ -37,8 +37,11 @@ interface ImageEditorProps {
     onObjectImagesChange: React.Dispatch<React.SetStateAction<string[]>>;
     characterImages: string[];
     onCharacterImagesChange: React.Dispatch<React.SetStateAction<string[]>>;
+    mode: EditorMode;
+    onModeChange: (mode: EditorMode) => void;
     ratio: AspectRatio;
     onRatioChange: React.Dispatch<React.SetStateAction<AspectRatio>>;
+    lockedAspectRatio?: AspectRatio | null;
     size: ImageSize;
     onSizeChange: React.Dispatch<React.SetStateAction<ImageSize>>;
     batchSize: number;
@@ -71,9 +74,10 @@ interface ImageEditorProps {
     onErrorClear?: () => void;
     imageModel: ImageModel;
     onModelChange: (model: ImageModel) => void;
+    leftDockTopOffset?: number | null;
 }
 
-type EditMode = 'inpaint' | 'outpaint';
+type EditMode = EditorMode;
 type RetouchMode = 'mask' | 'doodle'; // Distinguish between Masking (Inpaint) and Doodling (Sketch)
 type InteractionType = 'idle' | 'panning_viewport' | 'drawing' | 'moving_image';
 
@@ -118,8 +122,11 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     onObjectImagesChange,
     characterImages,
     onCharacterImagesChange,
+    mode,
+    onModeChange,
     ratio,
     onRatioChange,
+    lockedAspectRatio = null,
     size,
     onSizeChange,
     batchSize,
@@ -133,11 +140,11 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     onErrorClear,
     imageModel,
     onModelChange,
+    leftDockTopOffset = null,
 }) => {
     const t = (key: string) => getTranslation(currentLanguage, key);
 
     // --- Core State ---
-    const [mode, setMode] = useState<EditMode>('inpaint');
     const [retouchMode, setRetouchMode] = useState<RetouchMode>('mask'); // Default to Mask (original behavior)
     // Enforce model constraints dynamically
     useEffect(() => {
@@ -151,7 +158,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
             if (!caps.supportedSizes.includes(size)) {
                 onSizeChange(caps.supportedSizes[0] || '1K');
             }
-            if (!caps.supportedRatios.includes(ratio)) {
+            if (!caps.supportedRatios.includes(ratio) && (!lockedAspectRatio || ratio !== lockedAspectRatio)) {
                 onRatioChange('1:1');
             }
             if (objectImages.length > caps.maxObjects) {
@@ -173,6 +180,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         onSizeChange,
         ratio,
         size,
+        lockedAspectRatio,
     ]);
 
     // --- Image & Canvas Data ---
@@ -549,7 +557,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         if (hasChanges) {
             setShowModeSwitchConfirm({ target });
         } else {
-            setMode(target);
+            onModeChange(target);
             resetTools(true);
             // When switching to inpaint, ensure we start with mask/brush defaults
             if (target === 'inpaint') {
@@ -624,7 +632,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
 
     const confirmModeSwitch = () => {
         if (showModeSwitchConfirm) {
-            setMode(showModeSwitchConfirm.target);
+            onModeChange(showModeSwitchConfirm.target);
             resetTools(true);
             // When switching to inpaint, ensure we start with mask/brush defaults
             if (showModeSwitchConfirm.target === 'inpaint') {
@@ -1150,8 +1158,12 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
 
                     <div className="flex-1 relative">
                         {/* Left Tools (Inpaint) */}
-                        {mode === 'inpaint' && (
-                            <div className="nbu-toolbar-shell absolute left-0 top-1/2 flex -translate-y-1/2 flex-col gap-2 p-1.5 pointer-events-auto transition-colors">
+                        {mode === 'inpaint' && leftDockTopOffset !== null && (
+                            <div
+                                data-testid="editor-retouch-toolbar"
+                                className="nbu-toolbar-shell fixed left-4 flex flex-col gap-2 p-1.5 pointer-events-auto transition-all md:left-5"
+                                style={{ top: leftDockTopOffset }}
+                            >
                                 <button
                                     onClick={() => setActiveTool('pan')}
                                     disabled={isGenerating}

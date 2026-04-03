@@ -4,6 +4,27 @@ This changelog is compiled from the repository's local git tags plus the publish
 
 ## Unreleased
 
+## v3.2.1 - 2026-04-03
+
+- Release title: Nano Banana Ultra 3.2.1 - Shared Controls, Retouch Locking & Advanced Settings Draft Flow
+- Release prep summary:
+    - Shared controls, editor-local prompt/reference state, prompt draft/apply, and retouch/editor-entry hardening:
+        - rebuilt the floating `Shared` surface controls into an always-visible compact settings card instead of an open/close disclosure, moved it to the left-side workspace edge, collapsed the surface summary into compact chips, limited SketchPad to first-layer `Model` and `Ratio` actions, and added bottom-offset reporting so the editor retouch toolbar can dock beneath the shared controls without overlap
+        - moved editor prompt and reference ownership further into editor-local transient state so editor object/character references start empty from snapshot-backed editor sessions, clear correctly on editor exit, and stay isolated from the main composer while shared model and generation settings continue to follow the active workspace surface
+        - changed the shared prompt sheet to a draft-and-apply flow: prompt edits now stay local until `Apply`, close and backdrop-dismiss discard unsaved prompt draft changes, the old prompt quick-action footer was removed from that route, and style entry points are hidden for editor-local picker flows that should not expose shared style changes
+        - added prompt clear affordances in both the main composer and the shared prompt sheet, aligned the clear icon to the nicer SketchPad trash-can treatment, and polished the shared-controls button label wrapping so multi-line action text reads denser without feeling overly loose
+        - changed editor entry so uploaded or reopened images are measured up front, clamped to the same 4K semantics used by the editor, and then auto-apply the closest aspect ratio plus the closest output-size bucket before the editor opens, while snapshot restore keeps the pre-editor shared settings separate from the editor-initial ratio and size used by `Reset` inside the editor
+        - made retouch ratio-locking ratio-first at the app level: entering editor now starts in `inpaint`, only retouch/inpaint keeps the auto-selected ratio locked, outpaint stays free to change ratio, unsupported models auto-switch to the first ratio-compatible model with a localized notice, and the shared picker now filters model choices plus disables ratio changes whenever that retouch lock is active
+        - hardened the ratio-lock path across capability normalization and editor constraints so locked retouch ratios are no longer bounced back to `1:1`, added the supporting editor auto-switch locale key across the maintained translations, expanded focused regression coverage for closest ratio/size helpers, picker retouch locking, and capability-hook preservation, and revalidated the slice with focused Vitest at `4 files / 374 tests` plus `npm run build`
+        - updated maintained locale dictionaries for the new shared-controls `Settings` heading plus the revised editor-local wording, expanded focused regression coverage for shared controls, composer prompt clear, prompt draft/apply/discard behavior, and transient editor state, and revalidated the slice with focused Vitest coverage, full Vitest at `66 files / 614 tests`, and `workspace-restore.spec.ts` Playwright at `59 passed`
+
+    - Advanced settings simplification and shared settings-session drill-in:
+        - simplified `Advanced settings` into a cleaner apply/cancel flow: removed redundant header and section help chrome, kept `Runtime guide` always visible as a static note block, shortened structured-output and grounding guidance, removed the misleading live `Default temp` chip because the fixed baseline remains `1`, and aligned the simplified wording across the maintained locales
+        - kept prompt and advanced edits in draft state until explicit `Apply`: shared prompt changes now stay local until applied, clear affordances were added for both composer and shared prompt textareas, advanced close/backdrop/Escape now behave as cancel, and editor-local picker routes no longer expose shared style entry points that should stay out of editor-local flows
+        - replaced the older generation/advanced peer-switch behavior with one App-owned `WorkspaceSettingsDraft` session: `Generation Settings` is now the parent flow, `Advanced settings` is a one-way child drill-in, entering advanced from generation keeps the same uncommitted draft without auto-applying, and closing advanced after drill-in returns to generation with that draft intact
+        - moved capability-aware settings normalization into `App.tsx` so draft model changes keep ratio, size, output format, structured output, thinking, and grounding choices valid from the draft itself, while `WorkspacePickerSheet` keeps prompt draft local and the advanced modal reads capability from the shared draft model instead of the last committed model
+        - refreshed focused regression coverage for prompt draft/apply/discard, advanced-settings apply/cancel, the removed advanced footer return action, and the shared-draft generation-to-advanced drill-in flow, then revalidated the slice with clean touched-file diagnostics, focused Vitest at `7 files / 27 tests`, and `npm run build`
+
 ## v3.2.0 - 2026-04-02
 
 - Release title: Nano Banana Ultra 3.2.0 - Shared Settings, Image Tools & Queue Workflow Refinement

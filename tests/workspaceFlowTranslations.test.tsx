@@ -1514,10 +1514,10 @@ const zhCnGroundingRuntimeLabelBaseline = {
 const zhTwGroundingDescriptionBaseline = {
     composerAdvancedGroundingSectionDesc:
         '解析度行為和請求契約是分開驗證的，所以這裡直接保留目前已知的脈絡依據路徑結果。',
-    composerAdvancedGroundingDesc: '用明確模式決定這個模型如何執行脈絡依據，而不是手動組合多個切換。',
+    composerAdvancedGroundingDesc: '替這個模型直接選一種脈絡依據路徑。',
     composerAdvancedGroundingResolutionWarningFlashImageSearch:
         'Nano Banana 2 的圖片搜尋可能在請求 2K 或 4K 時回落成 1K。',
-    composerAdvancedGroundingGuideDesc: '這些脈絡依據解析度說明是根據目前產品路徑的實機檢查結果。',
+    composerAdvancedGroundingGuideDesc: '目前產品路徑的實測尺寸備註。',
     composerGroundingImageSearchUpgradeNotice:
         '啟用圖片搜尋脈絡依據時，輸出會自動升級為圖片與文字，以便回傳歸屬中繼資料。',
 } as const;
@@ -1525,24 +1525,24 @@ const zhTwGroundingDescriptionBaseline = {
 const zhCnGroundingDescriptionBaseline = {
     composerAdvancedGroundingSectionDesc:
         '分辨率行为和请求契约是分开验证的，所以这里直接保留目前已知的脉络依据路径结果。',
-    composerAdvancedGroundingDesc: '用明确模式决定这个模型如何执行脉络依据，而不是手动组合多个开关。',
+    composerAdvancedGroundingDesc: '直接为这个模型选择一种脉络依据路径。',
     composerAdvancedGroundingResolutionWarningFlashImageSearch:
         'Nano Banana 2 的图片搜索在请求 2K 或 4K 时，可能回落到 1K。',
-    composerAdvancedGroundingGuideDesc: '这些脉络依据分辨率说明来自当前产品路径的实机验证。',
+    composerAdvancedGroundingGuideDesc: '当前产品路径的实测尺寸备注。',
     composerGroundingImageSearchUpgradeNotice:
         '启用图片搜索脉络依据时，输出会自动升级为图片与文字，以便返回归属元数据。',
 } as const;
 
 const zhTwGroundingGuideSentenceBaseline = {
-    composerAdvancedGroundingGuideFlashGoogle: 'Nano Banana 2 + Google 搜尋：請求 2K 與 4K 時，實際輸出維持請求尺寸。',
-    composerAdvancedGroundingGuideFlashImage: 'Nano Banana 2 + 圖片搜尋：請求 2K 與 4K 時，實際輸出可能回落到 1K。',
-    composerAdvancedGroundingGuideProGoogle: 'Nano Banana Pro + Google 搜尋：請求 2K 與 4K 時，實際輸出維持請求尺寸。',
+    composerAdvancedGroundingGuideFlashGoogle: 'Nano Banana 2 + Google 搜尋：2K、4K 會維持請求尺寸。',
+    composerAdvancedGroundingGuideFlashImage: 'Nano Banana 2 + 圖片搜尋：2K、4K 可能回落到 1K。',
+    composerAdvancedGroundingGuideProGoogle: 'Nano Banana Pro + Google 搜尋：2K、4K 會維持請求尺寸。',
 } as const;
 
 const zhCnGroundingGuideSentenceBaseline = {
-    composerAdvancedGroundingGuideFlashGoogle: 'Nano Banana 2 + Google 搜索：请求 2K 与 4K 时，实际输出保持请求尺寸。',
-    composerAdvancedGroundingGuideFlashImage: 'Nano Banana 2 + 图片搜索：请求 2K 与 4K 时，实际输出可能回落到 1K。',
-    composerAdvancedGroundingGuideProGoogle: 'Nano Banana Pro + Google 搜索：请求 2K 与 4K 时，实际输出保持请求尺寸。',
+    composerAdvancedGroundingGuideFlashGoogle: 'Nano Banana 2 + Google 搜索：2K、4K 会保持请求尺寸。',
+    composerAdvancedGroundingGuideFlashImage: 'Nano Banana 2 + 图片搜索：2K、4K 可能回落到 1K。',
+    composerAdvancedGroundingGuideProGoogle: 'Nano Banana Pro + Google 搜索：2K、4K 会保持请求尺寸。',
 } as const;
 
 const zhTwQueuedBatchWordingBaseline = {

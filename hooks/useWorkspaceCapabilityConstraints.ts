@@ -7,6 +7,7 @@ type UseWorkspaceCapabilityConstraintsArgs = {
     capability: ModelCapability;
     imageSize: ImageSize;
     aspectRatio: AspectRatio;
+    lockedAspectRatio?: AspectRatio | null;
     outputFormat: OutputFormat;
     structuredOutputMode: StructuredOutputMode;
     thinkingLevel: ThinkingLevel;
@@ -31,6 +32,7 @@ export function useWorkspaceCapabilityConstraints({
     capability,
     imageSize,
     aspectRatio,
+    lockedAspectRatio = null,
     outputFormat,
     structuredOutputMode,
     thinkingLevel,
@@ -55,7 +57,11 @@ export function useWorkspaceCapabilityConstraints({
             setImageSize(capability.supportedSizes.includes('1K') ? '1K' : capability.supportedSizes[0]);
         }
 
-        if (capability.supportedRatios.length > 0 && !capability.supportedRatios.includes(aspectRatio)) {
+        if (
+            capability.supportedRatios.length > 0 &&
+            !capability.supportedRatios.includes(aspectRatio) &&
+            (!lockedAspectRatio || aspectRatio !== lockedAspectRatio)
+        ) {
             setAspectRatio(capability.supportedRatios.includes('1:1') ? '1:1' : capability.supportedRatios[0]);
         }
 
@@ -125,6 +131,7 @@ export function useWorkspaceCapabilityConstraints({
         imageSearch,
         imageSize,
         includeThoughts,
+        lockedAspectRatio,
         outputFormat,
         structuredOutputMode,
         setAspectRatio,

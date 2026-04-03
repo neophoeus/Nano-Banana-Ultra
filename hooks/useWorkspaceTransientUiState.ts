@@ -22,6 +22,10 @@ type UseWorkspaceTransientUiStateReturn = {
     setEditorContextSnapshot: Dispatch<SetStateAction<EditorContextSnapshot | null>>;
     editorPrompt: string;
     setEditorPrompt: Dispatch<SetStateAction<string>>;
+    editorObjectImages: string[];
+    setEditorObjectImages: Dispatch<SetStateAction<string[]>>;
+    editorCharacterImages: string[];
+    setEditorCharacterImages: Dispatch<SetStateAction<string[]>>;
     editorInitialState: EditorContextSnapshot;
 };
 
@@ -40,6 +44,8 @@ export function useWorkspaceTransientUiState({
 }: UseWorkspaceTransientUiStateArgs): UseWorkspaceTransientUiStateReturn {
     const [editorContextSnapshot, setEditorContextSnapshot] = useState<EditorContextSnapshot | null>(null);
     const [editorPrompt, setEditorPrompt] = useState('');
+    const [editorObjectImages, setEditorObjectImages] = useState<string[]>([]);
+    const [editorCharacterImages, setEditorCharacterImages] = useState<string[]>([]);
 
     useEffect(() => {
         setActiveGroundingSelection(null);
@@ -55,16 +61,27 @@ export function useWorkspaceTransientUiState({
         if (!isEditing) {
             setEditorContextSnapshot(null);
             setEditorPrompt('');
+            setEditorObjectImages([]);
+            setEditorCharacterImages([]);
         }
     }, [isEditing]);
+
+    useEffect(() => {
+        if (!isEditing || !editorContextSnapshot) {
+            return;
+        }
+
+        setEditorObjectImages([]);
+        setEditorCharacterImages([]);
+    }, [editorContextSnapshot, isEditing]);
 
     const editorInitialState = useMemo(
         () => ({
             prompt: editorContextSnapshot?.prompt ?? '',
-            objectImages: editorContextSnapshot?.objectImages || objectImages,
-            characterImages: editorContextSnapshot?.characterImages || characterImages,
-            ratio: editorContextSnapshot?.ratio || aspectRatio,
-            size: editorContextSnapshot?.size || imageSize,
+            objectImages: editorContextSnapshot ? [] : objectImages,
+            characterImages: editorContextSnapshot ? [] : characterImages,
+            ratio: editorContextSnapshot?.editorInitialRatio || editorContextSnapshot?.ratio || aspectRatio,
+            size: editorContextSnapshot?.editorInitialSize || editorContextSnapshot?.size || imageSize,
             batchSize: editorContextSnapshot?.batchSize || batchSize,
         }),
         [aspectRatio, batchSize, characterImages, editorContextSnapshot, imageSize, objectImages],
@@ -75,6 +92,10 @@ export function useWorkspaceTransientUiState({
         setEditorContextSnapshot,
         editorPrompt,
         setEditorPrompt,
+        editorObjectImages,
+        setEditorObjectImages,
+        editorCharacterImages,
+        setEditorCharacterImages,
         editorInitialState,
     };
 }

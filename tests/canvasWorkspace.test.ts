@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { ASPECT_RATIOS } from '../constants';
 import {
     appendPointToLatestStroke,
     applyPanDelta,
@@ -8,6 +9,8 @@ import {
     canUndoHistoryState,
     commitHistoryPresent,
     createHistoryState,
+    findClosestAspectRatio,
+    findClosestImageSize,
     fitWorkspaceToViewport,
     redoHistoryState,
     replaceHistoryPresent,
@@ -85,6 +88,17 @@ describe('canvasWorkspace', () => {
     it('builds ratio-aware canvas dimensions', () => {
         expect(buildCanvasDimensionsForRatio('16:9')).toEqual({ w: 1024, h: 576 });
         expect(buildCanvasDimensionsForRatio('3:4')).toEqual({ w: 768, h: 1024 });
+    });
+
+    it('finds the closest supported aspect ratio for editor entry', () => {
+        expect(findClosestAspectRatio(4032, 3024, ASPECT_RATIOS)).toBe('4:3');
+        expect(findClosestAspectRatio(1200, 300, ASPECT_RATIOS)).toBe('4:1');
+    });
+
+    it('maps source dimensions to the nearest image-size bucket', () => {
+        expect(findClosestImageSize(800, 600)).toBe('1K');
+        expect(findClosestImageSize(3000, 2000)).toBe('2K');
+        expect(findClosestImageSize(4096, 2304)).toBe('4K');
     });
 
     it('tracks history with a shared past/present/future contract', () => {

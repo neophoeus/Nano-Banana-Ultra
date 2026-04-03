@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { WORKSPACE_SURFACE_Z_INDEX } from '../constants/workspaceOverlays';
 import { GenerationSettings } from '../types';
 import { buildWorkflowTimeline, renderWorkflowMessage, workflowMessageIncludes } from '../utils/workflowTimeline';
@@ -42,7 +42,6 @@ type UseWorkspaceShellViewModelArgs = {
     isSketchPadOpen: boolean;
     objectImageCount: number;
     characterImageCount: number;
-    setIsSurfaceSharedControlsOpen: Dispatch<SetStateAction<boolean>>;
     t: (key: string) => string;
 };
 
@@ -72,7 +71,6 @@ export function useWorkspaceShellViewModel({
     isSketchPadOpen,
     objectImageCount,
     characterImageCount,
-    setIsSurfaceSharedControlsOpen,
     t,
 }: UseWorkspaceShellViewModelArgs) {
     const viewSettings = useMemo<GenerationSettings>(
@@ -175,12 +173,6 @@ export function useWorkspaceShellViewModel({
         ? surfacePrompt.trim().slice(0, 64)
         : t('workspaceSurfacePromptEmpty');
     const totalReferenceCount = objectImageCount + characterImageCount;
-
-    useEffect(() => {
-        if (!isSurfaceWorkspaceOpen) {
-            setIsSurfaceSharedControlsOpen(false);
-        }
-    }, [isSurfaceWorkspaceOpen, setIsSurfaceSharedControlsOpen]);
 
     return {
         viewSettings,

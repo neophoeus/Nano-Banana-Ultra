@@ -113,6 +113,35 @@ describe('ComposerSettingsPanel prompt focus wiring', () => {
         expect(promptTextareaRef.current?.value).toBe('Test prompt');
     });
 
+    it('routes the composer prompt clear button through the prompt change handler', () => {
+        const onPromptChange = vi.fn();
+
+        act(() => {
+            root.render(<ComposerSettingsPanel {...baseProps} onPromptChange={onPromptChange} />);
+        });
+
+        const clearButton = container.querySelector('[data-testid="composer-prompt-clear"]') as HTMLButtonElement;
+
+        act(() => {
+            clearButton.click();
+        });
+
+        expect(clearButton.disabled).toBe(false);
+        expect(onPromptChange).toHaveBeenCalledTimes(1);
+        expect(onPromptChange).toHaveBeenCalledWith('');
+    });
+
+    it('disables the composer prompt clear button when the prompt is already empty', () => {
+        act(() => {
+            root.render(<ComposerSettingsPanel {...baseProps} prompt="" />);
+        });
+
+        const clearButton = container.querySelector('[data-testid="composer-prompt-clear"]') as HTMLButtonElement;
+
+        expect(clearButton).toBeInstanceOf(HTMLButtonElement);
+        expect(clearButton.disabled).toBe(true);
+    });
+
     it('routes the unified settings strip through the composer-owned opener', () => {
         const onOpenSettings = vi.fn();
 

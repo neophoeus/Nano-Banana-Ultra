@@ -79,6 +79,11 @@ describe('WorkspacePickerSheet', () => {
         expect(markup).toContain('Prompt History');
         expect(markup).toContain(t('workspacePickerNoSavedPrompts'));
         expect(markup).not.toContain(t('workspaceSheetTitleGallery'));
+        expect(markup).not.toContain(t('templates'));
+        expect(markup).not.toContain(t('workspaceSheetTitleStyles'));
+        expect(markup).not.toContain(t('workspaceSheetTitleReferences'));
+        expect(markup).not.toContain(t('switchDark'));
+        expect(markup).not.toContain(t('switchLight'));
     });
 
     it('renders unified generation settings for full and sketch variants', () => {
@@ -150,6 +155,8 @@ describe('WorkspacePickerSheet', () => {
         expect(fullMarkup).toContain(t('workspacePickerModelSupportImageSearch'));
         expect(fullMarkup).toContain(t('resolution'));
         expect(fullMarkup).toContain(t('batchSize'));
+        expect(fullMarkup).toContain('generation-settings-open-advanced');
+        expect(fullMarkup).toContain(t('composerToolbarAdvancedSettings'));
         expect(fullMarkup).toContain('generation-settings-apply');
         expect(fullMarkup).not.toContain(t('promptLabel'));
         expect(fullMarkup).not.toContain(t('workspacePickerPromptHistoryTitle'));
@@ -165,6 +172,7 @@ describe('WorkspacePickerSheet', () => {
         expect(sketchMarkup).toContain('workspace-generation-settings-controls-pane');
         expect(sketchMarkup).not.toContain(t('resolution'));
         expect(sketchMarkup).not.toContain(t('batchSize'));
+        expect(sketchMarkup).toContain('generation-settings-open-advanced');
         expect(sketchMarkup).toContain('generation-settings-apply');
         expect(sketchMarkup).not.toContain(t('generationSettingsModalDescSketch'));
         expect(sketchMarkup).not.toContain(t('switchDark'));
@@ -235,5 +243,191 @@ describe('WorkspacePickerSheet', () => {
         expect(markup).not.toContain('picker-references-stage-source-card');
         expect(markup).not.toContain(t('workspacePickerStageSourceHint'));
         expect(markup).not.toContain('Rec. <');
+    });
+
+    it('hides style entry points for editor picker flows', () => {
+        const t = (key: string) => getTranslation('en', key);
+        const promptMarkup = renderToStaticMarkup(
+            <WorkspacePickerSheet
+                activePickerSheet="prompt"
+                activeSheetTitle={t('workspaceSheetTitlePrompt')}
+                pickerSheetZIndex={120}
+                prompt="Prompt"
+                setPrompt={vi.fn()}
+                handleSurpriseMe={vi.fn()}
+                handleSmartRewrite={vi.fn()}
+                isEnhancingPrompt={false}
+                closePickerSheet={vi.fn()}
+                openPromptSheet={vi.fn()}
+                openTemplatesSheet={vi.fn()}
+                openHistorySheet={vi.fn()}
+                openStylesSheet={vi.fn()}
+                openReferencesSheet={vi.fn()}
+                promptHistory={[]}
+                removePrompt={vi.fn()}
+                clearPromptHistory={vi.fn()}
+                history={[]}
+                handleHistorySelect={vi.fn()}
+                handleContinueFromHistoryTurn={vi.fn()}
+                handleBranchFromHistoryTurn={vi.fn()}
+                handleRenameBranch={vi.fn()}
+                isPromotedContinuationSource={() => false}
+                getContinueActionLabel={() => 'Continue from turn'}
+                branchNameOverrides={{}}
+                selectedHistoryId={null}
+                currentLanguage="en"
+                handleClearGalleryHistory={vi.fn()}
+                t={t}
+                imageStyle="none"
+                setImageStyle={vi.fn()}
+                imageModel="gemini-3.1-flash-image-preview"
+                setImageModel={vi.fn()}
+                capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
+                aspectRatio="1:1"
+                setAspectRatio={vi.fn()}
+                imageSize="1024x1024"
+                setImageSize={vi.fn()}
+                batchSize={1}
+                setBatchSize={vi.fn()}
+                settingsVariant="full"
+                objectImages={[]}
+                characterImages={[]}
+                setObjectImages={vi.fn()}
+                isGenerating={false}
+                showNotification={vi.fn()}
+                handleRemoveObjectReference={vi.fn()}
+                setCharacterImages={vi.fn()}
+                handleRemoveCharacterReference={vi.fn()}
+                showStyleEntry={false}
+            />,
+        );
+
+        const stylesMarkup = renderToStaticMarkup(
+            <WorkspacePickerSheet
+                activePickerSheet="styles"
+                activeSheetTitle={t('workspaceSheetTitleStyles')}
+                pickerSheetZIndex={120}
+                prompt="Prompt"
+                setPrompt={vi.fn()}
+                handleSurpriseMe={vi.fn()}
+                handleSmartRewrite={vi.fn()}
+                isEnhancingPrompt={false}
+                closePickerSheet={vi.fn()}
+                openPromptSheet={vi.fn()}
+                openTemplatesSheet={vi.fn()}
+                openHistorySheet={vi.fn()}
+                openStylesSheet={vi.fn()}
+                openReferencesSheet={vi.fn()}
+                promptHistory={[]}
+                removePrompt={vi.fn()}
+                clearPromptHistory={vi.fn()}
+                history={[]}
+                handleHistorySelect={vi.fn()}
+                handleContinueFromHistoryTurn={vi.fn()}
+                handleBranchFromHistoryTurn={vi.fn()}
+                handleRenameBranch={vi.fn()}
+                isPromotedContinuationSource={() => false}
+                getContinueActionLabel={() => 'Continue from turn'}
+                branchNameOverrides={{}}
+                selectedHistoryId={null}
+                currentLanguage="en"
+                handleClearGalleryHistory={vi.fn()}
+                t={t}
+                imageStyle="none"
+                setImageStyle={vi.fn()}
+                imageModel="gemini-3.1-flash-image-preview"
+                setImageModel={vi.fn()}
+                capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
+                aspectRatio="1:1"
+                setAspectRatio={vi.fn()}
+                imageSize="1024x1024"
+                setImageSize={vi.fn()}
+                batchSize={1}
+                setBatchSize={vi.fn()}
+                settingsVariant="full"
+                objectImages={[]}
+                characterImages={[]}
+                setObjectImages={vi.fn()}
+                isGenerating={false}
+                showNotification={vi.fn()}
+                handleRemoveObjectReference={vi.fn()}
+                setCharacterImages={vi.fn()}
+                handleRemoveCharacterReference={vi.fn()}
+                showStyleEntry={false}
+            />,
+        );
+
+        expect(promptMarkup).toContain('shared-prompt-clear');
+        expect(promptMarkup).toContain('shared-prompt-apply');
+        expect(promptMarkup).toContain(t('generationSettingsApply'));
+        expect(promptMarkup).not.toContain(t('workspacePickerInspiration'));
+        expect(promptMarkup).not.toContain(t('rewrite'));
+        expect(promptMarkup).not.toContain(t('templates'));
+        expect(promptMarkup).not.toContain(t('workspacePickerPromptHistoryTitle'));
+        expect(promptMarkup).not.toContain(t('workspaceSheetTitleStyles'));
+        expect(stylesMarkup).toBe('');
+    });
+
+    it('locks the ratio and filters model options during retouch editor flows', () => {
+        const t = (key: string) => getTranslation('en', key);
+        const markup = renderToStaticMarkup(
+            <WorkspacePickerSheet
+                activePickerSheet="settings"
+                activeSheetTitle={t('workspaceSheetTitleGenerationSettings')}
+                pickerSheetZIndex={120}
+                prompt="Prompt"
+                setPrompt={vi.fn()}
+                handleSurpriseMe={vi.fn()}
+                handleSmartRewrite={vi.fn()}
+                isEnhancingPrompt={false}
+                closePickerSheet={vi.fn()}
+                openPromptSheet={vi.fn()}
+                openTemplatesSheet={vi.fn()}
+                openHistorySheet={vi.fn()}
+                openStylesSheet={vi.fn()}
+                openReferencesSheet={vi.fn()}
+                promptHistory={[]}
+                removePrompt={vi.fn()}
+                clearPromptHistory={vi.fn()}
+                history={[]}
+                handleHistorySelect={vi.fn()}
+                handleContinueFromHistoryTurn={vi.fn()}
+                handleBranchFromHistoryTurn={vi.fn()}
+                handleRenameBranch={vi.fn()}
+                isPromotedContinuationSource={() => false}
+                getContinueActionLabel={() => 'Continue from turn'}
+                branchNameOverrides={{}}
+                selectedHistoryId={null}
+                currentLanguage="en"
+                handleClearGalleryHistory={vi.fn()}
+                t={t}
+                imageStyle="none"
+                setImageStyle={vi.fn()}
+                imageModel="gemini-3.1-flash-image-preview"
+                setImageModel={vi.fn()}
+                capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
+                aspectRatio="1:8"
+                setAspectRatio={vi.fn()}
+                imageSize="1K"
+                setImageSize={vi.fn()}
+                lockedAspectRatio="1:8"
+                batchSize={1}
+                setBatchSize={vi.fn()}
+                settingsVariant="full"
+                objectImages={[]}
+                characterImages={[]}
+                setObjectImages={vi.fn()}
+                isGenerating={false}
+                showNotification={vi.fn()}
+                handleRemoveObjectReference={vi.fn()}
+                setCharacterImages={vi.fn()}
+                handleRemoveCharacterReference={vi.fn()}
+            />,
+        );
+
+        expect(markup).toContain('gemini-3.1-flash-image-preview');
+        expect(markup).not.toContain('gemini-3-pro-image-preview');
+        expect(markup).not.toContain('gemini-2.5-flash-image');
+        expect(markup).toContain('pointer-events-none');
     });
 });

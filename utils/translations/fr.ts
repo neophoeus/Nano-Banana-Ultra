@@ -190,6 +190,7 @@ export const fr = {
 
     // --- NEW LOGS & NOTIFICATIONS ---
     autoRatioSet: 'Format auto : {0}',
+    editorRetouchModelAutoSwitch: 'Retouch verrouille {1}, le modele a donc bascule automatiquement vers {0}.',
     errEnterIdea: 'Entrez une idée à améliorer.',
     errInvalidImage: 'Fichier image invalide.',
     msgImageResized: 'Image ajustée (limite 4K).',
@@ -548,6 +549,7 @@ export const fr = {
     structuredOutputFieldRecommendedNextMove: 'Prochaine action recommandee',
     structuredOutputFieldTestPrompts: 'Prompts de test',
     surfaceSharedControlsBadge: 'Partage',
+    surfaceSharedControlsSettingsTitle: 'Parametres',
     surfaceSharedControlsOpen: 'Ouvrir les controles partages',
     surfaceSharedControlsHide: 'Masquer les controles partages',
     surfaceSharedControlsRefsCount: '{0} refs',

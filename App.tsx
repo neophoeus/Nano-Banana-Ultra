@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo, Suspense, laz
 import {
     AspectRatio,
     BranchNameOverrides,
+    EditorMode,
     ExecutionMode,
     GroundingMode,
     ImageSize,
@@ -16,6 +17,7 @@ import {
     StageAsset,
     ResultArtifacts,
     SessionContinuitySource,
+    WorkspaceSettingsDraft,
 } from './types';
 import RecentHistoryFilmstrip from './components/RecentHistoryFilmstrip';
 import ComposerAdvancedSettingsDialog from './components/ComposerAdvancedSettingsDialog';
@@ -90,6 +92,7 @@ import { useWorkspaceGenerationContext } from './hooks/useWorkspaceGenerationCon
 import { useWorkspaceShellUtilities } from './hooks/useWorkspaceShellUtilities';
 import { useWorkspaceTransientUiState } from './hooks/useWorkspaceTransientUiState';
 import { useLegacyWorkspaceSnapshotMigration } from './hooks/useLegacyWorkspaceSnapshotMigration';
+import { normalizeStructuredOutputMode } from './utils/structuredOutputs';
 
 const ImageEditor = lazy(() => import('./components/ImageEditor'));
 const GeneratedImage = lazy(() => import('./components/GeneratedImage'));
@@ -128,6 +131,17 @@ const parseWorkflowTimestampMs = (timestamp: string | null | undefined, anchorMs
     return parsedMs;
 };
 
+const areWorkspaceSettingsDraftsEqual = (left: WorkspaceSettingsDraft, right: WorkspaceSettingsDraft) =>
+    left.imageModel === right.imageModel &&
+    left.aspectRatio === right.aspectRatio &&
+    left.imageSize === right.imageSize &&
+    left.batchSize === right.batchSize &&
+    left.outputFormat === right.outputFormat &&
+    left.structuredOutputMode === right.structuredOutputMode &&
+    left.temperature === right.temperature &&
+    left.thinkingLevel === right.thinkingLevel &&
+    left.groundingMode === right.groundingMode;
+
 const TopLauncherSignal = ({ active, dataTestId }: { active: boolean; dataTestId: string }) => {
     const activeOuterClassName =
         'bg-amber-300/60 shadow-[0_0_18px_rgba(251,191,36,0.52)] dark:bg-amber-300/40 dark:shadow-[0_0_20px_rgba(251,191,36,0.36)]';
@@ -163,6 +177,11 @@ const App: React.FC = () => {
     const [currentLang, setCurrentLang] = useState<Language>('en');
     const [areInitialPreferencesReady, setAreInitialPreferencesReady] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [editorMode, setEditorMode] = useState<EditorMode>('inpaint');
+    const [editorRetouchLockedRatio, setEditorRetouchLockedRatio] = useState<AspectRatio | null>(null);
+    const [surfaceSharedControlsBottom, setSurfaceSharedControlsBottom] = useState<number | null>(null);
+    const [settingsSessionDraft, setSettingsSessionDraft] = useState<WorkspaceSettingsDraft | null>(null);
+    const [settingsSessionReturnToGeneration, setSettingsSessionReturnToGeneration] = useState(false);
     const [activeWorkspaceDetailModal, setActiveWorkspaceDetailModal] = useState<
         'workflow' | 'answer' | 'sources' | 'versions' | 'queued-jobs' | null
     >(null);
@@ -195,8 +214,6 @@ const App: React.FC = () => {
         setBranchRenameDraft,
         openBranchRenameDialog,
         closeBranchRenameDialog,
-        isSurfaceSharedControlsOpen,
-        setIsSurfaceSharedControlsOpen,
         openSurfacePickerSheet,
     } = useWorkspaceSurfaceState();
 
@@ -333,8 +350,17 @@ const App: React.FC = () => {
     } = useWorkspaceShellUtilities({
         setApiKeyReady,
     });
-    const { editorContextSnapshot, setEditorContextSnapshot, editorPrompt, setEditorPrompt, editorInitialState } =
-        useWorkspaceTransientUiState({
+    const {
+        editorContextSnapshot,
+        setEditorContextSnapshot,
+        editorPrompt,
+        setEditorPrompt,
+        editorObjectImages,
+        setEditorObjectImages,
+        editorCharacterImages,
+        setEditorCharacterImages,
+        editorInitialState,
+    } = useWorkspaceTransientUiState({
         selectedGrounding,
         activeResultGrounding: workspaceSession.activeResult?.grounding || null,
         activeGroundingSelection,
@@ -346,7 +372,11 @@ const App: React.FC = () => {
         aspectRatio,
         imageSize,
         batchSize,
-        });
+    });
+    const surfaceObjectImages = isEditing ? editorObjectImages : objectImages;
+    const surfaceCharacterImages = isEditing ? editorCharacterImages : characterImages;
+    const setSurfaceObjectImages = isEditing ? setEditorObjectImages : setObjectImages;
+    const setSurfaceCharacterImages = isEditing ? setEditorCharacterImages : setCharacterImages;
 
     const handleLanguageChange = useCallback(
         (nextLanguage: Language) => {
@@ -400,6 +430,345 @@ const App: React.FC = () => {
         },
         [t],
     );
+    const activeEditorLockedAspectRatio = isEditing && editorMode === 'inpaint' ? editorRetouchLockedRatio : null;
+    const compatibleEditorLockedModels = useMemo(
+        () =>
+            activeEditorLockedAspectRatio
+                ? IMAGE_MODELS.filter((model) =>
+                      MODEL_CAPABILITIES[model].supportedRatios.includes(activeEditorLockedAspectRatio),
+                  )
+                : IMAGE_MODELS,
+        [activeEditorLockedAspectRatio],
+    );
+
+    const normalizeSettingsSessionDraft = useCallback(
+        (draft: WorkspaceSettingsDraft): WorkspaceSettingsDraft => {
+            let nextImageModel = draft.imageModel;
+
+            if (
+                activeEditorLockedAspectRatio &&
+                !MODEL_CAPABILITIES[nextImageModel].supportedRatios.includes(activeEditorLockedAspectRatio)
+            ) {
+                nextImageModel =
+                    IMAGE_MODELS.find((model) =>
+                        MODEL_CAPABILITIES[model].supportedRatios.includes(activeEditorLockedAspectRatio),
+                    ) || nextImageModel;
+            }
+
+            const nextCapability = MODEL_CAPABILITIES[nextImageModel];
+            const nextAspectRatio = activeEditorLockedAspectRatio
+                ? activeEditorLockedAspectRatio
+                : nextCapability.supportedRatios.includes(draft.aspectRatio)
+                  ? draft.aspectRatio
+                  : nextCapability.supportedRatios.includes('1:1')
+                    ? '1:1'
+                    : nextCapability.supportedRatios[0] || draft.aspectRatio;
+            const nextImageSize =
+                nextCapability.supportedSizes.length === 0
+                    ? draft.imageSize
+                    : nextCapability.supportedSizes.includes(draft.imageSize)
+                      ? draft.imageSize
+                      : nextCapability.supportedSizes.includes('1K')
+                        ? '1K'
+                        : nextCapability.supportedSizes[0];
+            const nextStructuredOutputMode = nextCapability.supportsStructuredOutputs
+                ? normalizeStructuredOutputMode(draft.structuredOutputMode)
+                : 'off';
+            const nextThinkingLevel = nextCapability.thinkingLevels.includes(draft.thinkingLevel)
+                ? draft.thinkingLevel
+                : nextCapability.thinkingLevels.includes('minimal')
+                  ? 'minimal'
+                  : nextCapability.thinkingLevels[0] || 'disabled';
+            const nextGroundingMode = getAvailableGroundingModes(nextCapability).includes(draft.groundingMode)
+                ? draft.groundingMode
+                : 'off';
+            let nextOutputFormat = nextCapability.outputFormats.includes(draft.outputFormat)
+                ? draft.outputFormat
+                : nextCapability.outputFormats[0];
+
+            if (
+                nextStructuredOutputMode !== 'off' ||
+                getGroundingFlagsFromMode(nextGroundingMode).imageSearch
+            ) {
+                nextOutputFormat = 'images-and-text';
+            }
+
+            return {
+                ...draft,
+                imageModel: nextImageModel,
+                aspectRatio: nextAspectRatio,
+                imageSize: nextImageSize,
+                outputFormat: nextOutputFormat,
+                structuredOutputMode: nextStructuredOutputMode,
+                temperature: Math.max(0, Math.min(2, draft.temperature)),
+                thinkingLevel: nextThinkingLevel,
+                groundingMode: nextGroundingMode,
+            };
+        },
+        [activeEditorLockedAspectRatio],
+    );
+    const buildSettingsSessionDraft = useCallback(
+        () =>
+            normalizeSettingsSessionDraft({
+                imageModel,
+                aspectRatio,
+                imageSize,
+                batchSize,
+                outputFormat,
+                structuredOutputMode,
+                temperature,
+                thinkingLevel,
+                groundingMode,
+            }),
+        [
+            normalizeSettingsSessionDraft,
+            imageModel,
+            aspectRatio,
+            imageSize,
+            batchSize,
+            outputFormat,
+            structuredOutputMode,
+            temperature,
+            thinkingLevel,
+            groundingMode,
+        ],
+    );
+    const updateSettingsSessionDraft = useCallback(
+        (updater: React.SetStateAction<WorkspaceSettingsDraft>) => {
+            setSettingsSessionDraft((previous) => {
+                const baseDraft = previous ?? buildSettingsSessionDraft();
+                const nextDraft =
+                    typeof updater === 'function'
+                        ? (updater as (value: WorkspaceSettingsDraft) => WorkspaceSettingsDraft)(baseDraft)
+                        : updater;
+
+                return normalizeSettingsSessionDraft(nextDraft);
+            });
+        },
+        [buildSettingsSessionDraft, normalizeSettingsSessionDraft],
+    );
+    const clearSettingsSession = useCallback(() => {
+        setSettingsSessionDraft(null);
+        setSettingsSessionReturnToGeneration(false);
+    }, []);
+    const settingsSessionView = useMemo(
+        () => settingsSessionDraft ?? buildSettingsSessionDraft(),
+        [buildSettingsSessionDraft, settingsSessionDraft],
+    );
+    const settingsSessionCapability = useMemo(
+        () => MODEL_CAPABILITIES[settingsSessionView.imageModel],
+        [settingsSessionView.imageModel],
+    );
+    const settingsSessionAvailableGroundingModes = useMemo(
+        () => getAvailableGroundingModes(settingsSessionCapability),
+        [settingsSessionCapability],
+    );
+    const generationSettingsDraft = useMemo(
+        () => ({
+            imageModel: settingsSessionView.imageModel,
+            aspectRatio: settingsSessionView.aspectRatio,
+            imageSize: settingsSessionView.imageSize,
+            batchSize: settingsSessionView.batchSize,
+        }),
+        [
+            settingsSessionView.aspectRatio,
+            settingsSessionView.batchSize,
+            settingsSessionView.imageModel,
+            settingsSessionView.imageSize,
+        ],
+    );
+    const openGenerationSettingsSession = useCallback(() => {
+        setSettingsSessionDraft((previous) => previous ?? buildSettingsSessionDraft());
+        setSettingsSessionReturnToGeneration(false);
+        setIsAdvancedSettingsOpen(false);
+        setActivePickerSheet('settings');
+    }, [buildSettingsSessionDraft, setActivePickerSheet, setIsAdvancedSettingsOpen]);
+    const openAdvancedSettingsSession = useCallback(() => {
+        setSettingsSessionDraft((previous) => previous ?? buildSettingsSessionDraft());
+        setSettingsSessionReturnToGeneration(false);
+        setActivePickerSheet(null);
+        setIsAdvancedSettingsOpen(true);
+    }, [buildSettingsSessionDraft, setActivePickerSheet, setIsAdvancedSettingsOpen]);
+    const openAdvancedSettingsFromGeneration = useCallback(() => {
+        setSettingsSessionDraft((previous) => previous ?? buildSettingsSessionDraft());
+        setSettingsSessionReturnToGeneration(true);
+        setActivePickerSheet(null);
+        setIsAdvancedSettingsOpen(true);
+    }, [buildSettingsSessionDraft, setActivePickerSheet, setIsAdvancedSettingsOpen]);
+    const handleCloseSettingsSheetSession = useCallback(() => {
+        clearSettingsSession();
+        closePickerSheet();
+    }, [clearSettingsSession, closePickerSheet]);
+    const handleCloseAdvancedSettingsSession = useCallback(() => {
+        if (settingsSessionReturnToGeneration) {
+            setIsAdvancedSettingsOpen(false);
+            setSettingsSessionReturnToGeneration(false);
+            setActivePickerSheet('settings');
+            return;
+        }
+
+        setIsAdvancedSettingsOpen(false);
+        clearSettingsSession();
+    }, [clearSettingsSession, setActivePickerSheet, setIsAdvancedSettingsOpen, settingsSessionReturnToGeneration]);
+    const handleApplySettingsSessionDraft = useCallback(() => {
+        const nextDraft = normalizeSettingsSessionDraft(settingsSessionDraft ?? buildSettingsSessionDraft());
+        const nextCapability = MODEL_CAPABILITIES[nextDraft.imageModel];
+
+        setImageModel(nextDraft.imageModel);
+        setAspectRatio(nextDraft.aspectRatio);
+        if (nextCapability.supportedSizes.length > 0) {
+            setImageSize(nextDraft.imageSize);
+        }
+        setBatchSize(nextDraft.batchSize);
+        setOutputFormat(nextDraft.outputFormat);
+        setStructuredOutputMode(nextDraft.structuredOutputMode);
+        setTemperature(nextDraft.temperature);
+        setThinkingLevel(nextDraft.thinkingLevel);
+        setGroundingMode(nextDraft.groundingMode);
+        setActivePickerSheet(null);
+        setIsAdvancedSettingsOpen(false);
+        clearSettingsSession();
+    }, [
+        buildSettingsSessionDraft,
+        clearSettingsSession,
+        normalizeSettingsSessionDraft,
+        setActivePickerSheet,
+        setAspectRatio,
+        setBatchSize,
+        setGroundingMode,
+        setImageModel,
+        setImageSize,
+        setIsAdvancedSettingsOpen,
+        setOutputFormat,
+        setStructuredOutputMode,
+        setTemperature,
+        setThinkingLevel,
+        settingsSessionDraft,
+    ]);
+    const handleUpdateGenerationSettingsDraft = useCallback(
+        (
+            updater: React.SetStateAction<
+                Pick<WorkspaceSettingsDraft, 'imageModel' | 'aspectRatio' | 'imageSize' | 'batchSize'>
+            >,
+        ) => {
+            updateSettingsSessionDraft((previous) => {
+                const baseGenerationDraft = {
+                    imageModel: previous.imageModel,
+                    aspectRatio: previous.aspectRatio,
+                    imageSize: previous.imageSize,
+                    batchSize: previous.batchSize,
+                };
+                const nextGenerationDraft =
+                    typeof updater === 'function'
+                        ? (
+                              updater as (
+                                  value: Pick<
+                                      WorkspaceSettingsDraft,
+                                      'imageModel' | 'aspectRatio' | 'imageSize' | 'batchSize'
+                                  >,
+                              ) => Pick<
+                                  WorkspaceSettingsDraft,
+                                  'imageModel' | 'aspectRatio' | 'imageSize' | 'batchSize'
+                              >
+                          )(baseGenerationDraft)
+                        : updater;
+
+                return {
+                    ...previous,
+                    ...nextGenerationDraft,
+                };
+            });
+        },
+        [updateSettingsSessionDraft],
+    );
+    const handleSettingsSessionStructuredOutputModeChange = useCallback(
+        (nextMode: WorkspaceSettingsDraft['structuredOutputMode']) => {
+            const normalizedMode = normalizeStructuredOutputMode(nextMode);
+            const shouldUpgrade =
+                normalizedMode !== 'off' && settingsSessionView.outputFormat !== 'images-and-text';
+
+            updateSettingsSessionDraft((previous) => ({
+                ...previous,
+                structuredOutputMode: normalizedMode,
+                outputFormat: normalizedMode !== 'off' ? 'images-and-text' : previous.outputFormat,
+            }));
+
+            if (shouldUpgrade) {
+                showNotification(t('composerStructuredOutputUpgradeNotice'), 'info');
+            }
+        },
+        [settingsSessionView.outputFormat, showNotification, t, updateSettingsSessionDraft],
+    );
+    const handleSettingsSessionGroundingModeChange = useCallback(
+        (nextMode: WorkspaceSettingsDraft['groundingMode']) => {
+            const nextFlags = getGroundingFlagsFromMode(nextMode);
+            const shouldUpgrade = nextFlags.imageSearch && settingsSessionView.outputFormat !== 'images-and-text';
+
+            updateSettingsSessionDraft((previous) => ({
+                ...previous,
+                groundingMode: nextMode,
+                outputFormat: nextFlags.imageSearch ? 'images-and-text' : previous.outputFormat,
+            }));
+
+            if (shouldUpgrade) {
+                showNotification(t('composerGroundingImageSearchUpgradeNotice'), 'info');
+            }
+        },
+        [settingsSessionView.outputFormat, showNotification, t, updateSettingsSessionDraft],
+    );
+
+    useEffect(() => {
+        if (isEditing) {
+            return;
+        }
+
+        setEditorMode('inpaint');
+        setEditorRetouchLockedRatio(null);
+    }, [isEditing]);
+
+    useEffect(() => {
+        if (!activeEditorLockedAspectRatio) {
+            return;
+        }
+
+        if (aspectRatio !== activeEditorLockedAspectRatio) {
+            setAspectRatio(activeEditorLockedAspectRatio);
+            return;
+        }
+
+        if (compatibleEditorLockedModels.length === 0 || compatibleEditorLockedModels.includes(imageModel)) {
+            return;
+        }
+
+        const nextModel = compatibleEditorLockedModels[0];
+        setImageModel(nextModel);
+        showNotification(
+            t('editorRetouchModelAutoSwitch')
+                .replace('{0}', getModelLabel(nextModel))
+                .replace('{1}', activeEditorLockedAspectRatio),
+            'info',
+        );
+    }, [
+        activeEditorLockedAspectRatio,
+        aspectRatio,
+        compatibleEditorLockedModels,
+        getModelLabel,
+        imageModel,
+        setAspectRatio,
+        setImageModel,
+        showNotification,
+        t,
+    ]);
+    useEffect(() => {
+        setSettingsSessionDraft((previous) => {
+            if (!previous) {
+                return previous;
+            }
+
+            const normalizedDraft = normalizeSettingsSessionDraft(previous);
+            return areWorkspaceSettingsDraftsEqual(previous, normalizedDraft) ? previous : normalizedDraft;
+        });
+    }, [normalizeSettingsSessionDraft]);
     const lineageBranchLabelConfig = useMemo(
         () => ({
             main: t('historyBranchMain'),
@@ -550,6 +919,7 @@ const App: React.FC = () => {
         capability,
         imageSize,
         aspectRatio,
+        lockedAspectRatio: activeEditorLockedAspectRatio,
         outputFormat,
         structuredOutputMode,
         thinkingLevel,
@@ -780,10 +1150,14 @@ const App: React.FC = () => {
         setEditingImageSource,
         setEditorContextSnapshot,
         setEditorPrompt,
+        setAspectRatio,
+        setImageSize,
         setActivePickerSheet,
         setError,
         setIsSketchPadOpen,
         setShowSketchReplaceConfirm,
+        setEditorMode,
+        setEditorRetouchLockedRatio,
         restoreEditorComposerState,
         getActiveImageUrl,
         addWorkspaceAsset,
@@ -796,6 +1170,28 @@ const App: React.FC = () => {
         performGeneration,
         queueBatchJobFromEditor: handleQueueBatchJobFromEditor,
     });
+    const handleSurfaceRemoveObjectReference = useCallback(
+        (indexToRemove: number) => {
+            if (isEditing) {
+                setEditorObjectImages((previous) => previous.filter((_, index) => index !== indexToRemove));
+                return;
+            }
+
+            handleRemoveObjectReference(indexToRemove);
+        },
+        [handleRemoveObjectReference, isEditing, setEditorObjectImages],
+    );
+    const handleSurfaceRemoveCharacterReference = useCallback(
+        (indexToRemove: number) => {
+            if (isEditing) {
+                setEditorCharacterImages((previous) => previous.filter((_, index) => index !== indexToRemove));
+                return;
+            }
+
+            handleRemoveCharacterReference(indexToRemove);
+        },
+        [handleRemoveCharacterReference, isEditing, setEditorCharacterImages],
+    );
 
     const { handleClearCurrentStage, handleClearGalleryHistory } = useWorkspaceResetActions({
         activePickerSheet,
@@ -947,8 +1343,6 @@ const App: React.FC = () => {
         isSurfaceWorkspaceOpen,
         floatingControlsZIndex,
         pickerSheetZIndex,
-        activeSurfaceSheetLabel,
-        surfacePromptPreview,
         totalReferenceCount,
     } = useWorkspaceShellViewModel({
         generatedImageCount: generatedImageUrls.length,
@@ -974,11 +1368,16 @@ const App: React.FC = () => {
         activePickerSheet,
         isEditing,
         isSketchPadOpen,
-        objectImageCount: objectImages.length,
-        characterImageCount: characterImages.length,
-        setIsSurfaceSharedControlsOpen,
+        objectImageCount: surfaceObjectImages.length,
+        characterImageCount: surfaceCharacterImages.length,
         t,
     });
+
+    useEffect(() => {
+        if (!isSurfaceWorkspaceOpen) {
+            setSurfaceSharedControlsBottom(null);
+        }
+    }, [isSurfaceWorkspaceOpen]);
 
     const {
         effectiveResultText,
@@ -1102,36 +1501,48 @@ const App: React.FC = () => {
         groundingQueries,
         searchEntryPointRenderedContent,
     });
+    const handleOpenSurfacePickerSheet = useCallback(
+        (sheet: Parameters<typeof openSurfacePickerSheet>[0]) => {
+            if (sheet === 'settings') {
+                openGenerationSettingsSession();
+                return;
+            }
+
+            openSurfacePickerSheet(sheet);
+        },
+        [openGenerationSettingsSession, openSurfacePickerSheet],
+    );
     const { surfaceSharedControlsProps, importReviewProps, branchRenameDialogProps } =
         useWorkspaceOverlayAuxiliaryProps({
             isSurfaceWorkspaceOpen,
-            isSurfaceSharedControlsOpen,
             isAdvancedSettingsOpen,
             isEditing,
-            activeSurfaceSheetLabel,
             activePickerSheet,
-            surfacePromptPreview,
             settingsVariant: isSketchPadOpen ? 'sketch' : 'full',
             totalReferenceCount,
+            hasSurfacePrompt: Boolean((isEditing ? editorPrompt : prompt).trim()),
             imageStyle,
             imageModel,
             aspectRatio,
             imageSize,
             batchSize,
-            objectImageCount: objectImages.length,
-            characterImageCount: characterImages.length,
+            outputFormat,
+            structuredOutputMode: effectiveStructuredOutputMode,
+            temperature,
+            thinkingLevel,
+            includeThoughts,
+            groundingMode,
+            objectImageCount: surfaceObjectImages.length,
+            characterImageCount: surfaceCharacterImages.length,
             maxObjects: capability.maxObjects,
             maxCharacters: capability.maxCharacters,
             floatingControlsZIndex,
+            onSurfaceSharedControlsBottomChange: setSurfaceSharedControlsBottom,
             currentLanguage: currentLang,
-            setIsSurfaceSharedControlsOpen,
-            setIsAdvancedSettingsOpen,
-            openSurfacePickerSheet,
+            openSurfacePickerSheet: handleOpenSurfacePickerSheet,
+            openAdvancedSettings: openAdvancedSettingsSession,
             getStyleLabel,
             getModelLabel,
-            openPromptSheet: () => setActivePickerSheet('prompt'),
-            openPromptHistorySheet: () => setActivePickerSheet('history'),
-            openReferencesSheet: () => setActivePickerSheet('references'),
             workspaceImportReview,
             importedBranchSummaries,
             importedLatestTurn,
@@ -1211,9 +1622,10 @@ const App: React.FC = () => {
         handleCancelGeneration,
         handleStartNewConversation,
         handleFollowUpGenerate,
-        handleOpenEditor,
         handleSurpriseMe: handleComposerSurpriseMe,
         handleSmartRewrite: handleComposerSmartRewrite,
+        openSettings: openGenerationSettingsSession,
+        openAdvancedSettings: openAdvancedSettingsSession,
         setActivePickerSheet,
         setIsAdvancedSettingsOpen,
         setOutputFormat,
@@ -1240,8 +1652,34 @@ const App: React.FC = () => {
         isAdvancedSettingsOpen
             ? {
                   ...composerSettingsPanelProps,
+                  outputFormat: settingsSessionView.outputFormat,
+                  structuredOutputMode: settingsSessionView.structuredOutputMode,
+                  thinkingLevel: settingsSessionView.thinkingLevel,
+                  groundingMode: settingsSessionView.groundingMode,
+                  imageModel: settingsSessionView.imageModel,
+                  capability: settingsSessionCapability,
+                  availableGroundingModes: settingsSessionAvailableGroundingModes,
+                  temperature: settingsSessionView.temperature,
+                  onOutputFormatChange: (value) =>
+                      updateSettingsSessionDraft((previous) => ({
+                          ...previous,
+                          outputFormat: value,
+                      })),
+                  onStructuredOutputModeChange: handleSettingsSessionStructuredOutputModeChange,
+                  onTemperatureChange: (value) =>
+                      updateSettingsSessionDraft((previous) => ({
+                          ...previous,
+                          temperature: value,
+                      })),
+                  onThinkingLevelChange: (value) =>
+                      updateSettingsSessionDraft((previous) => ({
+                          ...previous,
+                          thinkingLevel: value,
+                      })),
+                  onGroundingModeChange: handleSettingsSessionGroundingModeChange,
                   isOpen: true,
-                  onClose: () => setIsAdvancedSettingsOpen(false),
+                  onApply: handleApplySettingsSessionDraft,
+                  onClose: handleCloseAdvancedSettingsSession,
               }
             : null;
     const headerConsole = useMemo(
@@ -1430,6 +1868,14 @@ const App: React.FC = () => {
         onReplacePrompt: handleReplacePromptFromStructuredOutput,
         onAppendPrompt: handleAppendPromptFromStructuredOutput,
     });
+    const handleCloseWorkspacePickerSheet = useCallback(() => {
+        if (activePickerSheet === 'settings') {
+            handleCloseSettingsSheetSession();
+            return;
+        }
+
+        closePickerSheet();
+    }, [activePickerSheet, closePickerSheet, handleCloseSettingsSheetSession]);
     const workspacePickerSheetProps = useWorkspacePickerSheetProps({
         activePickerSheet,
         activeSheetTitle,
@@ -1439,12 +1885,17 @@ const App: React.FC = () => {
         handleSurpriseMe: isEditing ? handleEditorSurpriseMe : handleComposerSurpriseMe,
         handleSmartRewrite: isEditing ? handleEditorSmartRewrite : handleComposerSmartRewrite,
         isEnhancingPrompt: isEditing ? isEnhancingEditorPrompt : isEnhancingComposerPrompt,
-        closePickerSheet,
+        closePickerSheet: handleCloseWorkspacePickerSheet,
         openPromptSheet: () => setActivePickerSheet('prompt'),
         openTemplatesSheet: () => setActivePickerSheet('templates'),
         openHistorySheet: () => setActivePickerSheet('history'),
-        openStylesSheet: () => setActivePickerSheet('styles'),
+        openStylesSheet: () => {
+            if (!isEditing) {
+                setActivePickerSheet('styles');
+            }
+        },
         openReferencesSheet: () => setActivePickerSheet('references'),
+        openAdvancedSettings: openAdvancedSettingsFromGeneration,
         promptHistory,
         removePrompt,
         clearPromptHistory,
@@ -1469,17 +1920,22 @@ const App: React.FC = () => {
         setAspectRatio,
         imageSize,
         setImageSize,
+        lockedAspectRatio: activeEditorLockedAspectRatio,
+        settingsDraft: generationSettingsDraft,
+        onUpdateSettingsDraft: handleUpdateGenerationSettingsDraft,
+        onApplySettingsDraft: handleApplySettingsSessionDraft,
         batchSize,
         setBatchSize,
         settingsVariant: isSketchPadOpen ? 'sketch' : 'full',
-        objectImages,
-        characterImages,
-        setObjectImages,
+        objectImages: surfaceObjectImages,
+        characterImages: surfaceCharacterImages,
+        setObjectImages: setSurfaceObjectImages,
         isGenerating,
         showNotification,
-        handleRemoveObjectReference,
-        setCharacterImages,
-        handleRemoveCharacterReference,
+        handleRemoveObjectReference: handleSurfaceRemoveObjectReference,
+        setCharacterImages: setSurfaceCharacterImages,
+        handleRemoveCharacterReference: handleSurfaceRemoveCharacterReference,
+        showStyleEntry: !isEditing,
     });
     const recentHistoryFilmstripProps = useRecentHistoryFilmstripProps({
         recentHistory,
@@ -1983,12 +2439,15 @@ const App: React.FC = () => {
                                 initialBatchSize={editorInitialState.batchSize}
                                 prompt={editorPrompt}
                                 onPromptChange={setEditorPrompt}
-                                objectImages={objectImages}
-                                onObjectImagesChange={setObjectImages}
-                                characterImages={characterImages}
-                                onCharacterImagesChange={setCharacterImages}
+                                objectImages={editorObjectImages}
+                                onObjectImagesChange={setEditorObjectImages}
+                                characterImages={editorCharacterImages}
+                                onCharacterImagesChange={setEditorCharacterImages}
+                                mode={editorMode}
+                                onModeChange={setEditorMode}
                                 ratio={aspectRatio}
                                 onRatioChange={setAspectRatio}
+                                lockedAspectRatio={activeEditorLockedAspectRatio}
                                 size={imageSize}
                                 onSizeChange={setImageSize}
                                 batchSize={batchSize}
@@ -2003,6 +2462,9 @@ const App: React.FC = () => {
                                 onErrorClear={() => setError(null)}
                                 imageModel={imageModel}
                                 onModelChange={setImageModel}
+                                leftDockTopOffset={
+                                    surfaceSharedControlsBottom === null ? null : surfaceSharedControlsBottom + 12
+                                }
                             />
                         </Suspense>
                     ) : null

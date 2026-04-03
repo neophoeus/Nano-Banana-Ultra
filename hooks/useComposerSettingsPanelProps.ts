@@ -77,6 +77,8 @@ type UseComposerSettingsPanelPropsArgs = {
     handleFollowUpGenerate: () => void;
     handleSurpriseMe: () => void;
     handleSmartRewrite: () => void;
+    openSettings: () => void;
+    openAdvancedSettings: () => void;
     setActivePickerSheet: Dispatch<SetStateAction<PickerSheet>>;
     setIsAdvancedSettingsOpen: Dispatch<SetStateAction<boolean>>;
     setOutputFormat: (value: OutputFormat) => void;
@@ -146,6 +148,8 @@ export function useComposerSettingsPanelProps({
     handleFollowUpGenerate,
     handleSurpriseMe,
     handleSmartRewrite,
+    openSettings,
+    openAdvancedSettings,
     setActivePickerSheet,
     setIsAdvancedSettingsOpen,
     setOutputFormat,
@@ -180,7 +184,6 @@ export function useComposerSettingsPanelProps({
         },
         [t],
     );
-    const openSettings = useCallback(() => setActivePickerSheet('settings'), [setActivePickerSheet]);
     const latestHandlersRef = useRef({
         setPrompt,
         toggleEnterToSubmit,
@@ -192,6 +195,8 @@ export function useComposerSettingsPanelProps({
         handleFollowUpGenerate,
         handleSurpriseMe,
         handleSmartRewrite,
+        openSettings,
+        openAdvancedSettings,
         setActivePickerSheet,
         setIsAdvancedSettingsOpen,
         setOutputFormat,
@@ -228,6 +233,8 @@ export function useComposerSettingsPanelProps({
             handleFollowUpGenerate,
             handleSurpriseMe,
             handleSmartRewrite,
+            openSettings,
+            openAdvancedSettings,
             setActivePickerSheet,
             setIsAdvancedSettingsOpen,
             setOutputFormat,
@@ -339,11 +346,8 @@ export function useComposerSettingsPanelProps({
             onOpenPromptHistory: () => latestHandlersRef.current.setActivePickerSheet('history'),
             onOpenTemplates: () => latestHandlersRef.current.setActivePickerSheet('templates'),
             onOpenStyles: () => latestHandlersRef.current.setActivePickerSheet('styles'),
-            onOpenSettings: openSettings,
-            onToggleAdvancedSettings: () => {
-                latestHandlersRef.current.setActivePickerSheet(null);
-                latestHandlersRef.current.setIsAdvancedSettingsOpen(true);
-            },
+            onOpenSettings: () => latestHandlersRef.current.openSettings(),
+            onToggleAdvancedSettings: () => latestHandlersRef.current.openAdvancedSettings(),
             onOutputFormatChange: (value: OutputFormat) => latestHandlersRef.current.setOutputFormat(value),
             onStructuredOutputModeChange: (nextMode: StructuredOutputMode) => {
                 latestHandlersRef.current.setStructuredOutputMode(nextMode);
@@ -421,6 +425,7 @@ export function useComposerSettingsPanelProps({
             getStageOriginLabel,
             getLineageActionLabel,
             openSettings,
+            openAdvancedSettings,
         ],
     );
 }

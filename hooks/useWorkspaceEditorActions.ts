@@ -1,7 +1,14 @@
 import { ChangeEvent, Dispatch, MutableRefObject, SetStateAction, useCallback } from 'react';
-import { prepareImageAssetFromFile } from '../utils/imageSaveUtils';
+import { ASPECT_RATIOS } from '../constants';
+import {
+    constrainImageDimensions,
+    loadImageDimensions,
+    prepareImageAssetFromFile,
+} from '../utils/imageSaveUtils';
+import { findClosestAspectRatio, findClosestImageSize } from '../utils/canvasWorkspace';
 import {
     AspectRatio,
+    EditorMode,
     ImageModel,
     ImageSize,
     ImageStyle,
@@ -27,6 +34,8 @@ export type EditorContextSnapshot = {
     includeThoughts: boolean;
     googleSearch: boolean;
     imageSearch: boolean;
+    editorInitialRatio?: AspectRatio;
+    editorInitialSize?: ImageSize;
 };
 
 type PickerSheet =
@@ -72,10 +81,14 @@ type UseWorkspaceEditorActionsArgs = {
     setEditingImageSource: Dispatch<SetStateAction<string | null>>;
     setEditorContextSnapshot: Dispatch<SetStateAction<EditorContextSnapshot | null>>;
     setEditorPrompt: Dispatch<SetStateAction<string>>;
+    setAspectRatio: Dispatch<SetStateAction<AspectRatio>>;
+    setImageSize: Dispatch<SetStateAction<ImageSize>>;
     setActivePickerSheet: Dispatch<SetStateAction<PickerSheet>>;
     setError: Dispatch<SetStateAction<string | null>>;
     setIsSketchPadOpen: Dispatch<SetStateAction<boolean>>;
     setShowSketchReplaceConfirm: Dispatch<SetStateAction<boolean>>;
+    setEditorMode: Dispatch<SetStateAction<EditorMode>>;
+    setEditorRetouchLockedRatio: Dispatch<SetStateAction<AspectRatio | null>>;
     restoreEditorComposerState: (snapshot: EditorContextSnapshot) => void;
     getActiveImageUrl: () => string;
     addWorkspaceAsset: (args: {
@@ -146,10 +159,14 @@ export function useWorkspaceEditorActions({
     setEditingImageSource,
     setEditorContextSnapshot,
     setEditorPrompt,
+    setAspectRatio,
+    setImageSize,
     setActivePickerSheet,
     setError,
     setIsSketchPadOpen,
     setShowSketchReplaceConfirm,
+    setEditorMode,
+    setEditorRetouchLockedRatio,
     restoreEditorComposerState,
     getActiveImageUrl,
     addWorkspaceAsset,
@@ -184,7 +201,32 @@ export function useWorkspaceEditorActions({
     );
 
     const openEditorWithSource = useCallback(
-        (nextImageSource: string) => {
+        async (nextImageSource: string, sourceDimensions?: { width: number; height: number }) => {
+            let editorInitialRatio = aspectRatio;
+            let editorInitialSize = imageSize;
+
+            try {
+                const measuredDimensions = sourceDimensions || (await loadImageDimensions(nextImageSource));
+                const constrainedDimensions = constrainImageDimensions(
+                    measuredDimensions.width,
+                    measuredDimensions.height,
+                );
+
+                if (constrainedDimensions.width > 0 && constrainedDimensions.height > 0) {
+                    editorInitialRatio = findClosestAspectRatio(
+                        constrainedDimensions.width,
+                        constrainedDimensions.height,
+                        ASPECT_RATIOS,
+                    );
+                    editorInitialSize = findClosestImageSize(
+                        constrainedDimensions.width,
+                        constrainedDimensions.height,
+                    );
+                }
+            } catch (error) {
+                console.error('Failed to resolve editor entry settings.', error);
+            }
+
             setEditorContextSnapshot({
                 prompt: '',
                 objectImages: [...objectImages],
@@ -201,7 +243,13 @@ export function useWorkspaceEditorActions({
                 includeThoughts,
                 googleSearch,
                 imageSearch,
+                editorInitialRatio,
+                editorInitialSize,
             });
+            setEditorMode('inpaint');
+            setEditorRetouchLockedRatio(editorInitialRatio);
+            setAspectRatio(editorInitialRatio);
+            setImageSize(editorInitialSize);
             setEditorPrompt('');
             setEditingImageSource(nextImageSource);
             setIsEditing(true);
@@ -220,12 +268,16 @@ export function useWorkspaceEditorActions({
             includeThoughts,
             outputFormat,
             objectImages,
+            setAspectRatio,
             setActivePickerSheet,
+            setEditorMode,
             setEditorPrompt,
             setEditingImageSource,
             setEditorContextSnapshot,
             setError,
             setIsEditing,
+            setEditorRetouchLockedRatio,
+            setImageSize,
             structuredOutputMode,
             temperature,
             thinkingLevel,
@@ -326,7 +378,10 @@ export function useWorkspaceEditorActions({
 
             prepareImageAssetFromFile(file)
                 .then((prepared) => {
-                    openEditorWithSource(prepared.dataUrl);
+                    void openEditorWithSource(prepared.dataUrl, {
+                        width: prepared.width,
+                        height: prepared.height,
+                    });
 
                     if (prepared.wasResized) {
                         addLog(t('msgImageResized'));
@@ -349,7 +404,7 @@ export function useWorkspaceEditorActions({
     const handleOpenEditor = useCallback(() => {
         const activeUrl = getActiveImageUrl();
         if (activeUrl) {
-            openEditorWithSource(activeUrl);
+            void openEditorWithSource(activeUrl);
             return;
         }
 
