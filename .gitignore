@@ -1,5 +1,5 @@
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,20 +7,19 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-output
-test-results
-playwright-report
-Archive
-archive
-*.local
+# Dependencies and build output
+node_modules/
+dist/
+dist-ssr/
+output/
+test-results/
+playwright-report/
+
+# Local workspace content
+Archive/
+docs/
+.env*.local
 e2e-global-log-focus.txt
-IMPLEMENTATION_MASTER_SPEC.md
-INTERNAL_SMOKE_CHECKLIST.md
-PRODUCT_SHELL_DECISIONS.md
-WORKING_TREE_PACKAGE_MAP.md
 INTERNAL_SMOKE_REPORT_*.md
 INTERNAL_SMOKE_HANDOFF*.md
 INTERNAL_SMOKE_FINAL_SUMMARY_*.md
@@ -30,7 +29,7 @@ INTERNAL_SMOKE_FINAL_SUMMARY_*.md
 !.vscode/extensions.json
 !.vscode/settings.json
 !.vscode/tasks.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
