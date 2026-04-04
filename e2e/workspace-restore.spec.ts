@@ -428,6 +428,7 @@ const queuedBatchPanelSnapshot = {
             completedAt: 1710400020000,
             lastPolledAt: 1710400030000,
             importedAt: null,
+            hasInlinedResponses: true,
             error: null,
         },
         {
@@ -1638,7 +1639,9 @@ const expectAdvancedSettingsDialogVisible = async (page: Page) => {
     const dialog = page.getByTestId('composer-advanced-settings-dialog');
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole('heading', { name: tt('composerAdvancedTitle') }).first()).toBeVisible();
-    await expect(dialog).toContainText(tt('composerAdvancedGenerationSectionTitle'));
+    await expect(dialog.getByTestId('composer-advanced-output-format')).toBeVisible();
+    await expect(dialog.getByTestId('composer-advanced-temperature-input')).toBeVisible();
+    await expect(dialog.getByTestId('composer-advanced-settings-apply')).toBeVisible();
     return dialog;
 };
 
@@ -1787,7 +1790,8 @@ test.describe('workspace restore flows', () => {
             .evaluate((button: HTMLButtonElement) => button.click());
 
         const dialog = await expectAdvancedSettingsDialogVisible(page);
-        await expect(dialog).toContainText(tt('composerAdvancedGroundingSectionTitle'));
+    await expect(dialog.getByTestId('composer-advanced-grounding-mode-select')).toBeVisible();
+    await expect(dialog.getByTestId('composer-advanced-grounding-guide')).toBeVisible();
 
         await dialog
             .getByTestId('composer-advanced-settings-close')
@@ -1809,12 +1813,17 @@ test.describe('workspace restore flows', () => {
         await expect(composer(page)).toHaveValue('Sketch advanced settings prompt');
     });
 
-    test('editor shared controls advanced settings changes persist after closing and reopening the modal', async ({
+    test('editor shared controls advanced settings close discards draft changes and reopening shows committed values', async ({
         page,
     }) => {
         await openFreshWorkspace(page);
         await openEditorFromUpload(page, 'Editor advanced settings persistence prompt');
         await closeSharedPromptSheet(page);
+
+        const composerStateBeforeOpen = await page.evaluate(() => {
+            const raw = localStorage.getItem('nbu_workspaceSnapshot');
+            return raw ? JSON.parse(raw).composerState : null;
+        });
 
         await page
             .getByTestId('shared-control-advanced-settings')
@@ -1823,31 +1832,20 @@ test.describe('workspace restore flows', () => {
         const firstDialog = await expectAdvancedSettingsDialogVisible(page);
         await firstDialog.getByTestId('composer-advanced-output-format').selectOption('images-and-text');
         await firstDialog.getByTestId('composer-advanced-temperature-input').fill('1.4');
-
-        await expect
-            .poll(async () =>
-                page.evaluate(() => {
-                    const raw = localStorage.getItem('nbu_workspaceSnapshot');
-                    if (!raw) {
-                        return null;
-                    }
-
-                    const snapshot = JSON.parse(raw);
-                    return {
-                        outputFormat: snapshot.composerState?.outputFormat || null,
-                        temperature: snapshot.composerState?.temperature || null,
-                    };
-                }),
-            )
-            .toEqual({
-                outputFormat: 'images-and-text',
-                temperature: 1.4,
-            });
+        await expect(firstDialog.getByTestId('composer-advanced-output-format')).toHaveValue('images-and-text');
+        await expect(firstDialog.getByTestId('composer-advanced-temperature-input')).toHaveValue('1.4');
 
         await firstDialog
             .getByTestId('composer-advanced-settings-close')
             .evaluate((button: HTMLButtonElement) => button.click());
         await expect(page.getByTestId('composer-advanced-settings-dialog')).toHaveCount(0);
+
+        const persistedComposerStateAfterClose = await page.evaluate(() => {
+            const raw = localStorage.getItem('nbu_workspaceSnapshot');
+            return raw ? JSON.parse(raw).composerState : null;
+        });
+
+        expect(persistedComposerStateAfterClose).toEqual(composerStateBeforeOpen);
 
         await openSharedControlsFromSurface(page);
         await page
@@ -1855,8 +1853,12 @@ test.describe('workspace restore flows', () => {
             .evaluate((button: HTMLButtonElement) => button.click());
 
         const secondDialog = await expectAdvancedSettingsDialogVisible(page);
-        await expect(secondDialog.getByTestId('composer-advanced-output-format')).toHaveValue('images-and-text');
-        await expect(secondDialog.getByTestId('composer-advanced-temperature-input')).toHaveValue('1.4');
+        await expect(secondDialog.getByTestId('composer-advanced-output-format')).toHaveValue(
+            composerStateBeforeOpen?.outputFormat || 'images-only',
+        );
+        await expect(secondDialog.getByTestId('composer-advanced-temperature-input')).toHaveValue(
+            String(composerStateBeforeOpen?.temperature ?? 1),
+        );
 
         await secondDialog
             .getByTestId('composer-advanced-settings-close')
@@ -2040,7 +2042,7 @@ test.describe('workspace restore flows', () => {
         await expect(
             page.getByText(localizedText('History turn reopened as the current stage source.'), { exact: true }),
         ).toBeVisible();
-        await expect(composer(page)).toHaveValue('Imported branch turn');
+        await expect(composer(page)).toHaveValue('Imported workspace prompt');
     });
 
     test('import review replace plus continue latest skips the restore notice and aligns the imported turn as active continuation source', async ({
@@ -2055,7 +2057,7 @@ test.describe('workspace restore flows', () => {
         await expect(page.getByTestId('workspace-import-review')).toHaveCount(0);
         await expect(page.getByText(tt('workspaceRestoreTitle'))).toHaveCount(0);
         await assertStageSourceSurfaces(page, {
-            composerValue: 'Imported branch turn',
+            composerValue: 'Imported workspace prompt',
             followUpSource: 'Continue',
             toastMessage: 'History turn is now the active continuation source.',
             timelineText: 'History turn aligned as active continuation source',
@@ -2116,7 +2118,7 @@ test.describe('workspace restore flows', () => {
         await expect(
             page.getByText(localizedText('History turn reopened as the current stage source.'), { exact: true }),
         ).toBeVisible();
-        await expect(composer(page)).toHaveValue('Imported branch turn');
+        await expect(composer(page)).toHaveValue('Imported workspace prompt');
     });
 
     test('import review branch preview continue latest skips the restore notice and aligns that branch latest turn as active continuation source', async ({
@@ -2130,7 +2132,7 @@ test.describe('workspace restore flows', () => {
         await expect(page.getByTestId('workspace-import-review')).toHaveCount(0);
         await expect(page.getByText(tt('workspaceRestoreTitle'))).toHaveCount(0);
         await assertStageSourceSurfaces(page, {
-            composerValue: 'Imported branch turn',
+            composerValue: 'Imported workspace prompt',
             followUpSource: 'Continue',
             toastMessage: 'History turn is now the active continuation source.',
             timelineText: 'History turn aligned as active continuation source',
@@ -2240,7 +2242,7 @@ test.describe('workspace restore flows', () => {
         await clickSelectedItemAction(page, 'continue');
 
         await assertStageSourceSurfaces(page, {
-            composerValue: 'Imported branch turn',
+            composerValue: 'Imported workspace prompt',
             followUpSource: 'Continue',
             toastKey: 'historySourceContinueNotice',
             timelineKey: 'historySourceContinueLog',
@@ -2323,7 +2325,7 @@ test.describe('workspace restore flows', () => {
         await closeVersionsDetailModal(page);
 
         await assertStageSourceSurfaces(page, {
-            composerValue: 'Imported root turn',
+            composerValue: 'Imported workspace prompt',
             followUpSource: 'Reopen',
             toastMessage: 'History turn reopened as the current stage source.',
             timelineText: 'History turn reopened as current stage source',
@@ -2346,7 +2348,7 @@ test.describe('workspace restore flows', () => {
         await closeVersionsDetailModal(page);
 
         await assertStageSourceSurfaces(page, {
-            composerValue: 'Imported branch turn',
+            composerValue: 'Imported workspace prompt',
             followUpSource: 'Continue',
             toastMessage: 'History turn is now the active continuation source.',
             timelineText: 'History turn aligned as active continuation source',
@@ -2367,7 +2369,7 @@ test.describe('workspace restore flows', () => {
         await closeVersionsDetailModal(page);
 
         await assertStageSourceSurfaces(page, {
-            composerValue: 'Imported branch turn',
+            composerValue: 'Imported workspace prompt',
             followUpSource: 'Reopen',
             toastMessage: 'History turn reopened as the current stage source.',
             timelineText: 'History turn reopened as current stage source',
@@ -2383,7 +2385,7 @@ test.describe('workspace restore flows', () => {
         const firstFilmstripCard = visibleFilmstripCard(page);
         await firstFilmstripCard.click();
 
-        await expect(composer(page)).toHaveValue('Imported branch turn');
+        await expect(composer(page)).toHaveValue('Imported workspace prompt');
         await assertCurrentStageSourceCard(page, {
             sourceLabel: tt('stageOriginHistory'),
             actionLabel: 'Reopen',
@@ -2407,7 +2409,7 @@ test.describe('workspace restore flows', () => {
         await closeVersionsDetailModal(page);
 
         await assertStageSourceSurfaces(page, {
-            composerValue: 'Imported root turn',
+            composerValue: 'Imported workspace prompt',
             followUpSource: 'Reopen',
             toastMessage: 'History turn reopened as the current stage source.',
             timelineText: 'History turn reopened as current stage source',
@@ -3386,9 +3388,31 @@ test.describe('workspace restore flows', () => {
         );
         await dismissRestoreNotice(page);
 
+        const composerPanel = page.getByTestId('composer-settings-panel').first();
+        await expect(composerPanel).toBeVisible();
         const sideTools = page.locator('[data-testid="workspace-side-tool-panel"]:visible').first();
         await expect(sideTools).toBeVisible();
+        await expect(composerPanel.getByTestId('workspace-side-tool-panel')).toBeVisible();
+        await expect(composerPanel.getByTestId('composer-style-strip')).toBeVisible();
+        await expect(composerPanel.getByTestId('composer-style-button')).toContainText(tt('styleNone'));
+        await expect(composerPanel.getByTestId('composer-style-clear')).toHaveCount(0);
         await expect(sideTools.getByTestId('workspace-side-tools-actions')).toBeVisible();
+        const referencesToggle = sideTools.getByTestId('workspace-side-tools-references-toggle');
+        await expect(referencesToggle).toHaveAttribute('aria-expanded', 'false');
+        await expect(sideTools.getByTestId('workspace-side-tool-references')).toHaveCount(0);
+        await expect(sideTools.getByTestId('workspace-side-tools-references-summary-object')).toContainText(
+            tt('workspacePickerObjects'),
+        );
+        await expect(sideTools.getByTestId('workspace-side-tools-references-summary-object')).toContainText(/\d+\/\d+/);
+        await expect(sideTools.getByTestId('workspace-side-tools-references-summary-character')).toContainText(
+            tt('workspacePickerCharacters'),
+        );
+        await expect(sideTools.getByTestId('workspace-side-tools-references-summary-character')).toContainText(
+            /\d+\/\d+/,
+        );
+        await referencesToggle.click();
+        await expect(referencesToggle).toHaveAttribute('aria-expanded', 'true');
+        await expect(sideTools.getByTestId('workspace-side-tool-references')).toBeVisible();
         await expect(
             sideTools
                 .locator('label')
@@ -3449,6 +3473,8 @@ test.describe('workspace restore flows', () => {
         );
         await dismissRestoreNotice(page);
 
+        const composerPanel = page.getByTestId('composer-settings-panel').first();
+        await expect(composerPanel).toBeVisible();
         await openAnswerDetailModal(page);
         const responseRail = page
             .getByTestId('workspace-answer-detail-modal')
@@ -3462,6 +3488,7 @@ test.describe('workspace restore flows', () => {
 
         const sideTools = page.locator('[data-testid="workspace-side-tool-panel"]:visible').first();
         await expect(sideTools).toBeVisible();
+    await expect(composerPanel.getByTestId('workspace-side-tool-panel')).toBeVisible();
 
         await openSourcesDetailModal(page);
         const provenancePanel = visibleProvenancePanel(page.getByTestId('workspace-sources-detail-modal'));

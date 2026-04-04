@@ -1,5 +1,10 @@
 import React from 'react';
 import { QueuedBatchJob } from '../types';
+import {
+    isQueuedBatchJobActive,
+    isQueuedBatchJobClosedIssue,
+    isQueuedBatchJobImportReady,
+} from '../utils/queuedBatchJobs';
 import { getWorkflowEntryLabelKey, WorkflowEntry } from '../utils/workflowTimeline';
 import { getTranslation, Language } from '../utils/translations';
 
@@ -47,13 +52,9 @@ function WorkspaceWorkflowDetailPanel({
     contextPanel,
 }: WorkspaceWorkflowDetailPanelProps) {
     const t = (key: string) => getTranslation(currentLanguage, key);
-    const activeQueueStates = new Set(['JOB_STATE_PENDING', 'JOB_STATE_RUNNING']);
-    const issueQueueStates = new Set(['JOB_STATE_FAILED', 'JOB_STATE_CANCELLED', 'JOB_STATE_EXPIRED']);
-    const activeQueueCount = queuedJobs.filter((job) => activeQueueStates.has(job.state)).length;
-    const importReadyQueueCount = queuedJobs.filter(
-        (job) => job.state === 'JOB_STATE_SUCCEEDED' && job.importedAt == null,
-    ).length;
-    const issueQueueCount = queuedJobs.filter((job) => issueQueueStates.has(job.state)).length;
+    const activeQueueCount = queuedJobs.filter(isQueuedBatchJobActive).length;
+    const importReadyQueueCount = queuedJobs.filter(isQueuedBatchJobImportReady).length;
+    const issueQueueCount = queuedJobs.filter(isQueuedBatchJobClosedIssue).length;
     const thoughtsBodyText = thoughtsText || thoughtsPlaceholder || null;
     const detailThoughtEntries =
         thoughtEntries.length > 0

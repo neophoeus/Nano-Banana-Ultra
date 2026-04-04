@@ -33,6 +33,19 @@ describe('branchContinuation', () => {
         });
     });
 
+    it("does not project a pending branch selection back onto the source turn's existing branch", () => {
+        expect(
+            getEffectiveBranchContinuationSourceByBranchOriginId(
+                { 'branch-a': 'turn-a1' },
+                { 'turn-a2': 'branch-a' },
+                'turn-a2',
+                'branch',
+            ),
+        ).toEqual({
+            'branch-a': 'turn-a1',
+        });
+    });
+
     it('marks only the promoted variant as the continuation source for its branch', () => {
         const firstVariant = buildTurn({ id: 'variant-1', variantGroupId: 'group-1' });
         const secondVariant = buildTurn({ id: 'variant-2', variantGroupId: 'group-1' });

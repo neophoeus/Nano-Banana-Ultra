@@ -80,6 +80,8 @@ const baseProps = {
     onRemoveQueuedJob: vi.fn(),
     getStageOriginLabel: () => 'Generated',
     getLineageActionLabel: () => 'Root',
+    onClearStyle: vi.fn(),
+    imageToolsPanel: <div data-testid="embedded-image-tools">Embedded Image Tools</div>,
 };
 
 describe('ComposerSettingsPanel prompt focus wiring', () => {
@@ -157,6 +159,49 @@ describe('ComposerSettingsPanel prompt focus wiring', () => {
 
         expect(onOpenSettings).toHaveBeenCalledTimes(1);
         expect(container.querySelector('[data-testid="composer-reference-context-button"]')).toBeNull();
+    });
+
+    it('keeps the style strip always visible and routes clear separately from opening the style modal', () => {
+        const onOpenStyles = vi.fn();
+        const onClearStyle = vi.fn();
+
+        act(() => {
+            root.render(
+                <ComposerSettingsPanel
+                    {...baseProps}
+                    imageStyleLabel="Anime"
+                    onOpenStyles={onOpenStyles}
+                    onClearStyle={onClearStyle}
+                />,
+            );
+        });
+
+        const styleButton = container.querySelector('[data-testid="composer-style-button"]') as HTMLButtonElement;
+        const clearButton = container.querySelector('[data-testid="composer-style-clear"]') as HTMLButtonElement;
+
+        expect(container.querySelector('[data-testid="composer-style-strip"]')).toBeInstanceOf(HTMLDivElement);
+        expect(styleButton).toBeInstanceOf(HTMLButtonElement);
+        expect(clearButton).toBeInstanceOf(HTMLButtonElement);
+
+        act(() => {
+            styleButton.click();
+        });
+
+        act(() => {
+            clearButton.click();
+        });
+
+        expect(onOpenStyles).toHaveBeenCalledTimes(1);
+        expect(onClearStyle).toHaveBeenCalledTimes(1);
+    });
+
+    it('hides the style clear affordance when the current style is none', () => {
+        act(() => {
+            root.render(<ComposerSettingsPanel {...baseProps} imageStyleLabel="None" />);
+        });
+
+        expect(container.querySelector('[data-testid="composer-style-strip"]')).toBeInstanceOf(HTMLDivElement);
+        expect(container.querySelector('[data-testid="composer-style-clear"]')).toBeNull();
     });
 
     it('opens the queued jobs modal from the status button when tracked jobs exist', () => {

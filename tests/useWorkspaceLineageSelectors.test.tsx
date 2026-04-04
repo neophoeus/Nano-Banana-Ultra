@@ -46,6 +46,7 @@ describe('useWorkspaceLineageSelectors', () => {
                 branchNameOverrides: {},
                 branchContinuationSourceByBranchOriginId: {},
                 workspaceSessionSourceHistoryId: successfulTurn.id,
+                workspaceSessionSourceLineageAction: 'continue',
                 selectedHistoryId: failedTurn.id,
                 currentStageAssetSourceHistoryId: null,
                 conversationId: null,
@@ -65,5 +66,59 @@ describe('useWorkspaceLineageSelectors', () => {
         expect(result?.selectedItemModel?.isStageSource).toBe(false);
         expect(result?.currentStageSourceHistoryId).toBeNull();
         expect(result?.currentStageSourceTurn).toBeNull();
+    });
+
+    it('keeps the active branch tied to the session continuation source while passive viewing changes only selection/stage state', () => {
+        const rootTurn = buildTurn({
+            id: 'root-turn',
+            rootHistoryId: 'root-turn',
+            lineageAction: 'root',
+            createdAt: 1,
+        });
+        const mainTurn = buildTurn({
+            id: 'main-turn',
+            parentHistoryId: 'root-turn',
+            rootHistoryId: 'root-turn',
+            sourceHistoryId: 'root-turn',
+            lineageAction: 'continue',
+            createdAt: 2,
+        });
+        const branchTurn = buildTurn({
+            id: 'branch-turn',
+            parentHistoryId: 'main-turn',
+            rootHistoryId: 'root-turn',
+            sourceHistoryId: 'main-turn',
+            lineageAction: 'branch',
+            createdAt: 3,
+        });
+        const history = [branchTurn, mainTurn, rootTurn];
+        const getHistoryTurnById = (historyId?: string | null) => history.find((item) => item.id === historyId) || null;
+        let result: ReturnType<typeof useWorkspaceLineageSelectors> | null = null;
+
+        const TestView = () => {
+            result = useWorkspaceLineageSelectors({
+                history,
+                branchNameOverrides: {},
+                branchContinuationSourceByBranchOriginId: { 'root-turn': 'main-turn' },
+                workspaceSessionSourceHistoryId: 'main-turn',
+                workspaceSessionSourceLineageAction: 'continue',
+                selectedHistoryId: 'branch-turn',
+                currentStageAssetSourceHistoryId: 'branch-turn',
+                conversationId: null,
+                conversationBranchOriginId: null,
+                conversationActiveSourceHistoryId: null,
+                conversationTurnIds: [],
+                getHistoryTurnById,
+                getShortTurnId: (historyId?: string | null) => historyId?.slice(0, 8) || 'none',
+            });
+
+            return null;
+        };
+
+        renderToStaticMarkup(<TestView />);
+
+        expect(result?.activeBranchSummary?.branchOriginId).toBe('root-turn');
+        expect(result?.selectedItemModel?.branchOriginId).toBe('branch-turn');
+        expect(result?.currentStageBranchSummary?.branchOriginId).toBe('branch-turn');
     });
 });

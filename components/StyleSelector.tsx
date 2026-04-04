@@ -504,8 +504,9 @@ const StyleSelector: React.FC<StyleSelectorProps> = ({
 
     // Initialize selected category based on the currently selected style
     const initialCategory =
-        STYLE_CATEGORIES.find((cat) => STYLES_BY_CATEGORY[cat.id].includes(selectedStyle) && cat.id !== 'All')?.id ||
-        'All';
+        STYLE_CATEGORIES.find(
+            (categoryId) => STYLES_BY_CATEGORY[categoryId].includes(selectedStyle) && categoryId !== 'All',
+        ) || 'All';
 
     const [activeCategory, setActiveCategory] = useState<ImageStyleCategory>(initialCategory);
 
@@ -522,20 +523,20 @@ const StyleSelector: React.FC<StyleSelectorProps> = ({
 
             {/* Category Tabs */}
             <div className="flex gap-2 overflow-x-auto pb-2 nbu-scrollbar-subtle">
-                {STYLE_CATEGORIES.map((cat) => (
+                {STYLE_CATEGORIES.map((categoryId) => (
                     <button
-                        key={cat.id}
-                        onClick={() => setActiveCategory(cat.id)}
+                        key={categoryId}
+                        onClick={() => setActiveCategory(categoryId)}
                         className={`
               px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-all border flex-shrink-0
               ${
-                  activeCategory === cat.id
+                  activeCategory === categoryId
                       ? 'bg-amber-500 text-black border-amber-500 shadow-lg shadow-amber-500/20'
                       : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-800 dark:hover:text-white'
               }
             `}
                     >
-                        {t(`cat${cat.id}`)}
+                        {t(`cat${categoryId}`)}
                     </button>
                 ))}
             </div>

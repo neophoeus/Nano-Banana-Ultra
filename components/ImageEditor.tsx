@@ -622,7 +622,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         onCharacterImagesChange(initialCharacterImages);
         onRatioChange(initialRatio);
         onSizeChange(initialSize);
-        onBatchSizeChange(initialBatchSize);
 
         if (eventSurfaceRef.current && originalDims.w > 0) {
             const { clientWidth, clientHeight } = eventSurfaceRef.current;

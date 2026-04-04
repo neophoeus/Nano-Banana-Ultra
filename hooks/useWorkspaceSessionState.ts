@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction, useCallback, useState } from 'react';
 import {
+    ContinuationLineageAction,
     GroundingMetadata,
     PendingProvenanceContext,
     ProvenanceContinuityMode,
@@ -27,6 +28,7 @@ type UseWorkspaceSessionStateReturn = {
             mode?: ProvenanceContinuityMode | null;
             sourceHistoryId?: string | null;
             sessionSourceHistoryId?: string | null;
+            sourceLineageAction?: ContinuationLineageAction | null;
             conversationId?: string | null;
             conversationBranchOriginId?: string | null;
             conversationActiveSourceHistoryId?: string | null;
@@ -52,6 +54,7 @@ export function useWorkspaceSessionState({
                 mode?: ProvenanceContinuityMode | null;
                 sourceHistoryId?: string | null;
                 sessionSourceHistoryId?: string | null;
+                sourceLineageAction?: ContinuationLineageAction | null;
                 conversationId?: string | null;
                 conversationBranchOriginId?: string | null;
                 conversationActiveSourceHistoryId?: string | null;
@@ -66,6 +69,12 @@ export function useWorkspaceSessionState({
                 provenanceOverride && Object.prototype.hasOwnProperty.call(provenanceOverride, 'sessionSourceHistoryId')
                     ? (provenanceOverride.sessionSourceHistoryId ?? null)
                     : provenanceSourceHistoryId;
+            const sourceLineageAction =
+                provenanceOverride && Object.prototype.hasOwnProperty.call(provenanceOverride, 'sourceLineageAction')
+                    ? (provenanceOverride.sourceLineageAction ?? null)
+                    : sessionSourceHistoryId
+                      ? 'continue'
+                      : null;
 
             setWorkspaceSession({
                 activeResult: artifacts,
@@ -79,6 +88,7 @@ export function useWorkspaceSessionState({
                 conversationTurnIds: provenanceOverride?.conversationTurnIds ?? [],
                 source,
                 sourceHistoryId: sessionSourceHistoryId,
+                sourceLineageAction,
                 updatedAt: artifacts ? Date.now() : null,
             });
         },

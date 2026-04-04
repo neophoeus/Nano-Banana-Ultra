@@ -269,6 +269,7 @@ type UseWorkspaceStageViewerArgs = {
     sessionHintEntries: SessionHintEntry[];
     formatSessionHintKey: (key: string) => string;
     formatSessionHintValue: (value: unknown) => string;
+    onApplyPrompt?: (value: string) => void;
     onReplacePrompt?: (value: string) => void;
     onAppendPrompt?: (value: string) => void;
 };
@@ -313,6 +314,7 @@ export function useWorkspaceStageViewer({
     sessionHintEntries,
     formatSessionHintKey,
     formatSessionHintValue,
+    onApplyPrompt,
     onReplacePrompt,
     onAppendPrompt,
 }: UseWorkspaceStageViewerArgs) {
@@ -427,6 +429,7 @@ export function useWorkspaceStageViewer({
                 formatSessionHintValue,
                 onClose: closeViewer,
                 onMoveViewer: moveViewer,
+                onApplyPrompt,
                 onReplacePrompt,
                 onAppendPrompt,
             }) satisfies WorkspaceViewerOverlayProps,
@@ -445,6 +448,7 @@ export function useWorkspaceStageViewer({
             isViewerOpen,
             modelLabel,
             moveViewer,
+            onApplyPrompt,
             onAppendPrompt,
             onReplacePrompt,
             prompt,

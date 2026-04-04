@@ -76,6 +76,7 @@ vi.mock('../components/ComposerSettingsPanel', async () => {
         previousPropsRef.current = props;
         return (
             <div data-testid="mock-composer-settings-panel">
+                {props.imageToolsPanel as React.ReactNode}
                 <button onClick={() => (props.onToggleAdvancedSettings as (() => void) | undefined)?.()}>
                     Advanced Settings
                 </button>
@@ -387,7 +388,7 @@ describe('Phase B render stability', () => {
         );
     });
 
-    it('keeps image tools outside the history canvas and before the composer in the bottom row', async () => {
+    it('keeps image tools outside the history canvas and embeds them inside the composer shell-owner row', async () => {
         const historyCanvas = await waitFor(() =>
             document.querySelector('[data-testid="mock-workspace-history-canvas"]'),
         );
@@ -407,11 +408,7 @@ describe('Phase B render stability', () => {
         expect(historyCanvas?.querySelector('[data-testid="mock-workspace-side-tool-panel"]')).toBeNull();
         expect(actionsComposerRow?.contains(sideToolPanel)).toBe(true);
         expect(actionsComposerRow?.contains(composerSettingsPanel)).toBe(true);
-        expect(
-            sideToolPanel && composerSettingsPanel
-                ? sideToolPanel.compareDocumentPosition(composerSettingsPanel) & Node.DOCUMENT_POSITION_FOLLOWING
-                : 0,
-        ).not.toBe(0);
+        expect(composerSettingsPanel?.contains(sideToolPanel)).toBe(true);
     });
 
     it('keeps the top launchers on one row and trims response and source launchers to title-only buttons', async () => {

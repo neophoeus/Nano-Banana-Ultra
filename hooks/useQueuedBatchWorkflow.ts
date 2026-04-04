@@ -11,6 +11,7 @@ import {
     GenerationLineageContext,
     ImageModel,
     QueuedBatchJob,
+    QueuedBatchJobImportDiagnostic,
     QueuedBatchJobStats,
     QueuedBatchJobState,
     StageAsset,
@@ -18,6 +19,10 @@ import {
 } from '../types';
 import { generateThumbnail, saveImageToLocal } from '../utils/imageSaveUtils';
 import { sanitizeSessionHintsForStorage } from '../utils/inlineImageDisplay';
+import {
+    isQueuedBatchJobImportReady,
+    isQueuedBatchJobRefreshable,
+} from '../utils/queuedBatchJobs';
 import { useQueuedBatchJobs } from './useQueuedBatchJobs';
 
 const QUEUED_BATCH_JOB_STATES: QueuedBatchJobState[] = [
@@ -28,7 +33,6 @@ const QUEUED_BATCH_JOB_STATES: QueuedBatchJobState[] = [
     'JOB_STATE_CANCELLED',
     'JOB_STATE_EXPIRED',
 ];
-const QUEUED_BATCH_REFRESHABLE_STATES: QueuedBatchJobState[] = ['JOB_STATE_PENDING', 'JOB_STATE_RUNNING'];
 const QUEUED_BATCH_AUTO_REFRESH_INTERVAL_MS = 45_000;
 
 const isQueuedBatchJobNameUnrecoverable = (message: string) => {
@@ -53,8 +57,6 @@ const normalizeQueuedBatchJobState = (value: string): QueuedBatchJobState => {
     return 'JOB_STATE_PENDING';
 };
 
-const isQueuedBatchJobRefreshable = (job: QueuedBatchJob) => QUEUED_BATCH_REFRESHABLE_STATES.includes(job.state);
-const isQueuedBatchJobImportReady = (job: QueuedBatchJob) => job.state === 'JOB_STATE_SUCCEEDED' && !job.importedAt;
 const sortQueuedBatchImportedHistory = (left: GeneratedImage, right: GeneratedImage) => {
     const leftIndex =
         typeof left.metadata?.batchResultIndex === 'number' ? left.metadata.batchResultIndex : Number.MAX_SAFE_INTEGER;
@@ -89,6 +91,9 @@ type RemoteQueuedJobSeed = Pick<
     | 'objectImageCount'
     | 'characterImageCount'
     | 'importedAt'
+    | 'hasInlinedResponses'
+    | 'submissionPending'
+    | 'importDiagnostic'
     | 'parentHistoryId'
     | 'rootHistoryId'
     | 'sourceHistoryId'
@@ -106,6 +111,7 @@ type RemoteQueuedJob = {
     startTime?: string;
     endTime?: string;
     error?: string | null;
+    hasInlinedResponses: boolean;
     batchStats?: QueuedBatchJobStats | null;
 };
 
@@ -306,13 +312,21 @@ export function useQueuedBatchWorkflow({
             const updatedAt = parseBatchJobTimestamp(remoteJob.updateTime) || Date.now();
             const startedAt = parseBatchJobTimestamp(remoteJob.startTime);
             const completedAt = parseBatchJobTimestamp(remoteJob.endTime);
+            const state = normalizeQueuedBatchJobState(remoteJob.state);
+            const hasInlinedResponses = Boolean(remoteJob.hasInlinedResponses);
+            const importDiagnostic: QueuedBatchJobImportDiagnostic | null =
+                state === 'JOB_STATE_SUCCEEDED' && !hasInlinedResponses
+                    ? 'no-payload'
+                    : hasInlinedResponses && seed.importDiagnostic === 'extraction-failure'
+                      ? 'extraction-failure'
+                      : null;
 
             return {
                 localId: seed.localId,
                 name: remoteJob.name,
                 displayName: remoteJob.displayName,
                 restoredFromSnapshot: seed.restoredFromSnapshot,
-                state: normalizeQueuedBatchJobState(remoteJob.state),
+                state,
                 model: remoteJob.model,
                 prompt: seed.prompt,
                 generationMode: seed.generationMode,
@@ -336,6 +350,9 @@ export function useQueuedBatchWorkflow({
                 completedAt,
                 lastPolledAt: null,
                 importedAt: seed.importedAt,
+                hasInlinedResponses,
+                submissionPending: false,
+                importDiagnostic,
                 error: remoteJob.error || null,
                 parentHistoryId: seed.parentHistoryId,
                 rootHistoryId: seed.rootHistoryId,
@@ -362,6 +379,7 @@ export function useQueuedBatchWorkflow({
             }
 
             const localId = crypto.randomUUID();
+            const createdAt = Date.now();
             const seed = {
                 localId,
                 prompt: draft.finalPrompt,
@@ -381,12 +399,55 @@ export function useQueuedBatchWorkflow({
                 objectImageCount: draft.finalObjectInputs.length,
                 characterImageCount: draft.finalCharacterInputs.length,
                 importedAt: null,
+                hasInlinedResponses: false,
+                submissionPending: true,
+                importDiagnostic: null,
                 parentHistoryId: draft.lineageContext?.parentHistoryId || null,
                 rootHistoryId: draft.lineageContext?.rootHistoryId || null,
                 sourceHistoryId: draft.lineageContext?.sourceHistoryId || null,
                 lineageAction: draft.lineageContext?.lineageAction || 'root',
                 lineageDepth: draft.lineageContext?.lineageDepth || 0,
             } as const;
+
+            upsertQueuedJob({
+                localId,
+                name: `local-pending/${localId}`,
+                displayName: draft.displayName,
+                restoredFromSnapshot: false,
+                state: 'JOB_STATE_PENDING',
+                model: draft.model,
+                prompt: draft.finalPrompt,
+                generationMode: draft.generationMode,
+                aspectRatio: draft.aspectRatio,
+                imageSize: draft.imageSize,
+                style: draft.style,
+                outputFormat: draft.outputFormat,
+                structuredOutputMode: draft.structuredOutputMode,
+                temperature: draft.temperature,
+                thinkingLevel: draft.thinkingLevel,
+                includeThoughts: draft.includeThoughts,
+                googleSearch: draft.googleSearch,
+                imageSearch: draft.imageSearch,
+                batchSize: draft.batchSize,
+                batchStats: null,
+                objectImageCount: draft.finalObjectInputs.length,
+                characterImageCount: draft.finalCharacterInputs.length,
+                createdAt,
+                updatedAt: createdAt,
+                startedAt: null,
+                completedAt: null,
+                lastPolledAt: null,
+                importedAt: null,
+                hasInlinedResponses: false,
+                submissionPending: true,
+                importDiagnostic: null,
+                error: null,
+                parentHistoryId: seed.parentHistoryId,
+                rootHistoryId: seed.rootHistoryId,
+                sourceHistoryId: seed.sourceHistoryId,
+                lineageAction: seed.lineageAction,
+                lineageDepth: seed.lineageDepth,
+            });
 
             try {
                 const remoteJob = await submitQueuedBatchJob({
@@ -417,6 +478,7 @@ export function useQueuedBatchWorkflow({
                 }
             } catch (error: any) {
                 const message = error?.message || 'Queued batch job submission failed.';
+                removeQueuedJob(localId);
                 addLog(formatMessage('queuedBatchSubmissionFailedLog', message));
                 showNotification(message, 'error');
             }
@@ -428,6 +490,7 @@ export function useQueuedBatchWorkflow({
             formatMessage,
             handleApiKeyConnect,
             mapRemoteQueuedJobToLocal,
+            removeQueuedJob,
             setApiKeyReady,
             showNotification,
             t,
@@ -531,7 +594,7 @@ export function useQueuedBatchWorkflow({
                 }
 
                 if (stateChanged && options?.reason === 'auto') {
-                    if (nextJob.state === 'JOB_STATE_SUCCEEDED') {
+                    if (isQueuedBatchJobImportReady(nextJob)) {
                         showNotification(formatMessage('queuedBatchReadyToImportNotice', job.displayName), 'info');
                     } else if (nextJob.state === 'JOB_STATE_FAILED' || nextJob.state === 'JOB_STATE_EXPIRED') {
                         showNotification(
@@ -709,8 +772,26 @@ export function useQueuedBatchWorkflow({
                 );
 
                 if (importedHistoryItems.length === 0) {
+                    const importDiagnostic: QueuedBatchJobImportDiagnostic = remoteJob.hasInlinedResponses
+                        ? 'extraction-failure'
+                        : 'no-payload';
+
+                    upsertQueuedJob({
+                        ...mapRemoteQueuedJobToLocal(remoteJob, job),
+                        importedAt: job.importedAt,
+                        lastPolledAt: Date.now(),
+                        importDiagnostic,
+                    });
+
                     if (!options?.silent) {
-                        showNotification(t('queuedBatchNoImportableResultsNotice'), 'error');
+                        showNotification(
+                            t(
+                                importDiagnostic === 'no-payload'
+                                    ? 'queuedBatchNoPayloadResultsNotice'
+                                    : 'queuedBatchNoImportableResultsNotice',
+                            ),
+                            'error',
+                        );
                     }
                     return 0;
                 }
@@ -721,6 +802,7 @@ export function useQueuedBatchWorkflow({
                     ...mapRemoteQueuedJobToLocal(remoteJob, job),
                     importedAt: Date.now(),
                     lastPolledAt: Date.now(),
+                    importDiagnostic: null,
                 });
                 historySelectRef.current?.(importedHistoryItems[0]);
                 addLog(formatMessage('queuedBatchImportedLog', importedHistoryItems.length, job.name));

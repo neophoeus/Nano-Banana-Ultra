@@ -181,7 +181,9 @@ export function useWorkspaceEditorActions({
 }: UseWorkspaceEditorActionsArgs) {
     const closeEditor = useCallback(
         (options?: { discardSharedContext?: boolean }) => {
-            if (options?.discardSharedContext && editorContextSnapshot) {
+            const shouldRestoreSharedContext = options?.discardSharedContext ?? true;
+
+            if (shouldRestoreSharedContext && editorContextSnapshot) {
                 restoreEditorComposerState(editorContextSnapshot);
                 setObjectImages(editorContextSnapshot.objectImages);
                 setCharacterImages(editorContextSnapshot.characterImages);

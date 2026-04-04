@@ -14,6 +14,7 @@ import {
     saveSharedWorkspaceSnapshot,
     saveWorkspaceSnapshot,
 } from '../utils/workspacePersistence';
+import { shouldPersistQueuedBatchJob } from '../utils/queuedBatchJobs';
 
 type UseWorkspaceSnapshotPersistenceArgs = {
     history: GeneratedImage[];
@@ -50,7 +51,7 @@ export function useWorkspaceSnapshotPersistence({
                 history,
                 stagedAssets,
                 workflowLogs,
-                queuedJobs,
+                queuedJobs: queuedJobs.filter(shouldPersistQueuedBatchJob),
                 workspaceSession,
                 branchState: {
                     nameOverrides: branchNameOverrides,

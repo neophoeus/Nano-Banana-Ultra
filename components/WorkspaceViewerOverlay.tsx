@@ -34,6 +34,7 @@ type WorkspaceViewerOverlayProps = {
     formatSessionHintValue: (key: string, value: unknown) => string;
     onClose: () => void;
     onMoveViewer: (direction: 'prev' | 'next') => void;
+    onApplyPrompt?: (value: string) => void;
     onReplacePrompt?: (value: string) => void;
     onAppendPrompt?: (value: string) => void;
 };
@@ -60,6 +61,7 @@ export default function WorkspaceViewerOverlay({
     formatSessionHintValue,
     onClose,
     onMoveViewer,
+    onApplyPrompt,
     onReplacePrompt,
     onAppendPrompt,
 }: WorkspaceViewerOverlayProps) {
@@ -85,6 +87,7 @@ export default function WorkspaceViewerOverlay({
         return `${trimmedValue.slice(0, limit).trimEnd()}...`;
     };
     const displayPrompt = sanitizeSensitiveDisplayText(prompt || t('workspaceViewerPromptEmpty'));
+    const canApplyPrompt = Boolean(onApplyPrompt && prompt.trim());
     const thoughtsValue = sanitizeSensitiveDisplayText(effectiveThoughts || thoughtStateMessage);
     const sessionHintsSummary =
         sessionHintEntries.length > 0
@@ -171,6 +174,16 @@ export default function WorkspaceViewerOverlay({
                                     >
                                         {displayPrompt}
                                     </p>
+                                    {canApplyPrompt && (
+                                        <button
+                                            type="button"
+                                            data-testid="workspace-viewer-apply-prompt"
+                                            onClick={() => onApplyPrompt?.(prompt)}
+                                            className="mt-3 inline-flex items-center rounded-full border border-amber-300/70 bg-amber-400/12 px-3 py-1.5 text-xs font-semibold text-amber-100 transition-colors hover:border-amber-200 hover:bg-amber-400/20"
+                                        >
+                                            {t('workspaceViewerApplyPrompt')}
+                                        </button>
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-2 text-xs text-white/70">

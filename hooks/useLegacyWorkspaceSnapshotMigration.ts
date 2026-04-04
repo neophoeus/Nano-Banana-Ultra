@@ -47,6 +47,11 @@ export const useLegacyWorkspaceSnapshotMigration = ({
                 return;
             }
 
+            const latestSnapshot = composeCurrentWorkspaceSnapshot();
+            if (!isWorkspaceSnapshotEffectivelyEmpty(latestSnapshot)) {
+                return;
+            }
+
             const fingerprint = buildWorkspaceSnapshotMigrationFingerprint(sharedSnapshot);
             const migrationState = loadLegacyWorkspaceMigrationState();
             if (migrationState.fingerprintsByOrigin[SHARED_WORKSPACE_SNAPSHOT_SOURCE] === fingerprint) {

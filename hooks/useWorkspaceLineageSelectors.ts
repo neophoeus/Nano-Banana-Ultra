@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { BranchNameOverrides, GeneratedImage, SelectedItemModel } from '../types';
+import { BranchNameOverrides, ContinuationLineageAction, GeneratedImage, SelectedItemModel } from '../types';
 import { BranchSummary, buildBranchSummaries, buildLineagePresentation } from '../utils/lineage';
 import {
     getContinueActionLabel as getContinueActionLabelForItem,
@@ -31,6 +31,7 @@ type DeriveLineageCollectionArgs = {
     branchNameOverrides: BranchNameOverrides;
     branchContinuationSourceByBranchOriginId: Record<string, string>;
     workspaceSessionSourceHistoryId: string | null;
+    workspaceSessionSourceLineageAction?: ContinuationLineageAction | null;
     branchLabelConfig?: {
         main?: string;
         branchNumber?: string;
@@ -58,6 +59,7 @@ export const deriveLineageCollection = ({
     branchNameOverrides,
     branchContinuationSourceByBranchOriginId,
     workspaceSessionSourceHistoryId,
+    workspaceSessionSourceLineageAction,
     branchLabelConfig,
     continueActionLabels,
 }: DeriveLineageCollectionArgs) => {
@@ -72,6 +74,7 @@ export const deriveLineageCollection = ({
         branchContinuationSourceByBranchOriginId,
         branchOriginIdByTurnId,
         workspaceSessionSourceHistoryId,
+        workspaceSessionSourceLineageAction,
     );
     const branchSummaries = buildBranchSummaries(successfulHistory, branchNameOverrides, branchLabelConfig);
     const branchSummaryByOriginId = Object.fromEntries(
@@ -138,6 +141,7 @@ export function useWorkspaceLineageSelectors({
     branchNameOverrides,
     branchContinuationSourceByBranchOriginId,
     workspaceSessionSourceHistoryId,
+    workspaceSessionSourceLineageAction,
     branchLabelConfig,
     continueActionLabels,
     selectedHistoryId,
@@ -155,15 +159,17 @@ export function useWorkspaceLineageSelectors({
             branchNameOverrides,
             branchContinuationSourceByBranchOriginId,
             workspaceSessionSourceHistoryId,
+            workspaceSessionSourceLineageAction,
             branchLabelConfig,
             continueActionLabels,
         });
         const latestRestorableTurn = collection.successfulHistory[0] || history[0] || null;
         const latestSuccessfulRestorableTurn = collection.successfulHistory[0] || null;
-        const activeBranchHistoryId =
-            selectedHistoryId || currentStageAssetSourceHistoryId || workspaceSessionSourceHistoryId || null;
+        const activeBranchHistoryId = workspaceSessionSourceHistoryId || null;
         const activeBranchOriginId = activeBranchHistoryId
-            ? collection.branchOriginIdByTurnId[activeBranchHistoryId] || activeBranchHistoryId
+            ? workspaceSessionSourceLineageAction === 'branch'
+                ? activeBranchHistoryId
+                : collection.branchOriginIdByTurnId[activeBranchHistoryId] || activeBranchHistoryId
             : null;
         const activeBranchSummary = activeBranchOriginId
             ? collection.branchSummaries.find((branch) => branch.branchOriginId === activeBranchOriginId) || null
@@ -260,6 +266,7 @@ export function useWorkspaceLineageSelectors({
         branchNameOverrides,
         branchContinuationSourceByBranchOriginId,
         workspaceSessionSourceHistoryId,
+        workspaceSessionSourceLineageAction,
         branchLabelConfig,
         continueActionLabels,
         selectedHistoryId,

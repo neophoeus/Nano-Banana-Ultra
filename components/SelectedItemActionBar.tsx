@@ -48,12 +48,6 @@ const SelectedItemActionBar: React.FC<SelectedItemActionBarComponentProps> = ({
     const overflowActionKeys = new Set(overflowActionKeysByLayoutBucket[layoutBucket]);
     const overflowActions = actions.filter((action) => overflowActionKeys.has(action.key));
     const visibleActions = actions.filter((action) => !overflowActionKeys.has(action.key));
-    const rightEdgeAction =
-        layoutBucket === 'wide' ? visibleActions.find((action) => action.key === 'rename-branch') || null : null;
-    const leftClusterActions =
-        rightEdgeAction === null
-            ? visibleActions
-            : visibleActions.filter((action) => action.key !== rightEdgeAction.key);
 
     return (
         <div
@@ -61,40 +55,26 @@ const SelectedItemActionBar: React.FC<SelectedItemActionBarComponentProps> = ({
             data-layout-bucket={layoutBucket}
             className="nbu-stage-hero-filmstrip-shell min-w-0 overflow-hidden rounded-[20px] border px-2.5 py-2"
         >
-            <div className="flex min-w-0 items-center gap-2">
-                <div className="nbu-scrollbar-subtle min-w-0 flex-1 overflow-x-auto pb-0">
-                    <div className="inline-flex min-w-max items-center gap-1.5 px-0.5">
-                        {isSelectedItemOnStage ? (
-                            <span
-                                data-testid="selected-item-action-on-stage"
-                                className="inline-flex h-7 shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 text-[11px] font-semibold text-emerald-700 whitespace-nowrap dark:border-emerald-500/25 dark:bg-emerald-950/25 dark:text-emerald-200"
-                            >
-                                {onStageLabel}
-                            </span>
-                        ) : null}
-                        {leftClusterActions.map((action) => (
-                            <button
-                                key={action.key}
-                                type="button"
-                                data-testid={`selected-item-action-${action.key}`}
-                                onClick={action.onClick}
-                                className={resolveActionClassName(action)}
-                            >
-                                {action.label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-                {rightEdgeAction ? (
-                    <button
-                        type="button"
-                        data-testid={`selected-item-action-${rightEdgeAction.key}`}
-                        onClick={rightEdgeAction.onClick}
-                        className={resolveActionClassName(rightEdgeAction)}
+            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                {isSelectedItemOnStage ? (
+                    <span
+                        data-testid="selected-item-action-on-stage"
+                        className="inline-flex h-7 shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 text-[11px] font-semibold text-emerald-700 whitespace-nowrap dark:border-emerald-500/25 dark:bg-emerald-950/25 dark:text-emerald-200"
                     >
-                        {rightEdgeAction.label}
-                    </button>
+                        {onStageLabel}
+                    </span>
                 ) : null}
+                {visibleActions.map((action) => (
+                    <button
+                        key={action.key}
+                        type="button"
+                        data-testid={`selected-item-action-${action.key}`}
+                        onClick={action.onClick}
+                        className={resolveActionClassName(action)}
+                    >
+                        {action.label}
+                    </button>
+                ))}
                 {overflowActions.length > 0 ? (
                     <details data-testid="selected-item-action-overflow" className="relative shrink-0">
                         <summary

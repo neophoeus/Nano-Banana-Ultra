@@ -100,6 +100,7 @@ describe('SelectedItem surfaces', () => {
 
         expect(markup).toContain('selected-item-summary-strip');
         expect(markup).toContain('selected-item-summary-anchor');
+        expect(markup).not.toContain('overflow-x-auto');
         expect(markup).toContain('Selected Turn');
         expect(markup).toContain('abcdef12');
         expect(markup).not.toContain('selected-item-summary-chip-short-id');
@@ -142,7 +143,7 @@ describe('SelectedItem surfaces', () => {
         );
     });
 
-    it('hides created time first on medium dock widths while keeping the remaining tail metadata visible', () => {
+    it('keeps the full chip set visible on medium dock widths while preserving canonical order', () => {
         const markup = renderToStaticMarkup(
             <SelectedItemSummaryStrip currentLanguage="en" layoutBucketOverride="medium" {...summaryProps} />,
         );
@@ -151,10 +152,10 @@ describe('SelectedItem surfaces', () => {
         expect(markup).toContain('data-testid="selected-item-summary-chip-queued-batch-position"');
         expect(markup).toContain('data-testid="selected-item-summary-chip-execution-mode"');
         expect(markup).toContain('data-testid="selected-item-summary-chip-mode"');
-        expect(markup).not.toContain('data-testid="selected-item-summary-chip-created-at"');
+        expect(markup).toContain('data-testid="selected-item-summary-chip-created-at"');
     });
 
-    it('hides created time, mode, and execution mode on compact dock widths while preserving core metadata', () => {
+    it('keeps the full chip set visible on compact dock widths while preserving core metadata', () => {
         const markup = renderToStaticMarkup(
             <SelectedItemSummaryStrip currentLanguage="en" layoutBucketOverride="compact" {...summaryProps} />,
         );
@@ -165,9 +166,9 @@ describe('SelectedItem surfaces', () => {
         expect(markup).toContain('data-testid="selected-item-summary-chip-size"');
         expect(markup).toContain('data-testid="selected-item-summary-chip-aspect-ratio"');
         expect(markup).toContain('data-testid="selected-item-summary-chip-queued-batch-position"');
-        expect(markup).not.toContain('data-testid="selected-item-summary-chip-created-at"');
-        expect(markup).not.toContain('data-testid="selected-item-summary-chip-mode"');
-        expect(markup).not.toContain('data-testid="selected-item-summary-chip-execution-mode"');
+        expect(markup).toContain('data-testid="selected-item-summary-chip-created-at"');
+        expect(markup).toContain('data-testid="selected-item-summary-chip-mode"');
+        expect(markup).toContain('data-testid="selected-item-summary-chip-execution-mode"');
     });
 
     it('renders a passive On Stage slot ahead of the remaining history-turn actions', () => {
@@ -175,6 +176,7 @@ describe('SelectedItem surfaces', () => {
 
         expect(markup).toContain('selected-item-action-bar');
         expect(markup).toContain('selected-item-action-on-stage');
+        expect(markup).not.toContain('overflow-x-auto');
         expect(markup).toContain('On Stage');
         expect(markup).not.toContain('selected-item-action-open');
         expect(markup.indexOf('selected-item-action-on-stage')).toBeLessThan(

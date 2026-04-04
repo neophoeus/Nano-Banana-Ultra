@@ -41,6 +41,7 @@ export const EMPTY_WORKSPACE_SESSION: WorkspaceSessionState = {
     conversationTurnIds: [],
     source: null,
     sourceHistoryId: null,
+    sourceLineageAction: null,
     updatedAt: null,
 };
 
@@ -383,30 +384,62 @@ const sanitizeQueuedBatchJobs = (value: unknown): QueuedBatchJob[] => {
         return [];
     }
 
-    return value.filter(
-        (item): item is QueuedBatchJob =>
-            isRecord(item) &&
-            typeof item.localId === 'string' &&
-            typeof item.name === 'string' &&
-            typeof item.displayName === 'string' &&
-            typeof item.state === 'string' &&
-            typeof item.model === 'string' &&
-            typeof item.prompt === 'string' &&
-            typeof item.aspectRatio === 'string' &&
-            typeof item.imageSize === 'string' &&
-            typeof item.style === 'string' &&
-            typeof item.outputFormat === 'string' &&
-            typeof item.temperature === 'number' &&
-            typeof item.thinkingLevel === 'string' &&
-            typeof item.includeThoughts === 'boolean' &&
-            typeof item.googleSearch === 'boolean' &&
-            typeof item.imageSearch === 'boolean' &&
-            typeof item.batchSize === 'number' &&
-            typeof item.objectImageCount === 'number' &&
-            typeof item.characterImageCount === 'number' &&
-            typeof item.createdAt === 'number' &&
-            typeof item.updatedAt === 'number',
-    );
+    return value.flatMap((item): QueuedBatchJob[] => {
+        if (
+            !(
+                isRecord(item) &&
+                typeof item.localId === 'string' &&
+                typeof item.name === 'string' &&
+                typeof item.displayName === 'string' &&
+                typeof item.state === 'string' &&
+                typeof item.model === 'string' &&
+                typeof item.prompt === 'string' &&
+                typeof item.aspectRatio === 'string' &&
+                typeof item.imageSize === 'string' &&
+                typeof item.style === 'string' &&
+                typeof item.outputFormat === 'string' &&
+                typeof item.temperature === 'number' &&
+                typeof item.thinkingLevel === 'string' &&
+                typeof item.includeThoughts === 'boolean' &&
+                typeof item.googleSearch === 'boolean' &&
+                typeof item.imageSearch === 'boolean' &&
+                typeof item.batchSize === 'number' &&
+                typeof item.objectImageCount === 'number' &&
+                typeof item.characterImageCount === 'number' &&
+                typeof item.createdAt === 'number' &&
+                typeof item.updatedAt === 'number'
+            )
+        ) {
+            return [];
+        }
+
+        const importDiagnostic =
+            item.importDiagnostic === 'no-payload' || item.importDiagnostic === 'extraction-failure'
+                ? item.importDiagnostic
+                : null;
+        const migratedHasInlinedResponses =
+            typeof item.hasInlinedResponses === 'boolean'
+                ? item.hasInlinedResponses
+                : importDiagnostic === 'extraction-failure'
+                  ? true
+                  : importDiagnostic === 'no-payload'
+                    ? false
+                    : item.state === 'JOB_STATE_SUCCEEDED' && item.importedAt == null
+                      ? true
+                      : item.importedAt != null
+                        ? true
+                        : undefined;
+
+        return [
+            {
+                ...(item as QueuedBatchJob),
+                ...(importDiagnostic ? { importDiagnostic } : {}),
+                ...(typeof migratedHasInlinedResponses === 'boolean'
+                    ? { hasInlinedResponses: migratedHasInlinedResponses }
+                    : {}),
+            },
+        ];
+    });
 };
 
 const sanitizeConversationRecord = (branchOriginId: string, value: unknown): BranchConversationRecord | null => {
@@ -484,6 +517,10 @@ const sanitizeWorkspaceSession = (value: unknown): WorkspaceSessionState => {
         conversationTurnIds: Array.isArray(value.conversationTurnIds)
             ? value.conversationTurnIds.filter((item): item is string => typeof item === 'string')
             : [],
+        sourceLineageAction:
+            value.sourceLineageAction === 'continue' || value.sourceLineageAction === 'branch'
+                ? value.sourceLineageAction
+                : null,
     } as WorkspaceSessionState;
 };
 
@@ -491,7 +528,7 @@ const normalizeWorkspaceSessionConversation = ({
     history,
     branchState,
     conversationState,
-    viewState,
+    viewState: _viewState,
     workspaceSession,
 }: {
     history: GeneratedImage[];
@@ -500,11 +537,7 @@ const normalizeWorkspaceSessionConversation = ({
     viewState: WorkspaceViewState;
     workspaceSession: WorkspaceSessionState;
 }): WorkspaceSessionState => {
-    const selectedHistoryId =
-        viewState.selectedHistoryId ||
-        workspaceSession.activeResult?.historyId ||
-        workspaceSession.sourceHistoryId ||
-        null;
+    const selectedHistoryId = workspaceSession.sourceHistoryId || workspaceSession.activeResult?.historyId || null;
 
     if (!selectedHistoryId) {
         return {
@@ -605,7 +638,8 @@ export const sanitizeWorkspaceSnapshot = (value: unknown): WorkspacePersistenceS
 
     if (
         Object.keys(branchState.continuationSourceByBranchOriginId).length === 0 &&
-        rawWorkspaceSession.sourceHistoryId
+        rawWorkspaceSession.sourceHistoryId &&
+        rawWorkspaceSession.sourceLineageAction !== 'branch'
     ) {
         const { branchOriginIdByTurnId } = buildLineagePresentation(history, branchState.nameOverrides);
         const branchOriginId =

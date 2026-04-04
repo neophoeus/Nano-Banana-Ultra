@@ -52,14 +52,14 @@ export const THINKING_LEVELS: Array<{ value: ThinkingLevel; label: string }> = [
     { value: 'high', label: 'High' },
 ];
 
-export const STYLE_CATEGORIES: { id: ImageStyleCategory; label: string }[] = [
-    { id: 'All', label: 'All' },
-    { id: 'Photo', label: 'Photo' },
-    { id: 'Classic', label: 'Classic' },
-    { id: 'Digital', label: 'Digital' },
-    { id: 'Stylized', label: 'Stylized' },
-    { id: 'Craft', label: 'Craft' },
-    { id: 'Design', label: 'Design' },
+export const STYLE_CATEGORIES: ImageStyleCategory[] = [
+    'All',
+    'Photo',
+    'Classic',
+    'Digital',
+    'Stylized',
+    'Craft',
+    'Design',
 ];
 
 // Mapping styles to categories for filtering

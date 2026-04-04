@@ -2,6 +2,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import GeneratedImage from '../components/GeneratedImage';
+import { getTranslation } from '../utils/translations';
 
 const getTestIdIndex = (markup: string, testId: string) => markup.indexOf(`data-testid="${testId}"`);
 const getVisibleText = (markup: string) =>
@@ -312,6 +313,23 @@ describe('GeneratedImage', () => {
         expect(markup).toContain('stage-top-right-action-generating');
         expect(markup).not.toContain('stage-top-right-overflow');
         expect(markup).not.toContain('Test prompt');
+    });
+
+    it('removes the empty-stage upload and repaint CTA while keeping the ready state copy', () => {
+        const markup = renderToStaticMarkup(
+            <GeneratedImage
+                imageUrls={[]}
+                isLoading={false}
+                onGenerate={() => {}}
+                onUpload={() => {}}
+                currentLanguage="en"
+            />,
+        );
+
+        expect(markup).toContain(getTranslation('en', 'readyTitle'));
+        expect(markup).toContain(getTranslation('en', 'readyDesc'));
+        expect(markup).toContain('max-w-sm');
+        expect(markup).not.toContain(getTranslation('en', 'uploadEdit'));
     });
 
     it('renders compact stage overflow with overflowed result status and open viewer action', () => {

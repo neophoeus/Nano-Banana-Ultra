@@ -22,12 +22,6 @@ const chipClassNameByKey: Partial<Record<SelectedItemSummaryStripChip['key'], st
         'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-500/25 dark:bg-violet-950/25 dark:text-violet-200',
 };
 
-const hiddenChipKeysByLayoutBucket: Record<SelectedItemDockLayoutBucket, SelectedItemSummaryStripChip['key'][]> = {
-    wide: [],
-    medium: ['created-at'],
-    compact: ['created-at', 'mode', 'execution-mode'],
-};
-
 const resolveChipClassName = (chip: SelectedItemSummaryStripChip) => {
     const baseClassName =
         'inline-flex h-5 shrink-0 items-center rounded-full border px-2 text-[10px] font-semibold leading-none whitespace-nowrap';
@@ -50,8 +44,6 @@ const SelectedItemSummaryStrip: React.FC<SelectedItemSummaryStripComponentProps>
 }) => {
     const anchorLabel = getTranslation(currentLanguage, 'selectedItemSummaryAnchor');
     const layoutBucket = useSelectedItemDockLayoutBucket(layoutBucketOverride);
-    const hiddenChipKeys = new Set(hiddenChipKeysByLayoutBucket[layoutBucket]);
-    const visibleChips = chips.filter((chip) => !hiddenChipKeys.has(chip.key));
 
     return (
         <div
@@ -59,35 +51,33 @@ const SelectedItemSummaryStrip: React.FC<SelectedItemSummaryStripComponentProps>
             data-layout-bucket={layoutBucket}
             className="nbu-stage-hero-filmstrip-shell min-w-0 overflow-hidden rounded-[20px] border px-2.5 py-2"
         >
-            <div className="nbu-scrollbar-subtle -mx-0.5 overflow-x-auto pb-0">
-                <div className="inline-flex min-w-max items-center gap-1.5 px-0.5">
-                    <div
-                        data-testid="selected-item-summary-anchor"
-                        className="inline-flex h-7 shrink-0 items-center gap-2 rounded-full border border-slate-200/80 bg-white/92 px-3 dark:border-slate-700/80 dark:bg-slate-900/88"
+            <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                <div
+                    data-testid="selected-item-summary-anchor"
+                    className="inline-flex h-7 shrink-0 items-center gap-2 rounded-full border border-slate-200/80 bg-white/92 px-3 dark:border-slate-700/80 dark:bg-slate-900/88"
+                >
+                    <span
+                        data-testid="selected-item-summary-anchor-label"
+                        className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400"
                     >
-                        <span
-                            data-testid="selected-item-summary-anchor-label"
-                            className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400"
-                        >
-                            {anchorLabel}
-                        </span>
-                        <span
-                            data-testid="selected-item-summary-short-id"
-                            className="font-mono text-[11px] font-semibold text-slate-900 dark:text-slate-100"
-                        >
-                            {selectedItem.shortId}
-                        </span>
-                    </div>
-                    {visibleChips.map((chip) => (
-                        <span
-                            key={chip.key}
-                            data-testid={`selected-item-summary-chip-${chip.key}`}
-                            className={resolveChipClassName(chip)}
-                        >
-                            {chip.label}
-                        </span>
-                    ))}
+                        {anchorLabel}
+                    </span>
+                    <span
+                        data-testid="selected-item-summary-short-id"
+                        className="font-mono text-[11px] font-semibold text-slate-900 dark:text-slate-100"
+                    >
+                        {selectedItem.shortId}
+                    </span>
                 </div>
+                {chips.map((chip) => (
+                    <span
+                        key={chip.key}
+                        data-testid={`selected-item-summary-chip-${chip.key}`}
+                        className={resolveChipClassName(chip)}
+                    >
+                        {chip.label}
+                    </span>
+                ))}
             </div>
         </div>
     );

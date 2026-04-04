@@ -13,17 +13,12 @@ import { syncThemeFromStoredPreference } from '../utils/theme';
 type UseWorkspaceAppLifecycleArgs = {
     historyCount: number;
     generatedImageCount: number;
-    initialComposerState: WorkspaceComposerState;
-    initialWorkflowLogs: string[];
     objectImages: string[];
     characterImages: string[];
     setApiKeyReady: Dispatch<SetStateAction<boolean>>;
     setCurrentLang: Dispatch<SetStateAction<Language>>;
     setInitialPreferencesReady: Dispatch<SetStateAction<boolean>>;
     setAspectRatio: Dispatch<SetStateAction<AspectRatio>>;
-    applyComposerState: (composerState: WorkspaceComposerState) => void;
-    logsLength: number;
-    setLogs: Dispatch<SetStateAction<string[]>>;
     addLog: (message: string) => void;
     t: (key: string) => string;
 };
@@ -31,17 +26,12 @@ type UseWorkspaceAppLifecycleArgs = {
 export function useWorkspaceAppLifecycle({
     historyCount,
     generatedImageCount,
-    initialComposerState,
-    initialWorkflowLogs,
     objectImages,
     characterImages,
     setApiKeyReady,
     setCurrentLang,
     setInitialPreferencesReady,
     setAspectRatio,
-    applyComposerState,
-    logsLength,
-    setLogs,
     addLog,
     t,
 }: UseWorkspaceAppLifecycleArgs) {
@@ -137,13 +127,4 @@ export function useWorkspaceAppLifecycle({
         };
     }, [addLog, characterImages, objectImages, setAspectRatio, t]);
 
-    useEffect(() => {
-        applyComposerState(initialComposerState);
-    }, [applyComposerState, initialComposerState]);
-
-    useEffect(() => {
-        if (logsLength === 0 && initialWorkflowLogs.length > 0) {
-            setLogs(initialWorkflowLogs);
-        }
-    }, [initialWorkflowLogs, logsLength, setLogs]);
 }

@@ -430,37 +430,9 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
                             <p className="font-extrabold text-2xl text-gray-800 dark:text-gray-200 mb-3 tracking-tight">
                                 {t('readyTitle')}
                             </p>
-                            <p className="text-sm text-gray-500 max-w-xs text-center mb-8 leading-relaxed font-light">
+                            <p className="max-w-sm text-center text-sm leading-relaxed font-light text-gray-500">
                                 {t('readyDesc')}
                             </p>
-
-                            <div className="flex gap-4">
-                                {onUpload && (
-                                    <Button
-                                        onClick={onUpload}
-                                        variant="secondary"
-                                        className="px-6 py-3.5 text-base"
-                                        icon={
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                className="h-4 w-4"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                                stroke="currentColor"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                                                />
-                                            </svg>
-                                        }
-                                    >
-                                        {t('uploadEdit')}
-                                    </Button>
-                                )}
-                            </div>
                         </div>
                     </div>
                 </StageFrame>

@@ -19,6 +19,7 @@ type PromoteResultArtifactsToSession = (
         mode?: WorkspaceSessionState['provenanceMode'];
         sourceHistoryId?: string | null;
         sessionSourceHistoryId?: string | null;
+        sourceLineageAction?: WorkspaceSessionState['sourceLineageAction'];
         conversationId?: string | null;
         conversationBranchOriginId?: string | null;
         conversationActiveSourceHistoryId?: string | null;
@@ -204,6 +205,7 @@ export function useProvenanceContinuation({
             sessionSourceHistoryId: shouldPromoteContinuationSource
                 ? (pendingProvenanceContext?.sourceHistoryId ?? mergedArtifacts.historyId ?? null)
                 : null,
+            sourceLineageAction: shouldPromoteContinuationSource ? 'continue' : null,
             conversationId: latestSuccessful.conversationId,
             conversationBranchOriginId: latestSuccessful.conversationBranchOriginId,
             conversationActiveSourceHistoryId: latestSuccessful.id,

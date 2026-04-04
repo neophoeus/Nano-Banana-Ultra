@@ -67,6 +67,9 @@ const buildQueuedJob = (overrides: Partial<QueuedBatchJob> = {}): QueuedBatchJob
     completedAt: overrides.completedAt ?? 1710400004000,
     lastPolledAt: overrides.lastPolledAt ?? 1710400005000,
     importedAt: overrides.importedAt ?? null,
+    hasInlinedResponses: overrides.hasInlinedResponses ?? true,
+    submissionPending: overrides.submissionPending ?? false,
+    importDiagnostic: overrides.importDiagnostic ?? null,
     error: overrides.error ?? null,
     parentHistoryId: overrides.parentHistoryId ?? null,
     rootHistoryId: overrides.rootHistoryId ?? null,
@@ -74,6 +77,17 @@ const buildQueuedJob = (overrides: Partial<QueuedBatchJob> = {}): QueuedBatchJob
     lineageAction: overrides.lineageAction || 'continue',
     lineageDepth: overrides.lineageDepth ?? 1,
 });
+
+const createDeferred = <T,>() => {
+    let resolve!: (value: T | PromiseLike<T>) => void;
+    let reject!: (reason?: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+        resolve = res;
+        reject = rej;
+    });
+
+    return { promise, resolve, reject };
+};
 
 describe('useQueuedBatchWorkflow', () => {
     let container: HTMLDivElement;
@@ -137,6 +151,7 @@ describe('useQueuedBatchWorkflow', () => {
                         queuedBatchSubmittedNotice: 'Queued batch job submitted to the official Batch API.',
                         queuedBatchSubmittedLog: 'Queued official batch job {0}.',
                         queuedBatchSubmissionFailedLog: 'Queued batch submission failed: {0}',
+                        queuedBatchNoPayloadResultsNotice: 'Queued batch finished without inline payload.',
                         queuedBatchNoImportableResultsNotice: 'No importable queued results.',
                         queuedBatchImportedNotice: 'Imported {0} queued batch results.',
                         queuedBatchImportedLog: 'Imported {0} queued batch results from {1}.',
@@ -201,21 +216,25 @@ describe('useQueuedBatchWorkflow', () => {
     });
 
     it('submits explicit editor queue drafts as Editor Edit jobs', async () => {
-        submitQueuedBatchJobMock.mockResolvedValue({
-            name: 'batches/job-editor-queue',
-            displayName: 'Editor queue job',
-            state: 'JOB_STATE_PENDING',
-            model: 'gemini-3.1-flash-image-preview',
-            createTime: '2025-01-01T00:00:00.000Z',
-            updateTime: '2025-01-01T00:00:00.000Z',
-            error: null,
-            batchStats: null,
-        });
+        const submitDeferred = createDeferred<{
+            name: string;
+            displayName: string;
+            state: string;
+            model: string;
+            createTime: string;
+            updateTime: string;
+            error: null;
+            batchStats: null;
+            hasInlinedResponses: boolean;
+        }>();
+        submitQueuedBatchJobMock.mockReturnValue(submitDeferred.promise);
 
         renderHook([]);
 
+        let submitPromise: Promise<void>;
+
         await act(async () => {
-            await latestHook!.handleQueueBatchJobFromEditor({
+            submitPromise = latestHook!.handleQueueBatchJobFromEditor({
                 prompt: 'Queue this editor revision',
                 editingInput: 'data:image/png;base64,editor-canvas',
                 batchSize: 3,
@@ -224,6 +243,30 @@ describe('useQueuedBatchWorkflow', () => {
                 objectImageInputs: ['data:image/png;base64,object-ref'],
                 characterImageInputs: ['data:image/png;base64,character-ref'],
             });
+            await Promise.resolve();
+        });
+
+        expect(latestHook!.queuedJobs[0]).toEqual(
+            expect.objectContaining({
+                state: 'JOB_STATE_PENDING',
+                generationMode: 'Editor Edit',
+                submissionPending: true,
+            }),
+        );
+
+        await act(async () => {
+            submitDeferred.resolve({
+                name: 'batches/job-editor-queue',
+                displayName: 'Editor queue job',
+                state: 'JOB_STATE_PENDING',
+                model: 'gemini-3.1-flash-image-preview',
+                createTime: '2025-01-01T00:00:00.000Z',
+                updateTime: '2025-01-01T00:00:00.000Z',
+                error: null,
+                batchStats: null,
+                hasInlinedResponses: false,
+            });
+            await submitPromise!;
         });
 
         expect(submitQueuedBatchJobMock).toHaveBeenCalledWith(
@@ -255,23 +298,51 @@ describe('useQueuedBatchWorkflow', () => {
     });
 
     it('keeps main queue submissions as Text to Image without stale editor state', async () => {
-        submitQueuedBatchJobMock.mockResolvedValue({
-            name: 'batches/job-main-queue',
-            displayName: 'Main queue job',
-            state: 'JOB_STATE_PENDING',
-            model: 'gemini-3.1-flash-image-preview',
-            createTime: '2025-01-01T00:00:00.000Z',
-            updateTime: '2025-01-01T00:00:00.000Z',
-            error: null,
-            batchStats: null,
-        });
+        const submitDeferred = createDeferred<{
+            name: string;
+            displayName: string;
+            state: string;
+            model: string;
+            createTime: string;
+            updateTime: string;
+            error: null;
+            batchStats: null;
+            hasInlinedResponses: boolean;
+        }>();
+        submitQueuedBatchJobMock.mockReturnValue(submitDeferred.promise);
 
         renderHook([], [], {
             prompt: 'Queue from the main composer',
         });
 
+        let submitPromise: Promise<void>;
+
         await act(async () => {
-            await latestHook!.handleQueueBatchJob();
+            submitPromise = latestHook!.handleQueueBatchJob();
+            await Promise.resolve();
+        });
+
+        expect(latestHook!.queuedJobs[0]).toEqual(
+            expect.objectContaining({
+                state: 'JOB_STATE_PENDING',
+                generationMode: 'Text to Image',
+                submissionPending: true,
+            }),
+        );
+
+        await act(async () => {
+            submitDeferred.resolve({
+                name: 'batches/job-main-queue',
+                displayName: 'Main queue job',
+                state: 'JOB_STATE_PENDING',
+                model: 'gemini-3.1-flash-image-preview',
+                createTime: '2025-01-01T00:00:00.000Z',
+                updateTime: '2025-01-01T00:00:00.000Z',
+                error: null,
+                batchStats: null,
+                hasInlinedResponses: false,
+            });
+            await submitPromise!;
         });
 
         expect(submitQueuedBatchJobMock).toHaveBeenCalledWith(
@@ -301,6 +372,7 @@ describe('useQueuedBatchWorkflow', () => {
                 startTime: '2025-01-01T00:01:00.000Z',
                 endTime: '2025-01-01T00:05:00.000Z',
                 error: null,
+                hasInlinedResponses: true,
             },
             results: [
                 {
@@ -381,6 +453,7 @@ describe('useQueuedBatchWorkflow', () => {
                     startTime: '2025-01-01T00:01:00.000Z',
                     endTime: '2025-01-01T00:02:00.000Z',
                     error: null,
+                    hasInlinedResponses: true,
                 },
                 results: [
                     {
@@ -402,6 +475,7 @@ describe('useQueuedBatchWorkflow', () => {
                     startTime: '2025-01-01T00:01:00.000Z',
                     endTime: '2025-01-01T00:03:00.000Z',
                     error: null,
+                    hasInlinedResponses: true,
                 },
                 results: [
                     {
@@ -456,6 +530,7 @@ describe('useQueuedBatchWorkflow', () => {
             startTime: '2025-01-01T00:01:00.000Z',
             endTime: '2025-01-01T00:05:00.000Z',
             error: null,
+            hasInlinedResponses: true,
         });
 
         renderHook([runningJob]);
@@ -478,6 +553,49 @@ describe('useQueuedBatchWorkflow', () => {
         expect(logs).not.toContain('Refreshed 1 queued batch jobs.');
         expect(notifications).toContainEqual({
             message: 'Queued batch job Running queue job is ready to import.',
+            type: 'info',
+        });
+    });
+
+    it('does not mark polled jobs as import-ready when the batch finished without inline responses', async () => {
+        const runningJob = buildQueuedJob({
+            localId: 'job-running-no-payload',
+            name: 'batches/job-running-no-payload',
+            displayName: 'No payload queue job',
+            state: 'JOB_STATE_RUNNING',
+            completedAt: null,
+            lastPolledAt: Date.now(),
+        });
+
+        getQueuedBatchJobMock.mockResolvedValue({
+            name: runningJob.name,
+            displayName: runningJob.displayName,
+            state: 'JOB_STATE_SUCCEEDED',
+            model: runningJob.model,
+            createTime: '2025-01-01T00:00:00.000Z',
+            updateTime: '2025-01-01T00:05:00.000Z',
+            startTime: '2025-01-01T00:01:00.000Z',
+            endTime: '2025-01-01T00:05:00.000Z',
+            error: null,
+            hasInlinedResponses: false,
+        });
+
+        renderHook([runningJob]);
+
+        await act(async () => {
+            await latestHook!.handlePollAllQueuedJobs({ silent: true, reason: 'auto' });
+        });
+
+        expect(latestHook!.queuedJobs[0]).toEqual(
+            expect.objectContaining({
+                localId: runningJob.localId,
+                state: 'JOB_STATE_SUCCEEDED',
+                hasInlinedResponses: false,
+                importDiagnostic: 'no-payload',
+            }),
+        );
+        expect(notifications).not.toContainEqual({
+            message: 'Queued batch job No payload queue job is ready to import.',
             type: 'info',
         });
     });
@@ -758,5 +876,99 @@ describe('useQueuedBatchWorkflow', () => {
         });
 
         expect(selectedHistoryIds).toEqual([importedHistoryItem.id]);
+    });
+
+    it('records a no-payload import diagnostic when a succeeded batch returns no inline responses', async () => {
+        const readyJob = buildQueuedJob({
+            localId: 'job-no-payload',
+            name: 'batches/job-no-payload',
+            displayName: 'No payload batch',
+        });
+
+        importQueuedBatchJobResultsMock.mockResolvedValue({
+            job: {
+                name: readyJob.name,
+                displayName: readyJob.displayName,
+                state: 'JOB_STATE_SUCCEEDED',
+                model: readyJob.model,
+                createTime: '2025-01-01T00:00:00.000Z',
+                updateTime: '2025-01-01T00:05:00.000Z',
+                startTime: '2025-01-01T00:01:00.000Z',
+                endTime: '2025-01-01T00:05:00.000Z',
+                error: null,
+                hasInlinedResponses: false,
+            },
+            results: [],
+        });
+
+        renderHook([readyJob]);
+
+        await act(async () => {
+            await latestHook!.handleImportQueuedJob(readyJob.localId);
+        });
+
+        expect(latestHistory).toHaveLength(0);
+        expect(latestHook!.queuedJobs[0]).toEqual(
+            expect.objectContaining({
+                localId: readyJob.localId,
+                importedAt: null,
+                hasInlinedResponses: false,
+                importDiagnostic: 'no-payload',
+            }),
+        );
+        expect(notifications).toContainEqual({
+            message: 'Queued batch finished without inline payload.',
+            type: 'error',
+        });
+    });
+
+    it('records an extraction-failure diagnostic when inline responses contain no importable images', async () => {
+        const readyJob = buildQueuedJob({
+            localId: 'job-extraction-failure',
+            name: 'batches/job-extraction-failure',
+            displayName: 'Extraction failure batch',
+        });
+
+        importQueuedBatchJobResultsMock.mockResolvedValue({
+            job: {
+                name: readyJob.name,
+                displayName: readyJob.displayName,
+                state: 'JOB_STATE_SUCCEEDED',
+                model: readyJob.model,
+                createTime: '2025-01-01T00:00:00.000Z',
+                updateTime: '2025-01-01T00:05:00.000Z',
+                startTime: '2025-01-01T00:01:00.000Z',
+                endTime: '2025-01-01T00:05:00.000Z',
+                error: null,
+                hasInlinedResponses: true,
+            },
+            results: [
+                {
+                    index: 0,
+                    status: 'failed',
+                    error: 'Model returned no image data.',
+                },
+            ],
+        });
+
+        renderHook([readyJob]);
+
+        await act(async () => {
+            await latestHook!.handleImportQueuedJob(readyJob.localId);
+        });
+
+        expect(latestHistory).toHaveLength(0);
+        expect(latestHook!.queuedJobs[0]).toEqual(
+            expect.objectContaining({
+                localId: readyJob.localId,
+                importedAt: null,
+                hasInlinedResponses: true,
+                importDiagnostic: 'extraction-failure',
+            }),
+        );
+        expect(notifications).toContainEqual({
+            message: 'No importable queued results.',
+            type: 'error',
+        });
     });
 });

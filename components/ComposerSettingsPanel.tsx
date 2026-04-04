@@ -19,6 +19,11 @@ import {
     ThinkingLevel,
     TurnLineageAction,
 } from '../types';
+import {
+    isQueuedBatchJobActive,
+    isQueuedBatchJobClosedIssue,
+    isQueuedBatchJobImportReady,
+} from '../utils/queuedBatchJobs';
 
 export type ComposerSettingsPanelProps = {
     prompt: string;
@@ -92,6 +97,8 @@ export type ComposerSettingsPanelProps = {
     getStageOriginLabel: (origin?: StageAsset['origin']) => string;
     getLineageActionLabel: (action?: TurnLineageAction) => string;
     promptTextareaRef?: React.RefObject<HTMLTextAreaElement | null>;
+    onClearStyle?: () => void;
+    imageToolsPanel?: React.ReactNode;
 };
 
 const renderClearIcon = () => (
@@ -109,6 +116,20 @@ const renderClearIcon = () => (
             strokeLinejoin="round"
             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
         />
+    </svg>
+);
+
+const renderDismissIcon = () => (
+    <svg
+        aria-hidden="true"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        className="h-3.5 w-3.5"
+    >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M18 6 6 18" />
     </svg>
 );
 
@@ -235,6 +256,8 @@ function ComposerSettingsPanel({
     getStageOriginLabel,
     getLineageActionLabel,
     promptTextareaRef,
+    onClearStyle,
+    imageToolsPanel,
 }: ComposerSettingsPanelProps) {
     const fallbackPromptTextareaRef = React.useRef<HTMLTextAreaElement | null>(null);
     const resolvedPromptTextareaRef = promptTextareaRef ?? fallbackPromptTextareaRef;
@@ -379,8 +402,14 @@ function ComposerSettingsPanel({
         ];
     };
     const quickToolButtonClassName =
-        'nbu-control-button group flex h-[68px] w-full flex-col items-center justify-center gap-1.5 rounded-[22px] px-2 py-2.5 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600 transition-all hover:-translate-y-0.5 hover:shadow-md sm:h-[74px] sm:text-[11px] dark:text-slate-200';
+        'nbu-control-button group flex min-h-[58px] w-full min-w-0 flex-col items-center justify-center gap-1 overflow-hidden rounded-[20px] border-slate-200/85 bg-white/92 px-1.5 py-2 text-center text-[10px] font-semibold leading-[1.1] tracking-normal text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-300/70 hover:bg-white hover:text-amber-700 hover:shadow-md disabled:cursor-not-allowed dark:border-white/10 dark:bg-slate-900/94 dark:text-slate-200 dark:shadow-none dark:hover:border-amber-400/35 dark:hover:bg-slate-900 dark:hover:text-amber-100 md:min-h-[42px] md:flex-row md:justify-start md:gap-1.5 md:px-2.5 md:py-1.5 md:text-left md:text-[10px]';
+    const quickToolIconClassName =
+        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-transparent bg-amber-100/80 text-amber-700 transition-colors group-hover:bg-amber-200 dark:border-amber-200/30 dark:bg-amber-400/95 dark:text-amber-50 dark:shadow-[0_10px_28px_rgba(0,0,0,0.32)] dark:group-hover:border-amber-100/45 dark:group-hover:bg-amber-500/92 dark:group-hover:text-white md:h-7 md:w-7';
+    const quickToolLabelClassName = 'block max-w-full leading-[1.1] tracking-normal md:min-w-0 md:flex-1 md:truncate';
     const compactModelLabel = modelLabel.replace(/\s*\([^)]*\)$/, '');
+    const normalizedStyleLabel = imageStyleLabel.trim();
+    const displayedStyleLabel = normalizedStyleLabel.length > 0 ? normalizedStyleLabel : t('styleNone');
+    const hasActiveStyle = displayedStyleLabel !== t('styleNone');
     const followUpSourceSummary = currentStageAsset
         ? `${getStageOriginLabel(currentStageAsset.origin)}${currentStageAsset.lineageAction ? ` · ${getLineageActionLabel(currentStageAsset.lineageAction)}` : ''}`
         : null;
@@ -445,6 +474,7 @@ function ComposerSettingsPanel({
         'inline-flex h-6 shrink-0 items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 text-[10px] font-black uppercase tracking-[0.16em] text-amber-700 dark:border-amber-500/25 dark:bg-amber-950/25 dark:text-amber-200';
     const summaryStripChipClassName =
         'inline-flex h-6 shrink-0 items-center rounded-full border border-slate-200/80 bg-white/88 px-2 text-[10px] font-semibold leading-none whitespace-nowrap text-slate-700 dark:border-slate-700/80 dark:bg-slate-900/80 dark:text-slate-200';
+    const summaryStripContentClassName = 'flex min-w-0 flex-1 flex-wrap items-center gap-1.5';
     const quickToolButtons = [
         {
             id: 'inspiration',
@@ -452,12 +482,19 @@ function ComposerSettingsPanel({
             onClick: onSurpriseMe,
             disabled: isEnhancingPrompt,
             icon: (
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth={1.8}
-                        d="m12 3 1.7 5.3H19l-4.3 3.1 1.7 5.3L12 13.6 7.6 16.7l1.7-5.3L5 8.3h5.3L12 3Z"
+                        strokeWidth={1.7}
+                        d="M12 4.5 13.75 8.25 17.5 10 13.75 11.75 12 15.5l-1.75-3.75L6.5 10l3.75-1.75L12 4.5Z"
+                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M18.5 4.75v3m1.5-1.5h-3" />
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.7}
+                        d="M5.25 16.25v2.5m1.25-1.25H4"
                     />
                 </svg>
             ),
@@ -468,13 +505,16 @@ function ComposerSettingsPanel({
             onClick: onSmartRewrite,
             disabled: isEnhancingPrompt,
             icon: (
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth={1.8}
-                        d="M12 4v4m0 8v4m8-8h-4M8 12H4m13.657-5.657-2.829 2.829M9.172 14.828l-2.829 2.829m11.314 0-2.829-2.829M9.172 9.172 6.343 6.343"
+                        strokeWidth={1.7}
+                        d="m6.5 18.5 3.25-.75L17 10.5 14.5 8l-7.25 7.25-.75 3.25Z"
                     />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="m13.75 8.75 2.5 2.5" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M6 6.25h2.5M7.25 5v2.5" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M16 16.5h3m-1.5-1.5v3" />
                 </svg>
             ),
         },
@@ -483,12 +523,24 @@ function ComposerSettingsPanel({
             label: t('workspaceSheetTitleTemplates'),
             onClick: onOpenTemplates,
             icon: (
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth={1.8}
-                        d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5v-11ZM8 8h8M8 12h8m-8 4h5"
+                        strokeWidth={1.7}
+                        d="M7.25 5.5H17a1.75 1.75 0 0 1 1.75 1.75V17A1.75 1.75 0 0 1 17 18.75H7.25A1.75 1.75 0 0 1 5.5 17V7.25A1.75 1.75 0 0 1 7.25 5.5Z"
+                    />
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.7}
+                        d="M9.75 3.75h6.5A1.5 1.5 0 0 1 17.75 5.25v6.5"
+                    />
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.7}
+                        d="M8.5 9h6.75M8.5 12h5.75M8.5 15h3.75"
                     />
                 </svg>
             ),
@@ -498,28 +550,15 @@ function ComposerSettingsPanel({
             label: t('workspacePickerPromptHistoryTitle'),
             onClick: onOpenPromptHistory,
             icon: (
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M12 8v4l2.5 2.25" />
                     <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth={1.8}
-                        d="M12 8v4l2.5 2.5M20 12a8 8 0 1 1-2.343-5.657M20 4v6h-6"
+                        strokeWidth={1.7}
+                        d="M20 12a8 8 0 1 1-2.35-5.65"
                     />
-                </svg>
-            ),
-        },
-        {
-            id: 'styles',
-            label: t('workspaceSheetTitleStyles'),
-            onClick: onOpenStyles,
-            icon: (
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.8}
-                        d="M7 16a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm10-8a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM7 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm2 2h6m-6 12h6m-8-6h10"
-                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M20 5v4.5h-4.5" />
                 </svg>
             ),
         },
@@ -537,18 +576,9 @@ function ComposerSettingsPanel({
         t('composerAdvancedGroundingGuideFlashImage'),
         t('composerAdvancedGroundingGuideProGoogle'),
     ];
-    const runningQueueCount = queuedJobs.filter(
-        (job) => job.state === 'JOB_STATE_PENDING' || job.state === 'JOB_STATE_RUNNING',
-    ).length;
-    const importReadyQueueCount = queuedJobs.filter(
-        (job) => job.state === 'JOB_STATE_SUCCEEDED' && !job.importedAt,
-    ).length;
-    const issueQueueCount = queuedJobs.filter(
-        (job) =>
-            job.state === 'JOB_STATE_FAILED' ||
-            job.state === 'JOB_STATE_CANCELLED' ||
-            job.state === 'JOB_STATE_EXPIRED',
-    ).length;
+    const runningQueueCount = queuedJobs.filter(isQueuedBatchJobActive).length;
+    const importReadyQueueCount = queuedJobs.filter(isQueuedBatchJobImportReady).length;
+    const issueQueueCount = queuedJobs.filter(isQueuedBatchJobClosedIssue).length;
     const trackedQueueCount = queuedJobs.length;
     const settledQueueCount = trackedQueueCount - runningQueueCount;
     const queueProgressPercent =
@@ -557,8 +587,11 @@ function ComposerSettingsPanel({
             : 0;
 
     return (
-        <section className="nbu-shell-panel nbu-shell-surface-composer-dock shrink-0 p-3 md:p-4">
-            <div data-testid="composer-settings-row" className="mb-3 flex flex-wrap items-center gap-2">
+        <section
+            data-testid="composer-settings-panel"
+            className="nbu-shell-panel nbu-shell-surface-composer-dock shrink-0 p-3 md:p-4"
+        >
+            <div data-testid="composer-settings-row" className="mb-1.5 flex flex-wrap items-center gap-1.5">
                 <button
                     type="button"
                     data-testid="composer-settings-button"
@@ -566,26 +599,55 @@ function ComposerSettingsPanel({
                     onClick={onOpenSettings}
                     className="nbu-inline-panel group flex min-h-10 min-w-0 flex-1 items-center overflow-hidden rounded-[20px] px-2.5 py-2 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
                 >
-                    <div className="nbu-scrollbar-subtle -mx-0.5 min-w-0 flex-1 overflow-x-auto pb-0">
-                        <div className="inline-flex min-w-max items-center gap-1.5 px-0.5">
-                            <span className={summaryStripAnchorClassName}>
-                                {t('workspaceSheetTitleGenerationSettings')}
+                    <div className={summaryStripContentClassName}>
+                        <span className={summaryStripAnchorClassName}>
+                            {t('workspaceSheetTitleGenerationSettings')}
+                        </span>
+                        {settingsSummaryItems.map((item) => (
+                            <span key={item.key} className={`${summaryStripChipClassName} ${item.className}`.trim()}>
+                                {item.value}
                             </span>
-                            {settingsSummaryItems.map((item) => (
-                                <span
-                                    key={item.key}
-                                    className={`${summaryStripChipClassName} ${item.className}`.trim()}
-                                >
-                                    {item.value}
-                                </span>
-                            ))}
-                        </div>
+                        ))}
                     </div>
                 </button>
+                <div
+                    data-testid="composer-style-strip"
+                    className="nbu-inline-panel flex h-10 w-full min-w-0 items-center gap-1.5 overflow-hidden rounded-[20px] px-2.5 sm:w-auto sm:max-w-[16rem]"
+                >
+                    <button
+                        type="button"
+                        data-testid="composer-style-button"
+                        aria-label={t('workspaceSheetTitleStyles')}
+                        onClick={onOpenStyles}
+                        className="group flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden text-left"
+                    >
+                        <span className="inline-flex h-6 shrink-0 items-center rounded-full border border-fuchsia-200/90 bg-fuchsia-50 px-2.5 text-[10px] font-black uppercase tracking-[0.16em] text-fuchsia-700 dark:border-fuchsia-500/25 dark:bg-fuchsia-950/25 dark:text-fuchsia-200">
+                            {t('workspaceViewerStyle')}
+                        </span>
+                        <span className="inline-flex h-6 min-w-0 flex-1 items-center rounded-full border border-fuchsia-200/80 bg-fuchsia-50/80 px-2 text-[10px] font-semibold leading-none text-fuchsia-700 transition-colors group-hover:border-fuchsia-300/90 group-hover:bg-fuchsia-100/80 dark:border-fuchsia-500/25 dark:bg-fuchsia-950/20 dark:text-fuchsia-100 dark:group-hover:border-fuchsia-400/35 dark:group-hover:bg-fuchsia-950/35">
+                            <span className="truncate">{displayedStyleLabel}</span>
+                        </span>
+                    </button>
+                    {hasActiveStyle && onClearStyle && (
+                        <button
+                            type="button"
+                            data-testid="composer-style-clear"
+                            aria-label={`${t('clear')} ${t('workspaceViewerStyle')}`}
+                            title={`${t('clear')} ${t('workspaceViewerStyle')}`}
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                onClearStyle();
+                            }}
+                            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-fuchsia-200/90 bg-fuchsia-50/90 text-fuchsia-700 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-amber-300 dark:border-fuchsia-500/25 dark:bg-fuchsia-950/25 dark:text-fuchsia-100 dark:hover:border-rose-900/40 dark:hover:bg-rose-950/30 dark:hover:text-rose-200"
+                        >
+                            {renderDismissIcon()}
+                        </button>
+                    )}
+                </div>
                 {followUpSourceSummary && (
                     <div
                         data-testid="composer-follow-up-source-strip"
-                        className="nbu-inline-panel flex h-10 w-full min-w-0 items-center gap-2 overflow-hidden rounded-[20px] px-2.5 sm:w-auto sm:max-w-[18rem]"
+                        className="nbu-inline-panel flex h-10 w-full min-w-0 items-center gap-1.5 overflow-hidden rounded-[20px] px-2.5 sm:w-auto sm:max-w-[18rem]"
                     >
                         <span className="inline-flex h-6 shrink-0 items-center rounded-full border border-slate-200/80 bg-white/92 px-2.5 text-[10px] font-black uppercase tracking-[0.16em] text-slate-700 dark:border-slate-700/80 dark:bg-slate-900/88 dark:text-slate-200">
                             {t('composerFollowUpSource')}
@@ -597,29 +659,14 @@ function ComposerSettingsPanel({
                 )}
             </div>
 
-            <div className="grid grid-cols-[76px_minmax(0,1fr)] gap-3 lg:grid-cols-[76px_minmax(0,1fr)_240px] xl:grid-cols-[76px_minmax(0,1fr)_270px]">
-                <div data-testid="composer-quick-tools" className="grid gap-2 self-start">
-                    {quickToolButtons.map((button) => (
-                        <button
-                            key={button.id}
-                            type="button"
-                            onClick={button.onClick}
-                            disabled={button.disabled}
-                            title={button.label}
-                            aria-label={button.label}
-                            className={`${quickToolButtonClassName} ${button.disabled ? 'opacity-50' : ''}`}
-                        >
-                            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-100/80 text-amber-700 transition-colors group-hover:bg-amber-200 dark:bg-amber-500/12 dark:text-amber-200 dark:group-hover:bg-amber-500/20">
-                                {button.icon}
-                            </span>
-                            <span className="leading-tight">{button.label}</span>
-                        </button>
-                    ))}
+            <div className="grid gap-1.5 lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)_240px] xl:grid-cols-[minmax(300px,320px)_minmax(0,1fr)_270px]">
+                <div data-testid="composer-image-tools-slot" className="order-1 min-w-0">
+                    {imageToolsPanel ?? null}
                 </div>
 
-                <div>
+                <div className="order-2 min-w-0">
                     <div className="nbu-subpanel overflow-hidden p-2.5">
-                        <div className="mb-2.5 flex flex-wrap items-start justify-between gap-3 px-1">
+                        <div className="mb-1.5 flex flex-wrap items-start justify-between gap-1.5 px-1">
                             <div>
                                 <h3 className="text-[15px] font-black text-slate-900 dark:text-slate-100">
                                     {t('promptLabel')}
@@ -629,68 +676,87 @@ function ComposerSettingsPanel({
                                 {enterToSubmit ? t('composerEnterSends') : t('composerEnterNewline')}
                             </button>
                         </div>
-                        <div className="relative">
-                            <textarea
-                                ref={resolvedPromptTextareaRef}
-                                className="nbu-composer-dock-textarea h-36 w-full rounded-[26px] border px-4 py-3.5 pr-12 text-sm leading-6 outline-none transition-all focus:ring-4 focus:ring-amber-100/70 dark:focus:ring-amber-500/10"
-                                placeholder={placeholder}
-                                value={prompt}
-                                onChange={(e) => onPromptChange(e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (enterToSubmit && e.key === 'Enter' && !e.shiftKey && !isGenerating) {
-                                        e.preventDefault();
-                                        onGenerate();
-                                    }
-                                }}
-                            />
-                            <button
-                                type="button"
-                                data-testid="composer-prompt-clear"
-                                aria-label={t('clear')}
-                                title={t('clear')}
-                                disabled={prompt.length === 0}
-                                onClick={handleClearPrompt}
-                                className="absolute right-3 top-3 rounded-full border border-slate-200/80 bg-white/92 p-2 text-slate-400 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700/80 dark:bg-slate-950/70 dark:text-slate-500 dark:hover:border-red-900/40 dark:hover:bg-red-950/30 dark:hover:text-red-300"
-                            >
-                                {renderClearIcon()}
-                            </button>
-                        </div>
-                        <div className="mt-2.5 space-y-2">
-                            <button
-                                type="button"
-                                data-testid="composer-advanced-settings-button"
-                                aria-label={t('composerToolbarAdvancedSettings')}
-                                aria-haspopup="dialog"
-                                aria-expanded={isAdvancedSettingsOpen}
-                                onClick={onToggleAdvancedSettings}
-                                className="nbu-inline-panel group flex min-h-10 w-full min-w-0 items-center overflow-hidden rounded-[20px] px-2.5 py-2 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
-                            >
-                                <div className="nbu-scrollbar-subtle -mx-0.5 min-w-0 flex-1 overflow-x-auto pb-0">
-                                    <div className="inline-flex min-w-max items-center gap-1.5 px-0.5">
-                                        <span className={summaryStripAnchorClassName}>
-                                            {t('composerToolbarAdvancedSettings')}
-                                        </span>
-                                        {advancedSummaryItems.map((item) => (
-                                            <span
-                                                key={item.key}
-                                                className={`${summaryStripChipClassName} ${item.className}`.trim()}
-                                            >
-                                                {item.value}
-                                            </span>
-                                        ))}
-                                    </div>
+                        <div className="grid min-w-0 grid-cols-[72px_minmax(0,1fr)] gap-1.5 md:grid-cols-[8.25rem_minmax(0,1fr)] xl:grid-cols-[8.25rem_minmax(0,1fr)]">
+                            <div data-testid="composer-quick-tools" className="grid gap-1.5 self-start md:gap-2">
+                                {quickToolButtons.map((button) => (
+                                    <button
+                                        key={button.id}
+                                        type="button"
+                                        onClick={button.onClick}
+                                        disabled={button.disabled}
+                                        title={button.label}
+                                        aria-label={button.label}
+                                        className={`${quickToolButtonClassName} ${button.disabled ? 'opacity-50' : ''}`}
+                                    >
+                                        <span className={quickToolIconClassName}>{button.icon}</span>
+                                        <span className={quickToolLabelClassName}>{button.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="min-w-0 space-y-1.5">
+                                <div className="relative">
+                                    <textarea
+                                        ref={resolvedPromptTextareaRef}
+                                        className="nbu-composer-dock-textarea nbu-scrollbar-subtle h-36 w-full resize-none overflow-y-auto rounded-[26px] border px-4 py-3.5 pr-12 text-sm leading-6 outline-none transition-all focus:ring-4 focus:ring-amber-100/70 dark:focus:ring-amber-500/10"
+                                        placeholder={placeholder}
+                                        value={prompt}
+                                        onChange={(e) => onPromptChange(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (enterToSubmit && e.key === 'Enter' && !e.shiftKey && !isGenerating) {
+                                                e.preventDefault();
+                                                onGenerate();
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        data-testid="composer-prompt-clear"
+                                        aria-label={t('clear')}
+                                        title={t('clear')}
+                                        disabled={prompt.length === 0}
+                                        onClick={handleClearPrompt}
+                                        className="absolute right-3 top-3 rounded-full border border-slate-200/80 bg-white/92 p-2 text-slate-400 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700/80 dark:bg-slate-950/70 dark:text-slate-500 dark:hover:border-red-900/40 dark:hover:bg-red-950/30 dark:hover:text-red-300"
+                                    >
+                                        {renderClearIcon()}
+                                    </button>
                                 </div>
-                            </button>
+                                <div className="space-y-1.5">
+                                    <button
+                                        type="button"
+                                        data-testid="composer-advanced-settings-button"
+                                        aria-label={t('composerToolbarAdvancedSettings')}
+                                        aria-haspopup="dialog"
+                                        aria-expanded={isAdvancedSettingsOpen}
+                                        onClick={onToggleAdvancedSettings}
+                                        className="nbu-inline-panel group flex min-h-10 w-full min-w-0 items-center overflow-hidden rounded-[20px] px-2.5 py-2 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
+                                    >
+                                        <div className={summaryStripContentClassName}>
+                                            <span className={summaryStripAnchorClassName}>
+                                                {t('composerToolbarAdvancedSettings')}
+                                            </span>
+                                            {advancedSummaryItems.map((item) => (
+                                                <span
+                                                    key={item.key}
+                                                    className={`${summaryStripChipClassName} ${item.className}`.trim()}
+                                                >
+                                                    {item.value}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div className="mt-2.5 flex flex-wrap items-center gap-2.5 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
                         <button onClick={onToggleEnterToSubmit} className="nbu-control-button px-3 py-1.5 lg:hidden">
                             {enterToSubmit ? t('composerEnterSends') : t('composerEnterNewline')}
                         </button>
                     </div>
                 </div>
 
-                <div className="col-span-2 nbu-floating-panel p-2.5 text-slate-900 dark:text-white lg:col-span-1">
+                <div className="order-3 min-w-0 nbu-floating-panel p-2.5 text-slate-900 dark:text-white">
                     {isGenerating ? (
                         <Button
                             onClick={onCancelGeneration}
@@ -705,7 +771,7 @@ function ComposerSettingsPanel({
                         </Button>
                     )}
                     {!isGenerating && (
-                        <div className="mt-2.5 flex items-center gap-2">
+                        <div className="mt-1.5 flex items-center gap-1.5">
                             <Button
                                 variant="secondary"
                                 onClick={onQueueBatchJob}
@@ -723,7 +789,7 @@ function ComposerSettingsPanel({
                             />
                         </div>
                     )}
-                    <div className="mt-2.5 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                    <div className="mt-1.5 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-1">
                         {!isGenerating && (
                             <Button variant="secondary" onClick={onStartNewConversation} className="rounded-[16px]">
                                 {t('workspaceViewerNewConversation')}
@@ -743,10 +809,10 @@ function ComposerSettingsPanel({
                     aria-haspopup="dialog"
                     data-testid="composer-queue-status-button"
                     onClick={onOpenQueuedBatchJobs}
-                    className="nbu-inline-panel mt-3 flex w-full items-center gap-3 px-3 py-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    className="nbu-inline-panel mt-1.5 flex w-full items-center gap-1.5 px-3 py-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
                 >
                     <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-1.5">
                             <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
                                 {t('queuedBatchJobsTitle')}
                             </span>
@@ -756,14 +822,14 @@ function ComposerSettingsPanel({
                         </div>
                         <div
                             data-testid="composer-queue-status-progress"
-                            className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-slate-800/80"
+                            className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-slate-800/80"
                         >
                             <div
                                 className="h-full rounded-full bg-[linear-gradient(90deg,rgba(245,158,11,0.95),rgba(16,185,129,0.95))] transition-all duration-300"
                                 style={{ width: `${queueProgressPercent}%` }}
                             />
                         </div>
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
                             <span className="nbu-chip">
                                 {t('queuedBatchJobsActiveCount').replace('{0}', runningQueueCount.toString())}
                             </span>

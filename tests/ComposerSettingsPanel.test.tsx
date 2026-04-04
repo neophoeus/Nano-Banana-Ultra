@@ -76,10 +76,12 @@ const baseProps = {
     onRemoveQueuedJob: vi.fn(),
     getStageOriginLabel: () => 'Generated',
     getLineageActionLabel: () => 'Root',
+    onClearStyle: vi.fn(),
+    imageToolsPanel: <div data-testid="embedded-image-tools">Embedded Image Tools</div>,
 };
 
 describe('ComposerSettingsPanel toolbar layout', () => {
-    it('keeps settings ownership above helper tools without a separate reference strip', () => {
+    it('keeps the top summary row above the embedded image tools and prompt helper rail', () => {
         const markup = renderToStaticMarkup(
             <ComposerSettingsPanel
                 {...baseProps}
@@ -90,11 +92,19 @@ describe('ComposerSettingsPanel toolbar layout', () => {
         );
 
         expect(markup).toContain('composer-settings-row');
+        expect(markup).toContain('composer-settings-panel');
+        expect(markup).toContain('composer-image-tools-slot');
+        expect(markup).toContain('embedded-image-tools');
         expect(markup).toContain('composer-quick-tools');
         expect(markup).toContain('composer-settings-button');
+        expect(markup).toContain('composer-style-strip');
+        expect(markup).toContain('composer-style-button');
         expect(markup).toContain('composer-advanced-settings-button');
-        expect(markup.indexOf('composer-settings-row')).toBeLessThan(markup.indexOf('composer-quick-tools'));
+        expect(markup.indexOf('composer-settings-row')).toBeLessThan(markup.indexOf('composer-image-tools-slot'));
+        expect(markup.indexOf('composer-image-tools-slot')).toBeLessThan(markup.indexOf('composer-quick-tools'));
         expect(markup).toContain('Generation Settings');
+        expect(markup).toContain('Style');
+        expect(markup).toContain('None');
         expect(markup).toContain(
             `Model: ${getTranslation('en', 'modelGemini31Flash').replace(' (gemini-3.1-flash-image-preview)', '')}`,
         );
@@ -112,15 +122,25 @@ describe('ComposerSettingsPanel toolbar layout', () => {
         expect(markup).toContain('Inspiration');
         expect(markup).toContain('AI Enhance');
         expect(markup).toContain('Templates');
-        expect(markup).toContain('Saved Prompts');
-        expect(markup).toContain('Styles');
+        expect(markup).toContain('History');
         expect(markup).toContain('Advanced settings');
         expect(markup).toContain('Output format: Images only');
         expect(markup).toContain('Thinking level: High');
         expect(markup).toContain('Return thoughts: Visible');
         expect(markup).toContain('Grounding: Off');
-        expect((markup.match(/nbu-scrollbar-subtle/g) || []).length).toBeGreaterThanOrEqual(2);
-        expect((markup.match(/overflow-x-auto/g) || []).length).toBeGreaterThanOrEqual(2);
+        expect(markup).toContain('bg-white/92');
+        expect(markup).toContain('border-slate-200/85');
+        expect(markup).toContain('dark:bg-amber-400/95');
+        expect(markup).toContain('dark:border-amber-200/30');
+        expect(markup).toContain('dark:text-amber-50');
+        expect(markup).toContain('tracking-normal');
+        expect(markup).toContain('md:flex-row');
+        expect(markup).toContain('md:grid-cols-[8.25rem_minmax(0,1fr)]');
+        expect(markup).toContain('nbu-scrollbar-subtle');
+        expect(markup).toContain('overflow-y-auto');
+        expect(markup).toContain('resize-none');
+        expect(markup).not.toContain('overflow-x-auto');
+        expect(markup).not.toContain('✦');
         expect(markup).not.toContain(getTranslation('en', 'composerAdvancedDesc'));
         expect(markup).not.toContain('Output format: images-only');
         expect(markup).not.toContain('Thinking level: high');
@@ -142,15 +162,17 @@ describe('ComposerSettingsPanel toolbar layout', () => {
         expect(markup).not.toContain('composer-workspace-tools');
         expect(markup).not.toContain('Export Workspace');
         expect(markup).not.toContain('Import Workspace');
+        expect(markup).not.toContain('composer-style-clear');
         expect(markup).toContain('min-h-10');
         expect(markup).toContain('py-2');
         expect(markup).toContain('border-amber-200 bg-amber-50');
     });
 
-    it('keeps the follow-up source summary beside generation settings instead of below the prompt', () => {
+    it('renders a clear affordance on the style strip between generation settings and follow-up source when style is active', () => {
         const markup = renderToStaticMarkup(
             <ComposerSettingsPanel
                 {...baseProps}
+                imageStyleLabel="Cinematic"
                 currentStageAsset={{
                     id: 'stage-source-1',
                     url: 'https://example.com/stage-source.png',
@@ -167,13 +189,18 @@ describe('ComposerSettingsPanel toolbar layout', () => {
             />,
         );
 
+        expect(markup).toContain('composer-style-strip');
+        expect(markup).toContain('Style');
+        expect(markup).toContain('Cinematic');
+        expect(markup).toContain('composer-style-clear');
         expect(markup).toContain('composer-follow-up-source-strip');
         expect(markup).toContain('Follow-up source');
         expect(markup).toContain('History · Reopen');
-        expect(markup.indexOf('composer-settings-button')).toBeLessThan(
-            markup.indexOf('composer-follow-up-source-strip'),
+        expect(markup.indexOf('composer-settings-button')).toBeLessThan(markup.indexOf('composer-style-strip'));
+        expect(markup.indexOf('composer-style-strip')).toBeLessThan(markup.indexOf('composer-follow-up-source-strip'));
+        expect(markup.indexOf('composer-follow-up-source-strip')).toBeLessThan(
+            markup.indexOf('composer-image-tools-slot'),
         );
-        expect(markup.indexOf('composer-follow-up-source-strip')).toBeLessThan(markup.indexOf('composer-quick-tools'));
     });
 
     it('replaces the inline queued jobs panel with a compact status button when tracked jobs exist', () => {
@@ -226,6 +253,115 @@ describe('ComposerSettingsPanel toolbar layout', () => {
         expect(markup).toContain('0 ready to import');
         expect(markup).toContain('0 closed with issues');
         expect(markup).not.toContain('queued-batch-panel');
+    });
+
+    it('counts submit-pending jobs as active and excludes no-payload successes from ready-to-import totals', () => {
+        const markup = renderToStaticMarkup(
+            <ComposerSettingsPanel
+                {...baseProps}
+                queuedJobs={
+                    [
+                        {
+                            localId: 'job-submit-pending',
+                            name: 'local-pending/job-submit-pending',
+                            displayName: 'Submitting queue job',
+                            state: 'JOB_STATE_PENDING',
+                            model: 'gemini-3.1-flash-image-preview',
+                            prompt: 'Track the queue immediately',
+                            generationMode: 'Text to Image',
+                            aspectRatio: '1:1',
+                            imageSize: '1K',
+                            style: 'None',
+                            outputFormat: 'images-only',
+                            temperature: 1,
+                            thinkingLevel: 'minimal',
+                            includeThoughts: true,
+                            googleSearch: false,
+                            imageSearch: false,
+                            batchSize: 1,
+                            objectImageCount: 0,
+                            characterImageCount: 0,
+                            createdAt: 1710400000000,
+                            updatedAt: 1710400000000,
+                            startedAt: null,
+                            completedAt: null,
+                            lastPolledAt: null,
+                            importedAt: null,
+                            submissionPending: true,
+                            hasInlinedResponses: false,
+                            error: null,
+                        },
+                        {
+                            localId: 'job-no-payload',
+                            name: 'batches/job-no-payload',
+                            displayName: 'No payload queue job',
+                            state: 'JOB_STATE_SUCCEEDED',
+                            model: 'gemini-3.1-flash-image-preview',
+                            prompt: 'Succeeded without inline payload',
+                            generationMode: 'Text to Image',
+                            aspectRatio: '1:1',
+                            imageSize: '1K',
+                            style: 'None',
+                            outputFormat: 'images-only',
+                            temperature: 1,
+                            thinkingLevel: 'minimal',
+                            includeThoughts: true,
+                            googleSearch: false,
+                            imageSearch: false,
+                            batchSize: 1,
+                            objectImageCount: 0,
+                            characterImageCount: 0,
+                            createdAt: 1710400001000,
+                            updatedAt: 1710400002000,
+                            startedAt: 1710400001000,
+                            completedAt: 1710400002000,
+                            lastPolledAt: 1710400002000,
+                            importedAt: null,
+                            hasInlinedResponses: false,
+                            error: null,
+                        },
+                        {
+                            localId: 'job-ready',
+                            name: 'batches/job-ready',
+                            displayName: 'Ready queue job',
+                            state: 'JOB_STATE_SUCCEEDED',
+                            model: 'gemini-3.1-flash-image-preview',
+                            prompt: 'Succeeded with inline payload',
+                            generationMode: 'Text to Image',
+                            aspectRatio: '1:1',
+                            imageSize: '1K',
+                            style: 'None',
+                            outputFormat: 'images-only',
+                            temperature: 1,
+                            thinkingLevel: 'minimal',
+                            includeThoughts: true,
+                            googleSearch: false,
+                            imageSearch: false,
+                            batchSize: 1,
+                            objectImageCount: 0,
+                            characterImageCount: 0,
+                            createdAt: 1710400003000,
+                            updatedAt: 1710400004000,
+                            startedAt: 1710400003000,
+                            completedAt: 1710400004000,
+                            lastPolledAt: 1710400004000,
+                            importedAt: null,
+                            hasInlinedResponses: true,
+                            error: null,
+                        },
+                    ] as any
+                }
+                groundingMode="off"
+                imageModel="gemini-3.1-flash-image-preview"
+                capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
+            />,
+        );
+
+        expect(markup).toContain('composer-queue-status-button');
+        expect(markup).toContain('3 tracked');
+        expect(markup).toContain('1 active');
+        expect(markup).toContain('1 ready to import');
+        expect(markup).toContain('0 closed with issues');
     });
 });
 

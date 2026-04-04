@@ -1,6 +1,12 @@
 import React from 'react';
 import { GeneratedImage, QueuedBatchJob } from '../types';
 import { Language, getTranslation } from '../utils/translations';
+import {
+    getQueuedBatchJobImportDiagnostic,
+    isQueuedBatchJobActive,
+    isQueuedBatchJobClosedIssue,
+    isQueuedBatchJobImportReady,
+} from '../utils/queuedBatchJobs';
 import InfoTooltip from './InfoTooltip';
 
 type QueuedBatchJobsPanelProps = {
@@ -48,9 +54,6 @@ const QUEUED_BATCH_TARGET_WINDOW_MS = 24 * HOUR_MS;
 const QUEUED_BATCH_EXPIRY_WINDOW_MS = 48 * HOUR_MS;
 const QUEUED_BATCH_NEAR_EXPIRY_WINDOW_MS = QUEUED_BATCH_EXPIRY_WINDOW_MS - 6 * HOUR_MS;
 
-const isQueuedJobClosedIssue = (job: QueuedBatchJob) =>
-    job.state === 'JOB_STATE_FAILED' || job.state === 'JOB_STATE_CANCELLED' || job.state === 'JOB_STATE_EXPIRED';
-
 const formatBatchStatsSummary = (job: QueuedBatchJob, t: (key: string) => string) => {
     if (!job.batchStats) {
         return null;
@@ -64,7 +67,7 @@ const formatBatchStatsSummary = (job: QueuedBatchJob, t: (key: string) => string
 };
 
 const getQueuedJobAgeWarning = (job: QueuedBatchJob, t: (key: string) => string, currentTimestamp: number) => {
-    if (job.state !== 'JOB_STATE_PENDING' && job.state !== 'JOB_STATE_RUNNING') {
+    if (!isQueuedBatchJobActive(job) || job.submissionPending) {
         return null;
     }
 
@@ -200,14 +203,15 @@ export default function QueuedBatchJobsPanel({
             <path d="M6 8l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
     );
-    const renderActionGroups = (jobId: string, groups: ActionGroup[]) => (
-        <div className="flex min-w-[13rem] flex-col gap-2">
-            {groups.map((group) => {
-                if (group.actions.length === 0) {
-                    return null;
-                }
+    const renderActionGroups = (jobId: string, groups: ActionGroup[]) => {
+        const visibleGroups = groups.filter((group) => group.actions.length > 0);
+        if (visibleGroups.length === 0) {
+            return null;
+        }
 
-                return (
+        return (
+            <div className="flex min-w-[13rem] flex-col gap-2">
+                {visibleGroups.map((group) => (
                     <div
                         key={`${jobId}-${group.key}`}
                         data-testid={`queued-batch-job-${jobId}-${group.testId}`}
@@ -218,15 +222,13 @@ export default function QueuedBatchJobsPanel({
                         </div>
                         <div className="mt-2 flex flex-wrap items-center gap-2">{group.actions}</div>
                     </div>
-                );
-            })}
-        </div>
-    );
-    const importReadyCount = queuedJobs.filter((job) => job.state === 'JOB_STATE_SUCCEEDED' && !job.importedAt).length;
-    const runningCount = queuedJobs.filter(
-        (job) => job.state === 'JOB_STATE_PENDING' || job.state === 'JOB_STATE_RUNNING',
-    ).length;
-    const failedCount = queuedJobs.filter((job) => isQueuedJobClosedIssue(job)).length;
+                ))}
+            </div>
+        );
+    };
+    const importReadyCount = queuedJobs.filter(isQueuedBatchJobImportReady).length;
+    const runningCount = queuedJobs.filter(isQueuedBatchJobActive).length;
+    const failedCount = queuedJobs.filter((job) => isQueuedBatchJobClosedIssue(job)).length;
     const currentTimestamp = Date.now();
 
     const getQueuedJobStateLabel = (job: QueuedBatchJob) => {
@@ -348,12 +350,21 @@ export default function QueuedBatchJobsPanel({
 
             <div className="space-y-3">
                 {queuedJobs.map((job) => {
-                    const isRestoredHistoricalIssue = Boolean(job.restoredFromSnapshot && isQueuedJobClosedIssue(job));
-                    const canImport = job.state === 'JOB_STATE_SUCCEEDED' && !job.importedAt;
+                    const isRestoredHistoricalIssue = Boolean(
+                        job.restoredFromSnapshot && isQueuedBatchJobClosedIssue(job),
+                    );
+                    const canImport = isQueuedBatchJobImportReady(job);
                     const canOpenImported = Boolean(job.importedAt);
-                    const canCancel = job.state === 'JOB_STATE_PENDING' || job.state === 'JOB_STATE_RUNNING';
+                    const canCancel = !job.submissionPending && isQueuedBatchJobActive(job);
                     const importedResultCount = canOpenImported ? getImportedQueuedResultCount(job) : 0;
                     const importedHistoryItems = canOpenImported ? getImportedQueuedHistoryItems(job) : [];
+                    const importDiagnostic = getQueuedBatchJobImportDiagnostic(job);
+                    const importDiagnosticKey =
+                        importDiagnostic === 'no-payload'
+                            ? 'queuedBatchNoPayloadResultsNotice'
+                            : importDiagnostic === 'extraction-failure'
+                              ? 'queuedBatchNoImportableResultsNotice'
+                              : null;
                     const hasMultipleImportedResults = importedResultCount > 1;
                     const resolvedActiveImportedIndex = importedHistoryItems.findIndex(
                         (item) => item.id === activeImportedQueuedHistoryId,
@@ -376,7 +387,7 @@ export default function QueuedBatchJobsPanel({
                     const statusTone =
                         job.state === 'JOB_STATE_SUCCEEDED'
                             ? 'text-emerald-700 dark:text-emerald-300'
-                            : isQueuedJobClosedIssue(job)
+                                                        : isQueuedBatchJobClosedIssue(job)
                               ? 'text-rose-700 dark:text-rose-300'
                               : 'text-amber-700 dark:text-amber-300';
                     const timelineEvents = buildJobTimeline(job, t);
@@ -384,7 +395,7 @@ export default function QueuedBatchJobsPanel({
                     const ageWarning = getQueuedJobAgeWarning(job, t, currentTimestamp);
                     const monitorActions: React.ReactNode[] = [];
 
-                    if (!isRestoredHistoricalIssue) {
+                    if (!isRestoredHistoricalIssue && !job.submissionPending) {
                         monitorActions.push(
                             <button
                                 key="poll"
@@ -451,16 +462,18 @@ export default function QueuedBatchJobsPanel({
                         );
                     }
 
-                    const cleanupActions: React.ReactNode[] = [
-                        <button
-                            key="clear"
-                            data-testid={`queued-batch-job-${job.localId}-clear`}
-                            onClick={() => onRemoveQueuedJob(job.localId)}
-                            className={neutralActionButtonClassName}
-                        >
-                            {t('queuedBatchJobsClear')}
-                        </button>,
-                    ];
+                    const cleanupActions: React.ReactNode[] = job.submissionPending
+                        ? []
+                        : [
+                              <button
+                                  key="clear"
+                                  data-testid={`queued-batch-job-${job.localId}-clear`}
+                                  onClick={() => onRemoveQueuedJob(job.localId)}
+                                  className={neutralActionButtonClassName}
+                              >
+                                  {t('queuedBatchJobsClear')}
+                              </button>,
+                          ];
                     const actionGroups: ActionGroup[] = [
                         {
                             key: 'monitor',
@@ -571,6 +584,14 @@ export default function QueuedBatchJobsPanel({
                                     </p>
                                     {job.error && (
                                         <p className="mt-2 text-xs text-rose-600 dark:text-rose-300">{job.error}</p>
+                                    )}
+                                    {importDiagnosticKey && (
+                                        <p
+                                            data-testid={`queued-batch-job-${job.localId}-import-diagnostic`}
+                                            className="mt-2 text-xs text-amber-700 dark:text-amber-300"
+                                        >
+                                            {t(importDiagnosticKey)}
+                                        </p>
                                     )}
                                     {importedHistoryItems.length > 0 && (
                                         <details

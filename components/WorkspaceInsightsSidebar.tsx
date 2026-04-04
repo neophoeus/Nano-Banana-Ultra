@@ -2,6 +2,11 @@ import React from 'react';
 import { GeneratedImage, QueuedBatchJob, StageAsset, TurnLineageAction } from '../types';
 import { getTranslation, Language } from '../utils/translations';
 import { BranchSummary } from '../utils/lineage';
+import {
+    isQueuedBatchJobActive,
+    isQueuedBatchJobClosedIssue,
+    isQueuedBatchJobImportReady,
+} from '../utils/queuedBatchJobs';
 import { getWorkflowEntryLabelKey } from '../utils/workflowTimeline';
 import InfoTooltip from './InfoTooltip';
 import WorkspaceInsightsHeaderSummary from './WorkspaceInsightsHeaderSummary';
@@ -130,8 +135,6 @@ function WorkspaceInsightsSidebar({
     renderHistoryTurnActionRow,
 }: WorkspaceInsightsSidebarProps) {
     const t = (key: string) => getTranslation(currentLanguage, key);
-    const activeQueueStates = new Set(['JOB_STATE_PENDING', 'JOB_STATE_RUNNING']);
-    const issueQueueStates = new Set(['JOB_STATE_FAILED', 'JOB_STATE_CANCELLED', 'JOB_STATE_EXPIRED']);
     const rootPanelClassName = compact
         ? 'nbu-shell-panel nbu-shell-surface-context-rail overflow-hidden p-2.5 lg:min-h-0'
         : 'nbu-shell-panel nbu-shell-surface-context-rail overflow-hidden p-3 lg:min-h-0';
@@ -156,11 +159,9 @@ function WorkspaceInsightsSidebar({
     const provenanceSectionClassName = compact
         ? `${sectionCardClassName} space-y-2.5`
         : `${sectionCardClassName} space-y-3`;
-    const activeQueueCount = queuedJobs.filter((job) => activeQueueStates.has(job.state)).length;
-    const importReadyQueueCount = queuedJobs.filter(
-        (job) => job.state === 'JOB_STATE_SUCCEEDED' && job.importedAt == null,
-    ).length;
-    const issueQueueCount = queuedJobs.filter((job) => issueQueueStates.has(job.state)).length;
+    const activeQueueCount = queuedJobs.filter(isQueuedBatchJobActive).length;
+    const importReadyQueueCount = queuedJobs.filter(isQueuedBatchJobImportReady).length;
+    const issueQueueCount = queuedJobs.filter(isQueuedBatchJobClosedIssue).length;
     const hasQueueWorkflowSummary = activeQueueCount > 0 || issueQueueCount > 0 || importReadyQueueCount > 0;
     const workflowStatusLabel = latestWorkflowEntry ? t(getWorkflowEntryLabelKey(latestWorkflowEntry)) : null;
     const workflowHeadline = isGenerating

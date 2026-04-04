@@ -184,6 +184,53 @@ describe('workspacePersistence', () => {
         expect(restored.queuedJobs).toEqual(incomingSnapshot.queuedJobs);
     });
 
+    it('migrates legacy succeeded queued jobs so restore keeps them import-ready until repolled', () => {
+        const restored = sanitizeWorkspaceSnapshot({
+            ...EMPTY_WORKSPACE_SNAPSHOT,
+            queuedJobs: [
+                {
+                    localId: 'legacy-succeeded-job',
+                    name: 'batches/legacy-succeeded-job',
+                    displayName: 'Legacy succeeded job',
+                    state: 'JOB_STATE_SUCCEEDED',
+                    model: 'gemini-3.1-flash-image-preview',
+                    prompt: 'Legacy restore prompt',
+                    generationMode: 'Text to Image',
+                    aspectRatio: '1:1',
+                    imageSize: '1K',
+                    style: 'None',
+                    outputFormat: 'images-only',
+                    temperature: 1,
+                    thinkingLevel: 'minimal',
+                    includeThoughts: true,
+                    googleSearch: false,
+                    imageSearch: false,
+                    batchSize: 1,
+                    objectImageCount: 0,
+                    characterImageCount: 0,
+                    createdAt: 1710400000000,
+                    updatedAt: 1710400005000,
+                    startedAt: 1710400001000,
+                    completedAt: 1710400005000,
+                    lastPolledAt: 1710400005000,
+                    importedAt: null,
+                    error: null,
+                },
+            ],
+        });
+
+        expect(restored.queuedJobs).toHaveLength(1);
+        expect(restored.queuedJobs[0]).toEqual(
+            expect.objectContaining({
+                localId: 'legacy-succeeded-job',
+                state: 'JOB_STATE_SUCCEEDED',
+                importedAt: null,
+                hasInlinedResponses: true,
+            }),
+        );
+        expect(restored.queuedJobs[0]?.importDiagnostic ?? null).toBeNull();
+    });
+
     it('drops empty generated image urls from restored view state', () => {
         const restored = sanitizeWorkspaceSnapshot({
             ...EMPTY_WORKSPACE_SNAPSHOT,
@@ -576,6 +623,56 @@ describe('workspacePersistence', () => {
         expect(restored.workspaceSession.conversationActiveSourceHistoryId).toBe('import-branch');
         expect(restored.workspaceSession.conversationTurnIds).toEqual(['import-branch']);
         expect(restored.conversationState.byBranchOriginId['import-root']?.turnIds).toEqual(['import-branch']);
+    });
+
+    it('keeps conversation state anchored to the active session source when another history turn is only selected for viewing', () => {
+        const restored = sanitizeWorkspaceSnapshot({
+            ...incomingSnapshot,
+            history: [
+                {
+                    id: 'passive-view-turn',
+                    url: 'https://example.com/passive.png',
+                    prompt: 'Passive view turn',
+                    aspectRatio: '1:1',
+                    size: '1K',
+                    style: 'Anime',
+                    model: 'gemini-3.1-flash-image-preview',
+                    createdAt: 12,
+                    parentHistoryId: 'import-root',
+                    rootHistoryId: 'import-root',
+                    sourceHistoryId: 'import-root',
+                    lineageAction: 'continue',
+                },
+                ...incomingSnapshot.history,
+            ],
+            workspaceSession: {
+                ...EMPTY_WORKSPACE_SNAPSHOT.workspaceSession,
+                activeResult: {
+                    text: 'Imported branch result',
+                    thoughts: null,
+                    grounding: null,
+                    metadata: null,
+                    sessionHints: null,
+                    historyId: 'import-branch',
+                },
+                conversationId: 'stale-conversation',
+                conversationBranchOriginId: 'stale-branch',
+                conversationActiveSourceHistoryId: 'stale-turn',
+                conversationTurnIds: ['stale-turn'],
+                source: 'history',
+                sourceHistoryId: 'import-branch',
+                sourceLineageAction: 'continue',
+            },
+            viewState: {
+                ...EMPTY_WORKSPACE_SNAPSHOT.viewState,
+                selectedHistoryId: 'passive-view-turn',
+            },
+        });
+
+        expect(restored.workspaceSession.conversationId).toBe('conversation-import-root');
+        expect(restored.workspaceSession.conversationBranchOriginId).toBe('import-root');
+        expect(restored.workspaceSession.conversationActiveSourceHistoryId).toBe('import-branch');
+        expect(restored.workspaceSession.conversationTurnIds).toEqual(['import-branch']);
     });
 
     it('clears stale workspace session conversation state when no selected turn maps to a conversation', () => {

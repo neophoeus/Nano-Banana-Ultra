@@ -164,6 +164,8 @@ export interface QueuedBatchJobStats {
     pendingRequestCount: number;
 }
 
+export type QueuedBatchJobImportDiagnostic = 'no-payload' | 'extraction-failure';
+
 export interface QueuedBatchJob {
     localId: string;
     name: string;
@@ -193,6 +195,9 @@ export interface QueuedBatchJob {
     completedAt: number | null;
     lastPolledAt: number | null;
     importedAt: number | null;
+    hasInlinedResponses?: boolean;
+    submissionPending?: boolean;
+    importDiagnostic?: QueuedBatchJobImportDiagnostic | null;
     error: string | null;
     parentHistoryId?: string | null;
     rootHistoryId?: string | null;
@@ -285,6 +290,7 @@ export interface PendingProvenanceContext {
 }
 
 export type SessionContinuitySource = 'generated' | 'history' | 'follow-up';
+export type ContinuationLineageAction = 'continue' | 'branch';
 export type ProvenanceContinuityMode = 'live' | 'inherited';
 
 export interface WorkspaceBranchState {
@@ -328,6 +334,7 @@ export interface WorkspaceSessionState {
     conversationTurnIds: string[];
     source: SessionContinuitySource | null;
     sourceHistoryId: string | null;
+    sourceLineageAction?: ContinuationLineageAction | null;
     updatedAt: number | null;
 }
 

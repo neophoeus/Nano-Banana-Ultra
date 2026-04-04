@@ -27,12 +27,13 @@ export function useWorkspaceGenerationContext({
 }: UseWorkspaceGenerationContextArgs) {
     const getGenerationLineageContext = useCallback(
         ({ mode, editingInput }: { mode: string; editingInput?: string }) => {
-            const sourceHistoryId =
-                currentStageAsset?.sourceHistoryId ??
-                workspaceSession.sourceHistoryId ??
-                null;
+            const isEditingRequest = Boolean(
+                editingInput || mode.includes('Inpaint') || mode.includes('Retouch') || mode.includes('Editor'),
+            );
+            const sourceHistoryId = isEditingRequest
+                ? (currentStageAsset?.sourceHistoryId ?? workspaceSession.sourceHistoryId ?? null)
+                : (workspaceSession.sourceHistoryId ?? null);
             const sourceTurn = getHistoryTurnById(sourceHistoryId);
-            const inheritedAction = currentStageAsset?.lineageAction;
 
             if (!sourceHistoryId) {
                 return {
@@ -45,9 +46,9 @@ export function useWorkspaceGenerationContext({
             }
 
             let lineageAction: GenerationLineageContext['lineageAction'];
-            if (editingInput || mode.includes('Inpaint') || mode.includes('Retouch') || mode.includes('Editor')) {
+            if (isEditingRequest) {
                 lineageAction = 'editor-follow-up';
-            } else if (inheritedAction === 'branch') {
+            } else if (workspaceSession.sourceLineageAction === 'branch') {
                 lineageAction = 'branch';
             } else {
                 lineageAction = 'continue';
@@ -62,9 +63,9 @@ export function useWorkspaceGenerationContext({
             } satisfies GenerationLineageContext;
         },
         [
-            currentStageAsset?.lineageAction,
             currentStageAsset?.sourceHistoryId,
             getHistoryTurnById,
+            workspaceSession.sourceLineageAction,
             workspaceSession.sourceHistoryId,
         ],
     );
@@ -75,23 +76,22 @@ export function useWorkspaceGenerationContext({
                 return null;
             }
 
-            const activeSourceHistoryId =
-                currentStageAsset?.sourceHistoryId ??
-                workspaceSession.sourceHistoryId ??
-                null;
+            const activeSourceHistoryId = workspaceSession.sourceHistoryId ?? null;
             if (!activeSourceHistoryId) {
                 return null;
             }
 
+            const preferredBranchOriginId =
+                workspaceSession.sourceLineageAction === 'branch'
+                    ? activeSourceHistoryId
+                    : branchOriginIdByTurnId[activeSourceHistoryId] || activeSourceHistoryId;
+
             const conversationSelection = resolveConversationSelectionState(conversationState, {
                 selectedHistoryId: activeSourceHistoryId,
-                preferredBranchOriginId: branchOriginIdByTurnId[activeSourceHistoryId] || activeSourceHistoryId,
+                preferredBranchOriginId,
                 conversationBranchOriginId: workspaceSession.conversationBranchOriginId,
             });
-            const branchOriginId =
-                conversationSelection.branchOriginId ||
-                branchOriginIdByTurnId[activeSourceHistoryId] ||
-                activeSourceHistoryId;
+            const branchOriginId = conversationSelection.branchOriginId || preferredBranchOriginId;
 
             return buildConversationRequestContext({
                 activeSourceHistoryId,
@@ -103,9 +103,9 @@ export function useWorkspaceGenerationContext({
         [
             branchOriginIdByTurnId,
             conversationState,
-            currentStageAsset?.sourceHistoryId,
             history,
             workspaceSession.conversationBranchOriginId,
+            workspaceSession.sourceLineageAction,
             workspaceSession.sourceHistoryId,
         ],
     );

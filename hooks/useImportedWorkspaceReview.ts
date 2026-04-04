@@ -31,6 +31,8 @@ export function useImportedWorkspaceReview({
                     workspaceImportReview?.snapshot.branchState.continuationSourceByBranchOriginId || {},
                 workspaceSessionSourceHistoryId:
                     workspaceImportReview?.snapshot.workspaceSession.sourceHistoryId || null,
+                workspaceSessionSourceLineageAction:
+                    workspaceImportReview?.snapshot.workspaceSession.sourceLineageAction || null,
                 continueActionLabels,
             }),
         [continueActionLabels, importedSuccessfulHistory, workspaceImportReview],

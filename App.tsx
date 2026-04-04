@@ -486,10 +486,7 @@ const App: React.FC = () => {
                 ? draft.outputFormat
                 : nextCapability.outputFormats[0];
 
-            if (
-                nextStructuredOutputMode !== 'off' ||
-                getGroundingFlagsFromMode(nextGroundingMode).imageSearch
-            ) {
+            if (nextStructuredOutputMode !== 'off' || getGroundingFlagsFromMode(nextGroundingMode).imageSearch) {
                 nextOutputFormat = 'images-and-text';
             }
 
@@ -684,8 +681,7 @@ const App: React.FC = () => {
     const handleSettingsSessionStructuredOutputModeChange = useCallback(
         (nextMode: WorkspaceSettingsDraft['structuredOutputMode']) => {
             const normalizedMode = normalizeStructuredOutputMode(nextMode);
-            const shouldUpgrade =
-                normalizedMode !== 'off' && settingsSessionView.outputFormat !== 'images-and-text';
+            const shouldUpgrade = normalizedMode !== 'off' && settingsSessionView.outputFormat !== 'images-and-text';
 
             updateSettingsSessionDraft((previous) => ({
                 ...previous,
@@ -811,6 +807,7 @@ const App: React.FC = () => {
         branchNameOverrides,
         branchContinuationSourceByBranchOriginId,
         workspaceSessionSourceHistoryId: workspaceSession.sourceHistoryId,
+        workspaceSessionSourceLineageAction: workspaceSession.sourceLineageAction || null,
         branchLabelConfig: lineageBranchLabelConfig,
         continueActionLabels: lineageContinueActionLabels,
         selectedHistoryId,
@@ -900,17 +897,12 @@ const App: React.FC = () => {
     useWorkspaceAppLifecycle({
         historyCount: history.length,
         generatedImageCount: generatedImageUrls.length,
-        initialComposerState,
-        initialWorkflowLogs: initialWorkspaceSnapshot.workflowLogs,
         objectImages,
         characterImages,
         setApiKeyReady,
         setCurrentLang,
         setInitialPreferencesReady: setAreInitialPreferencesReady,
         setAspectRatio,
-        applyComposerState,
-        logsLength: logs.length,
-        setLogs,
         addLog,
         t,
     });
@@ -1233,7 +1225,6 @@ const App: React.FC = () => {
         buildResultArtifacts,
         applySelectedResultArtifacts,
         promoteResultArtifactsToSession,
-        applyComposerState,
         setPendingProvenanceContext,
         setConversationState,
         setBranchContinuationSourceByBranchOriginId,
@@ -1578,6 +1569,9 @@ const App: React.FC = () => {
     const handleOpenQueuedBatchJobs = useCallback(() => {
         setActiveWorkspaceDetailModal('queued-jobs');
     }, []);
+    const handleClearStyle = useCallback(() => {
+        setImageStyle('None');
+    }, [setImageStyle]);
     const composerSettingsPanelProps = useComposerSettingsPanelProps({
         prompt,
         placeholder: t('placeholder'),
@@ -1708,35 +1702,51 @@ const App: React.FC = () => {
         currentLanguage: currentLang,
         onLanguageChange: handleLanguageChange,
     });
-    const handleReplacePromptFromStructuredOutput = useCallback(
-        (value: string) => {
+    const focusComposerPromptTextarea = useCallback(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        window.requestAnimationFrame(() => {
+            const textarea = composerPromptTextareaRef.current;
+            if (!textarea) {
+                return;
+            }
+
+            try {
+                textarea.focus({ preventScroll: false });
+            } catch {
+                textarea.focus();
+            }
+
+            const cursorIndex = textarea.value.length;
+            textarea.setSelectionRange(cursorIndex, cursorIndex);
+        });
+    }, []);
+    const replaceComposerPromptText = useCallback(
+        (value: string, noticeKey: string) => {
             const normalizedValue = value.trim();
             if (!normalizedValue) {
                 return;
             }
 
             setPrompt(normalizedValue);
-            showNotification(t('structuredOutputReplacePromptNotice'), 'info');
-
-            if (typeof window !== 'undefined') {
-                window.requestAnimationFrame(() => {
-                    const textarea = composerPromptTextareaRef.current;
-                    if (!textarea) {
-                        return;
-                    }
-
-                    try {
-                        textarea.focus({ preventScroll: false });
-                    } catch {
-                        textarea.focus();
-                    }
-
-                    const cursorIndex = textarea.value.length;
-                    textarea.setSelectionRange(cursorIndex, cursorIndex);
-                });
-            }
+            showNotification(t(noticeKey), 'info');
+            focusComposerPromptTextarea();
         },
-        [setPrompt, showNotification, t],
+        [focusComposerPromptTextarea, setPrompt, showNotification, t],
+    );
+    const handleReplacePromptFromStructuredOutput = useCallback(
+        (value: string) => {
+            replaceComposerPromptText(value, 'structuredOutputReplacePromptNotice');
+        },
+        [replaceComposerPromptText],
+    );
+    const handleApplyPromptFromViewer = useCallback(
+        (value: string) => {
+            replaceComposerPromptText(value, 'workspaceViewerPromptAppliedNotice');
+        },
+        [replaceComposerPromptText],
     );
     const handleAppendPromptFromStructuredOutput = useCallback(
         (value: string) => {
@@ -1748,26 +1758,9 @@ const App: React.FC = () => {
             const nextPrompt = prompt.trim() ? `${prompt.trim()}\n\n${normalizedValue}` : normalizedValue;
             setPrompt(nextPrompt);
             showNotification(t('structuredOutputAppendPromptNotice'), 'info');
-
-            if (typeof window !== 'undefined') {
-                window.requestAnimationFrame(() => {
-                    const textarea = composerPromptTextareaRef.current;
-                    if (!textarea) {
-                        return;
-                    }
-
-                    try {
-                        textarea.focus({ preventScroll: false });
-                    } catch {
-                        textarea.focus();
-                    }
-
-                    const cursorIndex = textarea.value.length;
-                    textarea.setSelectionRange(cursorIndex, cursorIndex);
-                });
-            }
+            focusComposerPromptTextarea();
         },
-        [prompt, setPrompt, showNotification, t],
+        [focusComposerPromptTextarea, prompt, setPrompt, showNotification, t],
     );
     const stageViewerSettings = useMemo(
         () => ({
@@ -1789,9 +1782,16 @@ const App: React.FC = () => {
     const currentStageContinuationSourceHistoryId = currentStageLinkedBranchSummary
         ? effectiveBranchContinuationSourceByBranchOriginId[currentStageLinkedBranchSummary.branchOriginId] || null
         : null;
+    const currentStageIsPendingBranchSource = Boolean(
+        currentStageHasLinkedHistoryTurn &&
+        currentStageSourceTurn &&
+        workspaceSession.sourceLineageAction === 'branch' &&
+        workspaceSession.sourceHistoryId === currentStageSourceTurn.id,
+    );
     const currentStageContinuationDiffers = Boolean(
         currentStageHasLinkedHistoryTurn &&
         currentStageSourceTurn &&
+        !currentStageIsPendingBranchSource &&
         currentStageContinuationSourceHistoryId &&
         currentStageContinuationSourceHistoryId !== currentStageSourceTurn.id,
     );
@@ -1865,6 +1865,7 @@ const App: React.FC = () => {
         sessionHintEntries,
         formatSessionHintKey,
         formatSessionHintValue,
+        onApplyPrompt: handleApplyPromptFromViewer,
         onReplacePrompt: handleReplacePromptFromStructuredOutput,
         onAppendPrompt: handleAppendPromptFromStructuredOutput,
     });
@@ -2549,12 +2550,13 @@ const App: React.FC = () => {
 
                     <section
                         data-testid="workspace-actions-composer-row"
-                        className="grid gap-1.5 xl:grid-cols-[minmax(280px,320px)_minmax(0,1fr)] xl:items-start"
+                        className="min-w-0"
                     >
-                        <div className="order-2 xl:order-1">{sideToolPanel}</div>
-                        <div className="order-1 min-w-0 xl:order-2">
-                            <ComposerSettingsPanel {...composerSettingsPanelProps} />
-                        </div>
+                        <ComposerSettingsPanel
+                            {...composerSettingsPanelProps}
+                            imageToolsPanel={sideToolPanel}
+                            onClearStyle={handleClearStyle}
+                        />
                     </section>
                 </main>
             </div>

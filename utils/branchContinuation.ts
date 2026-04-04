@@ -1,4 +1,4 @@
-import { GeneratedImage } from '../types';
+import { ContinuationLineageAction, GeneratedImage } from '../types';
 import { getTranslation } from './translations';
 
 type ContinueActionLabels = {
@@ -17,9 +17,10 @@ export const getEffectiveBranchContinuationSourceByBranchOriginId = (
     branchContinuationSourceByBranchOriginId: Record<string, string>,
     branchOriginIdByTurnId: Record<string, string>,
     workspaceSessionSourceHistoryId: string | null,
+    workspaceSessionSourceLineageAction?: ContinuationLineageAction | null,
 ): Record<string, string> => ({
     ...branchContinuationSourceByBranchOriginId,
-    ...(workspaceSessionSourceHistoryId
+    ...(workspaceSessionSourceHistoryId && workspaceSessionSourceLineageAction !== 'branch'
         ? {
               [branchOriginIdByTurnId[workspaceSessionSourceHistoryId] || workspaceSessionSourceHistoryId]:
                   workspaceSessionSourceHistoryId,

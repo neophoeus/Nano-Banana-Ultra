@@ -80,6 +80,7 @@ describe('QueuedBatchJobsPanel', () => {
                         completedAt: 1710400020000,
                         lastPolledAt: 1710400030000,
                         importedAt: null,
+                        hasInlinedResponses: true,
                         error: null,
                     },
                     {
@@ -365,6 +366,65 @@ describe('QueuedBatchJobsPanel', () => {
         } finally {
             vi.useRealTimers();
         }
+    });
+
+    it('renders a no-payload diagnostic for succeeded jobs that finished without inline responses', () => {
+        const markup = renderToStaticMarkup(
+            <QueuedBatchJobsPanel
+                currentLanguage="en"
+                queueBatchConversationNotice={null}
+                queuedJobs={[
+                    {
+                        localId: 'job-no-payload',
+                        name: 'batches/job-no-payload',
+                        displayName: 'No payload queue job',
+                        state: 'JOB_STATE_SUCCEEDED',
+                        model: 'gemini-3.1-flash-image-preview',
+                        prompt: 'Succeeded without inline payload',
+                        generationMode: 'Text to Image',
+                        aspectRatio: '1:1',
+                        imageSize: '1K',
+                        style: 'None',
+                        outputFormat: 'images-only',
+                        temperature: 1,
+                        thinkingLevel: 'minimal',
+                        includeThoughts: true,
+                        googleSearch: false,
+                        imageSearch: false,
+                        batchSize: 1,
+                        objectImageCount: 0,
+                        characterImageCount: 0,
+                        createdAt: 1710400010000,
+                        updatedAt: 1710400030000,
+                        startedAt: 1710400015000,
+                        completedAt: 1710400020000,
+                        lastPolledAt: 1710400030000,
+                        importedAt: null,
+                        hasInlinedResponses: false,
+                        importDiagnostic: 'no-payload',
+                        error: null,
+                    },
+                ]}
+                getLineageActionLabel={(action) => action || 'root'}
+                getImportedQueuedResultCount={() => 0}
+                getImportedQueuedHistoryItems={() => []}
+                activeImportedQueuedHistoryId={null}
+                onImportAllQueuedJobs={vi.fn()}
+                onPollAllQueuedJobs={vi.fn()}
+                onPollQueuedJob={vi.fn()}
+                onCancelQueuedJob={vi.fn()}
+                onImportQueuedJob={vi.fn()}
+                onOpenImportedQueuedJob={vi.fn()}
+                onOpenLatestImportedQueuedJob={vi.fn()}
+                onOpenImportedQueuedHistoryItem={vi.fn()}
+                onRemoveQueuedJob={vi.fn()}
+            />,
+        );
+
+        expect(markup).toContain('This batch job finished without any inline image payload to import.');
+        expect(markup).toContain('queued-batch-job-job-no-payload-import-diagnostic');
+        expect(markup).not.toContain('data-testid="queued-batch-job-job-no-payload-import"');
+        expect(markup).toContain('0 ready to import');
     });
 
     it('suppresses duplicate title guidance in embedded mode and keeps bottom breathing room', () => {

@@ -5,6 +5,7 @@ import {
     GenerationSettings,
     WorkspacePersistenceSnapshot,
 } from '../types';
+import { buildDisplaySettingsFromComposerState } from '../utils/workspaceSnapshotState';
 
 interface GenerationState {
     generatedImageUrls: string[];
@@ -46,27 +47,16 @@ export function useImageGeneration(initialSnapshot: WorkspacePersistenceSnapshot
         () => initialSnapshot.viewState.selectedImageIndex,
     );
     const [isGenerating, setIsGenerating] = useState(false);
-    const [generationMode, setGenerationMode] = useState<string>('Text to Image');
+    const [generationMode, setGenerationMode] = useState<string>(() => initialSnapshot.composerState.generationMode);
     const [executionMode, setExecutionMode] = useState<ExecutionMode>(
         () => initialSnapshot.composerState.executionMode,
     );
     const [error, setError] = useState<string | null>(null);
     const [logs, setLogs] = useState<string[]>(() => initialSnapshot.workflowLogs);
     const [history, setHistory] = useState<GeneratedImageType[]>(() => initialSnapshot.history);
-    const [displaySettings, setDisplaySettings] = useState<GenerationState['displaySettings']>({
-        prompt: '',
-        aspectRatio: '1:1',
-        size: '2K',
-        style: 'None',
-        model: 'gemini-3.1-flash-image-preview',
-        batchSize: 1,
-        outputFormat: 'images-only',
-        temperature: 1,
-        thinkingLevel: 'minimal',
-        includeThoughts: true,
-        googleSearch: false,
-        imageSearch: false,
-    });
+    const [displaySettings, setDisplaySettings] = useState<GenerationState['displaySettings']>(() =>
+        buildDisplaySettingsFromComposerState(initialSnapshot.composerState),
+    );
 
     const addLog = useCallback((message: string) => {
         const timestamp = new Date().toLocaleTimeString([], {

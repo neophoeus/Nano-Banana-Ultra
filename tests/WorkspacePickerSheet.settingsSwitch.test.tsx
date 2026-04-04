@@ -49,9 +49,7 @@ function SettingsSwitchHarness() {
     const [groundingMode, setGroundingMode] = useState<GroundingMode>('off');
 
     const updateGenerationSettingsDraft: React.Dispatch<
-        React.SetStateAction<
-            Pick<WorkspaceSettingsDraft, 'imageModel' | 'aspectRatio' | 'imageSize' | 'batchSize'>
-        >
+        React.SetStateAction<Pick<WorkspaceSettingsDraft, 'imageModel' | 'aspectRatio' | 'imageSize' | 'batchSize'>>
     > = (updater) => {
         setSettingsDraft((previous) => {
             const baseDraft = {
@@ -106,6 +104,7 @@ function SettingsSwitchHarness() {
     return (
         <div>
             <div data-testid="committed-model">{imageModel}</div>
+            <div data-testid="committed-batch-size">{batchSize}</div>
             <div data-testid="committed-output-format">{outputFormat}</div>
             <div data-testid="committed-structured-output">{structuredOutputMode}</div>
 
@@ -305,6 +304,20 @@ describe('WorkspacePickerSheet generation settings switch', () => {
         });
     };
 
+    const clickButtonWithExactText = (text: string) => {
+        const button = Array.from(container.querySelectorAll('button')).find(
+            (candidate) => candidate.textContent?.trim() === text,
+        ) as HTMLButtonElement | undefined;
+
+        if (!button) {
+            throw new Error(`Button with exact text "${text}" was not found.`);
+        }
+
+        act(() => {
+            button.click();
+        });
+    };
+
     const selectValue = (selector: string, value: string) => {
         const input = container.querySelector(selector) as HTMLSelectElement;
 
@@ -321,6 +334,7 @@ describe('WorkspacePickerSheet generation settings switch', () => {
         });
 
         clickButtonContaining('Nano Banana Pro');
+        clickButtonWithExactText('3');
 
         const switchButton = container.querySelector(
             '[data-testid="generation-settings-open-advanced"]',
@@ -353,6 +367,7 @@ describe('WorkspacePickerSheet generation settings switch', () => {
         expect(container.querySelector('[data-testid="committed-model"]')?.textContent).toBe(
             'gemini-3.1-flash-image-preview',
         );
+        expect(container.querySelector('[data-testid="committed-batch-size"]')?.textContent).toBe('1');
 
         const applyButton = container.querySelector('[data-testid="generation-settings-apply"]') as HTMLButtonElement;
         act(() => {
@@ -362,6 +377,7 @@ describe('WorkspacePickerSheet generation settings switch', () => {
         expect(container.querySelector('[data-testid="committed-model"]')?.textContent).toBe(
             'gemini-3-pro-image-preview',
         );
+        expect(container.querySelector('[data-testid="committed-batch-size"]')?.textContent).toBe('3');
     });
 
     it('applies the full shared draft from advanced settings', () => {
@@ -370,6 +386,7 @@ describe('WorkspacePickerSheet generation settings switch', () => {
         });
 
         clickButtonContaining('Nano Banana Pro');
+        clickButtonWithExactText('3');
 
         const switchButton = container.querySelector(
             '[data-testid="generation-settings-open-advanced"]',
@@ -392,11 +409,8 @@ describe('WorkspacePickerSheet generation settings switch', () => {
         expect(container.querySelector('[data-testid="committed-model"]')?.textContent).toBe(
             'gemini-3-pro-image-preview',
         );
-        expect(container.querySelector('[data-testid="committed-structured-output"]')?.textContent).toBe(
-            'scene-brief',
-        );
-        expect(container.querySelector('[data-testid="committed-output-format"]')?.textContent).toBe(
-            'images-and-text',
-        );
+        expect(container.querySelector('[data-testid="committed-batch-size"]')?.textContent).toBe('3');
+        expect(container.querySelector('[data-testid="committed-structured-output"]')?.textContent).toBe('scene-brief');
+        expect(container.querySelector('[data-testid="committed-output-format"]')?.textContent).toBe('images-and-text');
     });
 });

@@ -4007,6 +4007,7 @@ const ruPickerViewerBaseline = {
 
 const jaPickerSheetSurfaceBaseline = {
     workspacePickerInspiration: 'インスピレーション',
+    workspacePickerPromptHistoryTitle: '履歴',
     workspacePickerNoSavedPrompts: '保存済みプロンプトはまだありません。',
     workspacePickerRemovePrompt: '削除',
     workspacePickerClearPromptHistory: 'プロンプト履歴を消去',
@@ -4028,7 +4029,7 @@ const jaPickerSheetSurfaceBaseline = {
     workspacePickerLoading: 'ピッカーシートを読み込み中...',
     workspacePickerCapabilityHint: 'モデルが対応しない機能のコントロールは自動的に非表示になります。',
     workspaceSheetTitlePrompt: '共有プロンプト',
-    workspaceSheetTitleHistory: 'プロンプト履歴',
+    workspaceSheetTitleHistory: '履歴',
     workspaceSheetTitleTemplates: 'テンプレート',
     workspaceSheetTitleStyles: 'スタイル',
     workspaceSheetTitleModel: 'モデル',
@@ -4042,6 +4043,7 @@ const jaPickerSheetSurfaceBaseline = {
 
 const koPickerSheetSurfaceBaseline = {
     workspacePickerInspiration: '영감',
+    workspacePickerPromptHistoryTitle: '기록',
     workspacePickerNoSavedPrompts: '저장된 프롬프트가 아직 없습니다.',
     workspacePickerRemovePrompt: '제거',
     workspacePickerClearPromptHistory: '프롬프트 기록 지우기',
@@ -4063,7 +4065,7 @@ const koPickerSheetSurfaceBaseline = {
     workspacePickerLoading: '피커 시트를 불러오는 중...',
     workspacePickerCapabilityHint: '모델이 지원하지 않는 기능 제어는 자동으로 숨겨집니다.',
     workspaceSheetTitlePrompt: '공유 프롬프트',
-    workspaceSheetTitleHistory: '프롬프트 기록',
+    workspaceSheetTitleHistory: '기록',
     workspaceSheetTitleTemplates: '템플릿',
     workspaceSheetTitleStyles: '스타일',
     workspaceSheetTitleModel: '모델',
@@ -4077,6 +4079,7 @@ const koPickerSheetSurfaceBaseline = {
 
 const esPickerSheetSurfaceBaseline = {
     workspacePickerInspiration: 'Inspiracion',
+    workspacePickerPromptHistoryTitle: 'Historial',
     workspacePickerNoSavedPrompts: 'Todavia no hay prompts guardados.',
     workspacePickerRemovePrompt: 'Quitar',
     workspacePickerClearPromptHistory: 'Borrar historial de prompts',
@@ -4098,7 +4101,7 @@ const esPickerSheetSurfaceBaseline = {
     workspacePickerLoading: 'Cargando panel del selector...',
     workspacePickerCapabilityHint: 'Los controles segun capacidad se ocultan cuando el modelo no los admite.',
     workspaceSheetTitlePrompt: 'Prompt compartido',
-    workspaceSheetTitleHistory: 'Historial de prompts',
+    workspaceSheetTitleHistory: 'Historial',
     workspaceSheetTitleTemplates: 'Plantillas',
     workspaceSheetTitleStyles: 'Estilos',
     workspaceSheetTitleModel: 'Modelo',
@@ -4112,6 +4115,7 @@ const esPickerSheetSurfaceBaseline = {
 
 const frPickerSheetSurfaceBaseline = {
     workspacePickerInspiration: 'Inspiration',
+    workspacePickerPromptHistoryTitle: 'Historique',
     workspacePickerNoSavedPrompts: "Aucun prompt enregistre pour l'instant.",
     workspacePickerRemovePrompt: 'Supprimer',
     workspacePickerClearPromptHistory: "Effacer l'historique des prompts",
@@ -4134,7 +4138,7 @@ const frPickerSheetSurfaceBaseline = {
     workspacePickerCapabilityHint:
         'Les controles adaptes aux capacites restent caches quand le modele ne les prend pas en charge.',
     workspaceSheetTitlePrompt: 'Prompt partage',
-    workspaceSheetTitleHistory: 'Historique des prompts',
+    workspaceSheetTitleHistory: 'Historique',
     workspaceSheetTitleTemplates: 'Modeles',
     workspaceSheetTitleStyles: 'Styles',
     workspaceSheetTitleModel: 'Modele',
@@ -4148,6 +4152,7 @@ const frPickerSheetSurfaceBaseline = {
 
 const dePickerSheetSurfaceBaseline = {
     workspacePickerInspiration: 'Inspiration',
+    workspacePickerPromptHistoryTitle: 'Verlauf',
     workspacePickerNoSavedPrompts: 'Noch keine gespeicherten Prompts.',
     workspacePickerRemovePrompt: 'Entfernen',
     workspacePickerClearPromptHistory: 'Prompt-Verlauf loschen',
@@ -4170,7 +4175,7 @@ const dePickerSheetSurfaceBaseline = {
     workspacePickerCapabilityHint:
         'Fahigkeitsbezogene Steuerelemente bleiben verborgen, wenn das Modell sie nicht unterstutzt.',
     workspaceSheetTitlePrompt: 'Gemeinsamer Prompt',
-    workspaceSheetTitleHistory: 'Prompt-Verlauf',
+    workspaceSheetTitleHistory: 'Verlauf',
     workspaceSheetTitleTemplates: 'Vorlagen',
     workspaceSheetTitleStyles: 'Stile',
     workspaceSheetTitleModel: 'Modell',
@@ -4184,6 +4189,7 @@ const dePickerSheetSurfaceBaseline = {
 
 const ruPickerSheetSurfaceBaseline = {
     workspacePickerInspiration: 'Вдохновение',
+    workspacePickerPromptHistoryTitle: 'История',
     workspacePickerNoSavedPrompts: 'Сохраненных промптов пока нет.',
     workspacePickerRemovePrompt: 'Удалить',
     workspacePickerClearPromptHistory: 'Очистить историю промптов',
@@ -4206,7 +4212,7 @@ const ruPickerSheetSurfaceBaseline = {
     workspacePickerCapabilityHint:
         'Элементы управления по возможностям автоматически скрываются, если модель их не поддерживает.',
     workspaceSheetTitlePrompt: 'Общий промпт',
-    workspaceSheetTitleHistory: 'История промптов',
+    workspaceSheetTitleHistory: 'История',
     workspaceSheetTitleTemplates: 'Шаблоны',
     workspaceSheetTitleStyles: 'Стили',
     workspaceSheetTitleModel: 'Модель',

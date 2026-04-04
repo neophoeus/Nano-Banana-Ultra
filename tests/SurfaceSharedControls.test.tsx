@@ -57,7 +57,7 @@ describe('SurfaceSharedControls', () => {
         expect(markup).toContain('px-2 py-px');
         expect(markup).toContain('w-[min(16rem,calc(100vw-2rem))]');
         expect(markup).toContain('rounded-xl border px-2.5 py-1.5 text-center transition-colors');
-        expect(markup).toContain('text-xs font-semibold leading-3');
+        expect(markup).toContain('text-xs font-semibold leading-[13px]');
         expect(markup).not.toContain('max-w-[min(92vw,21rem)]');
         expect(markup).not.toContain('max-w-[min(92vw,380px)]');
         expect(markup).toContain('Settings');
@@ -120,7 +120,7 @@ describe('SurfaceSharedControls', () => {
         expect(markup).toContain('w-[min(16rem,calc(100vw-2rem))]');
         expect(markup).toContain('mt-2.5 grid grid-cols-2 gap-1.5');
         expect(markup).toContain('px-2 py-px');
-        expect(markup).toContain('text-xs font-semibold leading-3');
+        expect(markup).toContain('text-xs font-semibold leading-[13px]');
         expect(markup).toContain('shared-controls-summary-item-model');
         expect(markup).toContain('shared-controls-summary-item-ratio');
         expect(markup).toContain('Settings');

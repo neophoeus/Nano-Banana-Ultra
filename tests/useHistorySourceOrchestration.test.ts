@@ -1,6 +1,16 @@
-import { describe, expect, it } from 'vitest';
+/** @vitest-environment jsdom */
+
+import React from 'react';
+import { flushSync } from 'react-dom';
+import { createRoot, Root } from 'react-dom/client';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GeneratedImage } from '../types';
-import { resolveViewerStageSourceSyncArgs } from '../hooks/useHistorySourceOrchestration';
+import {
+    resolveViewerStageSourceSyncArgs,
+    useHistorySourceOrchestration,
+} from '../hooks/useHistorySourceOrchestration';
+import { EMPTY_WORKSPACE_CONVERSATION_STATE } from '../utils/conversationState';
+import { EMPTY_WORKSPACE_SESSION } from '../utils/workspacePersistence';
 
 const buildTurn = (overrides: Partial<GeneratedImage> = {}): GeneratedImage => ({
     id: 'turn-1',
@@ -73,5 +83,201 @@ describe('resolveViewerStageSourceSyncArgs', () => {
             sourceHistoryId: selectedTurn.id,
             lineageAction: 'continue',
         });
+    });
+});
+
+describe('useHistorySourceOrchestration', () => {
+    let container: HTMLDivElement;
+    let root: Root;
+
+    beforeEach(() => {
+        container = document.createElement('div');
+        document.body.appendChild(container);
+        root = createRoot(container);
+    });
+
+    afterEach(() => {
+        root.unmount();
+        container.remove();
+    });
+
+    const renderHook = (
+        item: GeneratedImage,
+        overrides: Partial<Parameters<typeof useHistorySourceOrchestration>[0]> = {},
+    ) => {
+        const applySelectedResultArtifacts = vi.fn();
+        const promoteResultArtifactsToSession = vi.fn();
+        const setConversationState = vi.fn();
+        const setBranchContinuationSourceByBranchOriginId = vi.fn();
+        const clearActivePickerSheet = vi.fn();
+        const upsertViewerStageSource = vi.fn();
+        let handle: ReturnType<typeof useHistorySourceOrchestration> | null = null;
+        const history = [item];
+
+        const TestComponent = () => {
+            handle = useHistorySourceOrchestration({
+                generatedImageUrls: [],
+                selectedImageIndex: 0,
+                selectedHistoryId: null,
+                isGenerating: false,
+                currentStageSourceHistoryId: null,
+                currentStageLineageAction: undefined,
+                workspaceSession: {
+                    ...EMPTY_WORKSPACE_SESSION,
+                    source: 'history',
+                    sourceHistoryId: 'active-turn',
+                    sourceLineageAction: 'continue',
+                },
+                conversationState: EMPTY_WORKSPACE_CONVERSATION_STATE,
+                branchOriginIdByTurnId: {
+                    [item.id]: 'root-turn',
+                    'active-turn': 'active-turn',
+                },
+                handleApplyImportedWorkspaceSnapshot: vi.fn(),
+                getHistoryTurnById: createHistoryLookup(history),
+                handleClearResults: vi.fn(),
+                resetSelectedOutputState: vi.fn(),
+                resetWorkspaceSession: vi.fn(),
+                clearAssetRoles: vi.fn(),
+                buildResultArtifacts: (historyItem) => ({
+                    text: historyItem.text || null,
+                    thoughts: historyItem.thoughts || null,
+                    grounding: historyItem.grounding || null,
+                    metadata: historyItem.metadata || null,
+                    sessionHints: historyItem.sessionHints || null,
+                    historyId: historyItem.id || null,
+                }),
+                applySelectedResultArtifacts,
+                promoteResultArtifactsToSession,
+                setPendingProvenanceContext: vi.fn(),
+                setConversationState,
+                setBranchContinuationSourceByBranchOriginId,
+                setEditingImageSource: vi.fn(),
+                setGeneratedImageUrls: vi.fn(),
+                setSelectedImageIndex: vi.fn(),
+                setSelectedHistoryId: vi.fn(),
+                setError: vi.fn(),
+                setLogs: vi.fn(),
+                setIsGenerating: vi.fn(),
+                upsertViewerStageSource,
+                addLog: vi.fn(),
+                showNotification: vi.fn(),
+                t: (key: string) => key,
+                clearActivePickerSheet,
+                ...overrides,
+            });
+
+            return null;
+        };
+
+        flushSync(() => {
+            root.render(React.createElement(TestComponent));
+        });
+
+        return {
+            handle: handle!,
+            applySelectedResultArtifacts,
+            promoteResultArtifactsToSession,
+            setConversationState,
+            setBranchContinuationSourceByBranchOriginId,
+            clearActivePickerSheet,
+            upsertViewerStageSource,
+        };
+    };
+
+    it('keeps passive history open scoped to stage/view state', () => {
+        const historyTurn = buildTurn({
+            id: 'history-turn',
+            text: 'Viewed result',
+            lineageAction: 'continue',
+        });
+        const {
+            handle,
+            applySelectedResultArtifacts,
+            promoteResultArtifactsToSession,
+            setConversationState,
+            setBranchContinuationSourceByBranchOriginId,
+            upsertViewerStageSource,
+        } = renderHook(historyTurn);
+
+        flushSync(() => {
+            handle.handleHistorySelect(historyTurn);
+        });
+
+        expect(applySelectedResultArtifacts).toHaveBeenCalledWith(
+            expect.objectContaining({
+                historyId: historyTurn.id,
+                text: 'Viewed result',
+            }),
+        );
+        expect(promoteResultArtifactsToSession).not.toHaveBeenCalled();
+        expect(setConversationState).not.toHaveBeenCalled();
+        expect(setBranchContinuationSourceByBranchOriginId).not.toHaveBeenCalled();
+        expect(upsertViewerStageSource).toHaveBeenCalledWith(
+            expect.objectContaining({
+                sourceHistoryId: historyTurn.id,
+                lineageAction: 'reopen',
+            }),
+        );
+    });
+
+    it('promotes continue as the active continuation source without using passive-open semantics', () => {
+        const historyTurn = buildTurn({
+            id: 'history-turn',
+            text: 'Continue result',
+            lineageAction: 'continue',
+        });
+        const {
+            handle,
+            promoteResultArtifactsToSession,
+            setConversationState,
+            setBranchContinuationSourceByBranchOriginId,
+            clearActivePickerSheet,
+        } = renderHook(historyTurn);
+
+        flushSync(() => {
+            handle.handleContinueFromHistoryTurn(historyTurn);
+        });
+
+        expect(promoteResultArtifactsToSession).toHaveBeenCalledWith(
+            expect.objectContaining({ historyId: historyTurn.id }),
+            'history',
+            expect.objectContaining({
+                sessionSourceHistoryId: historyTurn.id,
+                sourceLineageAction: 'continue',
+            }),
+        );
+        expect(setConversationState).toHaveBeenCalledTimes(1);
+        expect(setBranchContinuationSourceByBranchOriginId).toHaveBeenCalledTimes(1);
+        expect(clearActivePickerSheet).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps branch intent explicit without rewriting continuation via passive-open state', () => {
+        const historyTurn = buildTurn({
+            id: 'history-turn',
+            text: 'Branch source',
+            lineageAction: 'continue',
+        });
+        const {
+            handle,
+            promoteResultArtifactsToSession,
+            setConversationState,
+            setBranchContinuationSourceByBranchOriginId,
+        } = renderHook(historyTurn);
+
+        flushSync(() => {
+            handle.handleBranchFromHistoryTurn(historyTurn);
+        });
+
+        expect(promoteResultArtifactsToSession).toHaveBeenCalledWith(
+            expect.objectContaining({ historyId: historyTurn.id }),
+            'history',
+            expect.objectContaining({
+                sessionSourceHistoryId: historyTurn.id,
+                sourceLineageAction: 'branch',
+            }),
+        );
+        expect(setConversationState).toHaveBeenCalledTimes(1);
+        expect(setBranchContinuationSourceByBranchOriginId).not.toHaveBeenCalled();
     });
 });

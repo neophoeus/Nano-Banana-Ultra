@@ -4,6 +4,120 @@ This changelog is compiled from the repository's local git tags plus the publish
 
 ## Unreleased
 
+## v3.2.6 - 2026-04-04
+
+- Release title: Nano Banana Ultra 3.2.6 - Composer Shell Refinement & Restore Hardening
+- Release prep summary:
+    - Prompt helper rail follow-up:
+        - refined the four prompt helper buttons inside the composer prompt card so desktop now uses compact equal-width icon-and-label rows while mobile keeps the icon-above-label stack, with normalized letter spacing, refreshed helper glyphs, and clearer dark-theme icon-chip contrast
+        - restored the helper buttons to the white surface family, shortened the prompt-history surface label from `Saved Prompts` / prompt-history equivalents to `History` across the maintained locales, and removed the trailing `✦` from `AI Enhance`
+        - tightened the prompt rail and textarea pairing so the helper rail no longer overlaps the editor, kept the textarea on the subtle local scrollbar treatment for longer prompts, updated the focused composer and translation regressions, reran `npm exec vitest run tests/ComposerSettingsPanel.test.tsx tests/workspaceFlowTranslations.test.tsx`, reran the focused composer slice again through the final dark-mode color tuning, and kept `npm run build` green
+
+    - Summary/action strip wrap follow-up:
+        - replaced the horizontal-scroll treatment on the composer `Generation Settings` strip, composer `Advanced settings` strip, `History Summary Strip`, and selected-item action strip with wrap-first token rows so these summary/action surfaces no longer render a bottom scrollbar when their pills exceed the available width
+        - kept every `History Summary Strip` chip visible across `wide`, `medium`, and `compact` dock buckets instead of hiding tail metadata, and flattened the selected-item action layout into one wrapping row while preserving the existing overflow-menu density rules for narrower action states
+        - updated the focused composer and selected-item regression expectations to assert no local `overflow-x-auto` on those strip surfaces while explicitly leaving true carousel rails such as `RecentHistoryFilmstrip` on horizontal scroll, then revalidated with `npm exec vitest run tests/ComposerSettingsPanel.test.tsx tests/SelectedItemSurfaces.test.tsx tests/RecentHistoryFilmstrip.test.tsx` at `3 files / 19 tests` plus `npm run build`
+
+    - Composer shell and prompt dock restructure:
+        - moved `Image Tools` into the composer as the left child card owned by `ComposerSettingsPanel`, keeping the wide layout at `Image Tools | Prompt | Generation` while narrow screens now stack `Image Tools -> Prompt -> Generation`
+        - moved the four prompt helper actions into the prompt card beside the textarea, removed the old quick `Styles` button, and kept advanced settings as the strip below the prompt editor
+        - changed the style status into an always-visible composer strip that opens the styles sheet even when the current value is `None`, and added an inline clear affordance that appears only for active styles and resets them back to `None`
+        - revalidated the restructure with the full Vitest suite at `75 files / 653 tests`, `npm run build`, and `npm run test:e2e:restore:shell-owners` at `3 / 3`
+
+    - Composer spacing and references fold refinement:
+        - normalized the composer card-level spacing rhythm to the tighter `1.5` cadence across the embedded `Image Tools`, prompt card, and generation card instead of mixing wider internal gaps
+        - changed the `References` card inside `Image Tools` to default-collapsed disclosure behavior, with `References` on the first line and the compact `Objects {current}/{max} Characters {current}/{max}` summary on the second line so the chevron no longer crowds the counts
+        - aligned the side-tools unit test and shell-owner restore Playwright coverage with the collapsed-by-default contract before rerunning focused validation and the full Vitest suite
+
+    - Late shared-snapshot restore race hardening:
+        - tightened `useLegacyWorkspaceSnapshotMigration.ts` so the async shared-backup restore path rechecks whether the current workspace is still effectively empty after `loadSharedWorkspaceSnapshot()` resolves, preventing a late legacy snapshot from overwriting a live prompt/settings draft that started after launch
+        - added focused regression coverage in `tests/useLegacyWorkspaceSnapshotMigration.test.tsx` for the late-restore skip path and a dedicated Playwright guard in `e2e/workspace-late-shared-restore.spec.ts` that delays `/api/workspace-snapshot` and verifies the live draft stays intact while no legacy turn silently rehydrates
+        - revalidated the fix with the focused migration Vitest slice, the new Playwright spec, and repeated manual browser use where the composer/viewer rollback no longer reproduced
+
+    - Startup hydration replay hardening:
+        - removed the broad launch-time composer replay from `useWorkspaceAppLifecycle.ts`, where `applyComposerState(initialComposerState)` could rerun during dev refresh and overwrite the live composer with an older startup snapshot while source files were being edited
+        - moved restored startup presentation hydration into `useImageGeneration.ts` so `generationMode`, `executionMode`, and `displaySettings` now initialize directly from the restored composer snapshot instead of relying on a rerunnable lifecycle restore path
+        - added focused regression coverage in `tests/useImageGeneration.test.tsx`, reran the targeted startup/restore Vitest slice with `tests/useImageGeneration.test.tsx tests/useLegacyWorkspaceSnapshotMigration.test.tsx tests/legacyWorkspaceSnapshotMigration.test.ts tests/usePerformGeneration.test.tsx`, reran `e2e/workspace-late-shared-restore.spec.ts`, and kept `npm run build` green
+
+    - Post-audit hardening:
+        - removed the duplicate Vitest import from `tests/useHistorySourceOrchestration.test.ts` so the Session A regression file stays syntactically clean
+        - added legacy queued-job snapshot migration in `utils/workspacePersistence.ts` so pre-`hasInlinedResponses` succeeded jobs restore with truthful import-ready state until the next poll refreshes them
+        - reran focused Session A and Session D Vitest slices at `10 files / 71 tests` and reran `npm run test:e2e:restore:queued-batch` to `2 / 2`
+
+## v3.2.5 - 2026-04-04
+
+- Release title: Nano Banana Ultra 3.2.5 - Queued Batch Truthfulness & Submit Feedback Closeout
+- Release prep summary:
+    - Queued batch truthfulness hardening:
+        - threaded `hasInlinedResponses` into local queued-job state, added explicit local `submissionPending` plus import-diagnostic tracking, and centralized the queue truth predicates in `utils/queuedBatchJobs.ts` so import-ready no longer means `JOB_STATE_SUCCEEDED` alone
+        - updated composer queue status, the queued-batch detail panel, workspace insights, and workflow detail surfaces so counts and actions now reflect real importability, while succeeded jobs without inline payload no longer appear ready to import
+        - separated queued-batch diagnostics into two user-visible outcomes: jobs that finished with no inline payload and jobs that had inline responses but still produced no importable image after extraction
+
+    - Immediate submit feedback and snapshot safety:
+        - added optimistic local queued jobs for both main-composer and editor-origin batch submits so pending feedback appears immediately instead of waiting for the remote batch create response
+        - made the editor-origin queue path rely on stable workspace queued-job state so submit feedback survives editor closure without requiring editor-local persistence
+        - filtered optimistic `submissionPending` jobs out of workspace snapshot persistence so restore never revives local-only placeholder jobs as if they were real remote batches
+
+    - Validation, restore alignment, and closeout:
+        - expanded focused regression coverage for `hasInlinedResponses` mapping, truthful ready counts, no-payload versus extraction-failure diagnostics, optimistic pending feedback, and batch-helper payload/extraction behavior
+        - aligned the queued-batch restore Playwright fixture with the new import-ready contract by marking restored ready jobs with `hasInlinedResponses: true`, then reran the targeted restore browser slice
+        - revalidated Session D with the package Vitest script at `74 files / 648 tests`, reran `npm run build`, reran `npm run test:e2e:restore:queued-batch` to `2 / 2`, and updated the split-session docs / repo memory so Session D is explicitly marked complete with its preserved queued-batch contracts
+
+## v3.2.4 - 2026-04-04
+
+- Release title: Nano Banana Ultra 3.2.4 - Quantity Persistence Closeout & Session D Handoff
+- Release prep summary:
+    - Quantity persistence stale-state fix closeout:
+        - confirmed the Session C root cause in `ImageEditor.resetTools(...)`, where editor-local reset replayed stale `initialBatchSize` back into committed composer state via `onBatchSizeChange(initialBatchSize)` and could silently overwrite a later committed Quantity such as `3`
+        - kept the runtime fix narrow by removing that stale editor reset batch-size writeback instead of adding broad defensive clamping or widening settings-session ownership changes
+        - expanded the Quantity regression coverage so `Quantity = 3` is now exercised across generation-settings round trip, advanced-settings round trip, and editor reset / close flows through `WorkspacePickerSheet.settingsSwitch`, `useWorkspaceEditorActions`, and the dedicated `ImageEditor.reset` regression
+
+    - Validation and stale-suite cleanup:
+        - aligned the stale `SurfaceSharedControls` Vitest expectation to the current shared-controls button label line-height class so the full suite reflects the existing component output instead of failing on an outdated assertion
+        - revalidated the Quantity slice with focused Vitest at `4 files / 7 tests`, reran `SurfaceSharedControls` at `2 / 2`, reran the full suite at `74 files / 641 tests`, and reran `npm run build`
+        - manually verified two real user paths in the browser: `Quantity 3` stayed draft-only until `Apply` through the generation-to-advanced round trip, and stayed committed at `3` across ImageEditor entry, `Reset`, and editor close
+
+    - Session closeout and next-session handoff:
+        - updated the split-session handoff docs so Session C is explicitly marked complete, its stop condition and validation are recorded, and Session D now starts from the verified A-C ready state instead of still treating Session C as pending
+        - documented the preserved cross-session contract that committed `batchSize` must only change through explicit apply / restore flows and must not be mutated by editor-local stale snapshot replay
+
+## v3.2.3 - 2026-04-04
+
+- Release title: Nano Banana Ultra 3.2.3 - Composer / Viewer Surface Clarity & Image Tools Polish
+- Release prep summary:
+    - Composer / viewer / style-label cleanup:
+        - added a conditional composer style status strip between `Generation Settings` and `Follow-up Source` that only renders when a real style is active, making shared style state visible without surfacing the `None` case as fake status
+        - added an explicit viewer `Apply Prompt` CTA that routes through an App-owned prompt-replace helper so applying a viewed prompt only replaces composer prompt text and preserves the Session A continuation/source contract
+        - removed the duplicate main-stage Upload/Repaint empty-state CTA so repaint entry stays owned by `Image Tools`, while the stage empty state keeps the cleaner ready-only presentation
+        - fixed the English `catDesign` label, simplified `STYLE_CATEGORIES` to translation-driven ids, and aligned style category display plus the new viewer/action wording across the maintained locales instead of relying on hardcoded mixed-language labels
+
+    - Image Tools wording and action-button polish:
+        - renamed the three Image Tools entries to `Upload Image To Repaint`, `Repaint Current Image`, and `Draw Reference Sketch` so the side-tool verbs match the actual workflow surface ownership after chain cleanup
+        - polished the visible Image Tools action buttons with left-side icons, slightly larger compact typography, and tighter multiline alignment so the longer labels stay readable without reopening the old loose action-card styling
+
+    - Validation and handoff follow-through:
+        - added focused regression coverage for composer style-strip visibility, viewer prompt-apply behavior, Image Tools wording, empty-stage CTA removal, and Session B translation coverage, then revalidated the main Session B slice with focused Vitest at `386/386` plus `npm run build`
+        - reran the focused `WorkspaceSideToolPanel` Vitest slice after the post-closeout Image Tools typography/icon refinement at `2/2` and updated the split handoff docs so Session B is marked complete and Session C starts from the preserved Session A/B contracts
+
+## v3.2.2 - 2026-04-04
+
+- Release title: Nano Banana Ultra 3.2.2 - Chain Cleanup & Restore Contract Alignment
+- Release prep summary:
+    - Chain cleanup and explicit continuation-source contract:
+        - stopped passive history open/reopen from promoting workspace session source, mutating conversation route, or rewriting composer state, so `Reopen` now stays in stage/view-only territory while `Continue`, `Promote Variant`, and `Branch` remain the only explicit route-changing actions
+        - added `workspaceSession.sourceLineageAction` as explicit continuation intent, threaded it through session promotion, lineage selectors, imported-workspace review, provenance continuation, and branch continuation helpers, and stopped pending branch intent from being projected back onto the old branch continuation map
+        - changed normal generation and conversation request assembly to read from the explicit continuation source instead of the last viewed stage image, while preserving current-stage ownership for follow-up editor flows
+        - hardened snapshot sanitation and restore normalization so passive `selectedHistoryId` no longer rehydrates conversation/session route semantics, and aligned imported-workspace / versions / filmstrip restore expectations so passive history open continues to preserve composer text
+        - added focused regression coverage for history orchestration, branch continuation, lineage selectors, generation context, and workspace persistence, then revalidated the slice with focused Vitest, adjacent continuity/provenance Vitest, `npm run build`, and focused restore Playwright coverage
+
+    - Broader restore follow-up and editor shared-state restore:
+        - broader `workspace-restore.spec.ts` validation exposed outdated advanced-settings assumptions plus an editor-close shared ratio/size regression, so standalone advanced-settings close is now treated as discard-only and no longer expected to persist unapplied draft changes
+        - changed editor close to restore the pre-editor shared composer/object/character snapshot by default, keeping editor-entry auto-measured ratio and size isolated from the main workspace when no local editor changes are being kept
+        - updated restore Playwright assertions to target stable advanced-settings controls instead of removed section-heading copy, added `useWorkspaceEditorActions` regression coverage for default restore versus explicit opt-out, and reran the full restore browser suite to `59 passed`
+
+    - Session handoff and closeout documentation:
+        - updated `docs/session-handoffs/README.md`, `session-a-chain-cleanup.md`, and `session-b-composer-viewer-surface-ui.md` so the next session can start from the verified Session A stop condition and preserve the fixed route/source and shared-settings contracts
+
 ## v3.2.1 - 2026-04-03
 
 - Release title: Nano Banana Ultra 3.2.1 - Shared Controls, Retouch Locking & Advanced Settings Draft Flow

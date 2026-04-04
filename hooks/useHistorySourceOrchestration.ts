@@ -1,17 +1,16 @@
 import { Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
 import {
+    ContinuationLineageAction,
     GeneratedImage as GeneratedImageType,
     PendingProvenanceContext,
     ResultArtifacts,
     SessionContinuitySource,
     TurnLineageAction,
-    WorkspaceComposerState,
     WorkspaceConversationState,
     WorkspaceSessionState,
 } from '../types';
 import { loadFullImage } from '../utils/imageSaveUtils';
 import { encodeWorkflowMessage } from '../utils/workflowTimeline';
-import { buildWorkspaceComposerStateFromHistoryItem } from '../utils/workspaceSnapshotState';
 import {
     EMPTY_WORKSPACE_CONVERSATION_STATE,
     getConversationSelectionState,
@@ -33,6 +32,7 @@ type PromoteResultArtifactsToSession = (
         mode?: WorkspaceSessionState['provenanceMode'];
         sourceHistoryId?: string | null;
         sessionSourceHistoryId?: string | null;
+        sourceLineageAction?: ContinuationLineageAction | null;
         conversationId?: string | null;
         conversationBranchOriginId?: string | null;
         conversationActiveSourceHistoryId?: string | null;
@@ -61,7 +61,6 @@ type UseHistorySourceOrchestrationArgs = {
     ) => ResultArtifacts;
     applySelectedResultArtifacts: (artifacts: ResultArtifacts | null) => void;
     promoteResultArtifactsToSession: PromoteResultArtifactsToSession;
-    applyComposerState: (nextComposerState: WorkspaceComposerState) => void;
     setPendingProvenanceContext: Dispatch<SetStateAction<PendingProvenanceContext | null>>;
     setConversationState: Dispatch<SetStateAction<WorkspaceConversationState>>;
     setBranchContinuationSourceByBranchOriginId: Dispatch<SetStateAction<Record<string, string>>>;
@@ -143,7 +142,6 @@ export function useHistorySourceOrchestration({
     buildResultArtifacts,
     applySelectedResultArtifacts,
     promoteResultArtifactsToSession,
-    applyComposerState,
     setPendingProvenanceContext,
     setConversationState,
     setBranchContinuationSourceByBranchOriginId,
@@ -187,9 +185,9 @@ export function useHistorySourceOrchestration({
     ]);
 
     const handleHistorySelect = useCallback(
-        (item: GeneratedImageType, options?: { preserveComposer?: boolean; lineageAction?: TurnLineageAction }) => {
-            const preserveComposer = Boolean(options?.preserveComposer);
+        (item: GeneratedImageType, options?: { lineageAction?: TurnLineageAction }) => {
             const lineageAction = options?.lineageAction || 'reopen';
+            const isRouteMutation = lineageAction === 'continue' || lineageAction === 'branch';
             const shortHistoryId = item.id.slice(0, 8);
 
             if (item.status === 'failed') {
@@ -214,39 +212,35 @@ export function useHistorySourceOrchestration({
                       sessionHints: workspaceSession.continuitySessionHints,
                       mode: workspaceSession.provenanceMode,
                       sourceHistoryId: workspaceSession.provenanceSourceHistoryId ?? item.id,
-                      sessionSourceHistoryId: item.id,
                   }
-                : { sessionSourceHistoryId: item.id };
+                : undefined;
             const branchOriginId = lineageAction === 'branch' ? item.id : branchOriginIdByTurnId[item.id] || item.id;
-            const nextConversationState =
-                lineageAction === 'continue' || lineageAction === 'branch'
-                    ? promoteConversationSource(conversationState, branchOriginId, item.id, lineageAction)
-                    : conversationState;
-            const conversationSelection =
-                lineageAction === 'continue' || lineageAction === 'branch'
-                    ? {
-                          branchOriginId,
-                          ...getConversationSelectionState(nextConversationState, branchOriginId, item.id),
-                      }
-                    : resolveConversationSelectionState(nextConversationState, {
-                          selectedHistoryId: item.id,
-                          preferredBranchOriginId: branchOriginId,
-                          conversationBranchOriginId:
-                              item.conversationBranchOriginId || workspaceSession.conversationBranchOriginId,
-                      });
+            const nextConversationState = isRouteMutation
+                ? promoteConversationSource(conversationState, branchOriginId, item.id, lineageAction)
+                : conversationState;
+            const conversationSelection = isRouteMutation
+                ? {
+                      branchOriginId,
+                      ...getConversationSelectionState(nextConversationState, branchOriginId, item.id),
+                  }
+                : null;
 
             setGeneratedImageUrls([item.url]);
             setSelectedImageIndex(0);
             applySelectedResultArtifacts(historyArtifacts);
-            promoteResultArtifactsToSession(historyArtifacts, 'history', {
-                ...provenanceOverride,
-                conversationId: conversationSelection.conversationId,
-                conversationBranchOriginId: conversationSelection.conversationId
-                    ? conversationSelection.branchOriginId
-                    : null,
-                conversationActiveSourceHistoryId: conversationSelection.conversationActiveSourceHistoryId,
-                conversationTurnIds: conversationSelection.conversationTurnIds,
-            });
+            if (isRouteMutation) {
+                promoteResultArtifactsToSession(historyArtifacts, 'history', {
+                    ...provenanceOverride,
+                    sessionSourceHistoryId: item.id,
+                    sourceLineageAction: lineageAction,
+                    conversationId: conversationSelection?.conversationId ?? null,
+                    conversationBranchOriginId: conversationSelection?.conversationId
+                        ? conversationSelection.branchOriginId
+                        : null,
+                    conversationActiveSourceHistoryId: conversationSelection?.conversationActiveSourceHistoryId ?? null,
+                    conversationTurnIds: conversationSelection?.conversationTurnIds ?? [],
+                });
+            }
             setError(null);
             setLogs([
                 `[${new Date(item.createdAt).toLocaleTimeString()}] ${encodeWorkflowMessage('historySourceLoadedLog')}`,
@@ -304,16 +298,11 @@ export function useHistorySourceOrchestration({
                     });
             }
 
-            if (!preserveComposer) {
-                applyComposerState(buildWorkspaceComposerStateFromHistoryItem(item));
-            }
-
             clearAssetRoles(['object', 'character']);
             setIsGenerating(false);
         },
         [
             addLog,
-            applyComposerState,
             applySelectedResultArtifacts,
             branchOriginIdByTurnId,
             buildResultArtifacts,
@@ -337,7 +326,7 @@ export function useHistorySourceOrchestration({
 
     const handleContinueFromHistoryTurn = useCallback(
         (item: GeneratedImageType) => {
-            handleHistorySelect(item, { preserveComposer: false, lineageAction: 'continue' });
+            handleHistorySelect(item, { lineageAction: 'continue' });
             clearActivePickerSheet();
         },
         [clearActivePickerSheet, handleHistorySelect],
@@ -345,7 +334,7 @@ export function useHistorySourceOrchestration({
 
     const handleBranchFromHistoryTurn = useCallback(
         (item: GeneratedImageType) => {
-            handleHistorySelect(item, { preserveComposer: true, lineageAction: 'branch' });
+            handleHistorySelect(item, { lineageAction: 'branch' });
             clearActivePickerSheet();
         },
         [clearActivePickerSheet, handleHistorySelect],
