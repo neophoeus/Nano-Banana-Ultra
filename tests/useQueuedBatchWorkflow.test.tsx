@@ -9,6 +9,7 @@ import { QueuedBatchJob, GeneratedImage } from '../types';
 const {
     checkApiKeyMock,
     submitQueuedBatchJobMock,
+    listQueuedBatchJobsMock,
     getQueuedBatchJobMock,
     cancelQueuedBatchJobMock,
     importQueuedBatchJobResultsMock,
@@ -17,6 +18,7 @@ const {
 } = vi.hoisted(() => ({
     checkApiKeyMock: vi.fn(),
     submitQueuedBatchJobMock: vi.fn(),
+    listQueuedBatchJobsMock: vi.fn(),
     getQueuedBatchJobMock: vi.fn(),
     cancelQueuedBatchJobMock: vi.fn(),
     importQueuedBatchJobResultsMock: vi.fn(),
@@ -27,6 +29,7 @@ const {
 vi.mock('../services/geminiService', () => ({
     checkApiKey: checkApiKeyMock,
     submitQueuedBatchJob: submitQueuedBatchJobMock,
+    listQueuedBatchJobs: listQueuedBatchJobsMock,
     getQueuedBatchJob: getQueuedBatchJobMock,
     cancelQueuedBatchJob: cancelQueuedBatchJobMock,
     importQueuedBatchJobResults: importQueuedBatchJobResultsMock,
@@ -129,13 +132,15 @@ describe('useQueuedBatchWorkflow', () => {
                 objectImages: overrides.objectImages ?? [],
                 characterImages: overrides.characterImages ?? [],
                 getModelLabel: overrides.getModelLabel ?? ((model) => model),
-                getGenerationLineageContext: overrides.getGenerationLineageContext ?? (() => ({
-                    parentHistoryId: 'parent-turn-1',
-                    rootHistoryId: 'root-turn-1',
-                    sourceHistoryId: 'source-turn-1',
-                    lineageAction: 'continue',
-                    lineageDepth: 1,
-                })),
+                getGenerationLineageContext:
+                    overrides.getGenerationLineageContext ??
+                    (() => ({
+                        parentHistoryId: 'parent-turn-1',
+                        rootHistoryId: 'root-turn-1',
+                        sourceHistoryId: 'source-turn-1',
+                        lineageAction: 'continue',
+                        lineageDepth: 1,
+                    })),
                 addLog: overrides.addLog ?? ((message) => logs.push(message)),
                 addPromptToHistory: overrides.addPromptToHistory ?? ((value) => promptHistory.push(value)),
                 showNotification:
@@ -145,33 +150,51 @@ describe('useQueuedBatchWorkflow', () => {
                 },
                 history: latestHistory,
                 historySelectRef,
-                t: overrides.t ?? ((key) => {
-                    const translations: Record<string, string> = {
-                        errorNoPrompt: 'Please enter a prompt to start!',
-                        queuedBatchSubmittedNotice: 'Queued batch job submitted to the official Batch API.',
-                        queuedBatchSubmittedLog: 'Queued official batch job {0}.',
-                        queuedBatchSubmissionFailedLog: 'Queued batch submission failed: {0}',
-                        queuedBatchNoPayloadResultsNotice: 'Queued batch finished without inline payload.',
-                        queuedBatchNoImportableResultsNotice: 'No importable queued results.',
-                        queuedBatchImportedNotice: 'Imported {0} queued batch results.',
-                        queuedBatchImportedLog: 'Imported {0} queued batch results from {1}.',
-                        queuedBatchImportAllLog: 'Imported {0} queued batch results from {1} ready jobs.',
-                        queuedBatchImportAllNotice: 'Imported {0} queued batch results from ready jobs.',
-                        queuedBatchImportAllNoneNotice:
-                            'Ready queued batch jobs did not contain importable image results.',
-                        queuedBatchImportWaitingNotice: 'Queued batch jobs are still waiting for importable results.',
-                        queuedBatchPolledLog: 'Polled queued batch job {0}: {1}.',
-                        queuedBatchReadyToImportNotice: 'Queued batch job {0} is ready to import.',
-                        queuedBatchFinishedStateNotice: 'Queued batch job {0} finished with {1}.',
-                        queuedBatchPollFailedLog: 'Queued batch poll failed for {0}: {1}',
-                        queuedBatchRefreshedLog: 'Refreshed {0} queued batch jobs.',
-                        queuedBatchRefreshNoneNotice: 'There are no running queued batch jobs to refresh.',
-                        queuedBatchCancelledLog: 'Cancelled queued batch job {0}.',
-                        queuedBatchCancelRequestedNotice: 'Queued batch job cancellation requested.',
-                        queuedBatchCancelFailedLog: 'Queued batch cancel failed for {0}: {1}',
-                    };
-                    return translations[key] || key;
-                }),
+                t:
+                    overrides.t ??
+                    ((key) => {
+                        const translations: Record<string, string> = {
+                            errorNoPrompt: 'Please enter a prompt to start!',
+                            queuedBatchSubmittedNotice: 'Queued batch job submitted to the official Batch API.',
+                            queuedBatchSubmittedLog: 'Queued official batch job {0}.',
+                            queuedBatchSubmissionFailedLog: 'Queued batch submission failed: {0}',
+                            queuedBatchNoPayloadResultsNotice: 'Queued batch finished without inline payload.',
+                            queuedBatchNoImportableResultsNotice: 'No importable queued results.',
+                            queuedBatchImportedNotice: 'Imported {0} queued batch results.',
+                            queuedBatchImportedLog: 'Imported {0} queued batch results from {1}.',
+                            queuedBatchImportAllLog: 'Imported {0} queued batch results from {1} ready jobs.',
+                            queuedBatchImportAllNotice: 'Imported {0} queued batch results from ready jobs.',
+                            queuedBatchImportAllNoneNotice:
+                                'Ready queued batch jobs did not contain importable image results.',
+                            queuedBatchImportWaitingNotice:
+                                'Queued batch jobs are still waiting for importable results.',
+                            queuedBatchPolledLog: 'Polled queued batch job {0}: {1}.',
+                            queuedBatchReadyToImportNotice: 'Queued batch job {0} is ready to import.',
+                            queuedBatchFinishedStateNotice: 'Queued batch job {0} finished with {1}.',
+                            queuedBatchPollFailedLog: 'Queued batch poll failed for {0}: {1}',
+                            queuedBatchRefreshedLog: 'Refreshed {0} queued batch jobs.',
+                            queuedBatchRefreshNoneNotice: 'There are no running queued batch jobs to refresh.',
+                            queuedBatchCancelledLog: 'Cancelled queued batch job {0}.',
+                            queuedBatchCancelRequestedNotice: 'Queued batch job cancellation requested.',
+                            queuedBatchCancelFailedLog: 'Queued batch cancel failed for {0}: {1}',
+                            queuedBatchRecoverRecentNotice: 'Recovered {0} recent batch jobs.',
+                            queuedBatchRecoverRecentAlreadyTrackedNotice:
+                                'Recent remote batch jobs are already tracked. Refreshed {0} entries.',
+                            queuedBatchRecoverRecentNoneNotice: 'No additional recent remote batch jobs were found.',
+                            queuedBatchRecoverRecentLog: 'Recovered {0} recent remote batch jobs from the batch list.',
+                            queuedBatchRecoverRecentRefreshedLog:
+                                'Refreshed {0} already tracked remote batch jobs from the batch list.',
+                            queuedBatchRecoverRecentFailedLog: 'Recover recent batch jobs failed: {0}',
+                            queuedBatchRecoverRecentMetadataHint:
+                                'Recovered remote jobs can be imported again, but Gemini batch list does not return the original prompt or reference images, so recovered entries use simplified local details.',
+                            queuedBatchClearIssuesNotice: 'Cleared {0} non-importable queued batch jobs.',
+                            queuedBatchClearImportedNotice: 'Cleared {0} imported queued batch jobs.',
+                            queuedBatchClearIssuesLog:
+                                'Cleared {0} non-importable queued batch jobs from the local queue.',
+                            queuedBatchClearImportedLog: 'Cleared {0} imported queued batch jobs from the local queue.',
+                        };
+                        return translations[key] || key;
+                    }),
             });
             return null;
         }
@@ -196,6 +219,7 @@ describe('useQueuedBatchWorkflow', () => {
 
         checkApiKeyMock.mockReset();
         submitQueuedBatchJobMock.mockReset();
+        listQueuedBatchJobsMock.mockReset();
         getQueuedBatchJobMock.mockReset();
         cancelQueuedBatchJobMock.mockReset();
         importQueuedBatchJobResultsMock.mockReset();
@@ -293,6 +317,105 @@ describe('useQueuedBatchWorkflow', () => {
         expect(promptHistory).toEqual(['Queue this editor revision']);
         expect(notifications).toContainEqual({
             message: 'Queued batch job submitted to the official Batch API.',
+            type: 'info',
+        });
+    });
+
+    it('recovers recent remote jobs and restores imported state from existing history', async () => {
+        listQueuedBatchJobsMock.mockResolvedValue([
+            {
+                name: 'batches/recovered-imported',
+                displayName: 'Recovered imported job',
+                state: 'JOB_STATE_SUCCEEDED',
+                model: 'gemini-3.1-flash-image-preview',
+                createTime: '2026-04-05T10:00:00.000Z',
+                updateTime: '2026-04-05T10:05:00.000Z',
+                endTime: '2026-04-05T10:04:00.000Z',
+                error: null,
+                batchStats: {
+                    requestCount: 2,
+                    successfulRequestCount: 2,
+                    failedRequestCount: 0,
+                    pendingRequestCount: 0,
+                },
+                hasInlinedResponses: false,
+            },
+        ]);
+        getQueuedBatchJobMock.mockResolvedValue({
+            name: 'batches/recovered-imported',
+            displayName: 'Recovered imported job',
+            state: 'JOB_STATE_SUCCEEDED',
+            model: 'gemini-3.1-flash-image-preview',
+            createTime: '2026-04-05T10:00:00.000Z',
+            updateTime: '2026-04-05T10:05:00.000Z',
+            endTime: '2026-04-05T10:04:00.000Z',
+            error: null,
+            batchStats: {
+                requestCount: 2,
+                successfulRequestCount: 2,
+                failedRequestCount: 0,
+                pendingRequestCount: 0,
+            },
+            hasInlinedResponses: true,
+        });
+
+        renderHook(
+            [],
+            [
+                {
+                    id: 'history-recovered-1',
+                    url: 'data:image/png;base64,recovered',
+                    prompt: 'Recovered original prompt',
+                    aspectRatio: '16:9',
+                    size: '2K',
+                    style: 'Cinematic',
+                    model: 'gemini-3.1-flash-image-preview',
+                    createdAt: 1712300000000,
+                    mode: 'Follow-up Edit',
+                    executionMode: 'queued-batch-job',
+                    variantGroupId: 'batches/recovered-imported',
+                    status: 'success',
+                    thoughts: 'Recovered thoughts',
+                    metadata: {
+                        outputFormat: 'images-and-text',
+                        structuredOutputMode: 'quality-check',
+                        temperature: 0.8,
+                        thinkingLevel: 'high',
+                        includeThoughts: true,
+                    },
+                    parentHistoryId: 'parent-1',
+                    rootHistoryId: 'root-1',
+                    sourceHistoryId: 'source-1',
+                    lineageAction: 'continue',
+                    lineageDepth: 2,
+                },
+            ],
+        );
+
+        await act(async () => {
+            await latestHook!.handleRecoverRecentQueuedJobs();
+        });
+
+        expect(listQueuedBatchJobsMock).toHaveBeenCalledWith(50);
+        expect(getQueuedBatchJobMock).toHaveBeenCalledWith('batches/recovered-imported');
+        expect(latestHook!.queuedJobs).toHaveLength(1);
+        expect(latestHook!.queuedJobs[0]).toEqual(
+            expect.objectContaining({
+                name: 'batches/recovered-imported',
+                prompt: 'Recovered original prompt',
+                generationMode: 'Follow-up Edit',
+                aspectRatio: '16:9',
+                imageSize: '2K',
+                style: 'Cinematic',
+                outputFormat: 'images-and-text',
+                structuredOutputMode: 'quality-check',
+                thinkingLevel: 'high',
+                importedAt: 1712300000000,
+                hasInlinedResponses: true,
+            }),
+        );
+        expect(notifications).toContainEqual({
+            message: 'Recovered 1 recent batch jobs.',
             type: 'info',
         });
     });
@@ -429,6 +552,63 @@ describe('useQueuedBatchWorkflow', () => {
         });
     });
 
+    it('imports successful queued results even when some batch entries fail', async () => {
+        const readyJob = buildQueuedJob({
+            localId: 'job-partial-import',
+            name: 'batches/job-partial-import',
+            displayName: 'Partial import queue job',
+            batchSize: 4,
+        });
+        importQueuedBatchJobResultsMock.mockResolvedValue({
+            job: {
+                name: readyJob.name,
+                displayName: readyJob.displayName,
+                state: 'JOB_STATE_SUCCEEDED',
+                model: readyJob.model,
+                createTime: '2025-01-01T00:00:00.000Z',
+                updateTime: '2025-01-01T00:05:00.000Z',
+                startTime: '2025-01-01T00:01:00.000Z',
+                endTime: '2025-01-01T00:05:00.000Z',
+                error: null,
+                hasInlinedResponses: true,
+            },
+            results: [
+                {
+                    index: 0,
+                    status: 'success',
+                    imageUrl: 'data:image/png;base64,AAA',
+                },
+                {
+                    index: 1,
+                    status: 'failed',
+                    error: 'Model returned a response without candidates.',
+                },
+            ],
+        });
+
+        renderHook([readyJob]);
+
+        await act(async () => {
+            await latestHook!.handleImportQueuedJob(readyJob.localId);
+        });
+
+        expect(latestHistory).toHaveLength(1);
+        expect(latestHook!.queuedJobs[0]).toEqual(
+            expect.objectContaining({
+                localId: readyJob.localId,
+                importedAt: expect.any(Number),
+                importDiagnostic: null,
+            }),
+        );
+        expect(logs).toContain(
+            `Queued batch import skipped 1 non-importable results for ${readyJob.name}: Model returned a response without candidates.`,
+        );
+        expect(notifications).toContainEqual({
+            message: 'Imported 1 queued batch results.',
+            type: 'info',
+        });
+    });
+
     it('imports all ready jobs and emits the aggregate import notice once', async () => {
         const firstReadyJob = buildQueuedJob({
             localId: 'job-ready-1',
@@ -506,6 +686,75 @@ describe('useQueuedBatchWorkflow', () => {
         });
         expect(notifications).not.toContainEqual({
             message: 'Imported 1 queued batch results.',
+            type: 'info',
+        });
+    });
+
+    it('skips known extraction failures during import-all retries', async () => {
+        const retryableReadyJob = buildQueuedJob({
+            localId: 'job-ready-retryable',
+            name: 'batches/job-ready-retryable',
+            displayName: 'Retryable ready queue job',
+        });
+        const failedReadyJob = buildQueuedJob({
+            localId: 'job-ready-failed',
+            name: 'batches/job-ready-failed',
+            displayName: 'Failed ready queue job',
+            importDiagnostic: 'extraction-failure',
+            error: 'Model returned no image data.',
+        });
+
+        importQueuedBatchJobResultsMock.mockResolvedValueOnce({
+            job: {
+                name: retryableReadyJob.name,
+                displayName: retryableReadyJob.displayName,
+                state: 'JOB_STATE_SUCCEEDED',
+                model: retryableReadyJob.model,
+                createTime: '2025-01-01T00:00:00.000Z',
+                updateTime: '2025-01-01T00:02:00.000Z',
+                startTime: '2025-01-01T00:01:00.000Z',
+                endTime: '2025-01-01T00:02:00.000Z',
+                error: null,
+                hasInlinedResponses: true,
+            },
+            results: [
+                {
+                    index: 0,
+                    status: 'success',
+                    imageUrl: 'data:image/png;base64,AAA',
+                    text: 'Imported queued result',
+                },
+            ],
+        });
+
+        saveImageToLocalMock.mockResolvedValue('D:/saved/imported.png');
+        generateThumbnailMock.mockResolvedValue('data:image/png;base64,AAA-thumb');
+
+        renderHook([retryableReadyJob, failedReadyJob]);
+
+        await act(async () => {
+            await latestHook!.handleImportAllQueuedJobs();
+        });
+
+        expect(importQueuedBatchJobResultsMock).toHaveBeenCalledTimes(1);
+        expect(importQueuedBatchJobResultsMock).toHaveBeenCalledWith(retryableReadyJob.name);
+        expect(latestHook!.queuedJobs).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    localId: retryableReadyJob.localId,
+                    importedAt: expect.any(Number),
+                }),
+                expect.objectContaining({
+                    localId: failedReadyJob.localId,
+                    importedAt: null,
+                    importDiagnostic: 'extraction-failure',
+                    error: 'Model returned no image data.',
+                }),
+            ]),
+        );
+        expect(logs).toContain('Imported 1 queued batch results from 1 ready jobs.');
+        expect(notifications).toContainEqual({
+            message: 'Imported 1 queued batch results from ready jobs.',
             type: 'info',
         });
     });
@@ -964,11 +1213,159 @@ describe('useQueuedBatchWorkflow', () => {
                 importedAt: null,
                 hasInlinedResponses: true,
                 importDiagnostic: 'extraction-failure',
+                error: 'Model returned no image data.',
+            }),
+        );
+        expect(logs).toContain(
+            `Queued batch import found no usable image results for ${readyJob.name}: Model returned no image data.`,
+        );
+        expect(notifications).toContainEqual({
+            message: 'Model returned no image data.',
+            type: 'error',
+        });
+    });
+
+    it('preserves extraction failure details across later status refreshes', async () => {
+        const failedImportJob = buildQueuedJob({
+            localId: 'job-preserve-import-error',
+            name: 'batches/job-preserve-import-error',
+            displayName: 'Preserved import error batch',
+            importDiagnostic: 'extraction-failure',
+            error: 'Prompt was rejected by policy (block reason: PROHIBITED_CONTENT).',
+        });
+
+        getQueuedBatchJobMock.mockResolvedValue({
+            name: failedImportJob.name,
+            displayName: failedImportJob.displayName,
+            state: 'JOB_STATE_SUCCEEDED',
+            model: failedImportJob.model,
+            createTime: '2025-01-01T00:00:00.000Z',
+            updateTime: '2025-01-01T00:06:00.000Z',
+            startTime: '2025-01-01T00:01:00.000Z',
+            endTime: '2025-01-01T00:05:00.000Z',
+            error: null,
+            hasInlinedResponses: true,
+        });
+
+        renderHook([failedImportJob]);
+
+        await act(async () => {
+            await latestHook!.handlePollQueuedJob(failedImportJob.localId);
+        });
+
+        expect(latestHook!.queuedJobs[0]).toEqual(
+            expect.objectContaining({
+                localId: failedImportJob.localId,
+                importDiagnostic: 'extraction-failure',
+                error: 'Prompt was rejected by policy (block reason: PROHIBITED_CONTENT).',
             }),
         );
         expect(notifications).toContainEqual({
-            message: 'No importable queued results.',
+            message: 'Prompt was rejected by policy (block reason: PROHIBITED_CONTENT).',
             type: 'error',
+        });
+    });
+
+    it('clears non-importable queued jobs while keeping active and ready jobs', () => {
+        const failedJob = buildQueuedJob({
+            localId: 'job-failed',
+            name: 'batches/job-failed',
+            displayName: 'Failed queue job',
+            state: 'JOB_STATE_FAILED',
+            hasInlinedResponses: false,
+            error: 'Upstream batch failed.',
+        });
+        const extractionFailureJob = buildQueuedJob({
+            localId: 'job-extraction-failure-clear',
+            name: 'batches/job-extraction-failure-clear',
+            displayName: 'Extraction failure queue job',
+            importDiagnostic: 'extraction-failure',
+            error: 'Model returned no image data.',
+        });
+        const noPayloadJob = buildQueuedJob({
+            localId: 'job-no-payload-clear',
+            name: 'batches/job-no-payload-clear',
+            displayName: 'No payload queue job',
+            hasInlinedResponses: false,
+            importDiagnostic: 'no-payload',
+        });
+        const runningJob = buildQueuedJob({
+            localId: 'job-running-clear',
+            name: 'batches/job-running-clear',
+            displayName: 'Running queue job',
+            state: 'JOB_STATE_RUNNING',
+            completedAt: null,
+            importedAt: null,
+            hasInlinedResponses: false,
+            importDiagnostic: null,
+            error: null,
+        });
+        const readyJob = buildQueuedJob({
+            localId: 'job-ready-clear',
+            name: 'batches/job-ready-clear',
+            displayName: 'Ready queue job',
+        });
+
+        renderHook([failedJob, extractionFailureJob, noPayloadJob, runningJob, readyJob]);
+
+        act(() => {
+            latestHook!.handleClearIssueQueuedJobs();
+        });
+
+        expect(latestHook!.queuedJobs).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({ localId: runningJob.localId }),
+                expect.objectContaining({ localId: readyJob.localId }),
+            ]),
+        );
+        expect(latestHook!.queuedJobs).toHaveLength(2);
+        expect(logs).toContain('Cleared 3 non-importable queued batch jobs from the local queue.');
+        expect(notifications).toContainEqual({
+            message: 'Cleared 3 non-importable queued batch jobs.',
+            type: 'info',
+        });
+    });
+
+    it('clears imported queued jobs without removing imported history items', () => {
+        const importedJob = buildQueuedJob({
+            localId: 'job-imported-clear',
+            name: 'batches/job-imported-clear',
+            displayName: 'Imported queue job',
+            importedAt: 1710400100000,
+        });
+        const readyJob = buildQueuedJob({
+            localId: 'job-ready-clear-imported',
+            name: 'batches/job-ready-clear-imported',
+            displayName: 'Ready queue job',
+        });
+        const importedHistoryItem: GeneratedImage = {
+            id: 'history-imported-clear',
+            url: 'data:image/png;base64,AAA',
+            prompt: importedJob.prompt,
+            aspectRatio: importedJob.aspectRatio,
+            size: importedJob.imageSize,
+            style: importedJob.style,
+            model: importedJob.model,
+            createdAt: 1710400100000,
+            mode: importedJob.generationMode,
+            executionMode: 'queued-batch-job',
+            variantGroupId: importedJob.name,
+            status: 'success',
+            metadata: { batchResultIndex: 0 },
+        };
+
+        renderHook([importedJob, readyJob], [importedHistoryItem]);
+
+        act(() => {
+            latestHook!.handleClearImportedQueuedJobs();
+        });
+
+        expect(latestHook!.queuedJobs).toEqual([expect.objectContaining({ localId: readyJob.localId })]);
+        expect(latestHistory).toEqual([importedHistoryItem]);
+        expect(logs).toContain('Cleared 1 imported queued batch jobs from the local queue.');
+        expect(notifications).toContainEqual({
+            message: 'Cleared 1 imported queued batch jobs.',
+            type: 'info',
         });
     });
 });

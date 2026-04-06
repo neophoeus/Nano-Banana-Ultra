@@ -63,5 +63,90 @@ describe('extractGeneratedContent', () => {
         expect(extracted.imageUrl).toBe(`data:image/png;base64,${finalImage}`);
         expect(extracted.imageDimensions).toEqual({ width: 4096, height: 4096 });
         expect(extracted.thoughts).toBe('Reasoning trace');
+        expect(extracted.candidateCount).toBe(1);
+        expect(extracted.partCount).toBe(3);
+        expect(extracted.imagePartCount).toBe(2);
+        expect(extracted.extractionIssue).toBeUndefined();
+    });
+
+    it('accepts wrapped batch responses with snake_case image fields', () => {
+        const batchImage = createPngBase64(2048, 1024);
+
+        const extracted = extractGeneratedContent({
+            response: {
+                candidates: [
+                    {
+                        content: {
+                            parts: [
+                                {
+                                    inline_data: {
+                                        mime_type: 'image/png',
+                                        data: batchImage,
+                                    },
+                                    thought_signature: 'sig-batch-1',
+                                },
+                            ],
+                        },
+                        finish_reason: 'STOP',
+                        safety_ratings: [{ category: 'SAFE' }],
+                    },
+                ],
+            },
+        });
+
+        expect(extracted.imageUrl).toBe(`data:image/png;base64,${batchImage}`);
+        expect(extracted.imageDimensions).toEqual({ width: 2048, height: 1024 });
+        expect(extracted.thoughtSignaturePresent).toBe(true);
+        expect(extracted.thoughtSignature).toBe('sig-batch-1');
+        expect(extracted.finishReason).toBe('STOP');
+        expect(extracted.imagePartCount).toBe(1);
+    });
+
+    it('can recover image data from later candidates when the first candidate is empty', () => {
+        const fallbackImage = createPngBase64(1536, 1536);
+
+        const extracted = extractGeneratedContent({
+            candidates: [
+                {
+                    content: {
+                        parts: [],
+                    },
+                    finishReason: 'STOP',
+                },
+                {
+                    content: {
+                        parts: [
+                            {
+                                inlineData: {
+                                    mimeType: 'image/png',
+                                    data: fallbackImage,
+                                },
+                            },
+                        ],
+                    },
+                    finishReason: 'STOP',
+                },
+            ],
+        });
+
+        expect(extracted.imageUrl).toBe(`data:image/png;base64,${fallbackImage}`);
+        expect(extracted.candidateCount).toBe(2);
+        expect(extracted.partCount).toBe(1);
+        expect(extracted.imagePartCount).toBe(1);
+        expect(extracted.extractionIssue).toBeUndefined();
+    });
+
+    it('reads prompt block reasons from wrapped prompt feedback payloads', () => {
+        const extracted = extractGeneratedContent({
+            response: {
+                prompt_feedback: {
+                    block_reason: 'PROHIBITED_CONTENT',
+                },
+            },
+        });
+
+        expect(extracted.promptBlockReason).toBe('PROHIBITED_CONTENT');
+        expect(extracted.candidateCount).toBe(0);
+        expect(extracted.extractionIssue).toBe('missing-candidates');
     });
 });

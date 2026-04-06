@@ -180,6 +180,7 @@ describe('QueuedBatchJobsPanel', () => {
                         : []
                 }
                 activeImportedQueuedHistoryId="history-imported-1"
+                onRecoverRecentQueuedJobs={vi.fn()}
                 onImportAllQueuedJobs={vi.fn()}
                 onPollAllQueuedJobs={vi.fn()}
                 onPollQueuedJob={vi.fn()}
@@ -210,7 +211,13 @@ describe('QueuedBatchJobsPanel', () => {
         expect(markup).toContain('Import ready results');
         expect(markup).toContain('queued-batch-panel-monitor-group');
         expect(markup).toContain('queued-batch-panel-results-group');
+        expect(markup).toContain('queued-batch-panel-cleanup-group');
         expect(markup).toContain('queued-batch-panel-results-count');
+        expect(markup).toContain('Recover recent batch jobs');
+        expect(markup).toContain('queued-batch-recover-recent');
+        expect(markup).toContain('Clear non-importable');
+        expect(markup).toContain('Clear imported');
+        expect(markup).toContain('Cleanup');
         expect(markup).toContain('Pending panorama batch');
         expect(markup).toContain('Pending');
         expect(markup).toContain('queued-batch-job-job-pending-batch-stats');
@@ -347,6 +354,7 @@ describe('QueuedBatchJobsPanel', () => {
                     getImportedQueuedResultCount={() => 0}
                     getImportedQueuedHistoryItems={() => []}
                     activeImportedQueuedHistoryId={null}
+                    onRecoverRecentQueuedJobs={vi.fn()}
                     onImportAllQueuedJobs={vi.fn()}
                     onPollAllQueuedJobs={vi.fn()}
                     onPollQueuedJob={vi.fn()}
@@ -409,6 +417,7 @@ describe('QueuedBatchJobsPanel', () => {
                 getImportedQueuedResultCount={() => 0}
                 getImportedQueuedHistoryItems={() => []}
                 activeImportedQueuedHistoryId={null}
+                onRecoverRecentQueuedJobs={vi.fn()}
                 onImportAllQueuedJobs={vi.fn()}
                 onPollAllQueuedJobs={vi.fn()}
                 onPollQueuedJob={vi.fn()}
@@ -423,8 +432,72 @@ describe('QueuedBatchJobsPanel', () => {
 
         expect(markup).toContain('This batch job finished without any inline image payload to import.');
         expect(markup).toContain('queued-batch-job-job-no-payload-import-diagnostic');
-        expect(markup).not.toContain('data-testid="queued-batch-job-job-no-payload-import"');
+        expect(markup).toContain('data-testid="queued-batch-job-job-no-payload-import-unavailable"');
+        expect(markup).toContain('Import unavailable');
+        expect(markup).toContain('disabled=""');
         expect(markup).toContain('0 ready to import');
+    });
+
+    it('prefers a specific extraction failure message over the generic import diagnostic copy', () => {
+        const markup = renderToStaticMarkup(
+            <QueuedBatchJobsPanel
+                currentLanguage="en"
+                queueBatchConversationNotice={null}
+                queuedJobs={[
+                    {
+                        localId: 'job-specific-error',
+                        name: 'batches/job-specific-error',
+                        displayName: 'Specific extraction error batch',
+                        state: 'JOB_STATE_SUCCEEDED',
+                        model: 'gemini-3.1-flash-image-preview',
+                        prompt: 'Prompt rejected upstream',
+                        generationMode: 'Follow-up Edit',
+                        aspectRatio: '1:1',
+                        imageSize: '1K',
+                        style: 'None',
+                        outputFormat: 'images-only',
+                        temperature: 1,
+                        thinkingLevel: 'minimal',
+                        includeThoughts: true,
+                        googleSearch: false,
+                        imageSearch: false,
+                        batchSize: 1,
+                        objectImageCount: 0,
+                        characterImageCount: 0,
+                        createdAt: 1710400010000,
+                        updatedAt: 1710400030000,
+                        startedAt: 1710400015000,
+                        completedAt: 1710400020000,
+                        lastPolledAt: 1710400030000,
+                        importedAt: null,
+                        hasInlinedResponses: true,
+                        importDiagnostic: 'extraction-failure',
+                        error: 'Prompt was rejected by policy (block reason: PROHIBITED_CONTENT).',
+                    },
+                ]}
+                getLineageActionLabel={(action) => action || 'root'}
+                getImportedQueuedResultCount={() => 0}
+                getImportedQueuedHistoryItems={() => []}
+                activeImportedQueuedHistoryId={null}
+                onRecoverRecentQueuedJobs={vi.fn()}
+                onImportAllQueuedJobs={vi.fn()}
+                onPollAllQueuedJobs={vi.fn()}
+                onPollQueuedJob={vi.fn()}
+                onCancelQueuedJob={vi.fn()}
+                onImportQueuedJob={vi.fn()}
+                onOpenImportedQueuedJob={vi.fn()}
+                onOpenLatestImportedQueuedJob={vi.fn()}
+                onOpenImportedQueuedHistoryItem={vi.fn()}
+                onRemoveQueuedJob={vi.fn()}
+            />,
+        );
+
+        expect(markup).toContain('Prompt was rejected by policy (block reason: PROHIBITED_CONTENT).');
+        expect(markup).toContain('data-testid="queued-batch-job-job-specific-error-retry-import"');
+        expect(markup).toContain('Retry import');
+        expect(markup).toContain('0 ready to import');
+        expect(markup).not.toContain('No image results were available to import from this batch job.');
+        expect(markup).not.toContain('queued-batch-job-job-specific-error-import-diagnostic');
     });
 
     it('suppresses duplicate title guidance in embedded mode and keeps bottom breathing room', () => {
@@ -467,6 +540,7 @@ describe('QueuedBatchJobsPanel', () => {
                 getImportedQueuedResultCount={() => 0}
                 getImportedQueuedHistoryItems={() => []}
                 activeImportedQueuedHistoryId={null}
+                onRecoverRecentQueuedJobs={vi.fn()}
                 onImportAllQueuedJobs={vi.fn()}
                 onPollAllQueuedJobs={vi.fn()}
                 onPollQueuedJob={vi.fn()}
@@ -669,6 +743,7 @@ describe('QueuedBatchJobsPanel', () => {
                 getImportedQueuedResultCount={() => 0}
                 getImportedQueuedHistoryItems={() => []}
                 activeImportedQueuedHistoryId={null}
+                onRecoverRecentQueuedJobs={vi.fn()}
                 onImportAllQueuedJobs={vi.fn()}
                 onPollAllQueuedJobs={vi.fn()}
                 onPollQueuedJob={vi.fn()}
@@ -694,7 +769,7 @@ describe('QueuedBatchJobsPanel', () => {
         expect(markup).not.toContain('Follow-up Edit');
         expect(markup).not.toContain('Image to Image');
     });
-    
+
     it('renders Editor Edit as the waiting-list mode label for editor-origin queue jobs', () => {
         const markup = renderToStaticMarkup(
             <QueuedBatchJobsPanel
@@ -734,6 +809,7 @@ describe('QueuedBatchJobsPanel', () => {
                 getImportedQueuedResultCount={() => 0}
                 getImportedQueuedHistoryItems={() => []}
                 activeImportedQueuedHistoryId={null}
+                onRecoverRecentQueuedJobs={vi.fn()}
                 onImportAllQueuedJobs={vi.fn()}
                 onPollAllQueuedJobs={vi.fn()}
                 onPollQueuedJob={vi.fn()}
@@ -747,5 +823,36 @@ describe('QueuedBatchJobsPanel', () => {
         );
 
         expect(markup).toContain('Editor Edit');
+    });
+
+    it('shows recover guidance when no queued jobs are currently tracked', () => {
+        const markup = renderToStaticMarkup(
+            <QueuedBatchJobsPanel
+                currentLanguage="en"
+                queuedJobs={[]}
+                surface="embedded"
+                queueBatchConversationNotice={null}
+                getLineageActionLabel={(action) => action || 'root'}
+                getImportedQueuedResultCount={() => 0}
+                getImportedQueuedHistoryItems={() => []}
+                activeImportedQueuedHistoryId={null}
+                onRecoverRecentQueuedJobs={vi.fn()}
+                onImportAllQueuedJobs={vi.fn()}
+                onPollAllQueuedJobs={vi.fn()}
+                onPollQueuedJob={vi.fn()}
+                onCancelQueuedJob={vi.fn()}
+                onImportQueuedJob={vi.fn()}
+                onOpenImportedQueuedJob={vi.fn()}
+                onOpenLatestImportedQueuedJob={vi.fn()}
+                onOpenImportedQueuedHistoryItem={vi.fn()}
+                onRemoveQueuedJob={vi.fn()}
+            />,
+        );
+
+        expect(markup).toContain('queued-batch-panel-empty');
+        expect(markup).toContain('Recover recent batch jobs');
+        expect(markup).toContain(
+            'Recovered remote jobs can be imported again, but Gemini batch list does not return the original prompt or reference images, so recovered entries use simplified local details.',
+        );
     });
 });

@@ -153,7 +153,11 @@ describe('ComposerSettingsPanel toolbar layout', () => {
         expect(markup).not.toContain('Gallery');
         expect(markup).toContain('composer-queue-batch-mode-hint-trigger');
         expect(markup).toContain('composer-queue-batch-mode-hint');
-        expect(markup).not.toContain('composer-queue-status-button');
+        expect(markup).toContain('composer-queue-status-button');
+        expect(markup).toContain('0 tracked');
+        expect(markup).toContain('0 active');
+        expect(markup).toContain('0 ready to import');
+        expect(markup).toContain('0 closed with issues');
         expect(markup).not.toContain('composer-queue-summary-details');
         expect(markup).not.toContain('composer-queue-summary-summary');
         expect(markup).not.toContain('composer-queue-summary-notice');

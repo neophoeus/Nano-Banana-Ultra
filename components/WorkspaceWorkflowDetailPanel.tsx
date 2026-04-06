@@ -2,8 +2,8 @@ import React from 'react';
 import { QueuedBatchJob } from '../types';
 import {
     isQueuedBatchJobActive,
+    isQueuedBatchJobAutoImportReady,
     isQueuedBatchJobClosedIssue,
-    isQueuedBatchJobImportReady,
 } from '../utils/queuedBatchJobs';
 import { getWorkflowEntryLabelKey, WorkflowEntry } from '../utils/workflowTimeline';
 import { getTranslation, Language } from '../utils/translations';
@@ -53,7 +53,7 @@ function WorkspaceWorkflowDetailPanel({
 }: WorkspaceWorkflowDetailPanelProps) {
     const t = (key: string) => getTranslation(currentLanguage, key);
     const activeQueueCount = queuedJobs.filter(isQueuedBatchJobActive).length;
-    const importReadyQueueCount = queuedJobs.filter(isQueuedBatchJobImportReady).length;
+    const importReadyQueueCount = queuedJobs.filter(isQueuedBatchJobAutoImportReady).length;
     const issueQueueCount = queuedJobs.filter(isQueuedBatchJobClosedIssue).length;
     const thoughtsBodyText = thoughtsText || thoughtsPlaceholder || null;
     const detailThoughtEntries =

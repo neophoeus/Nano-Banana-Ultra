@@ -10,6 +10,7 @@ type UseQueuedBatchJobsReturn = {
     setQueuedJobs: Dispatch<SetStateAction<QueuedBatchJob[]>>;
     upsertQueuedJob: (job: QueuedBatchJob) => void;
     removeQueuedJob: (localId: string) => void;
+    removeQueuedJobs: (localIds: string[]) => void;
     markQueuedJobImported: (localId: string, importedAt?: number) => void;
 };
 
@@ -37,6 +38,15 @@ export function useQueuedBatchJobs({ initialQueuedJobs }: UseQueuedBatchJobsArgs
         setQueuedJobs((previous) => previous.filter((job) => job.localId !== localId));
     }, []);
 
+    const removeQueuedJobs = useCallback((localIds: string[]) => {
+        if (localIds.length === 0) {
+            return;
+        }
+
+        const localIdSet = new Set(localIds);
+        setQueuedJobs((previous) => previous.filter((job) => !localIdSet.has(job.localId)));
+    }, []);
+
     const markQueuedJobImported = useCallback((localId: string, importedAt: number = Date.now()) => {
         setQueuedJobs((previous) =>
             sortQueuedJobs(
@@ -58,6 +68,7 @@ export function useQueuedBatchJobs({ initialQueuedJobs }: UseQueuedBatchJobsArgs
         setQueuedJobs,
         upsertQueuedJob,
         removeQueuedJob,
+        removeQueuedJobs,
         markQueuedJobImported,
     };
 }

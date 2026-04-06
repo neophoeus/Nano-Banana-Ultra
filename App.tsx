@@ -975,16 +975,20 @@ const App: React.FC = () => {
     const {
         queuedJobs,
         setQueuedJobs,
+        isRecoveringRecentQueuedJobs,
         handleQueueBatchJob,
         handleQueueBatchJobFromEditor,
         handlePollQueuedJob,
         handlePollAllQueuedJobs,
         handleCancelQueuedJob,
+        handleRecoverRecentQueuedJobs,
         handleImportQueuedJob,
         handleImportAllQueuedJobs,
         handleOpenImportedQueuedJob,
         handleOpenLatestImportedQueuedJob,
         handleOpenImportedQueuedHistoryItem,
+        handleClearIssueQueuedJobs,
+        handleClearImportedQueuedJobs,
         handleRemoveQueuedJob,
     } = useQueuedBatchWorkflow({
         initialQueuedJobs: initialWorkspaceSnapshot.queuedJobs || [],
@@ -2333,10 +2337,12 @@ const App: React.FC = () => {
                     queuedJobs={queuedJobs}
                     surface="embedded"
                     queueBatchConversationNotice={queueBatchConversationNotice}
+                    isRecoveringRecentQueuedJobs={isRecoveringRecentQueuedJobs}
                     getLineageActionLabel={getLineageActionLabel}
                     getImportedQueuedResultCount={getImportedQueuedResultCount}
                     getImportedQueuedHistoryItems={getImportedQueuedHistoryItems}
                     activeImportedQueuedHistoryId={currentStageSourceHistoryId}
+                    onRecoverRecentQueuedJobs={handleRecoverRecentQueuedJobs}
                     onImportAllQueuedJobs={handleImportAllQueuedJobs}
                     onPollAllQueuedJobs={handlePollAllQueuedJobs}
                     onPollQueuedJob={handlePollQueuedJob}
@@ -2345,6 +2351,8 @@ const App: React.FC = () => {
                     onOpenImportedQueuedJob={handleOpenImportedQueuedJob}
                     onOpenLatestImportedQueuedJob={handleOpenLatestImportedQueuedJob}
                     onOpenImportedQueuedHistoryItem={handleOpenImportedQueuedHistoryItem}
+                    onClearIssueQueuedJobs={handleClearIssueQueuedJobs}
+                    onClearImportedQueuedJobs={handleClearImportedQueuedJobs}
                     onRemoveQueuedJob={handleRemoveQueuedJob}
                 />
             </WorkspaceDetailModal>
@@ -2548,10 +2556,7 @@ const App: React.FC = () => {
                         </div>
                     </section>
 
-                    <section
-                        data-testid="workspace-actions-composer-row"
-                        className="min-w-0"
-                    >
+                    <section data-testid="workspace-actions-composer-row" className="min-w-0">
                         <ComposerSettingsPanel
                             {...composerSettingsPanelProps}
                             imageToolsPanel={sideToolPanel}

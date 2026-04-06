@@ -28,6 +28,20 @@ describe('serializeBatchJob', () => {
         expect(serialized.hasInlinedResponses).toBe(false);
     });
 
+    it('normalizes model resource names returned by the batch list API', () => {
+        const serialized = serializeBatchJob({
+            name: 'batches/test-job-prefixed-model',
+            displayName: 'Queued image batch',
+            state: 'JOB_STATE_RUNNING',
+            model: 'models/gemini-3.1-flash-image-preview',
+            dest: {
+                inlinedResponses: [],
+            },
+        });
+
+        expect(serialized.model).toBe('gemini-3.1-flash-image-preview');
+    });
+
     it('marks jobs with inline responses as having importable payload candidates', () => {
         const serialized = serializeBatchJob({
             name: 'batches/test-job-inline',
@@ -65,7 +79,168 @@ describe('extractBatchImportResults', () => {
                 status: 'failed',
                 text: 'Narration only',
                 thoughts: 'Need another render pass',
-                error: 'Model returned no image data.',
+                error: 'Model returned text-only content instead of image data.',
+                sessionHints: expect.objectContaining({
+                    textReturned: true,
+                    thoughtsReturned: true,
+                }),
+            }),
+        ]);
+    });
+
+    it('surfaces malformed response diagnostics when a batch entry has no candidates', () => {
+        const results = extractBatchImportResults(
+            {
+                state: 'JOB_STATE_SUCCEEDED',
+                dest: {
+                    inlinedResponses: [{ response: {} }],
+                },
+            },
+            () => ({
+                thoughtSignaturePresent: false,
+                candidateCount: 0,
+                partCount: 0,
+                imagePartCount: 0,
+                extractionIssue: 'missing-candidates',
+            }),
+        );
+
+        expect(results).toEqual([
+            expect.objectContaining({
+                index: 0,
+                status: 'failed',
+                error: 'Model returned a response without candidates.',
+                sessionHints: expect.objectContaining({
+                    extractionIssue: 'missing-candidates',
+                    candidateCount: 0,
+                    partCount: 0,
+                    imagePartCount: 0,
+                }),
+            }),
+        ]);
+    });
+
+    it('surfaces prompt block reasons when the model rejects the prompt before returning candidates', () => {
+        const results = extractBatchImportResults(
+            {
+                state: 'JOB_STATE_SUCCEEDED',
+                dest: {
+                    inlinedResponses: [{ response: {} }],
+                },
+            },
+            () => ({
+                thoughtSignaturePresent: false,
+                promptBlockReason: 'PROHIBITED_CONTENT',
+                candidateCount: 0,
+                partCount: 0,
+                imagePartCount: 0,
+                extractionIssue: 'missing-candidates',
+            }),
+        );
+        expect(results).toEqual([
+            expect.objectContaining({
+                index: 0,
+                status: 'failed',
+                error: 'Prompt was rejected by policy (block reason: PROHIBITED_CONTENT).',
+                sessionHints: expect.objectContaining({
+                    promptBlockReason: 'PROHIBITED_CONTENT',
+                    extractionIssue: 'missing-candidates',
+                }),
+            }),
+        ]);
+    });
+
+    it('surfaces blocked safety categories when the model returns a safety-filtered candidate without images', () => {
+        const results = extractBatchImportResults(
+            {
+                state: 'JOB_STATE_SUCCEEDED',
+                dest: {
+                    inlinedResponses: [{ response: { candidates: [{ content: { parts: [] } }] } }],
+                },
+            },
+            () => ({
+                thoughtSignaturePresent: false,
+                finishReason: 'STOP',
+                candidateCount: 1,
+                partCount: 0,
+                imagePartCount: 0,
+                extractionIssue: 'missing-parts',
+                safetyRatings: [
+                    {
+                        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+                        probability: 'HIGH',
+                    },
+                ],
+            }),
+        );
+
+        expect(results).toEqual([
+            expect.objectContaining({
+                index: 0,
+                status: 'failed',
+                error: 'Model output was blocked by safety filters (sexually explicit).',
+                sessionHints: expect.objectContaining({
+                    blockedSafetyCategories: ['sexually explicit'],
+                    safetyRatingsReturned: 1,
+                    extractionIssue: 'missing-parts',
+                }),
+            }),
+        ]);
+    });
+
+    it('surfaces NO_IMAGE finish reasons when the model completes without any image parts', () => {
+        const results = extractBatchImportResults(
+            {
+                state: 'JOB_STATE_SUCCEEDED',
+                dest: {
+                    inlinedResponses: [{ response: { candidates: [{ content: {} }] } }],
+                },
+            },
+            () => ({
+                thoughtSignaturePresent: false,
+                finishReason: 'NO_IMAGE',
+                candidateCount: 1,
+                partCount: 0,
+                imagePartCount: 0,
+                extractionIssue: 'missing-parts',
+            }),
+        );
+
+        expect(results).toEqual([
+            expect.objectContaining({
+                index: 0,
+                status: 'failed',
+                error: 'Model finished without producing an image (finish reason: NO_IMAGE).',
+                sessionHints: expect.objectContaining({
+                    finishReason: 'NO_IMAGE',
+                    extractionIssue: 'missing-parts',
+                }),
+            }),
+        ]);
+    });
+
+    it('returns explicit per-entry batch errors when no response payload is present', () => {
+        const results = extractBatchImportResults(
+            {
+                state: 'JOB_STATE_SUCCEEDED',
+                dest: {
+                    inlinedResponses: [{ error: { message: 'The batch request entry failed upstream.' } }],
+                },
+            },
+            () => ({
+                thoughtSignaturePresent: false,
+            }),
+        );
+
+        expect(results).toEqual([
+            expect.objectContaining({
+                index: 0,
+                status: 'failed',
+                error: 'The batch request entry failed upstream.',
+                sessionHints: expect.objectContaining({
+                    entryErrorPresent: true,
+                    entryErrorMessage: 'The batch request entry failed upstream.',
+                }),
             }),
         ]);
     });

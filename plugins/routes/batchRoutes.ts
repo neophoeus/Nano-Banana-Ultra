@@ -37,6 +37,39 @@ type RegisterBatchRoutesArgs = {
 };
 
 export function registerBatchRoutes(server: any, { getAIClient, resolvedDir }: RegisterBatchRoutesArgs): void {
+    server.use('/api/batches/list', async (req: any, res: any) => {
+        if (req.method !== 'POST') {
+            sendJson(res, 405, { error: 'Method not allowed' });
+            return;
+        }
+
+        try {
+            const ai = getAIClient();
+            const body = await readJsonBody<{ pageSize?: number }>(req);
+            const pageSize = Math.max(1, Math.min(100, Math.floor(Number(body.pageSize) || 50)));
+            const pager = await ai.batches.list({ config: { pageSize } });
+            const jobs: ReturnType<typeof serializeBatchJob>[] = [];
+
+            for await (const batchJob of pager) {
+                const serializedJob = serializeBatchJob(batchJob);
+                if (!VALID_IMAGE_MODELS.has(serializedJob.model)) {
+                    continue;
+                }
+
+                jobs.push(serializedJob);
+                if (jobs.length >= pageSize) {
+                    break;
+                }
+            }
+
+            sendJson(res, 200, { jobs });
+        } catch (error: any) {
+            sendClassifiedApiError(res, '/api/batches/list', error, 'Failed to list recent batch jobs', {
+                defaultStatus: 502,
+            });
+        }
+    });
+
     server.use('/api/batches/create', async (req: any, res: any) => {
         if (req.method !== 'POST') {
             sendJson(res, 405, { error: 'Method not allowed' });

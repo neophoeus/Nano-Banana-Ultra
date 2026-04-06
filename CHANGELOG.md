@@ -4,6 +4,31 @@ This changelog is compiled from the repository's local git tags plus the publish
 
 ## Unreleased
 
+## v3.2.7 - 2026-04-06
+
+- Release title: Nano Banana Ultra 3.2.7 - Queued Batch Recovery, Retry & Cleanup
+- Release prep summary:
+    - Queued batch import extraction hardening:
+        - broadened queued-batch result extraction so the importer now accepts wrapped batch responses, snake_case payload fields such as `inline_data` / `thought_signature`, later-candidate image parts, and wrapped grounding metadata instead of assuming one strict happy-path shape
+        - refined queued-batch import diagnostics so backend results now distinguish malformed responses, prompt-level policy block reasons, missing candidates, missing parts, explicit per-entry batch errors, and safety-style finish reasons, while the workspace import flow preserves partial-success imports, logs skipped failed entries, and persists the first concrete import failure summary back onto the queued job instead of only showing a generic no-image notice
+        - follow-up reload UX hardening: succeeded jobs that previously landed in `extraction-failure` now remain manually re-importable after workspace restore or reload, and manual `Check status` refreshes always surface a visible status/error notification instead of only updating logs when the remote state has not changed
+        - follow-up runtime diagnostics alignment: queued-batch imports now reuse the interactive image path's safety-category interpretation so safety-filtered non-image responses can surface concrete blocked categories such as `sexually explicit` instead of stopping at generic `no image data` / `candidate without content parts` errors when the batch payload includes safety ratings
+        - follow-up live-payload diagnostics alignment: text-only batch responses now surface `Model returned text-only content instead of image data.`, and empty `finishReason: NO_IMAGE` candidates now surface `Model finished without producing an image (finish reason: NO_IMAGE).`, matching the real payload shapes returned by the two 2026-04-05 Nano Banana 2 jobs investigated on 2026-04-06
+        - added focused regression coverage for `extractGeneratedContent(...)`, `extractBatchImportResults(...)`, `QueuedBatchJobsPanel`, and `useQueuedBatchWorkflow(...)`; local focused Vitest, production build, and queued-batch restore Playwright checks passed, and real runtime batch import verification is still in progress
+
+    - Queued batch recovery and recent-list truthfulness:
+        - added a formal recent-job recovery path around `/api/batches/list`, `listQueuedBatchJobs(...)`, and `handleRecoverRecentQueuedJobs(...)` so deleted local queue entries can be restored from recent remote Gemini Batch API jobs instead of being lost once the local tracked list is emptied
+        - normalized `ai.batches.list()` model names such as `models/gemini-3.1-flash-image-preview` before image-model filtering, fixing the false `No additional recent remote batch jobs were found.` result that was hiding valid remote jobs from the recovery flow
+        - upgraded recovery to hydrate each listed job with `get` details before upserting it locally, because Batch API list summaries alone do not expose enough payload detail to determine truthful import readiness for succeeded image jobs
+        - kept the queue modal entry reachable even at `0 tracked`, added `Recover recent batch jobs` actions in both the populated and empty queue states, refreshed already tracked recovered jobs on later recover passes, and changed aggregate `ready to import` / `Import ready results` behavior to exclude jobs already confirmed as `extraction-failure` while still preserving per-job manual `Import` retries
+        - manual runtime verification on 2026-04-06 recovered 19 remote jobs into the live queue, surfaced truthful expired / cancelled / no-image outcomes instead of silently dropping them, imported 1 real queued image result, and recorded concrete extraction-failure outcomes such as text-only content, `finish reason: NO_IMAGE`, `candidate without content parts`, and `no image data`
+
+    - Queued batch retry and cleanup UX follow-up:
+        - reclassified succeeded queued jobs with `importDiagnostic: extraction-failure` as warning-state retry targets rather than normal green import actions, so the queue panel now shows `Retry import` for previously non-importable payloads while still blocking them from bulk `Import ready results`
+        - made `no-payload` results explicitly non-importable in the per-job UI through an `Import unavailable` action state, while preserving the existing inline diagnostic that the batch completed without inline payload
+        - added queue-level `Clear non-importable` and `Clear imported` actions that remove local queue tracking in bulk without touching remote batch jobs or already imported history cards, and wired focused workflow notifications/logs so cleanup remains visible and reversible only through future recovery
+        - revalidated the follow-up with focused Vitest at `5 files / 46 tests`, `npm run build`, and live browser spot-checking against the recovered 19-job queue on 2026-04-06
+
 ## v3.2.6 - 2026-04-04
 
 - Release title: Nano Banana Ultra 3.2.6 - Composer Shell Refinement & Restore Hardening

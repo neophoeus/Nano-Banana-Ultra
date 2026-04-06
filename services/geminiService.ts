@@ -358,6 +358,16 @@ export const submitQueuedBatchJob = async (options: SubmitQueuedBatchOptions): P
     return response.job;
 };
 
+export const listQueuedBatchJobs = async (pageSize: number = 50): Promise<RemoteQueuedBatchJob[]> => {
+    const response = await fetchJson<{ jobs: RemoteQueuedBatchJob[] }>('/api/batches/list', {
+        method: 'POST',
+        headers: jsonHeaders,
+        body: JSON.stringify({ pageSize }),
+    });
+
+    return Array.isArray(response.jobs) ? response.jobs : [];
+};
+
 export const getQueuedBatchJob = async (name: string): Promise<RemoteQueuedBatchJob> => {
     const response = await fetchJson<{ job: RemoteQueuedBatchJob }>('/api/batches/get', {
         method: 'POST',

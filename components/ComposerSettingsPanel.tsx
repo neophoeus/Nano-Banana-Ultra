@@ -21,8 +21,8 @@ import {
 } from '../types';
 import {
     isQueuedBatchJobActive,
+    isQueuedBatchJobAutoImportReady,
     isQueuedBatchJobClosedIssue,
-    isQueuedBatchJobImportReady,
 } from '../utils/queuedBatchJobs';
 
 export type ComposerSettingsPanelProps = {
@@ -577,7 +577,7 @@ function ComposerSettingsPanel({
         t('composerAdvancedGroundingGuideProGoogle'),
     ];
     const runningQueueCount = queuedJobs.filter(isQueuedBatchJobActive).length;
-    const importReadyQueueCount = queuedJobs.filter(isQueuedBatchJobImportReady).length;
+    const importReadyQueueCount = queuedJobs.filter(isQueuedBatchJobAutoImportReady).length;
     const issueQueueCount = queuedJobs.filter(isQueuedBatchJobClosedIssue).length;
     const trackedQueueCount = queuedJobs.length;
     const settledQueueCount = trackedQueueCount - runningQueueCount;
@@ -803,49 +803,47 @@ function ComposerSettingsPanel({
                     </div>
                 </div>
             </div>
-            {trackedQueueCount > 0 ? (
-                <button
-                    type="button"
-                    aria-haspopup="dialog"
-                    data-testid="composer-queue-status-button"
-                    onClick={onOpenQueuedBatchJobs}
-                    className="nbu-inline-panel mt-1.5 flex w-full items-center gap-1.5 px-3 py-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
-                >
-                    <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                                {t('queuedBatchJobsTitle')}
-                            </span>
-                            <span className="nbu-chip">
-                                {t('queuedBatchJobsTrackedCount').replace('{0}', trackedQueueCount.toString())}
-                            </span>
-                        </div>
-                        <div
-                            data-testid="composer-queue-status-progress"
-                            className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-slate-800/80"
-                        >
-                            <div
-                                className="h-full rounded-full bg-[linear-gradient(90deg,rgba(245,158,11,0.95),rgba(16,185,129,0.95))] transition-all duration-300"
-                                style={{ width: `${queueProgressPercent}%` }}
-                            />
-                        </div>
-                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-                            <span className="nbu-chip">
-                                {t('queuedBatchJobsActiveCount').replace('{0}', runningQueueCount.toString())}
-                            </span>
-                            <span className="nbu-chip">
-                                {t('queuedBatchJobsImportReadyCount').replace('{0}', importReadyQueueCount.toString())}
-                            </span>
-                            <span className="nbu-chip">
-                                {t('queuedBatchJobsClosedIssuesCount').replace('{0}', issueQueueCount.toString())}
-                            </span>
-                        </div>
+            <button
+                type="button"
+                aria-haspopup="dialog"
+                data-testid="composer-queue-status-button"
+                onClick={onOpenQueuedBatchJobs}
+                className="nbu-inline-panel mt-1.5 flex w-full items-center gap-1.5 px-3 py-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
+            >
+                <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                            {t('queuedBatchJobsTitle')}
+                        </span>
+                        <span className="nbu-chip">
+                            {t('queuedBatchJobsTrackedCount').replace('{0}', trackedQueueCount.toString())}
+                        </span>
                     </div>
-                    <span className="nbu-control-button shrink-0 px-3 py-1.5 text-[11px] font-semibold">
-                        {t('workspacePanelViewDetails')}
-                    </span>
-                </button>
-            ) : null}
+                    <div
+                        data-testid="composer-queue-status-progress"
+                        className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-slate-800/80"
+                    >
+                        <div
+                            className="h-full rounded-full bg-[linear-gradient(90deg,rgba(245,158,11,0.95),rgba(16,185,129,0.95))] transition-all duration-300"
+                            style={{ width: `${queueProgressPercent}%` }}
+                        />
+                    </div>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                        <span className="nbu-chip">
+                            {t('queuedBatchJobsActiveCount').replace('{0}', runningQueueCount.toString())}
+                        </span>
+                        <span className="nbu-chip">
+                            {t('queuedBatchJobsImportReadyCount').replace('{0}', importReadyQueueCount.toString())}
+                        </span>
+                        <span className="nbu-chip">
+                            {t('queuedBatchJobsClosedIssuesCount').replace('{0}', issueQueueCount.toString())}
+                        </span>
+                    </div>
+                </div>
+                <span className="nbu-control-button shrink-0 px-3 py-1.5 text-[11px] font-semibold">
+                    {t('workspacePanelViewDetails')}
+                </span>
+            </button>
         </section>
     );
 }

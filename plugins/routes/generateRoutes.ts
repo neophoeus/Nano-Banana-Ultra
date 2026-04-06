@@ -56,6 +56,95 @@ type RegisterGenerateRoutesArgs = {
     resolvedDir: string;
 };
 
+type NormalizedGeneratedResponsePart = {
+    text?: string;
+    thought?: boolean;
+    thoughtSignature?: string;
+    inlineData?: {
+        data: string;
+        mimeType: string;
+    };
+};
+
+type NormalizedGeneratedResponseCandidate = {
+    parts: NormalizedGeneratedResponsePart[];
+    finishReason?: string;
+    safetyRatings: any[];
+};
+
+function unwrapGeneratedResponse(response: any): any {
+    if (response?.response && typeof response.response === 'object') {
+        return response.response;
+    }
+
+    return response;
+}
+
+function resolveGeneratedResponseCandidates(response: any): any[] {
+    const unwrappedResponse = unwrapGeneratedResponse(response);
+    return Array.isArray(unwrappedResponse?.candidates) ? unwrappedResponse.candidates : [];
+}
+
+function resolveGeneratedResponsePromptBlockReason(response: any): string | undefined {
+    const unwrappedResponse = unwrapGeneratedResponse(response);
+    const promptFeedback = unwrappedResponse?.promptFeedback ?? unwrappedResponse?.prompt_feedback;
+    const blockReason = promptFeedback?.blockReason ?? promptFeedback?.block_reason;
+
+    return typeof blockReason === 'string' && blockReason.length > 0 && blockReason !== 'BLOCK_REASON_UNSPECIFIED'
+        ? blockReason
+        : undefined;
+}
+
+function normalizeGeneratedResponsePart(part: any): NormalizedGeneratedResponsePart {
+    const inlineData = part?.inlineData ?? part?.inline_data;
+    const data = typeof inlineData?.data === 'string' && inlineData.data.length > 0 ? inlineData.data : undefined;
+    const mimeType =
+        typeof inlineData?.mimeType === 'string' && inlineData.mimeType.length > 0
+            ? inlineData.mimeType
+            : typeof inlineData?.mime_type === 'string' && inlineData.mime_type.length > 0
+              ? inlineData.mime_type
+              : 'image/png';
+    const thoughtSignature =
+        typeof part?.thoughtSignature === 'string' && part.thoughtSignature.length > 0
+            ? part.thoughtSignature
+            : typeof part?.thought_signature === 'string' && part.thought_signature.length > 0
+              ? part.thought_signature
+              : undefined;
+
+    return {
+        text: typeof part?.text === 'string' ? part.text : undefined,
+        thought: part?.thought === true,
+        thoughtSignature,
+        inlineData: data
+            ? {
+                  data,
+                  mimeType,
+              }
+            : undefined,
+    };
+}
+
+function normalizeGeneratedResponseCandidate(candidate: any): NormalizedGeneratedResponseCandidate {
+    const parts = Array.isArray(candidate?.content?.parts)
+        ? candidate.content.parts.map((part: any) => normalizeGeneratedResponsePart(part))
+        : [];
+
+    return {
+        parts,
+        finishReason:
+            typeof candidate?.finishReason === 'string'
+                ? candidate.finishReason
+                : typeof candidate?.finish_reason === 'string'
+                  ? candidate.finish_reason
+                  : undefined,
+        safetyRatings: Array.isArray(candidate?.safetyRatings)
+            ? candidate.safetyRatings
+            : Array.isArray(candidate?.safety_ratings)
+              ? candidate.safety_ratings
+              : [],
+    };
+}
+
 export function extractGeneratedContent(response: any): {
     imageUrl?: string;
     text?: string;
@@ -64,11 +153,20 @@ export function extractGeneratedContent(response: any): {
     imageDimensions?: ImageDimensions | null;
     thoughtSignaturePresent: boolean;
     thoughtSignature?: string;
+    promptBlockReason?: string;
     finishReason?: string;
     safetyRatings?: any[];
+    candidateCount?: number;
+    partCount?: number;
+    imagePartCount?: number;
+    extractionIssue?: 'missing-candidates' | 'missing-parts' | 'no-image-data';
 } {
-    const candidate = response.candidates?.[0];
-    const parts = candidate?.content?.parts ?? [];
+    const candidates = resolveGeneratedResponseCandidates(response).map((candidate: any) =>
+        normalizeGeneratedResponseCandidate(candidate),
+    );
+    const primaryCandidate = candidates[0];
+    const parts = primaryCandidate?.parts ?? [];
+    const promptBlockReason = resolveGeneratedResponsePromptBlockReason(response);
     const textParts: string[] = [];
     const thoughtParts: string[] = [];
     let thoughtSignaturePresent = false;
@@ -77,11 +175,18 @@ export function extractGeneratedContent(response: any): {
         imageUrl: string;
         imageMimeType: string;
         imageDimensions: ImageDimensions | null;
+        candidateIndex: number;
         partIndex: number;
     }> = [];
+    let totalPartCount = 0;
 
-    parts.forEach((part: any, partIndex: number) => {
-        if (part.inlineData?.data) {
+    candidates.forEach((candidate, candidateIndex) => {
+        totalPartCount += candidate.parts.length;
+        candidate.parts.forEach((part, partIndex) => {
+            if (!part.inlineData?.data) {
+                return;
+            }
+
             const mimeType = part.inlineData.mimeType || 'image/png';
             if (!mimeType.startsWith('image/')) {
                 return;
@@ -91,9 +196,13 @@ export function extractGeneratedContent(response: any): {
                 imageUrl: `data:${mimeType};base64,${part.inlineData.data}`,
                 imageMimeType: mimeType,
                 imageDimensions: extractImageDimensionsFromBase64(part.inlineData.data, mimeType),
+                candidateIndex,
                 partIndex,
             });
-        }
+        });
+    });
+
+    parts.forEach((part: any, partIndex: number) => {
         if (typeof part.thoughtSignature === 'string' && part.thoughtSignature.length > 0) {
             thoughtSignaturePresent = true;
             thoughtSignature = thoughtSignature || part.thoughtSignature;
@@ -112,6 +221,7 @@ export function extractGeneratedContent(response: any): {
               imageUrl: string;
               imageMimeType: string;
               imageDimensions: ImageDimensions | null;
+              candidateIndex: number;
               partIndex: number;
           }
         | undefined
@@ -125,12 +235,28 @@ export function extractGeneratedContent(response: any): {
         if (candidateArea > bestArea) {
             return candidate;
         }
-        if (candidateArea === bestArea && candidate.partIndex > bestCandidate.partIndex) {
+        if (candidateArea === bestArea && candidate.candidateIndex > bestCandidate.candidateIndex) {
+            return candidate;
+        }
+        if (
+            candidateArea === bestArea &&
+            candidate.candidateIndex === bestCandidate.candidateIndex &&
+            candidate.partIndex > bestCandidate.partIndex
+        ) {
             return candidate;
         }
 
         return bestCandidate;
     }, undefined);
+
+    const extractionIssue =
+        candidates.length === 0
+            ? 'missing-candidates'
+            : totalPartCount === 0
+              ? 'missing-parts'
+              : imageCandidates.length === 0
+                ? 'no-image-data'
+                : undefined;
 
     return {
         imageUrl: selectedImage?.imageUrl,
@@ -140,8 +266,13 @@ export function extractGeneratedContent(response: any): {
         imageDimensions: selectedImage?.imageDimensions,
         thoughtSignaturePresent,
         thoughtSignature,
-        finishReason: candidate?.finishReason,
-        safetyRatings: candidate?.safetyRatings ?? [],
+        promptBlockReason,
+        finishReason: primaryCandidate?.finishReason,
+        safetyRatings: primaryCandidate?.safetyRatings ?? [],
+        candidateCount: candidates.length,
+        partCount: totalPartCount,
+        imagePartCount: imageCandidates.length,
+        extractionIssue,
     };
 }
 

@@ -53,6 +53,13 @@ type ExtractedGeneratedContent = {
     imageDimensions?: { width: number; height: number } | null;
     thoughtSignaturePresent: boolean;
     thoughtSignature?: string;
+    promptBlockReason?: string;
+    finishReason?: string;
+    safetyRatings?: any[];
+    candidateCount?: number;
+    partCount?: number;
+    imagePartCount?: number;
+    extractionIssue?: 'missing-candidates' | 'missing-parts' | 'no-image-data';
 };
 
 export function resolveBatchJobStateName(state: unknown): string {
@@ -69,6 +76,15 @@ export function resolveBatchJobStateName(state: unknown): string {
     }
 
     return 'JOB_STATE_PENDING';
+}
+
+function normalizeBatchJobModelName(model: unknown): string {
+    const rawModel = String(model || '').trim();
+    if (!rawModel) {
+        return '';
+    }
+
+    return rawModel.replace(/^models\//, '');
 }
 
 function parseBatchStatCount(value: unknown): number {
@@ -113,7 +129,7 @@ export function serializeBatchJob(batchJob: any): BatchJobResponsePayload {
         name: String(batchJob?.name || ''),
         displayName: String(batchJob?.displayName || batchJob?.name || 'Queued Batch Job'),
         state: resolveBatchJobStateName(batchJob?.state),
-        model: String(batchJob?.model || ''),
+        model: normalizeBatchJobModelName(batchJob?.model),
         createTime: typeof batchJob?.createTime === 'string' ? batchJob.createTime : undefined,
         updateTime: typeof batchJob?.updateTime === 'string' ? batchJob.updateTime : undefined,
         startTime: typeof batchJob?.startTime === 'string' ? batchJob.startTime : undefined,
@@ -123,6 +139,113 @@ export function serializeBatchJob(batchJob: any): BatchJobResponsePayload {
         hasInlinedResponses:
             Array.isArray(batchJob?.dest?.inlinedResponses) && batchJob.dest.inlinedResponses.length > 0,
     };
+}
+
+function readBatchJobErrorMessage(error: any): string | undefined {
+    if (typeof error === 'string' && error.trim().length > 0) {
+        return error.trim();
+    }
+    if (typeof error?.message === 'string' && error.message.trim().length > 0) {
+        return error.message.trim();
+    }
+    if (typeof error?.details === 'string' && error.details.trim().length > 0) {
+        return error.details.trim();
+    }
+
+    return undefined;
+}
+
+function getBlockedSafetyCategories(safetyRatings: unknown): string[] {
+    if (!Array.isArray(safetyRatings)) {
+        return [];
+    }
+
+    return safetyRatings
+        .filter(
+            (rating: any) =>
+                rating &&
+                typeof rating === 'object' &&
+                (rating.probability === 'HIGH' || rating.probability === 'MEDIUM' || rating.blocked === true),
+        )
+        .map((rating: any) =>
+            String(rating.category ?? 'UNKNOWN')
+                .replace('HARM_CATEGORY_', '')
+                .replace(/_/g, ' ')
+                .toLowerCase(),
+        )
+        .filter((category, index, categories) => category.length > 0 && categories.indexOf(category) === index);
+}
+
+function hasReturnedTextContent(extracted: ExtractedGeneratedContent): boolean {
+    return [extracted.text, extracted.thoughts].some(
+        (value) => typeof value === 'string' && value.trim().length > 0,
+    );
+}
+
+function resolveBatchStructuredOutputMode(entry: any) {
+    return normalizeStructuredOutputMode(
+        entry?.request?.requestBody?.structuredOutputMode ||
+            entry?.request?.requestBody?.structured_output_mode ||
+            entry?.request?.request_body?.structuredOutputMode ||
+            entry?.request?.request_body?.structured_output_mode ||
+            entry?.request?.structuredOutputMode ||
+            entry?.request?.structured_output_mode,
+    );
+}
+
+function resolveGroundingMetadataReturned(response: any, groundingDetails: ReturnType<typeof extractGroundingDetails>) {
+    const candidate = response?.candidates?.[0] ?? response?.response?.candidates?.[0];
+    return (
+        Boolean(candidate?.groundingMetadata || candidate?.grounding_metadata) ||
+        groundingDetails.sources.length > 0 ||
+        groundingDetails.webQueries.length > 0 ||
+        groundingDetails.imageQueries.length > 0 ||
+        groundingDetails.supports.length > 0 ||
+        groundingDetails.searchEntryPointAvailable
+    );
+}
+
+function resolveBatchExtractionFailureMessage(entry: any, extracted: ExtractedGeneratedContent): string {
+    const explicitEntryError =
+        readBatchJobErrorMessage(entry?.error) || readBatchJobErrorMessage(entry?.response?.error);
+    const blockedSafetyCategories = getBlockedSafetyCategories(extracted.safetyRatings);
+    const returnedTextContent = hasReturnedTextContent(extracted);
+
+    if (explicitEntryError) {
+        return explicitEntryError;
+    }
+
+    if (typeof extracted.promptBlockReason === 'string' && extracted.promptBlockReason.length > 0) {
+        return `Prompt was rejected by policy (block reason: ${extracted.promptBlockReason}).`;
+    }
+    if (blockedSafetyCategories.length > 0) {
+        return `Model output was blocked by safety filters (${blockedSafetyCategories.join(', ')}).`;
+    }
+    if (returnedTextContent) {
+        return 'Model returned text-only content instead of image data.';
+    }
+    if (extracted.finishReason === 'NO_IMAGE') {
+        return 'Model finished without producing an image (finish reason: NO_IMAGE).';
+    }
+    if (extracted.finishReason === 'SAFETY' || extracted.finishReason === 'BLOCKED') {
+        return 'Model output was blocked by safety filters.';
+    }
+    if (extracted.extractionIssue === 'missing-candidates') {
+        return 'Model returned a response without candidates.';
+    }
+    if (extracted.extractionIssue === 'missing-parts') {
+        return 'Model returned a candidate without content parts.';
+    }
+    if (
+        typeof extracted.finishReason === 'string' &&
+        extracted.finishReason.length > 0 &&
+        extracted.finishReason !== 'STOP' &&
+        extracted.finishReason !== 'FINISH_REASON_UNSPECIFIED'
+    ) {
+        return `Model returned no image data (finish reason: ${extracted.finishReason}).`;
+    }
+
+    return 'Model returned no image data.';
 }
 
 export function extractBatchImportResults(
@@ -138,11 +261,15 @@ export function extractBatchImportResults(
     return responses.map((entry: any, index: number) => {
         if (entry?.response) {
             const extracted = extractGeneratedContent(entry.response);
-            const structuredOutputMode = normalizeStructuredOutputMode(
-                entry?.request?.requestBody?.structuredOutputMode || entry?.request?.structuredOutputMode,
-            );
+            const structuredOutputMode = resolveBatchStructuredOutputMode(entry);
             const structuredData = parseStructuredOutputText(structuredOutputMode, extracted.text);
             const groundingDetails = extractGroundingDetails(entry.response);
+            const blockedSafetyCategories = getBlockedSafetyCategories(extracted.safetyRatings);
+            const extractionFailureMessage = extracted.imageUrl
+                ? undefined
+                : resolveBatchExtractionFailureMessage(entry, extracted);
+            const entryErrorMessage =
+                readBatchJobErrorMessage(entry?.error) || readBatchJobErrorMessage(entry?.response?.error);
             return {
                 index,
                 status: extracted.imageUrl ? 'success' : 'failed',
@@ -164,10 +291,21 @@ export function extractBatchImportResults(
                     sources: groundingDetails.sources,
                 },
                 sessionHints: {
-                    groundingMetadataReturned: Boolean(entry.response?.candidates?.[0]?.groundingMetadata),
+                    groundingMetadataReturned: resolveGroundingMetadataReturned(entry.response, groundingDetails),
+                    textReturned: Boolean(extracted.text),
                     thoughtsReturned: Boolean(extracted.thoughts),
                     thoughtSignatureReturned: extracted.thoughtSignaturePresent,
                     thoughtSignature: extracted.thoughtSignature,
+                    promptBlockReason: extracted.promptBlockReason,
+                    finishReason: extracted.finishReason,
+                    safetyRatingsReturned: Array.isArray(extracted.safetyRatings) ? extracted.safetyRatings.length : 0,
+                    blockedSafetyCategories,
+                    extractionIssue: extracted.extractionIssue,
+                    candidateCount: extracted.candidateCount ?? 0,
+                    partCount: extracted.partCount ?? 0,
+                    imagePartCount: extracted.imagePartCount ?? 0,
+                    entryErrorPresent: Boolean(entryErrorMessage),
+                    entryErrorMessage,
                     actualImageWidth: extracted.imageDimensions?.width,
                     actualImageHeight: extracted.imageDimensions?.height,
                     actualImageMimeType: extracted.imageMimeType,
@@ -181,14 +319,20 @@ export function extractBatchImportResults(
                     imageQueriesReturned: groundingDetails.imageQueries.length,
                     groundingSupportsReturned: groundingDetails.supports.length,
                 },
-                error: extracted.imageUrl ? undefined : 'Model returned no image data.',
+                error: extractionFailureMessage,
             };
         }
+
+        const entryErrorMessage = readBatchJobErrorMessage(entry?.error);
 
         return {
             index,
             status: 'failed',
-            error: entry?.error?.message || entry?.error?.details || 'Batch request failed.',
+            sessionHints: {
+                entryErrorPresent: Boolean(entryErrorMessage),
+                entryErrorMessage,
+            },
+            error: entryErrorMessage || 'Batch request failed.',
         };
     });
 }

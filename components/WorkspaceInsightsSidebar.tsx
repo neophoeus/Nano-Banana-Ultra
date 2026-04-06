@@ -4,8 +4,8 @@ import { getTranslation, Language } from '../utils/translations';
 import { BranchSummary } from '../utils/lineage';
 import {
     isQueuedBatchJobActive,
+    isQueuedBatchJobAutoImportReady,
     isQueuedBatchJobClosedIssue,
-    isQueuedBatchJobImportReady,
 } from '../utils/queuedBatchJobs';
 import { getWorkflowEntryLabelKey } from '../utils/workflowTimeline';
 import InfoTooltip from './InfoTooltip';
@@ -160,7 +160,7 @@ function WorkspaceInsightsSidebar({
         ? `${sectionCardClassName} space-y-2.5`
         : `${sectionCardClassName} space-y-3`;
     const activeQueueCount = queuedJobs.filter(isQueuedBatchJobActive).length;
-    const importReadyQueueCount = queuedJobs.filter(isQueuedBatchJobImportReady).length;
+    const importReadyQueueCount = queuedJobs.filter(isQueuedBatchJobAutoImportReady).length;
     const issueQueueCount = queuedJobs.filter(isQueuedBatchJobClosedIssue).length;
     const hasQueueWorkflowSummary = activeQueueCount > 0 || issueQueueCount > 0 || importReadyQueueCount > 0;
     const workflowStatusLabel = latestWorkflowEntry ? t(getWorkflowEntryLabelKey(latestWorkflowEntry)) : null;
