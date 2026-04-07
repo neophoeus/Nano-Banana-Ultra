@@ -361,11 +361,43 @@ describe('workspacePersistence', () => {
         const uploadedReference = persisted.stagedAssets.find((asset) => asset.id === 'uploaded-reference');
 
         expect(unsavedTurn?.url).toBe('');
-        expect(savedTurn?.url).toBe('/api/load-image?filename=saved-turn.png');
+        expect(savedTurn?.url).toBe('');
         expect(generatedStage?.url).toBe('');
         expect(uploadedReference?.url).toBe(uploadedReferenceUrl);
         expect(rawSnapshot).not.toContain('UNSAVEDHISTORYPAYLOAD');
         expect(rawSnapshot).not.toContain('UNSAVEDSTAGEPAYLOAD');
+    });
+
+    it('preserves inline thumbnail fallbacks for saved history items when no thumbnail file exists yet', () => {
+        saveWorkspaceSnapshot({
+            ...EMPTY_WORKSPACE_SNAPSHOT,
+            history: [
+                {
+                    id: 'saved-inline-thumb-turn',
+                    url: 'data:image/jpeg;base64,INLINE_THUMBNAIL_PAYLOAD',
+                    savedFilename: 'saved-inline-thumb-turn.png',
+                    thumbnailInline: true,
+                    prompt: 'Saved turn with inline thumbnail fallback',
+                    aspectRatio: '1:1',
+                    size: '1K',
+                    style: 'None',
+                    model: 'gemini-3.1-flash-image-preview',
+                    createdAt: 3,
+                },
+            ],
+        });
+
+        const rawSnapshot = localStorage.getItem(WORKSPACE_SNAPSHOT_STORAGE_KEY);
+        expect(rawSnapshot).toBeTruthy();
+
+        const persisted = JSON.parse(rawSnapshot || '{}') as WorkspacePersistenceSnapshot;
+        expect(persisted.history[0]).toEqual(
+            expect.objectContaining({
+                url: 'data:image/jpeg;base64,INLINE_THUMBNAIL_PAYLOAD',
+                thumbnailInline: true,
+                savedFilename: 'saved-inline-thumb-turn.png',
+            }),
+        );
     });
 
     it('omits unsaved inline generated payloads from shared snapshot uploads', async () => {
@@ -743,6 +775,7 @@ describe('workspacePersistence', () => {
                     id: 'kept-turn',
                     url: 'data:image/jpeg;base64,thumb-inline',
                     savedFilename: 'kept-turn.jpg',
+                    thumbnailSavedFilename: 'kept-turn-thumb.jpg',
                     prompt: 'Keep the history item intact unless quota fallback is needed',
                     aspectRatio: '1:1',
                     size: '2K',
@@ -763,7 +796,40 @@ describe('workspacePersistence', () => {
         const stored = JSON.parse(localStorage.getItem(WORKSPACE_SNAPSHOT_STORAGE_KEY) || 'null');
         expect(stored.viewState.generatedImageUrls).toEqual(['https://example.com/persistable-stage.png']);
         expect(stored.viewState.selectedImageIndex).toBe(0);
-        expect(stored.history[0].url).toBe('/api/load-image?filename=kept-turn.jpg');
+        expect(stored.history[0].url).toBe('/api/load-image?filename=kept-turn-thumb.jpg');
+    });
+
+    it('keeps legacy history items on placeholders after restore while still reopening the selected stage from the original file', () => {
+        localStorage.setItem(
+            WORKSPACE_SNAPSHOT_STORAGE_KEY,
+            JSON.stringify({
+                ...EMPTY_WORKSPACE_SNAPSHOT,
+                history: [
+                    {
+                        id: 'legacy-turn',
+                        url: '/api/load-image?filename=legacy-turn.png',
+                        savedFilename: 'legacy-turn.png',
+                        prompt: 'Legacy turn without thumbnail',
+                        aspectRatio: '1:1',
+                        size: '1K',
+                        style: 'None',
+                        model: 'gemini-3.1-flash-image-preview',
+                        createdAt: 100,
+                    },
+                ],
+                viewState: {
+                    generatedImageUrls: [],
+                    selectedImageIndex: 0,
+                    selectedHistoryId: 'legacy-turn',
+                },
+            } satisfies WorkspacePersistenceSnapshot),
+        );
+
+        const restored = loadWorkspaceSnapshot();
+
+        expect(restored.history[0].url).toBe('');
+        expect(restored.viewState.generatedImageUrls).toEqual(['/api/load-image?filename=legacy-turn.png']);
+        expect(restored.viewState.selectedHistoryId).toBe('legacy-turn');
     });
 
     it('uses saved output links for staged assets when restoring the stage from local snapshots', () => {

@@ -16,6 +16,7 @@ type WorkspaceViewerOverlayProps = {
     currentLanguage: Language;
     isOpen: boolean;
     activeViewerImage: string;
+    activeViewerIsFresh?: boolean;
     generatedImageCount: number;
     prompt: string;
     aspectRatio: string;
@@ -43,6 +44,7 @@ export default function WorkspaceViewerOverlay({
     currentLanguage,
     isOpen,
     activeViewerImage,
+    activeViewerIsFresh = false,
     generatedImageCount,
     prompt,
     aspectRatio,
@@ -128,6 +130,15 @@ export default function WorkspaceViewerOverlay({
 
                 <div className="grid min-h-0 flex-1 gap-0 overflow-hidden rounded-[28px] border border-white/10 bg-[#05070b] shadow-2xl lg:grid-cols-[minmax(0,1fr)_320px]">
                     <div className="relative flex min-h-0 items-center justify-center bg-[radial-gradient(circle_at_center,_rgba(245,158,11,0.15),_transparent_35%),linear-gradient(180deg,_#0c1118_0%,_#040608_100%)] p-3">
+                        {activeViewerIsFresh ? (
+                            <span
+                                data-testid="workspace-viewer-new-badge"
+                                className="absolute left-3 top-3 z-20 inline-flex items-center rounded-full border border-emerald-300/70 bg-emerald-400/16 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-emerald-100 shadow-[0_0_18px_rgba(34,197,94,0.35)]"
+                            >
+                                {t('workspaceViewerNewBadge')}
+                            </span>
+                        ) : null}
+
                         {generatedImageCount > 1 && (
                             <>
                                 <button

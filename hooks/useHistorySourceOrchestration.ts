@@ -9,7 +9,7 @@ import {
     WorkspaceConversationState,
     WorkspaceSessionState,
 } from '../types';
-import { loadFullImage } from '../utils/imageSaveUtils';
+import { loadFullImage, persistHistoryThumbnail } from '../utils/imageSaveUtils';
 import { encodeWorkflowMessage } from '../utils/workflowTimeline';
 import {
     EMPTY_WORKSPACE_CONVERSATION_STATE,
@@ -64,6 +64,7 @@ type UseHistorySourceOrchestrationArgs = {
     setPendingProvenanceContext: Dispatch<SetStateAction<PendingProvenanceContext | null>>;
     setConversationState: Dispatch<SetStateAction<WorkspaceConversationState>>;
     setBranchContinuationSourceByBranchOriginId: Dispatch<SetStateAction<Record<string, string>>>;
+    setHistory: Dispatch<SetStateAction<GeneratedImageType[]>>;
     setEditingImageSource: Dispatch<SetStateAction<string | null>>;
     setGeneratedImageUrls: Dispatch<SetStateAction<string[]>>;
     setSelectedImageIndex: Dispatch<SetStateAction<number>>;
@@ -82,6 +83,7 @@ type UseHistorySourceOrchestrationArgs = {
     showNotification: (message: string, type?: 'info' | 'error') => void;
     t: (key: string) => string;
     clearActivePickerSheet: () => void;
+    onHistorySelectWhileGenerating?: (item: GeneratedImageType) => void;
 };
 
 type ResolveViewerStageSourceSyncArgs = {
@@ -123,6 +125,8 @@ export const resolveViewerStageSourceSyncArgs = ({
     };
 };
 
+const isInlineHistoryPreviewUrl = (value?: string | null) => Boolean(value && value.startsWith('data:'));
+
 export function useHistorySourceOrchestration({
     generatedImageUrls,
     selectedImageIndex,
@@ -145,6 +149,7 @@ export function useHistorySourceOrchestration({
     setPendingProvenanceContext,
     setConversationState,
     setBranchContinuationSourceByBranchOriginId,
+    setHistory,
     setEditingImageSource,
     setGeneratedImageUrls,
     setSelectedImageIndex,
@@ -157,10 +162,65 @@ export function useHistorySourceOrchestration({
     showNotification,
     t,
     clearActivePickerSheet,
+    onHistorySelectWhileGenerating,
 }: UseHistorySourceOrchestrationArgs) {
     const [pendingImportedWorkspaceAction, setPendingImportedWorkspaceAction] =
         useState<PendingImportedWorkspaceAction>(null);
     const selectedHistoryLineageActionRef = useRef<TurnLineageAction | undefined>(currentStageLineageAction);
+    const historyThumbnailRepairInFlightRef = useRef<Set<string>>(new Set());
+    const repairLegacyHistoryThumbnail = useCallback(
+        async (item: GeneratedImageType, fullImageUrl?: string | null) => {
+            if (
+                !item.savedFilename ||
+                item.thumbnailSavedFilename ||
+                (!isInlineHistoryPreviewUrl(item.url) && item.url) ||
+                historyThumbnailRepairInFlightRef.current.has(item.id)
+            ) {
+                return;
+            }
+
+            historyThumbnailRepairInFlightRef.current.add(item.id);
+
+            try {
+                const resolvedFullImageUrl = fullImageUrl || (await loadFullImage(item.savedFilename));
+                if (!resolvedFullImageUrl) {
+                    return;
+                }
+
+                const persistedThumbnail = await persistHistoryThumbnail(
+                    resolvedFullImageUrl,
+                    `${item.model}-history`,
+                );
+                const hasSafePreview =
+                    Boolean(persistedThumbnail.thumbnailSavedFilename) || persistedThumbnail.url !== resolvedFullImageUrl;
+
+                if (!hasSafePreview) {
+                    return;
+                }
+
+                setHistory((previousHistory) =>
+                    previousHistory.map((historyItem) =>
+                        historyItem.id === item.id &&
+                        !historyItem.thumbnailSavedFilename &&
+                        (!historyItem.url || isInlineHistoryPreviewUrl(historyItem.url))
+                            ? {
+                                  ...historyItem,
+                                  url: persistedThumbnail.url,
+                                  thumbnailSavedFilename:
+                                      persistedThumbnail.thumbnailSavedFilename || historyItem.thumbnailSavedFilename,
+                                                                    thumbnailInline: persistedThumbnail.thumbnailInline || historyItem.thumbnailInline,
+                              }
+                            : historyItem,
+                    ),
+                );
+            } catch (error) {
+                console.warn('history thumbnail self-heal failed:', error);
+            } finally {
+                historyThumbnailRepairInFlightRef.current.delete(item.id);
+            }
+        },
+        [setHistory],
+    );
     const handleStartNewConversation = useCallback(() => {
         handleClearResults();
         setPendingProvenanceContext(null);
@@ -189,6 +249,10 @@ export function useHistorySourceOrchestration({
             const lineageAction = options?.lineageAction || 'reopen';
             const isRouteMutation = lineageAction === 'continue' || lineageAction === 'branch';
             const shortHistoryId = item.id.slice(0, 8);
+
+            if (isGenerating) {
+                onHistorySelectWhileGenerating?.(item);
+            }
 
             if (item.status === 'failed') {
                 selectedHistoryLineageActionRef.current = undefined;
@@ -281,7 +345,7 @@ export function useHistorySourceOrchestration({
 
             if (item.savedFilename) {
                 loadFullImage(item.savedFilename)
-                    .then((fullUrl) => {
+                    .then(async (fullUrl) => {
                         if (fullUrl) {
                             setGeneratedImageUrls([fullUrl]);
                             upsertViewerStageSource({
@@ -291,6 +355,7 @@ export function useHistorySourceOrchestration({
                                 sourceHistoryId: item.id,
                                 lineageAction,
                             });
+                            void repairLegacyHistoryThumbnail(item, fullUrl);
                         }
                     })
                     .catch((err) => {
@@ -299,7 +364,6 @@ export function useHistorySourceOrchestration({
             }
 
             clearAssetRoles(['object', 'character']);
-            setIsGenerating(false);
         },
         [
             addLog,
@@ -308,21 +372,42 @@ export function useHistorySourceOrchestration({
             buildResultArtifacts,
             clearAssetRoles,
             conversationState,
+            isGenerating,
+            onHistorySelectWhileGenerating,
             promoteResultArtifactsToSession,
             setBranchContinuationSourceByBranchOriginId,
             setConversationState,
             setError,
             setGeneratedImageUrls,
-            setIsGenerating,
+            setHistory,
             setLogs,
             setSelectedHistoryId,
             setSelectedImageIndex,
             showNotification,
             t,
+            repairLegacyHistoryThumbnail,
             upsertViewerStageSource,
             workspaceSession,
         ],
     );
+
+    useEffect(() => {
+        if (isGenerating) {
+            return;
+        }
+
+        const candidateHistoryId = currentStageSourceHistoryId || selectedHistoryId;
+        if (!candidateHistoryId) {
+            return;
+        }
+
+        const candidateHistoryItem = getHistoryTurnById(candidateHistoryId);
+        if (!candidateHistoryItem) {
+            return;
+        }
+
+        void repairLegacyHistoryThumbnail(candidateHistoryItem);
+    }, [currentStageSourceHistoryId, getHistoryTurnById, isGenerating, repairLegacyHistoryThumbnail, selectedHistoryId]);
 
     const handleContinueFromHistoryTurn = useCallback(
         (item: GeneratedImageType) => {

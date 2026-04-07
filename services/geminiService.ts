@@ -1,4 +1,4 @@
-import { GenerateOptions, GenerateResponse, ImageStyle, QueuedBatchJobStats } from '../types';
+import { GenerateOptions, GenerateResponse, ImageReceivedResult, ImageStyle, QueuedBatchJobStats } from '../types';
 
 const jsonHeaders = {
     'Content-Type': 'application/json',
@@ -286,8 +286,10 @@ const generateSingleImage = async (
 };
 
 export type GenerationResult = {
+    slotIndex: number;
     status: 'success' | 'failed';
     url?: string;
+    displayUrl?: string;
     error?: string;
     savedFilename?: string;
     text?: string;
@@ -475,10 +477,13 @@ const retryOperation = async <T>(
 export const generateImageWithGemini = async (
     options: GenerateOptions,
     batchSize: number = 1,
-    onImageReceived?: (url: string) => Promise<string | undefined> | string | undefined,
+    onImageReceived?:
+        | ((url: string, slotIndex: number) => Promise<ImageReceivedResult | undefined> | ImageReceivedResult | undefined)
+        | undefined,
     onLog?: (msg: string) => void,
     abortSignal?: AbortSignal,
     onProgress?: (completed: number, total: number) => void, // F4: Batch progress
+    onResult?: (result: GenerationResult) => void,
 ): Promise<GenerationResult[]> => {
     // PARALLEL EXECUTION WITH STAGGER
     const STAGGER_DELAY_MS = 300;
@@ -489,7 +494,15 @@ export const generateImageWithGemini = async (
         if (index > 0) await new Promise((resolve) => setTimeout(resolve, index * STAGGER_DELAY_MS));
 
         // F1: Check abort before starting each image
-        if (abortSignal?.aborted) return { status: 'failed' as const, error: 'Generation cancelled' };
+        if (abortSignal?.aborted) {
+            const abortedResult = {
+                slotIndex: index,
+                status: 'failed' as const,
+                error: 'Generation cancelled',
+            };
+            onResult?.(abortedResult);
+            return abortedResult;
+        }
 
         try {
             // F2: 3 retries with exponential backoff (1.5s → 3s → 6s)
@@ -502,14 +515,13 @@ export const generateImageWithGemini = async (
             if (!response.imageUrl) {
                 throw new Error('Model returned no image data.');
             }
-            let savedFilename: string | undefined;
-            if (onImageReceived) savedFilename = await onImageReceived(response.imageUrl);
-            completedCount++;
-            onProgress?.(completedCount, batchSize);
-            return {
+            const receivedResult = onImageReceived ? await onImageReceived(response.imageUrl, index) : undefined;
+            const successResult = {
+                slotIndex: index,
                 status: 'success' as const,
                 url: response.imageUrl,
-                savedFilename,
+                displayUrl: receivedResult?.displayUrl || response.imageUrl,
+                savedFilename: receivedResult?.savedFilename,
                 text: response.text,
                 thoughts: response.thoughts,
                 structuredData: response.structuredData,
@@ -518,12 +530,30 @@ export const generateImageWithGemini = async (
                 sessionHints: response.sessionHints,
                 conversation: response.conversation,
             };
+            completedCount++;
+            onProgress?.(completedCount, batchSize);
+            onResult?.(successResult);
+            return successResult;
         } catch (e: any) {
             completedCount++;
             onProgress?.(completedCount, batchSize);
-            if (e.message === 'ABORTED') return { status: 'failed' as const, error: 'Generation cancelled' };
+            if (e.message === 'ABORTED') {
+                const abortedResult = {
+                    slotIndex: index,
+                    status: 'failed' as const,
+                    error: 'Generation cancelled',
+                };
+                onResult?.(abortedResult);
+                return abortedResult;
+            }
             onLog?.(`Image #${index + 1} Failed: ${e.message}`);
-            return { status: 'failed' as const, error: e.message };
+            const failedResult = {
+                slotIndex: index,
+                status: 'failed' as const,
+                error: e.message,
+            };
+            onResult?.(failedResult);
+            return failedResult;
         }
     });
 

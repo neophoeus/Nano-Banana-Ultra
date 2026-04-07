@@ -11,6 +11,11 @@ type SessionHintEntry = [string, unknown];
 type GeneratedImageStageProps = React.ComponentProps<typeof GeneratedImageStage>;
 type WorkspaceViewerOverlayProps = React.ComponentProps<typeof WorkspaceViewerOverlay>;
 type StageTopRightViewModel = NonNullable<GeneratedImageStageProps['stageTopRight']>;
+type ViewerHistoryItem = {
+    id: string;
+    url: string;
+    isFresh: boolean;
+};
 
 type BuildStageTopRightModelArgs = {
     hasActiveStageImage: boolean;
@@ -230,6 +235,10 @@ type UseWorkspaceStageViewerArgs = {
     isViewerOpen: boolean;
     setIsViewerOpen: Dispatch<SetStateAction<boolean>>;
     isGenerating: boolean;
+    showStageGeneratingState?: boolean;
+    viewerItems?: ViewerHistoryItem[];
+    viewerSelectedHistoryId?: string | null;
+    onSelectViewerItem?: (historyId: string) => void;
     prompt: string;
     error: string | null;
     resultStatusSummary: string | null;
@@ -281,6 +290,10 @@ export function useWorkspaceStageViewer({
     isViewerOpen,
     setIsViewerOpen,
     isGenerating,
+    showStageGeneratingState = isGenerating,
+    viewerItems = [],
+    viewerSelectedHistoryId = null,
+    onSelectViewerItem,
     prompt,
     error,
     resultStatusSummary,
@@ -319,9 +332,20 @@ export function useWorkspaceStageViewer({
     onAppendPrompt,
 }: UseWorkspaceStageViewerArgs) {
     const stageTopRightLayoutBucket = useStageTopRightLayoutBucket();
+    const activeViewerHistoryItem = useMemo(() => {
+        if (viewerItems.length === 0) {
+            return null;
+        }
+
+        const selectedViewerHistoryItem = viewerSelectedHistoryId
+            ? viewerItems.find((viewerItem) => viewerItem.id === viewerSelectedHistoryId)
+            : null;
+
+        return selectedViewerHistoryItem || viewerItems[0] || null;
+    }, [viewerItems, viewerSelectedHistoryId]);
     const activeViewerImage = useMemo(
-        () => generatedImageUrls[selectedImageIndex] || generatedImageUrls[0] || '',
-        [generatedImageUrls, selectedImageIndex],
+        () => activeViewerHistoryItem?.url || generatedImageUrls[selectedImageIndex] || generatedImageUrls[0] || '',
+        [activeViewerHistoryItem, generatedImageUrls, selectedImageIndex],
     );
 
     const handleSelectGeneratedImage = useCallback(
@@ -349,7 +373,7 @@ export function useWorkspaceStageViewer({
             buildStageTopRightModel({
                 hasActiveStageImage: Boolean(activeViewerImage),
                 hasLinkedHistoryTurn: currentStageHasLinkedHistoryTurn,
-                isGenerating,
+                isGenerating: showStageGeneratingState,
                 layoutBucket: stageTopRightLayoutBucket,
                 currentStageOriginLabel,
                 currentStageBranchLabel,
@@ -374,7 +398,7 @@ export function useWorkspaceStageViewer({
             currentStageContinuationDiffers,
             currentStageHasLinkedHistoryTurn,
             currentStageOriginLabel,
-            isGenerating,
+            showStageGeneratingState,
             onAddToCharacterReference,
             onAddToObjectReference,
             onBranchFromStageSource,
@@ -390,19 +414,26 @@ export function useWorkspaceStageViewer({
 
     const moveViewer = useCallback(
         (direction: 'prev' | 'next') => {
-            if (generatedImageUrls.length <= 1) {
+            if (viewerItems.length <= 1 || !onSelectViewerItem) {
                 return;
             }
 
-            setSelectedImageIndex((previous) => {
-                if (direction === 'prev') {
-                    return previous === 0 ? generatedImageUrls.length - 1 : previous - 1;
-                }
+            const currentIndex = viewerSelectedHistoryId
+                ? viewerItems.findIndex((viewerItem) => viewerItem.id === viewerSelectedHistoryId)
+                : -1;
+            const baseIndex = currentIndex >= 0 ? currentIndex : 0;
+            const nextIndex =
+                direction === 'prev'
+                    ? baseIndex === 0
+                        ? viewerItems.length - 1
+                        : baseIndex - 1
+                    : baseIndex === viewerItems.length - 1
+                      ? 0
+                      : baseIndex + 1;
 
-                return previous === generatedImageUrls.length - 1 ? 0 : previous + 1;
-            });
+            onSelectViewerItem(viewerItems[nextIndex].id);
         },
-        [generatedImageUrls.length, setSelectedImageIndex],
+        [onSelectViewerItem, viewerItems, viewerSelectedHistoryId],
     );
 
     const workspaceViewerOverlayProps = useMemo(
@@ -411,7 +442,8 @@ export function useWorkspaceStageViewer({
                 currentLanguage,
                 isOpen: isViewerOpen,
                 activeViewerImage,
-                generatedImageCount: generatedImageUrls.length,
+                activeViewerIsFresh: activeViewerHistoryItem?.isFresh || false,
+                generatedImageCount: viewerItems.length,
                 prompt,
                 aspectRatio: settings.aspectRatio,
                 size: settings.imageSize,
@@ -435,6 +467,7 @@ export function useWorkspaceStageViewer({
             }) satisfies WorkspaceViewerOverlayProps,
         [
             activeViewerImage,
+            activeViewerHistoryItem?.isFresh,
             closeViewer,
             currentLanguage,
             effectiveResultText,
@@ -444,7 +477,6 @@ export function useWorkspaceStageViewer({
             effectiveThoughts,
             formatSessionHintKey,
             formatSessionHintValue,
-            generatedImageUrls.length,
             isViewerOpen,
             modelLabel,
             moveViewer,
@@ -458,6 +490,7 @@ export function useWorkspaceStageViewer({
             settings.imageSize,
             styleLabel,
             thoughtStateMessage,
+            viewerItems.length,
         ],
     );
 
@@ -465,7 +498,7 @@ export function useWorkspaceStageViewer({
         () =>
             ({
                 imageUrls: generatedImageUrls,
-                isLoading: isGenerating,
+                isLoading: showStageGeneratingState,
                 prompt,
                 error,
                 aspectRatio: settings.aspectRatio,
@@ -479,7 +512,7 @@ export function useWorkspaceStageViewer({
                 onSelectImage: handleSelectGeneratedImage,
                 selectedImageUrl: generatedImageUrls[selectedImageIndex],
                 currentLanguage,
-                currentLog: isGenerating ? currentLog : '',
+                currentLog: showStageGeneratingState ? currentLog : '',
                 onOpenViewer: openViewer,
                 stageTopRight,
             }) satisfies GeneratedImageStageProps,
@@ -491,7 +524,7 @@ export function useWorkspaceStageViewer({
             generatedImageUrls,
             generationMode,
             handleSelectGeneratedImage,
-            isGenerating,
+            showStageGeneratingState,
             onGenerate,
             onUpload,
             openViewer,

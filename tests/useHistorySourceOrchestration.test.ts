@@ -12,6 +12,16 @@ import {
 import { EMPTY_WORKSPACE_CONVERSATION_STATE } from '../utils/conversationState';
 import { EMPTY_WORKSPACE_SESSION } from '../utils/workspacePersistence';
 
+const { loadFullImageMock, persistHistoryThumbnailMock } = vi.hoisted(() => ({
+    loadFullImageMock: vi.fn(),
+    persistHistoryThumbnailMock: vi.fn(),
+}));
+
+vi.mock('../utils/imageSaveUtils', () => ({
+    loadFullImage: loadFullImageMock,
+    persistHistoryThumbnail: persistHistoryThumbnailMock,
+}));
+
 const buildTurn = (overrides: Partial<GeneratedImage> = {}): GeneratedImage => ({
     id: 'turn-1',
     url: 'https://example.com/image.png',
@@ -94,6 +104,10 @@ describe('useHistorySourceOrchestration', () => {
         container = document.createElement('div');
         document.body.appendChild(container);
         root = createRoot(container);
+        loadFullImageMock.mockReset();
+        persistHistoryThumbnailMock.mockReset();
+        loadFullImageMock.mockResolvedValue(null);
+        persistHistoryThumbnailMock.mockResolvedValue({ url: 'data:image/jpeg;base64,thumb' });
     });
 
     afterEach(() => {
@@ -111,8 +125,9 @@ describe('useHistorySourceOrchestration', () => {
         const setBranchContinuationSourceByBranchOriginId = vi.fn();
         const clearActivePickerSheet = vi.fn();
         const upsertViewerStageSource = vi.fn();
+        const setHistory = vi.fn();
         let handle: ReturnType<typeof useHistorySourceOrchestration> | null = null;
-        const history = [item];
+        let historyState = [item];
 
         const TestComponent = () => {
             handle = useHistorySourceOrchestration({
@@ -134,7 +149,7 @@ describe('useHistorySourceOrchestration', () => {
                     'active-turn': 'active-turn',
                 },
                 handleApplyImportedWorkspaceSnapshot: vi.fn(),
-                getHistoryTurnById: createHistoryLookup(history),
+                getHistoryTurnById: createHistoryLookup(historyState),
                 handleClearResults: vi.fn(),
                 resetSelectedOutputState: vi.fn(),
                 resetWorkspaceSession: vi.fn(),
@@ -152,6 +167,10 @@ describe('useHistorySourceOrchestration', () => {
                 setPendingProvenanceContext: vi.fn(),
                 setConversationState,
                 setBranchContinuationSourceByBranchOriginId,
+                setHistory: (updater) => {
+                    setHistory(updater);
+                    historyState = typeof updater === 'function' ? updater(historyState) : updater;
+                },
                 setEditingImageSource: vi.fn(),
                 setGeneratedImageUrls: vi.fn(),
                 setSelectedImageIndex: vi.fn(),
@@ -182,6 +201,8 @@ describe('useHistorySourceOrchestration', () => {
             setBranchContinuationSourceByBranchOriginId,
             clearActivePickerSheet,
             upsertViewerStageSource,
+            setHistory,
+            getHistoryState: () => historyState,
         };
     };
 
@@ -279,5 +300,43 @@ describe('useHistorySourceOrchestration', () => {
         );
         expect(setConversationState).toHaveBeenCalledTimes(1);
         expect(setBranchContinuationSourceByBranchOriginId).not.toHaveBeenCalled();
+    });
+
+    it('backfills a thumbnail in the background after reopening a legacy file-backed turn without preview media', async () => {
+        const legacyTurn = buildTurn({
+            id: 'legacy-turn',
+            url: '',
+            savedFilename: 'legacy-turn.png',
+            prompt: 'Legacy restore turn',
+        });
+
+        loadFullImageMock.mockResolvedValue('data:image/png;base64,FULL');
+        persistHistoryThumbnailMock.mockResolvedValue({
+            url: '/api/load-image?filename=legacy-turn-thumb.jpg',
+            thumbnailSavedFilename: 'legacy-turn-thumb.jpg',
+        });
+
+        const { handle, setHistory, getHistoryState } = renderHook(legacyTurn);
+
+        flushSync(() => {
+            handle.handleHistorySelect(legacyTurn);
+        });
+
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(loadFullImageMock).toHaveBeenCalledWith('legacy-turn.png');
+        expect(persistHistoryThumbnailMock).toHaveBeenCalledWith(
+            'data:image/png;base64,FULL',
+            'gemini-3.1-flash-image-preview-history',
+        );
+        expect(setHistory).toHaveBeenCalledTimes(1);
+        expect(getHistoryState()[0]).toEqual(
+            expect.objectContaining({
+                id: 'legacy-turn',
+                url: '/api/load-image?filename=legacy-turn-thumb.jpg',
+                thumbnailSavedFilename: 'legacy-turn-thumb.jpg',
+            }),
+        );
     });
 });

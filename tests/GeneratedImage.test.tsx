@@ -417,6 +417,7 @@ describe('GeneratedImage', () => {
 
         expect(stageFrameTag).toBeDefined();
         expect(stageFrameTag).toContain('aspect-square');
+        expect(stageFrameTag).toContain('xl:h-full');
     });
 
     it('renders the failed selected-history state without crashing when clear is available', () => {

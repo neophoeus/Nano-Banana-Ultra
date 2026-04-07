@@ -15,10 +15,8 @@ type LineageRootGroup = {
 
 type WorkspaceHistoryCanvasProps = {
     currentLanguage: Language;
-    selectedItemDock?: React.ReactNode;
-    recentLane: React.ReactNode;
     focusSurface: React.ReactNode;
-    supportSurface: React.ReactNode;
+    historySurface: React.ReactNode;
     activeBranchSummary: BranchSummary | null;
     recentBranchSummaries: BranchSummary[];
     branchSummariesCount: number;
@@ -66,10 +64,8 @@ type WorkspaceHistoryCanvasProps = {
 function WorkspaceHistoryCanvas(props: WorkspaceHistoryCanvasProps) {
     const {
         currentLanguage,
-        selectedItemDock,
-        recentLane,
         focusSurface,
-        supportSurface,
+        historySurface,
         activeBranchSummary,
         branchSummariesCount,
         sessionUpdatedLabel,
@@ -84,18 +80,18 @@ function WorkspaceHistoryCanvas(props: WorkspaceHistoryCanvasProps) {
     const { isDesktop, isOpen, setIsOpen } = useResponsivePanelState();
     const currentTurnId = selectedHistoryId || activeBranchSummary?.latestTurn.id || null;
     const versionsSummaryChipClassName =
-        'nbu-stage-hero-filmstrip-summary rounded-full border px-2.5 py-1 text-[10px] font-semibold text-gray-500 dark:text-gray-300';
+        'nbu-stage-hero-filmstrip-summary rounded-full border px-2 py-1 text-[10px] font-semibold text-gray-500 dark:text-gray-300';
     const versionsStatCardClassName =
-        'min-w-0 rounded-[20px] border border-gray-200/80 bg-white/92 px-3 py-2.5 shadow-[0_12px_28px_rgba(15,23,42,0.05)] dark:border-gray-800 dark:bg-[#0f141b]/92';
+        'min-w-0 rounded-[20px] border border-gray-200/80 bg-white/92 px-2 py-1.5 shadow-[0_12px_28px_rgba(15,23,42,0.05)] dark:border-gray-800 dark:bg-[#0f141b]/92';
     const versionsStatLabelClassName =
         'text-[10px] font-bold uppercase tracking-[0.14em] text-gray-400 dark:text-gray-500';
     const versionsStatValueClassName = 'mt-2 break-words text-sm font-semibold text-gray-900 dark:text-gray-100';
     const versionsActionButtonClassName =
-        'rounded-full border border-gray-200/80 px-2.5 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-amber-300 hover:text-amber-700 dark:border-gray-700 dark:text-gray-300 dark:hover:border-amber-500/40 dark:hover:text-amber-200';
+        'rounded-full border border-gray-200/80 px-1.5 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-amber-300 hover:text-amber-700 dark:border-gray-700 dark:text-gray-300 dark:hover:border-amber-500/40 dark:hover:text-amber-200';
     const versionsInlineActions = (
         <div
             data-testid="history-versions-quick-actions"
-            className="ml-auto flex flex-wrap items-center justify-end gap-2"
+            className="ml-auto flex flex-wrap items-center justify-end gap-1.5"
         >
             <button
                 type="button"
@@ -136,18 +132,18 @@ function WorkspaceHistoryCanvas(props: WorkspaceHistoryCanvasProps) {
         <section data-testid="workspace-history-canvas" className="grid min-w-0 gap-1.5 lg:min-h-0">
             <div
                 data-testid="workspace-history-focus-grid"
-                className="grid gap-1.5 lg:min-h-0 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
+                className="grid gap-1.5 lg:min-h-0 xl:grid-cols-[minmax(0,0.6fr)_minmax(0,1.4fr)] xl:items-stretch xl:gap-1"
             >
-                <div data-testid="workspace-history-focus-state" className="min-w-0">
+                <div data-testid="workspace-history-focus-state" className="min-w-0 xl:flex xl:min-h-0 xl:h-full">
                     {focusSurface}
                 </div>
-                <aside data-testid="workspace-history-support-rail" className="grid min-w-0 content-start gap-1.5">
-                    {selectedItemDock ? (
-                        <div data-testid="workspace-history-selected-item-dock" className="min-w-0">
-                            {selectedItemDock}
-                        </div>
-                    ) : null}
-                    <div data-testid="workspace-history-recent-lane">{recentLane}</div>
+                <aside
+                    data-testid="workspace-history-support-rail"
+                    className="flex min-h-0 min-w-0 flex-col gap-1.5 xl:h-full xl:gap-1"
+                >
+                    <div data-testid="workspace-history-history-surface" className="min-h-0 min-w-0 flex-1">
+                        {historySurface}
+                    </div>
                     <details
                         data-testid="history-versions-section"
                         open={isOpen}
@@ -158,7 +154,7 @@ function WorkspaceHistoryCanvas(props: WorkspaceHistoryCanvasProps) {
 
                             setIsOpen(event.currentTarget.open);
                         }}
-                        className="group min-w-0 w-full max-w-full overflow-hidden rounded-[24px] border p-2.5 nbu-stage-hero-filmstrip-shell"
+                        className="group min-w-0 w-full max-w-full overflow-hidden rounded-[24px] border p-1.5 nbu-stage-hero-filmstrip-shell"
                     >
                         <summary
                             data-testid="history-versions-summary"
@@ -191,7 +187,7 @@ function WorkspaceHistoryCanvas(props: WorkspaceHistoryCanvasProps) {
                         >
                             <div
                                 data-testid="history-versions-header"
-                                className="mb-1.5 flex min-w-0 items-start justify-end gap-3 xl:justify-between"
+                                className="mb-1 flex min-w-0 items-start justify-end gap-2 xl:justify-between"
                             >
                                 <div className="min-w-0 flex flex-1 items-center gap-2">
                                     <h2 className="hidden text-[15px] font-black text-slate-900 dark:text-slate-100 xl:block">
@@ -222,8 +218,8 @@ function WorkspaceHistoryCanvas(props: WorkspaceHistoryCanvasProps) {
 
                             <div className="flex flex-1 min-h-0 flex-col">
                                 <div className="nbu-scrollbar-subtle min-h-0 flex-1 overflow-x-hidden overflow-y-auto pr-0.5">
-                                    <div className="space-y-1.5 px-0.5 py-0.5">
-                                        <div className="grid gap-1.5 sm:grid-cols-3">
+                                    <div className="space-y-0.5 px-0.5 py-0.5">
+                                        <div className="grid gap-0.5 sm:grid-cols-3">
                                             <div className={versionsStatCardClassName}>
                                                 <div className={versionsStatLabelClassName}>
                                                     {t('workspaceInsightsActiveBranch')}
@@ -282,7 +278,6 @@ function WorkspaceHistoryCanvas(props: WorkspaceHistoryCanvasProps) {
                             </div>
                         </div>
                     </details>
-                    {supportSurface ? <div data-testid="workspace-history-support-tools">{supportSurface}</div> : null}
                 </aside>
             </div>
         </section>

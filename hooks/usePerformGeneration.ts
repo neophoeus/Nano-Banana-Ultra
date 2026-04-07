@@ -1,9 +1,11 @@
 import { useCallback, MutableRefObject } from 'react';
 import {
     AspectRatio,
+    BatchPreviewTile,
     ConversationRequestContext,
     ExecutionMode,
     GenerationLineageContext,
+    ImageReceivedResult,
     ImageSize,
     ImageStyle,
     ImageModel,
@@ -13,7 +15,12 @@ import {
     ThinkingLevel,
 } from '../types';
 import { generateImageWithGemini, checkApiKey, promptForApiKey } from '../services/geminiService';
-import { buildSavedImageLoadUrl, saveImageToLocal, generateThumbnail } from '../utils/imageSaveUtils';
+import {
+    buildSavedImageLoadUrl,
+    extractSavedFilename,
+    persistHistoryThumbnail,
+    saveImageToLocal,
+} from '../utils/imageSaveUtils';
 import { deriveExecutionMode } from '../utils/executionMode';
 import { sanitizeSessionHintsForStorage } from '../utils/inlineImageDisplay';
 
@@ -25,6 +32,24 @@ const MODEL_TRANSLATION_KEYS: Record<ImageModel, string> = {
 
 function getModelLabel(t: (key: string) => string, model: ImageModel): string {
     return t(MODEL_TRANSLATION_KEYS[model]);
+}
+
+function getBatchResultIndex(item: GeneratedImageType): number {
+    const candidateIndex = item.metadata?.batchResultIndex;
+    return typeof candidateIndex === 'number' && Number.isFinite(candidateIndex) ? candidateIndex : -1;
+}
+
+function sortBatchHistoryItemsByVisualOrder(items: GeneratedImageType[]): GeneratedImageType[] {
+    return [...items].sort((leftItem, rightItem) => {
+        const leftIndex = getBatchResultIndex(leftItem);
+        const rightIndex = getBatchResultIndex(rightItem);
+
+        if (leftIndex !== rightIndex) {
+            return rightIndex - leftIndex;
+        }
+
+        return rightItem.createdAt - leftItem.createdAt;
+    });
 }
 
 interface UsePerformGenerationProps {
@@ -65,6 +90,10 @@ interface UsePerformGenerationProps {
         editingInput?: string;
         batchSize: number;
     }) => ConversationRequestContext | null;
+    onBatchPreviewStart?: (args: { sessionId: string; batchSize: number }) => void;
+    onBatchPreviewTileUpdate?: (args: { sessionId: string; tile: BatchPreviewTile }) => void;
+    onBatchPreviewComplete?: (args: { sessionId: string; historyItems: GeneratedImageType[] }) => void;
+    onBatchPreviewClear?: (args: { sessionId: string }) => void;
 }
 
 export function usePerformGeneration(options: UsePerformGenerationProps) {
@@ -102,6 +131,10 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
         addPromptToHistory,
         getGenerationLineageContext,
         getConversationRequestContext,
+        onBatchPreviewStart,
+        onBatchPreviewTileUpdate,
+        onBatchPreviewComplete,
+        onBatchPreviewClear,
     } = options;
 
     const performGeneration = useCallback(
@@ -145,6 +178,8 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
             setGeneratedImageUrls([]);
             setSelectedImageIndex(0);
             setLogs([]);
+            const batchSessionId = crypto.randomUUID();
+            let didNotifyBatchPreviewComplete = false;
 
             const controller = new AbortController();
             abortControllerRef.current = controller;
@@ -179,6 +214,7 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
             const variantGroupId = currentExecutionMode === 'interactive-batch-variants' ? crypto.randomUUID() : null;
 
             setBatchProgress({ completed: 0, total: currentBatchSize });
+            onBatchPreviewStart?.({ sessionId: batchSessionId, batchSize: currentBatchSize });
 
             let currentMode = explicitMode;
             if (!currentMode) {
@@ -213,7 +249,7 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                 addLog(t('logSource').replace('{0}', getModelLabel(t, targetModel)));
                 addLog(t('logRequesting').replace('{0}', currentBatchSize.toString()).replace('{1}', currentImageSize));
 
-                const handleImageReceived = async (url: string): Promise<string | undefined> => {
+                const handleImageReceived = async (url: string, slotIndex: number): Promise<ImageReceivedResult> => {
                     const metadata = {
                         prompt: finalPrompt,
                         style: targetStyle,
@@ -223,21 +259,49 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                     };
                     const prefix = editingInput ? `${targetModel}-edit` : `${targetModel}-gen`;
                     const savedPath = await saveImageToLocal(url, prefix, metadata);
-                    const filename = savedPath?.split(/[\\/]/).pop();
+                    const filename = extractSavedFilename(savedPath);
                     const displayUrl = filename ? buildSavedImageLoadUrl(filename) : url;
 
-                    setGeneratedImageUrls((prev: string[]) => [...prev, displayUrl]);
+                    onBatchPreviewTileUpdate?.({
+                        sessionId: batchSessionId,
+                        tile: {
+                            id: `${batchSessionId}-${slotIndex}`,
+                            slotIndex,
+                            status: 'ready',
+                            previewUrl: displayUrl,
+                            error: null,
+                        },
+                    });
 
                     if (filename) {
                         addLog(t('logSaved').replace('{0}', filename || ''));
-                        return filename;
+                        return {
+                            displayUrl,
+                            savedFilename: filename,
+                        };
                     } else {
                         addLog(t('logAutoSaveFailed'));
-                        return undefined;
+                        return {
+                            displayUrl,
+                        };
                     }
                 };
 
                 const handleLogCallback = (msg: string) => addLog(msg);
+                const handleResultCallback = (result: import('../services/geminiService').GenerationResult) => {
+                    if (result.status === 'failed') {
+                        onBatchPreviewTileUpdate?.({
+                            sessionId: batchSessionId,
+                            tile: {
+                                id: `${batchSessionId}-${result.slotIndex}`,
+                                slotIndex: result.slotIndex,
+                                status: 'failed',
+                                previewUrl: null,
+                                error: result.error || null,
+                            },
+                        });
+                    }
+                };
 
                 const results = await generateImageWithGemini(
                     {
@@ -263,23 +327,32 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                     handleLogCallback,
                     controller.signal,
                     (completed, total) => setBatchProgress({ completed, total }),
+                    handleResultCallback,
                 );
 
                 const newHistoryItems: GeneratedImageType[] = [];
-                for (const res of results) {
+                for (const [resultIndex, res] of results.entries()) {
+                    const batchResultIndex =
+                        typeof res.slotIndex === 'number' && Number.isFinite(res.slotIndex)
+                            ? res.slotIndex
+                            : resultIndex;
                     let thumbnailUrl = '';
+                    let thumbnailSavedFilename: string | undefined;
+                    let thumbnailInline: boolean | undefined;
                     const sanitizedSessionHints = sanitizeSessionHintsForStorage(res.sessionHints || null);
                     if (res.status === 'success' && res.url) {
-                        try {
-                            thumbnailUrl = await generateThumbnail(res.url);
-                        } catch {
-                            thumbnailUrl = res.url;
-                        }
+                        const prefix = editingInput ? `${targetModel}-edit` : `${targetModel}-gen`;
+                        const persistedThumbnail = await persistHistoryThumbnail(res.url, prefix);
+                        thumbnailUrl = persistedThumbnail.url;
+                        thumbnailSavedFilename = persistedThumbnail.thumbnailSavedFilename;
+                        thumbnailInline = persistedThumbnail.thumbnailInline;
                     }
 
                     newHistoryItems.push({
                         id: crypto.randomUUID(),
                         url: thumbnailUrl,
+                        thumbnailSavedFilename,
+                        thumbnailInline,
                         prompt: finalPrompt || 'Auto-fill',
                         aspectRatio: effectiveAspectRatio || '1:1',
                         size: currentImageSize,
@@ -290,12 +363,16 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                         executionMode: currentExecutionMode,
                         variantGroupId,
                         status: res.status,
+                        openedAt: res.status === 'success' ? null : undefined,
                         error: res.error,
                         savedFilename: res.savedFilename,
                         text: res.text,
                         thoughts: res.thoughts,
                         structuredData: res.structuredData,
-                        metadata: res.metadata,
+                        metadata: {
+                            ...(res.metadata || {}),
+                            batchResultIndex,
+                        },
                         grounding: res.grounding,
                         sessionHints: sanitizedSessionHints || undefined,
                         conversationId: res.conversation?.conversationId || null,
@@ -314,7 +391,14 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                     } as GeneratedImageType);
                 }
 
-                setHistory((prev: GeneratedImageType[]) => [...newHistoryItems, ...prev]);
+                const orderedHistoryItems = sortBatchHistoryItemsByVisualOrder(newHistoryItems);
+
+                setHistory((prev: GeneratedImageType[]) => [...orderedHistoryItems, ...prev]);
+                didNotifyBatchPreviewComplete = true;
+                onBatchPreviewComplete?.({
+                    sessionId: batchSessionId,
+                    historyItems: orderedHistoryItems,
+                });
 
                 const successCount = results.filter((r) => r.status === 'success').length;
                 const failCount = results.filter((r) => r.status === 'failed').length;
@@ -344,6 +428,9 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                     showNotification(t('statusFailed'), 'error');
                 }
             } finally {
+                if (!didNotifyBatchPreviewComplete) {
+                    onBatchPreviewClear?.({ sessionId: batchSessionId });
+                }
                 setIsGenerating(false);
                 abortControllerRef.current = null;
                 setBatchProgress({ completed: 0, total: 0 });
@@ -364,6 +451,10 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
             imageSearch,
             includeThoughts,
             objectImages,
+            onBatchPreviewClear,
+            onBatchPreviewComplete,
+            onBatchPreviewStart,
+            onBatchPreviewTileUpdate,
             outputFormat,
             setApiKeyReady,
             setBatchProgress,

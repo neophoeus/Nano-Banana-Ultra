@@ -18,7 +18,7 @@ import {
     StageAsset,
     StructuredOutputMode,
 } from '../types';
-import { generateThumbnail, saveImageToLocal } from '../utils/imageSaveUtils';
+import { extractSavedFilename, persistHistoryThumbnail, saveImageToLocal } from '../utils/imageSaveUtils';
 import { sanitizeSessionHintsForStorage } from '../utils/inlineImageDisplay';
 import {
     isQueuedBatchJobAutoImportReady,
@@ -950,6 +950,8 @@ export function useQueuedBatchWorkflow({
                     successfulResults.map(async (result) => {
                         let thumbnailUrl = result.imageUrl as string;
                         let savedFilename: string | undefined;
+                        let thumbnailSavedFilename: string | undefined;
+                        let thumbnailInline: boolean | undefined;
 
                         try {
                             const savedPath = await saveImageToLocal(result.imageUrl as string, `${job.model}-batch`, {
@@ -961,21 +963,25 @@ export function useQueuedBatchWorkflow({
                                 batchJobName: job.name,
                                 batchResultIndex: result.index,
                             });
-                            savedFilename = savedPath ? savedPath.split(/[\\/]/).pop() : undefined;
+                            savedFilename = extractSavedFilename(savedPath);
                         } catch {
                             savedFilename = undefined;
                         }
 
-                        try {
-                            thumbnailUrl = await generateThumbnail(result.imageUrl as string);
-                        } catch {
-                            thumbnailUrl = result.imageUrl as string;
-                        }
+                        const persistedThumbnail = await persistHistoryThumbnail(
+                            result.imageUrl as string,
+                            `${job.model}-batch`,
+                        );
+                        thumbnailUrl = persistedThumbnail.url;
+                        thumbnailSavedFilename = persistedThumbnail.thumbnailSavedFilename;
+                        thumbnailInline = persistedThumbnail.thumbnailInline;
 
                         return {
                             id: crypto.randomUUID(),
                             url: thumbnailUrl,
                             savedFilename,
+                            thumbnailSavedFilename,
+                            thumbnailInline,
                             prompt: job.prompt,
                             aspectRatio: job.aspectRatio,
                             size: job.imageSize,

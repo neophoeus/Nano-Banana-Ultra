@@ -49,12 +49,12 @@ const SelectedItemSummaryStrip: React.FC<SelectedItemSummaryStripComponentProps>
         <div
             data-testid="selected-item-summary-strip"
             data-layout-bucket={layoutBucket}
-            className="nbu-stage-hero-filmstrip-shell min-w-0 overflow-hidden rounded-[20px] border px-2.5 py-2"
+            className="nbu-stage-hero-filmstrip-shell min-w-0 overflow-hidden rounded-[20px] border px-2 py-1.5"
         >
             <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                 <div
                     data-testid="selected-item-summary-anchor"
-                    className="inline-flex h-7 shrink-0 items-center gap-2 rounded-full border border-slate-200/80 bg-white/92 px-3 dark:border-slate-700/80 dark:bg-slate-900/88"
+                    className="inline-flex h-6 shrink-0 items-center gap-2 rounded-full border border-slate-200/80 bg-white/92 px-2.5 dark:border-slate-700/80 dark:bg-slate-900/88"
                 >
                     <span
                         data-testid="selected-item-summary-anchor-label"

@@ -150,12 +150,13 @@ export const ko = {
     lblHistoryFailed: '실패',
     modeTextToImg: '텍스트 생성',
     modeImgToImg: '이미지 생성',
-    clearHistory: '갤러리 비우기',
+    clearHistory: '작업공간 비우기',
 
     // Clear History Dialog
-    clearHistoryTitle: '갤러리 비우기',
-    clearHistoryMsg: '모든 생성 기록을 영구적으로 삭제하시겠습니까?',
-    clearHistoryConfirm: '전체 삭제',
+    clearHistoryTitle: '작업공간 비우기',
+    clearHistoryMsg:
+        '이 작업공간을 기본 초기 상태로 재설정할까요? 기록, 스테이지, 대기 작업, 세션 컨텍스트가 모두 삭제되며 되돌릴 수 없습니다.',
+    clearHistoryConfirm: '작업공간 비우기',
     clearHistoryCancel: '취소',
 
     // Sketch Pad
@@ -295,6 +296,18 @@ export const ko = {
     queuedBatchJobsImportReadyCount: '가져오기 준비 {0}',
     queuedBatchJobsClosedIssuesCount: '문제와 함께 종료 {0}',
     queuedBatchJobsImportReadyAction: '준비된 결과 가져오기',
+    queuedBatchRecoverRecentAction: '최근 배치 작업 복구',
+    queuedBatchRecoverRecentLoading: '최근 작업 복구 중...',
+    queuedBatchRecoverRecentNotice: '최근 배치 작업 {0}개를 복구했습니다.',
+    queuedBatchRecoverRecentAlreadyTrackedNotice:
+        '최근 원격 배치 작업은 이미 목록에서 추적 중이며 {0}개 항목을 새로고침했습니다.',
+    queuedBatchRecoverRecentNoneNotice: '추가로 복구할 최근 원격 배치 작업을 찾지 못했습니다.',
+    queuedBatchRecoverRecentLog: '배치 목록에서 최근 원격 배치 작업 {0}개를 복구했습니다.',
+    queuedBatchRecoverRecentRefreshedLog:
+        '배치 목록에서 이미 추적 중인 원격 배치 작업 {0}개를 새로고침했습니다.',
+    queuedBatchRecoverRecentFailedLog: '최근 배치 작업 복구 실패: {0}',
+    queuedBatchRecoverRecentMetadataHint:
+        '복구된 원격 작업은 다시 가져올 수 있지만, Gemini batch 목록은 원래 프롬프트나 참조 이미지를 돌려주지 않으므로 이 항목들에는 축약된 로컬 정보만 남습니다.',
     queuedBatchJobsRefreshAll: '모두 새로고침',
     queuedBatchJobsTrackedCount: '추적 중 {0}',
     queuedBatchJobsImportedTag: '가져옴',
@@ -631,6 +644,7 @@ export const ko = {
     workspaceSurfacePromptEmpty: '아직 프롬프트가 없습니다',
     workspaceViewerTitle: '뷰어',
     workspaceViewerDesc: '현재 스테이지 이미지, 결과 텍스트, 출처 정보를 한곳에서 확인합니다.',
+    workspaceViewerNewBadge: '새',
     workspaceViewerClose: '닫기',
     workspaceViewerImageAlt: '뷰어 이미지',
     workspaceViewerPrompt: '프롬프트',

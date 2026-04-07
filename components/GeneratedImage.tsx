@@ -186,13 +186,12 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
         return mode;
     };
 
-    const stageFrameStyle: React.CSSProperties = {
-        maxWidth: 'min(100%, calc(100vh - 15rem))',
-    };
-
     const StageFrame = ({ children }: { children: React.ReactNode }) => (
-        <div className="mx-auto flex min-h-0 w-full flex-1 items-center justify-start" style={stageFrameStyle}>
-            <div data-testid="generated-image-stage-frame" className="relative aspect-square w-full">
+        <div className="mx-auto flex h-full min-h-0 w-full flex-1 items-center justify-center">
+            <div
+                data-testid="generated-image-stage-frame"
+                className="relative aspect-square w-full max-w-[min(100%,calc(100vh-19rem))] xl:h-full xl:w-auto xl:max-h-full xl:max-w-full"
+            >
                 {children}
             </div>
         </div>
@@ -446,104 +445,19 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
             {/* Main Image Display */}
             <StageFrame>
                 <div className="nbu-stage-surface relative h-full w-full group shadow-2xl">
-                    <style>{`
-            @keyframes scan {
-                0% { top: 0%; opacity: 0; }
-                10% { opacity: 1; }
-                90% { opacity: 1; }
-                100% { top: 100%; opacity: 0; }
-            }
-            .animate-scan {
-                animation: scan 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-            }
-          `}</style>
-
                     <StageTopRightCluster />
-
-                    {/* SCANNING OVERLAY (Active during generation of next batch) */}
-                    {isLoading && (
-                        <div className="absolute inset-0 z-40 pointer-events-none animate-[fadeIn_0.3s_ease-out]">
-                            {/* 1. Darken Background slightly to focus on scan */}
-                            <div className="nbu-stage-hero-overlay-veil absolute inset-0 backdrop-blur-[2px] transition-[background-color,backdrop-filter] duration-500"></div>
-
-                            {/* 2. Scanline Animation */}
-                            <div className="absolute left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent shadow-[0_0_25px_rgba(251,191,36,1)] animate-scan z-10"></div>
-
-                            {/* 3. Ambient Pulse Border */}
-                            <div className="absolute inset-0 border-2 border-amber-500/30 animate-pulse shadow-[inset_0_0_30px_rgba(245,158,11,0.2)]"></div>
-
-                            {/* 4. Center HUD */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform scale-75 sm:scale-100">
-                                <HexagonHUD
-                                    statusText={t('statusScanning')}
-                                    progressPercent={(processingIndex / totalBatch) * 100}
-                                    logText={currentLog}
-                                />
-                                <div className="text-center mt-6">
-                                    <div className="nbu-overlay-shell inline-block rounded-full px-3 py-1 text-xs font-mono text-gray-500 dark:text-gray-400">
-                                        {t('statusProcessing')} {processingIndex} / {totalBatch}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
 
                     <img
                         src={activeImage}
                         alt={t('stageGeneratedImageAlt')}
                         className={`h-full w-full object-contain transition-transform duration-700 ease-out ${onOpenViewer ? 'cursor-zoom-in' : ''}`}
-                        style={{
-                            filter: isLoading ? 'grayscale(30%) contrast(110%)' : 'none',
-                            transform: isLoading ? 'scale(1.02)' : 'scale(1)',
-                        }}
+                        style={{ transform: 'scale(1)' }}
                         onClick={() => {
-                            if (!isLoading) {
-                                onOpenViewer?.();
-                            }
+                            onOpenViewer?.();
                         }}
                     />
                 </div>
             </StageFrame>
-
-            {/* Thumbnail Strip */}
-            {(imageUrls.length > 1 || (isLoading && imageUrls.length > 0)) && (
-                <div className="h-24 mt-4 flex gap-3 overflow-x-auto pb-2 nbu-scrollbar-subtle shrink-0 px-2">
-                    {imageUrls.map((url, idx) => (
-                        <button
-                            key={idx}
-                            onClick={() => onSelectImage && onSelectImage(url)}
-                            className={`
-                            relative aspect-square h-full flex-shrink-0 overflow-hidden rounded-xl border-2 transition-[border-color,box-shadow,opacity,transform] duration-200 animate-[fadeIn_0.3s_ease-out]
-                            ${
-                                activeImage === url
-                                    ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.4)] scale-[0.98]'
-                                    : 'border-gray-200 dark:border-gray-800 opacity-60 hover:opacity-100 hover:border-gray-400 dark:hover:border-gray-600'
-                            }
-                        `}
-                        >
-                            <img
-                                src={url}
-                                alt={`Variation ${idx + 1}`}
-                                className="nbu-stage-hero-thumb-media h-full w-full object-cover"
-                            />
-                            <div className="nbu-overlay-shell absolute top-1 left-1 rounded px-1.5 text-[8px] font-mono text-gray-800 dark:text-white">
-                                #{idx + 1}
-                            </div>
-                        </button>
-                    ))}
-                    {/* Placeholder spinner for pending images */}
-                    {isLoading && processingIndex > imageUrls.length && (
-                        <div className="nbu-stage-hero-thumb-placeholder flex aspect-square h-full flex-shrink-0 items-center justify-center rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-800 animate-pulse">
-                            <div className="flex flex-col items-center gap-1">
-                                <div className="w-5 h-5 border-2 border-gray-400 dark:border-gray-600 border-t-amber-500 rounded-full animate-spin"></div>
-                                <span className="text-[9px] text-gray-400 dark:text-gray-500 font-mono">
-                                    {imageUrls.length + 1}...
-                                </span>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
         </div>
     );
 };

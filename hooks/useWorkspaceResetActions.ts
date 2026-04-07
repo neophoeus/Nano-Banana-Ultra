@@ -1,47 +1,36 @@
 import { Dispatch, MutableRefObject, SetStateAction, useCallback } from 'react';
-import { WorkspaceConversationState } from '../types';
-import { EMPTY_WORKSPACE_CONVERSATION_STATE } from '../utils/conversationState';
-
-type PickerSheet =
-    | 'prompt'
-    | 'history'
-    | 'templates'
-    | 'styles'
-    | 'model'
-    | 'ratio'
-    | 'size'
-    | 'batch'
-    | 'references'
-    | null;
+import { WorkspaceSettingsDraft } from '../types';
 
 type UseWorkspaceResetActionsArgs = {
-    activePickerSheet: PickerSheet;
     lastPromotedHistoryIdRef: MutableRefObject<string | null>;
     handleClearResults: () => void;
-    handleClearHistory: () => void;
-    resetSelectedOutputState: () => void;
     clearAssetRoles: (roles: Array<'object' | 'character' | 'stage-source'>) => void;
-    resetWorkspaceSession: () => void;
-    closePickerSheet: () => void;
-    setBranchNameOverrides: Dispatch<SetStateAction<Record<string, string>>>;
-    setBranchContinuationSourceByBranchOriginId: Dispatch<SetStateAction<Record<string, string>>>;
-    setConversationState: Dispatch<SetStateAction<WorkspaceConversationState>>;
-    setSelectedHistoryId: Dispatch<SetStateAction<string | null>>;
+    applyEmptyWorkspaceSnapshot: () => void;
+    clearPromptHistory: () => void;
+    setActiveWorkspaceDetailModal: Dispatch<
+        SetStateAction<'workflow' | 'answer' | 'sources' | 'versions' | 'queued-jobs' | null>
+    >;
+    setIsAdvancedSettingsOpen: Dispatch<SetStateAction<boolean>>;
+    setIsSketchPadOpen: Dispatch<SetStateAction<boolean>>;
+    setShowSketchReplaceConfirm: Dispatch<SetStateAction<boolean>>;
+    setSettingsSessionDraft: Dispatch<SetStateAction<WorkspaceSettingsDraft | null>>;
+    setSettingsSessionReturnToGeneration: Dispatch<SetStateAction<boolean>>;
+    setSurfaceSharedControlsBottom: Dispatch<SetStateAction<number | null>>;
 };
 
 export function useWorkspaceResetActions({
-    activePickerSheet,
     lastPromotedHistoryIdRef,
     handleClearResults,
-    handleClearHistory,
-    resetSelectedOutputState,
     clearAssetRoles,
-    resetWorkspaceSession,
-    closePickerSheet,
-    setBranchNameOverrides,
-    setBranchContinuationSourceByBranchOriginId,
-    setConversationState,
-    setSelectedHistoryId,
+    applyEmptyWorkspaceSnapshot,
+    clearPromptHistory,
+    setActiveWorkspaceDetailModal,
+    setIsAdvancedSettingsOpen,
+    setIsSketchPadOpen,
+    setShowSketchReplaceConfirm,
+    setSettingsSessionDraft,
+    setSettingsSessionReturnToGeneration,
+    setSurfaceSharedControlsBottom,
 }: UseWorkspaceResetActionsArgs) {
     const handleClearCurrentStage = useCallback(() => {
         handleClearResults();
@@ -49,26 +38,27 @@ export function useWorkspaceResetActions({
     }, [clearAssetRoles, handleClearResults]);
 
     const handleClearGalleryHistory = useCallback(() => {
-        handleClearHistory();
-        resetSelectedOutputState();
-        setBranchNameOverrides({});
-        setBranchContinuationSourceByBranchOriginId({});
-        setConversationState(EMPTY_WORKSPACE_CONVERSATION_STATE);
-        setSelectedHistoryId(null);
+        applyEmptyWorkspaceSnapshot();
+        clearPromptHistory();
+        setActiveWorkspaceDetailModal(null);
+        setIsAdvancedSettingsOpen(false);
+        setIsSketchPadOpen(false);
+        setShowSketchReplaceConfirm(false);
+        setSettingsSessionDraft(null);
+        setSettingsSessionReturnToGeneration(false);
+        setSurfaceSharedControlsBottom(null);
         lastPromotedHistoryIdRef.current = null;
-        resetWorkspaceSession();
-        clearAssetRoles(['stage-source']);
     }, [
-        clearAssetRoles,
-        closePickerSheet,
-        handleClearHistory,
+        applyEmptyWorkspaceSnapshot,
+        clearPromptHistory,
         lastPromotedHistoryIdRef,
-        resetSelectedOutputState,
-        resetWorkspaceSession,
-        setBranchContinuationSourceByBranchOriginId,
-        setBranchNameOverrides,
-        setConversationState,
-        setSelectedHistoryId,
+        setActiveWorkspaceDetailModal,
+        setIsAdvancedSettingsOpen,
+        setIsSketchPadOpen,
+        setSettingsSessionDraft,
+        setSettingsSessionReturnToGeneration,
+        setShowSketchReplaceConfirm,
+        setSurfaceSharedControlsBottom,
     ]);
 
     return {

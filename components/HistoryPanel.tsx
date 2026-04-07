@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { WORKSPACE_OVERLAY_Z_INDEX } from '../constants/workspaceOverlays';
-import { BranchNameOverrides, GeneratedImage } from '../types';
+import { BatchPreviewTile, BranchNameOverrides, GeneratedImage } from '../types';
 import { Language, getTranslation } from '../utils/translations';
+import LazyHistoryImage from './LazyHistoryImage';
 
 interface HistoryPanelProps {
     history: GeneratedImage[];
@@ -20,6 +21,10 @@ interface HistoryPanelProps {
     onClear?: () => void;
     surface?: 'default' | 'embedded';
     currentStageSourceHistoryId?: string | null;
+    continuous?: boolean;
+    renderHeader?: boolean;
+    thumbnailMode?: 'responsive' | 'compact';
+    previewTiles?: BatchPreviewTile[];
 }
 
 const HistoryPanel: React.FC<HistoryPanelProps> = ({
@@ -34,6 +39,10 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
     onClear,
     surface = 'default',
     currentStageSourceHistoryId = null,
+    continuous = false,
+    renderHeader = true,
+    thumbnailMode = 'responsive',
+    previewTiles = [],
 }) => {
     const [page, setPage] = useState(0);
     const [showConfirm, setShowConfirm] = useState(false);
@@ -43,14 +52,14 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
     // Reset to first page when history changes (e.g. new image generated)
     useEffect(() => {
         setPage(0);
-    }, [history]);
+    }, [history, previewTiles.length]);
 
-    if (history.length === 0) return null;
+    if (history.length === 0 && previewTiles.length === 0) return null;
 
     const resolvedTitle = title || t('workspacePickerPromptHistoryTitle');
 
-    const totalPages = Math.ceil(history.length / pageSize);
-    const displayedHistory = history.slice(page * pageSize, (page + 1) * pageSize);
+    const totalPages = continuous ? 1 : Math.ceil(history.length / pageSize);
+    const displayedHistory = continuous ? history : history.slice(page * pageSize, (page + 1) * pageSize);
     const isEmbedded = surface === 'embedded';
     const panelClassName = isEmbedded
         ? `transition-opacity duration-300 ${disabled ? 'opacity-40 pointer-events-none select-none' : ''}`
@@ -62,107 +71,197 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
         ? 'flex items-center gap-2 text-[15px] font-black text-slate-900 dark:text-slate-100'
         : 'text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-2';
     const titleIconClassName = isEmbedded ? 'h-4 w-4 text-slate-400 dark:text-slate-500' : 'h-4 w-4';
+    const gridClassName =
+        thumbnailMode === 'compact'
+            ? 'grid w-full min-w-0 grid-cols-4 gap-1.5 xl:grid-cols-[repeat(10,minmax(100px,100px))] xl:justify-between xl:gap-x-0 xl:gap-y-1'
+            : 'grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4';
+    const cardSizeClassName =
+        thumbnailMode === 'compact'
+            ? 'aspect-square w-full rounded-[18px] xl:h-[100px] xl:w-[100px] xl:shrink-0'
+            : 'aspect-square rounded-xl';
+    const badgeContainerClassName =
+        thumbnailMode === 'compact'
+            ? 'pointer-events-none absolute left-1.5 top-1.5 z-10 flex max-w-[calc(100%-0.75rem)] flex-col items-start gap-1'
+            : 'pointer-events-none absolute left-2 top-2 z-10 flex max-w-[calc(100%-1rem)] flex-col items-start gap-1.5';
+    const selectedMarkerClassName =
+        thumbnailMode === 'compact'
+            ? 'absolute bottom-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-white/80 shadow-[0_0_10px_rgba(250,204,21,0.85)] dark:ring-slate-950/80'
+            : 'absolute bottom-2 right-2 h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-white/80 shadow-[0_0_10px_rgba(250,204,21,0.85)] dark:ring-slate-950/80';
+    const freshnessGlowClassName =
+        thumbnailMode === 'compact'
+            ? 'pointer-events-none absolute inset-0 rounded-[18px] border-[3px] border-emerald-400 shadow-[0_0_22px_rgba(34,197,94,0.55)]'
+            : 'pointer-events-none absolute inset-0 rounded-xl border-[3px] border-emerald-400 shadow-[0_0_22px_rgba(34,197,94,0.55)]';
+    const sortedPreviewTiles = [...previewTiles].sort((leftTile, rightTile) => rightTile.slotIndex - leftTile.slotIndex);
 
     return (
         <div className={panelClassName}>
-            <div className={headerClassName}>
-                <h3 className={titleClassName}>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className={titleIconClassName}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
-                    {resolvedTitle}
-                </h3>
-
-                <div className="flex items-center gap-3">
-                    {onClear && (
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setShowConfirm(true);
-                            }}
-                            className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                            title={t('clearHistory')}
+            {renderHeader ? (
+                <div className={headerClassName}>
+                    <h3 className={titleClassName}>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className={titleIconClassName}
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-4 w-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                            </svg>
-                        </button>
-                    )}
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                        {resolvedTitle}
+                    </h3>
 
-                    {/* Pagination Controls */}
-                    {totalPages > 1 && (
-                        <div className="nbu-segmented-tray flex items-center rounded-lg p-0.5">
+                    <div className="flex items-center gap-3">
+                        {onClear && (
                             <button
-                                onClick={() => setPage((p) => Math.max(0, p - 1))}
-                                disabled={page === 0}
-                                className="p-1 text-gray-400 hover:text-gray-800 dark:hover:text-white disabled:opacity-30 disabled:hover:text-gray-400 transition-colors"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowConfirm(true);
+                                }}
+                                className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                                title={t('clearHistory')}
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     className="h-4 w-4"
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
                                 >
                                     <path
-                                        fillRule="evenodd"
-                                        d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                                        clipRule="evenodd"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                                     />
                                 </svg>
                             </button>
-                            <span className="text-[10px] px-2 text-gray-600 dark:text-gray-500 font-mono select-none min-w-[30px] text-center">
-                                {page + 1}/{totalPages}
-                            </span>
-                            <button
-                                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-                                disabled={page === totalPages - 1}
-                                className="p-1 text-gray-400 hover:text-gray-800 dark:hover:text-white disabled:opacity-30 disabled:hover:text-gray-400 transition-colors"
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="h-4 w-4"
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
-                                >
-                                    <path
-                                        fillRule="evenodd"
-                                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                        clipRule="evenodd"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    )}
+                        )}
 
-                    <span className="nbu-quiet-pill min-w-[24px] text-center font-mono text-xs shadow-inner">
-                        {history.length}
-                    </span>
+                        {totalPages > 1 && (
+                            <div className="nbu-segmented-tray flex items-center rounded-lg p-0.5">
+                                <button
+                                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                                    disabled={page === 0}
+                                    className="p-1 text-gray-400 hover:text-gray-800 dark:hover:text-white disabled:opacity-30 disabled:hover:text-gray-400 transition-colors"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-4 w-4"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                    >
+                                        <path
+                                            fillRule="evenodd"
+                                            d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                                            clipRule="evenodd"
+                                        />
+                                    </svg>
+                                </button>
+                                <span className="text-[10px] px-2 text-gray-600 dark:text-gray-500 font-mono select-none min-w-[30px] text-center">
+                                    {page + 1}/{totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                                    disabled={page === totalPages - 1}
+                                    className="p-1 text-gray-400 hover:text-gray-800 dark:hover:text-white disabled:opacity-30 disabled:hover:text-gray-400 transition-colors"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-4 w-4"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                    >
+                                        <path
+                                            fillRule="evenodd"
+                                            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                            clipRule="evenodd"
+                                        />
+                                    </svg>
+                                </button>
+                            </div>
+                        )}
+
+                        <span className="nbu-quiet-pill min-w-[24px] text-center font-mono text-xs shadow-inner">
+                            {history.length}
+                        </span>
+                    </div>
                 </div>
-            </div>
+            ) : null}
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            <div className={gridClassName}>
+                {sortedPreviewTiles.map((tile) => {
+                    const isPending = tile.status === 'pending';
+                    const isReady = tile.status === 'ready' && Boolean(tile.previewUrl);
+
+                    return (
+                        <div
+                            key={tile.id}
+                            data-testid={`history-preview-tile-${tile.slotIndex}`}
+                            className={`relative ${cardSizeClassName} overflow-hidden border border-dashed border-sky-300/80 bg-slate-50/90 animate-[fadeIn_0.3s_ease-out] dark:border-sky-700/70 dark:bg-slate-950/80`}
+                        >
+                            {isReady ? (
+                                <>
+                                    <img
+                                        src={tile.previewUrl || ''}
+                                        alt={t('stageGeneratedImageAlt')}
+                                        className="h-full w-full object-cover bg-gray-100 dark:bg-gray-900"
+                                    />
+                                    <div className="absolute inset-0 bg-slate-950/34 backdrop-blur-[3px]" />
+                                    <div
+                                        data-testid={`history-preview-locked-${tile.slotIndex}`}
+                                        className="absolute inset-0 flex items-center justify-center"
+                                    >
+                                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/35 bg-slate-950/68 text-white shadow-lg">
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                className="h-4 w-4"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={1.8}
+                                                    d="M8 11V8a4 4 0 118 0v3m-9 0h10a1 1 0 011 1v7a1 1 0 01-1 1H7a1 1 0 01-1-1v-7a1 1 0 011-1z"
+                                                />
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </>
+                            ) : isPending ? (
+                                <div
+                                    data-testid={`history-preview-pending-${tile.slotIndex}`}
+                                    className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.18),transparent_60%)] px-2 text-center"
+                                >
+                                    <div className="h-7 w-7 animate-spin rounded-full border-2 border-sky-300/60 border-t-sky-500 dark:border-sky-800 dark:border-t-sky-400" />
+                                    <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-700 dark:text-sky-300">
+                                        {t('statusGenerating')}
+                                    </span>
+                                </div>
+                            ) : (
+                                <div
+                                    data-testid={`history-preview-failed-${tile.slotIndex}`}
+                                    className="flex h-full w-full items-center justify-center bg-gradient-to-br from-red-50 to-rose-100 px-2 text-center dark:from-red-950/30 dark:to-rose-950/20"
+                                >
+                                    <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-red-600 dark:text-red-300">
+                                        {t('lblHistoryFailed')}
+                                    </span>
+                                </div>
+                            )}
+
+                            <div className="nbu-overlay-shell absolute left-1 top-1 rounded px-1.5 text-[8px] font-mono text-gray-800 dark:text-white">
+                                #{tile.slotIndex + 1}
+                            </div>
+                        </div>
+                    );
+                })}
+
                 {displayedHistory.map((item) => {
                     const isFailed = item.status === 'failed';
                     const isSelected = selectedId ? selectedId === item.id : selectedUrl === item.url;
@@ -171,6 +270,7 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
                         : false;
                     const isCurrentStageSource = currentStageSourceHistoryId === item.id;
                     const hasPreviewImage = Boolean(item.url);
+                    const isFresh = item.status === 'success' && item.openedAt == null;
 
                     return (
                         <div
@@ -188,7 +288,7 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
                                 }
                             }}
                             className={`
-              relative aspect-square rounded-xl overflow-hidden border bg-white/90 transition-[border-color,box-shadow,background-color] duration-200 animate-[fadeIn_0.3s_ease-out] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 dark:bg-slate-950/70
+              relative ${cardSizeClassName} overflow-hidden border bg-white/90 transition-[border-color,box-shadow,background-color] duration-200 animate-[fadeIn_0.3s_ease-out] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 dark:bg-slate-950/70
               ${
                   isSelected && !isFailed
                       ? 'border-amber-500 ring-2 ring-amber-500/30 ring-offset-2 ring-offset-white dark:ring-offset-black z-10 shadow-[0_10px_24px_rgba(15,23,42,0.18)]'
@@ -213,16 +313,21 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
                                     <div className="h-8 w-8 rounded-2xl border border-slate-300/70 bg-white/70 shadow-inner dark:border-slate-700 dark:bg-slate-900/60" />
                                 </div>
                             ) : (
-                                <img
+                                <LazyHistoryImage
                                     src={item.url}
                                     alt={t('stageGeneratedImageAlt')}
-                                    className="w-full h-full object-cover bg-gray-100 dark:bg-gray-900"
-                                    loading="lazy"
+                                    dataTestId={`history-card-${item.id}-image`}
+                                    placeholderTestId={`history-card-${item.id}-deferred-media`}
+                                    wrapperClassName="h-full w-full"
+                                    className="h-full w-full object-cover bg-gray-100 dark:bg-gray-900"
+                                    placeholderClassName="h-full w-full bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800"
                                 />
                             )}
 
+                            {isFresh ? <div data-testid={`history-fresh-${item.id}`} className={freshnessGlowClassName} /> : null}
+
                             {!isFailed && (isCurrentStageSource || isContinuationSource) && (
-                                <div className="pointer-events-none absolute left-2 top-2 z-10 flex max-w-[calc(100%-1rem)] flex-col items-start gap-1.5">
+                                <div className={badgeContainerClassName}>
                                     {isCurrentStageSource && (
                                         <span
                                             data-testid={`history-stage-source-${item.id}`}
@@ -245,7 +350,7 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
                             {isSelected && !isFailed && (
                                 <div
                                     data-testid={`history-selected-${item.id}`}
-                                    className="absolute bottom-2 right-2 h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-white/80 shadow-[0_0_10px_rgba(250,204,21,0.85)] dark:ring-slate-950/80"
+                                    className={selectedMarkerClassName}
                                 ></div>
                             )}
                         </div>

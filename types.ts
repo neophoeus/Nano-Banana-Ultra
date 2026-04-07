@@ -127,6 +127,23 @@ export interface ConversationTurnReference {
     text: string | null;
     thoughts: string | null;
     thoughtSignature: string | null;
+
+export type BatchPreviewTileStatus = 'pending' | 'ready' | 'failed';
+
+export interface BatchPreviewTile {
+    id: string;
+    slotIndex: number;
+    status: BatchPreviewTileStatus;
+    previewUrl?: string | null;
+    error?: string | null;
+}
+
+export interface BatchPreviewSession {
+    id: string;
+    batchSize: number;
+    didUserInspectExistingImage: boolean;
+    tiles: BatchPreviewTile[];
+}
 }
 
 export interface ConversationRequestContext {
@@ -144,6 +161,7 @@ export interface BranchConversationRecord {
     startedAt: number;
     updatedAt: number | null;
 }
+    openedAt?: number | null;
 
 export interface WorkspaceConversationState {
     byBranchOriginId: Record<string, BranchConversationRecord>;
@@ -179,6 +197,11 @@ export interface QueuedBatchJob {
     imageSize: ImageSize;
     style: ImageStyle;
     outputFormat: OutputFormat;
+
+export interface ImageReceivedResult {
+    displayUrl: string;
+    savedFilename?: string;
+}
     structuredOutputMode?: StructuredOutputMode;
     temperature: number;
     thinkingLevel: ThinkingLevel;
@@ -350,6 +373,8 @@ export interface GeneratedImage {
     id: string;
     url: string;
     savedFilename?: string;
+    thumbnailSavedFilename?: string;
+    thumbnailInline?: boolean;
     prompt: string;
     aspectRatio: AspectRatio;
     size: ImageSize;

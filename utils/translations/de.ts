@@ -154,12 +154,13 @@ export const de = {
     lblHistoryFailed: 'Fehler',
     modeTextToImg: 'Text zu Bild',
     modeImgToImg: 'Bild zu Bild',
-    clearHistory: 'Galerie leeren',
+    clearHistory: 'Arbeitsbereich leeren',
 
     // Clear History Dialog
-    clearHistoryTitle: 'Galerie leeren',
-    clearHistoryMsg: 'Alles unwiderruflich löschen?',
-    clearHistoryConfirm: 'Alles löschen',
+    clearHistoryTitle: 'Arbeitsbereich leeren',
+    clearHistoryMsg:
+        'Diesen Arbeitsbereich auf den leeren Standardzustand zurücksetzen? Verlauf, Bühne, Warteschlangenjobs und Sitzungskontext werden entfernt. Dies kann nicht rückgängig gemacht werden.',
+    clearHistoryConfirm: 'Arbeitsbereich leeren',
     clearHistoryCancel: 'Abbrechen',
 
     // Sketch Pad
@@ -300,6 +301,19 @@ export const de = {
     queuedBatchJobsImportReadyCount: '{0} importbereit',
     queuedBatchJobsClosedIssuesCount: '{0} mit Problemen beendet',
     queuedBatchJobsImportReadyAction: 'Bereite importieren',
+    queuedBatchRecoverRecentAction: 'Aktuelle Batch-Jobs wiederherstellen',
+    queuedBatchRecoverRecentLoading: 'Aktuelle Jobs werden wiederhergestellt...',
+    queuedBatchRecoverRecentNotice: '{0} aktuelle Batch-Jobs wiederhergestellt.',
+    queuedBatchRecoverRecentAlreadyTrackedNotice:
+        'Die aktuellen Remote-Batch-Jobs werden bereits verfolgt. {0} Eintrage wurden aktualisiert.',
+    queuedBatchRecoverRecentNoneNotice: 'Keine weiteren aktuellen Remote-Batch-Jobs gefunden.',
+    queuedBatchRecoverRecentLog:
+        '{0} aktuelle Remote-Batch-Jobs aus der Batch-Liste wiederhergestellt.',
+    queuedBatchRecoverRecentRefreshedLog:
+        '{0} bereits verfolgte Remote-Batch-Jobs aus der Batch-Liste aktualisiert.',
+    queuedBatchRecoverRecentFailedLog: 'Wiederherstellung aktueller Batch-Jobs fehlgeschlagen: {0}',
+    queuedBatchRecoverRecentMetadataHint:
+        'Wiederhergestellte Remote-Jobs konnen erneut importiert werden, aber die Gemini-Batch-Liste liefert weder den ursprunglichen Prompt noch Referenzbilder zuruck, daher enthalten diese Eintrage nur vereinfachte lokale Details.',
     queuedBatchJobsRefreshAll: 'Alle aktualisieren',
     queuedBatchJobsTrackedCount: '{0} verfolgt',
     queuedBatchJobsImportedTag: 'Importiert',
@@ -654,6 +668,7 @@ export const de = {
     workspaceSurfacePromptEmpty: 'Noch kein Prompt',
     workspaceViewerTitle: 'Betrachter',
     workspaceViewerDesc: 'Prufen Sie aktuelles Stufenbild, Ergebnistext und Herkunft an einem Ort.',
+    workspaceViewerNewBadge: 'Neu',
     workspaceViewerClose: 'Schliessen',
     workspaceViewerImageAlt: 'Betrachterbild',
     workspaceViewerPrompt: 'Prompt',

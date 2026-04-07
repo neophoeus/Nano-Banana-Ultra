@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, Suspense, lazy } from 'react';
 import {
     AspectRatio,
+    BatchPreviewSession,
     BranchNameOverrides,
     EditorMode,
     ExecutionMode,
+    GeneratedImage as GeneratedImageType,
     GroundingMode,
     ImageSize,
     ImageStyle,
@@ -19,7 +21,6 @@ import {
     SessionContinuitySource,
     WorkspaceSettingsDraft,
 } from './types';
-import RecentHistoryFilmstrip from './components/RecentHistoryFilmstrip';
 import ComposerAdvancedSettingsDialog from './components/ComposerAdvancedSettingsDialog';
 import ComposerSettingsPanel from './components/ComposerSettingsPanel';
 import PanelLoadingFallback from './components/PanelLoadingFallback';
@@ -28,13 +29,14 @@ import SelectedItemActionBar from './components/SelectedItemActionBar';
 import SelectedItemSummaryStrip from './components/SelectedItemSummaryStrip';
 import SurfaceLoadingFallback from './components/SurfaceLoadingFallback';
 import WorkspaceDetailModal from './components/WorkspaceDetailModal';
-import WorkspaceGalleryCard from './components/WorkspaceGalleryCard';
 import WorkspaceHistoryCanvas from './components/WorkspaceHistoryCanvas';
 import WorkspaceInsightsSidebar from './components/WorkspaceInsightsSidebar';
 import WorkspaceOverlayStack from './components/WorkspaceOverlayStack';
 import WorkspaceResponseRail from './components/WorkspaceResponseRail';
 import WorkspaceSideToolPanel from './components/WorkspaceSideToolPanel';
+import WorkspaceBottomFooter from './components/WorkspaceBottomFooter';
 import WorkspaceTopHeader from './components/WorkspaceTopHeader';
+import WorkspaceUnifiedHistoryPanel from './components/WorkspaceUnifiedHistoryPanel';
 import WorkspaceVersionsDetailPanel from './components/WorkspaceVersionsDetailPanel';
 import WorkspaceWorkflowCard from './components/WorkspaceWorkflowCard';
 import WorkspaceWorkflowDetailPanel from './components/WorkspaceWorkflowDetailPanel';
@@ -42,6 +44,7 @@ import { Language, ensureLanguageLoaded, getTranslation, persistLanguagePreferen
 import { ASPECT_RATIOS, IMAGE_MODELS, MODEL_CAPABILITIES, OUTPUT_FORMATS, THINKING_LEVELS } from './constants';
 import {
     EMPTY_WORKSPACE_COMPOSER_STATE,
+    EMPTY_WORKSPACE_SNAPSHOT,
     EMPTY_WORKSPACE_SESSION,
     loadWorkspaceSnapshot,
 } from './utils/workspacePersistence';
@@ -68,7 +71,6 @@ import { useImportedWorkspaceReview } from './hooks/useImportedWorkspaceReview';
 import { useComposerSettingsPanelProps } from './hooks/useComposerSettingsPanelProps';
 import { useWorkspaceOverlayAuxiliaryProps } from './hooks/useWorkspaceOverlayAuxiliaryProps';
 import { useWorkspacePickerSheetProps } from './hooks/useWorkspacePickerSheetProps';
-import { useRecentHistoryFilmstripProps } from './hooks/useRecentHistoryFilmstripProps';
 import { useWorkspaceStageViewer } from './hooks/useWorkspaceStageViewer';
 import { useWorkspaceTopHeaderProps } from './hooks/useWorkspaceTopHeaderProps';
 import { useWorkspaceBranchPresentation } from './hooks/useWorkspaceBranchPresentation';
@@ -93,6 +95,7 @@ import { useWorkspaceShellUtilities } from './hooks/useWorkspaceShellUtilities';
 import { useWorkspaceTransientUiState } from './hooks/useWorkspaceTransientUiState';
 import { useLegacyWorkspaceSnapshotMigration } from './hooks/useLegacyWorkspaceSnapshotMigration';
 import { normalizeStructuredOutputMode } from './utils/structuredOutputs';
+import { buildSavedImageLoadUrl } from './utils/imageSaveUtils';
 
 const ImageEditor = lazy(() => import('./components/ImageEditor'));
 const GeneratedImage = lazy(() => import('./components/GeneratedImage'));
@@ -187,6 +190,7 @@ const App: React.FC = () => {
     >(null);
     const [editingImageSource, setEditingImageSource] = useState<string | null>(null);
     const [batchProgress, setBatchProgress] = useState({ completed: 0, total: 0 });
+    const [activeBatchPreviewSession, setActiveBatchPreviewSession] = useState<BatchPreviewSession | null>(null);
     const [branchNameOverrides, setBranchNameOverrides] = useState<BranchNameOverrides>(
         () => initialWorkspaceSnapshot.branchState.nameOverrides,
     );
@@ -223,6 +227,7 @@ const App: React.FC = () => {
     const abortControllerRef = useRef<AbortController | null>(null);
     const lastPromotedHistoryIdRef = useRef<string | null>(null);
     const queuedBatchHistorySelectRef = useRef<((item: import('./types').GeneratedImage) => void) | null>(null);
+    const activeBatchPreviewSessionRef = useRef<BatchPreviewSession | null>(null);
 
     const {
         generatedImageUrls,
@@ -417,6 +422,186 @@ const App: React.FC = () => {
         },
         [t],
     );
+    useEffect(() => {
+        activeBatchPreviewSessionRef.current = activeBatchPreviewSession;
+    }, [activeBatchPreviewSession]);
+
+    const markHistoryItemOpened = useCallback(
+        (historyId: string) => {
+            setHistory((previousHistory) =>
+                previousHistory.map((historyItem) =>
+                    historyItem.id === historyId && historyItem.status === 'success' && historyItem.openedAt == null
+                        ? {
+                              ...historyItem,
+                              openedAt: Date.now(),
+                          }
+                        : historyItem,
+                ),
+            );
+        },
+        [setHistory],
+    );
+
+    const getBatchVisualSlotIndex = useCallback((item: GeneratedImageType) => {
+        const candidateSlotIndex = item.metadata?.batchResultIndex;
+        return typeof candidateSlotIndex === 'number' && Number.isFinite(candidateSlotIndex) ? candidateSlotIndex : -1;
+    }, []);
+
+    const silentlyShowHistoryItemOnStage = useCallback(
+        (item: GeneratedImageType) => {
+            const stageUrl = item.savedFilename ? buildSavedImageLoadUrl(item.savedFilename) : item.url;
+            if (!stageUrl) {
+                return;
+            }
+
+            setGeneratedImageUrls([stageUrl]);
+            setSelectedImageIndex(0);
+            setSelectedHistoryId(item.id);
+            applySelectedResultArtifacts(buildResultArtifacts(item));
+            setError(null);
+            upsertViewerStageSource({
+                origin: 'history',
+                url: stageUrl,
+                savedFilename: item.savedFilename,
+                sourceHistoryId: item.id,
+                lineageAction: item.lineageAction,
+            });
+        },
+        [
+            applySelectedResultArtifacts,
+            buildResultArtifacts,
+            setError,
+            setGeneratedImageUrls,
+            setSelectedHistoryId,
+            setSelectedImageIndex,
+            upsertViewerStageSource,
+        ],
+    );
+
+    const silentlyShowFailedHistoryItemOnStage = useCallback(
+        (item: GeneratedImageType) => {
+            setGeneratedImageUrls([]);
+            setSelectedImageIndex(0);
+            setSelectedHistoryId(item.id);
+            applySelectedResultArtifacts(null);
+            setError(item.error || t('statusFailed'));
+            clearAssetRoles(['stage-source']);
+        },
+        [
+            applySelectedResultArtifacts,
+            clearAssetRoles,
+            setError,
+            setGeneratedImageUrls,
+            setSelectedHistoryId,
+            setSelectedImageIndex,
+            t,
+        ],
+    );
+
+    const currentViewedCompletedHistoryId = useMemo(() => {
+        const candidateHistoryId = currentStageAsset?.sourceHistoryId || selectedHistoryId;
+        const candidateHistoryItem = getHistoryTurnById(candidateHistoryId);
+
+        return candidateHistoryItem?.status === 'success' ? candidateHistoryItem.id : null;
+    }, [currentStageAsset?.sourceHistoryId, getHistoryTurnById, selectedHistoryId]);
+
+    const previousViewedCompletedHistoryIdRef = useRef<string | null>(currentViewedCompletedHistoryId);
+
+    useEffect(() => {
+        const previousViewedCompletedHistoryId = previousViewedCompletedHistoryIdRef.current;
+
+        if (previousViewedCompletedHistoryId && previousViewedCompletedHistoryId !== currentViewedCompletedHistoryId) {
+            const previousHistoryItem = getHistoryTurnById(previousViewedCompletedHistoryId);
+            if (previousHistoryItem?.status === 'success' && previousHistoryItem.openedAt == null) {
+                markHistoryItemOpened(previousViewedCompletedHistoryId);
+            }
+        }
+
+        previousViewedCompletedHistoryIdRef.current = currentViewedCompletedHistoryId;
+    }, [currentViewedCompletedHistoryId, getHistoryTurnById, markHistoryItemOpened]);
+
+    const handleBatchPreviewStart = useCallback(
+        ({ sessionId, batchSize }: { sessionId: string; batchSize: number }) => {
+            setActiveBatchPreviewSession({
+                id: sessionId,
+                batchSize,
+                didUserInspectExistingImage: false,
+                tiles: Array.from({ length: batchSize }, (_, slotIndex) => ({
+                    id: `${sessionId}-${slotIndex}`,
+                    slotIndex,
+                    status: 'pending',
+                    previewUrl: null,
+                    error: null,
+                })),
+            });
+        },
+        [],
+    );
+
+    const handleBatchPreviewTileUpdate = useCallback(
+        ({ sessionId, tile }: { sessionId: string; tile: BatchPreviewSession['tiles'][number] }) => {
+            setActiveBatchPreviewSession((previousSession) => {
+                if (!previousSession || previousSession.id !== sessionId) {
+                    return previousSession;
+                }
+
+                return {
+                    ...previousSession,
+                    tiles: previousSession.tiles.map((candidateTile) =>
+                        candidateTile.slotIndex === tile.slotIndex ? { ...candidateTile, ...tile } : candidateTile,
+                    ),
+                };
+            });
+        },
+        [],
+    );
+
+    const handleBatchPreviewComplete = useCallback(
+        ({ sessionId, historyItems }: { sessionId: string; historyItems: GeneratedImageType[] }) => {
+            const currentPreviewSession = activeBatchPreviewSessionRef.current;
+            if (!currentPreviewSession || currentPreviewSession.id !== sessionId) {
+                return;
+            }
+
+            setActiveBatchPreviewSession(null);
+
+            if (currentPreviewSession.didUserInspectExistingImage) {
+                return;
+            }
+
+            const orderedBatchHistoryItems = [...historyItems].sort(
+                (leftItem, rightItem) => getBatchVisualSlotIndex(rightItem) - getBatchVisualSlotIndex(leftItem),
+            );
+            const autoOpenHistoryItem =
+                orderedBatchHistoryItems.find(
+                    (historyItem) => historyItem.status === 'success' && (historyItem.savedFilename || historyItem.url),
+                ) || orderedBatchHistoryItems[0];
+
+            if (autoOpenHistoryItem) {
+                if (autoOpenHistoryItem.status === 'failed') {
+                    silentlyShowFailedHistoryItemOnStage(autoOpenHistoryItem);
+                } else {
+                    silentlyShowHistoryItemOnStage(autoOpenHistoryItem);
+                }
+            }
+        },
+        [getBatchVisualSlotIndex, silentlyShowFailedHistoryItemOnStage, silentlyShowHistoryItemOnStage],
+    );
+
+    const handleBatchPreviewClear = useCallback(({ sessionId }: { sessionId: string }) => {
+        setActiveBatchPreviewSession((previousSession) => (previousSession?.id === sessionId ? null : previousSession));
+    }, []);
+
+    const handleHistorySelectionDuringGeneration = useCallback(() => {
+        setActiveBatchPreviewSession((previousSession) =>
+            previousSession
+                ? {
+                      ...previousSession,
+                      didUserInspectExistingImage: true,
+                  }
+                : previousSession,
+        );
+    }, []);
 
     const getModelLabel = useCallback(
         (model: ImageModel) => {
@@ -780,8 +965,6 @@ const App: React.FC = () => {
         }),
         [t],
     );
-
-    const recentHistory = useMemo(() => history.slice(0, 12), [history]);
     const {
         successfulHistory,
         branchLabelByTurnId,
@@ -829,6 +1012,20 @@ const App: React.FC = () => {
         getHistoryTurnById,
     });
 
+    const viewerHistoryItems = useMemo(
+        () =>
+            successfulHistory
+                .map((historyItem) => ({
+                    id: historyItem.id,
+                    url: historyItem.savedFilename
+                        ? buildSavedImageLoadUrl(historyItem.savedFilename)
+                        : historyItem.url,
+                    isFresh: historyItem.openedAt == null,
+                }))
+                .filter((historyItem) => Boolean(historyItem.url)),
+        [successfulHistory],
+    );
+
     const { performGeneration } = usePerformGeneration({
         t,
         apiKeyReady,
@@ -863,6 +1060,10 @@ const App: React.FC = () => {
         addPromptToHistory,
         getGenerationLineageContext,
         getConversationRequestContext,
+        onBatchPreviewStart: handleBatchPreviewStart,
+        onBatchPreviewTileUpdate: handleBatchPreviewTileUpdate,
+        onBatchPreviewComplete: handleBatchPreviewComplete,
+        onBatchPreviewClear: handleBatchPreviewClear,
     });
 
     const {
@@ -952,6 +1153,9 @@ const App: React.FC = () => {
         addLog,
         t,
     });
+    const handlePrepareGenerate = useCallback(() => {
+        clearAssetRoles(['stage-source']);
+    }, [clearAssetRoles]);
 
     const { handleGenerate, handleFollowUpGenerate, handleCancelGeneration } = useWorkspaceGenerationActions({
         abortControllerRef,
@@ -967,6 +1171,7 @@ const App: React.FC = () => {
         primePendingProvenanceContinuation,
         resetSelectedOutputState,
         performGeneration,
+        onPrepareGenerate: handlePrepareGenerate,
         setIsGenerating,
         addLog,
         showNotification,
@@ -1092,6 +1297,9 @@ const App: React.FC = () => {
         setBranchRenameDialog,
         setBranchRenameDraft,
     });
+    const applyEmptyWorkspaceSnapshot = useCallback(() => {
+        applyWorkspaceSnapshot(EMPTY_WORKSPACE_SNAPSHOT);
+    }, [applyWorkspaceSnapshot]);
 
     useLegacyWorkspaceSnapshotMigration({
         t,
@@ -1190,18 +1398,18 @@ const App: React.FC = () => {
     );
 
     const { handleClearCurrentStage, handleClearGalleryHistory } = useWorkspaceResetActions({
-        activePickerSheet,
         lastPromotedHistoryIdRef,
         handleClearResults,
-        handleClearHistory,
-        resetSelectedOutputState,
         clearAssetRoles,
-        resetWorkspaceSession,
-        closePickerSheet,
-        setBranchNameOverrides,
-        setBranchContinuationSourceByBranchOriginId,
-        setConversationState,
-        setSelectedHistoryId,
+        applyEmptyWorkspaceSnapshot,
+        clearPromptHistory,
+        setActiveWorkspaceDetailModal,
+        setIsAdvancedSettingsOpen,
+        setIsSketchPadOpen,
+        setShowSketchReplaceConfirm,
+        setSettingsSessionDraft,
+        setSettingsSessionReturnToGeneration,
+        setSurfaceSharedControlsBottom,
     });
 
     const {
@@ -1232,6 +1440,7 @@ const App: React.FC = () => {
         setPendingProvenanceContext,
         setConversationState,
         setBranchContinuationSourceByBranchOriginId,
+        setHistory,
         setEditingImageSource,
         setGeneratedImageUrls,
         setSelectedImageIndex,
@@ -1244,6 +1453,7 @@ const App: React.FC = () => {
         showNotification,
         t,
         clearActivePickerSheet: closePickerSheet,
+        onHistorySelectWhileGenerating: handleHistorySelectionDuringGeneration,
     });
     queuedBatchHistorySelectRef.current = handleHistorySelect;
     const {
@@ -1287,7 +1497,6 @@ const App: React.FC = () => {
     const {
         buildSelectedItemActionBarProps,
         buildSelectedItemSummaryStripProps,
-        renderHistoryActionButton,
         renderHistoryTurnSnapshotContent,
         renderHistoryTurnActionRow,
         renderHistoryTurnBadges,
@@ -1829,6 +2038,15 @@ const App: React.FC = () => {
         ),
         [groundingProvenancePanelProps, t],
     );
+    const handleViewerSelectHistoryItem = useCallback(
+        (historyId: string) => {
+            const historyItem = getHistoryTurnById(historyId);
+            if (historyItem) {
+                handleHistorySelect(historyItem);
+            }
+        },
+        [getHistoryTurnById, handleHistorySelect],
+    );
     const { activeViewerImage, workspaceViewerOverlayProps, generatedImageStageProps } = useWorkspaceStageViewer({
         generatedImageUrls,
         selectedImageIndex,
@@ -1836,6 +2054,10 @@ const App: React.FC = () => {
         isViewerOpen,
         setIsViewerOpen,
         isGenerating,
+        showStageGeneratingState: isGenerating && generatedImageUrls.length === 0,
+        viewerItems: viewerHistoryItems,
+        viewerSelectedHistoryId: currentViewedCompletedHistoryId,
+        onSelectViewerItem: handleViewerSelectHistoryItem,
         prompt: viewSettings.prompt,
         error,
         resultStatusSummary: groundingResolutionStatusSummary,
@@ -1942,59 +2164,40 @@ const App: React.FC = () => {
         handleRemoveCharacterReference: handleSurfaceRemoveCharacterReference,
         showStyleEntry: !isEditing,
     });
-    const recentHistoryFilmstripProps = useRecentHistoryFilmstripProps({
-        recentHistory,
-        branchCount: branchSummaries.length,
-        activeStageImageUrl: activeViewerImage || null,
-        selectedHistoryId,
-        currentStageSourceHistoryId,
-        branchOriginIdByTurnId,
-        branchLabelByTurnId,
-        branchSummaryByOriginId,
-        activeBranchOriginId: activeBranchSummary?.branchOriginId || null,
-        onClear: handleClearGalleryHistory,
-        onHistorySelect: handleHistorySelect,
-        onContinueFromHistoryTurn: handleContinueFromHistoryTurn,
-        onBranchFromHistoryTurn: handleBranchFromHistoryTurn,
-        isPromotedContinuationSource,
-        getContinueActionLabel,
-        getBranchAccentClassName,
-        getLineageActionLabel,
-        getQueuedBatchPositionLabel,
-        currentLanguage: currentLang,
-        renderHistoryActionButton,
-    });
-    const gallerySupportSurface = useMemo(
+    const historySurface = useMemo(
         () => (
-            <WorkspaceGalleryCard
+            <WorkspaceUnifiedHistoryPanel
                 currentLanguage={currentLang}
                 history={history}
-                onSelect={handleHistorySelect}
-                onRenameBranch={handleRenameBranch}
-                isPromotedContinuationSource={isPromotedContinuationSource}
-                getContinueActionLabel={getContinueActionLabel}
-                branchNameOverrides={branchNameOverrides}
+                previewTiles={activeBatchPreviewSession?.tiles || []}
+                selectedItemDock={selectedItemDock || undefined}
                 selectedHistoryId={selectedHistoryId}
                 currentStageSourceHistoryId={currentStageSourceHistoryId}
-                onClear={handleClearGalleryHistory}
+                activeBranchSummary={activeBranchSummary}
+                branchSummariesCount={branchSummaries.length}
+                onSelect={handleHistorySelect}
+                isPromotedContinuationSource={isPromotedContinuationSource}
+                getBranchAccentClassName={getBranchAccentClassName}
+                onClearWorkspace={handleClearGalleryHistory}
             />
         ),
         [
-            branchNameOverrides,
+            activeBranchSummary,
+            activeBatchPreviewSession?.tiles,
+            branchSummaries.length,
             currentLang,
             currentStageSourceHistoryId,
-            getContinueActionLabel,
+            getBranchAccentClassName,
             handleClearGalleryHistory,
             handleHistorySelect,
-            handleRenameBranch,
             history,
             isPromotedContinuationSource,
             selectedHistoryId,
+            selectedItemDock,
         ],
     );
-    const shellPanelClassName = 'min-w-0 nbu-shell-panel nbu-shell-surface-stage-hero p-3';
     const stagePanelClassName =
-        'min-w-0 nbu-shell-panel nbu-shell-surface-stage-hero min-h-[440px] overflow-hidden p-3 lg:min-h-0 lg:flex-1';
+        'min-w-0 nbu-shell-panel nbu-shell-surface-stage-hero min-h-[400px] overflow-hidden p-3 lg:min-h-0 lg:flex-1 xl:h-full xl:min-h-0 xl:p-0';
     const topLauncherCompactButtonClassName =
         'group nbu-shell-panel flex h-[40px] min-w-0 items-center justify-center px-3 py-2 text-center transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_18px_40px_rgba(2,6,23,0.38)] min-h-[40px]';
     const topLauncherCompactLabelClassName =
@@ -2357,14 +2560,6 @@ const App: React.FC = () => {
                 />
             </WorkspaceDetailModal>
         ) : null;
-    const recentLane = useMemo(
-        () => (
-            <div className={shellPanelClassName}>
-                <RecentHistoryFilmstrip {...recentHistoryFilmstripProps} />
-            </div>
-        ),
-        [recentHistoryFilmstripProps],
-    );
     const focusSurface = useMemo(
         () => (
             <div className={stagePanelClassName}>
@@ -2372,7 +2567,7 @@ const App: React.FC = () => {
                     fallback={
                         <PanelLoadingFallback
                             label={t('loadingStageSurface')}
-                            className="nbu-dashed-panel flex h-full min-h-[420px] items-center justify-center rounded-[24px] text-sm text-gray-500 dark:text-gray-400"
+                            className="nbu-dashed-panel flex h-full min-h-[360px] items-center justify-center rounded-[24px] text-sm text-gray-500 dark:text-gray-400 xl:min-h-0"
                         />
                     }
                 >
@@ -2482,10 +2677,10 @@ const App: React.FC = () => {
                 viewerOverlayProps={workspaceViewerOverlayProps}
             />
 
-            <div className="relative z-10 mx-auto flex min-h-screen max-w-[1560px] flex-col px-4 pb-6 pt-0 lg:px-6 lg:pb-8">
-                <main className="mt-0 flex flex-1 flex-col gap-1.5">
-                    <WorkspaceTopHeader {...workspaceTopHeaderProps} />
+            <WorkspaceTopHeader {...workspaceTopHeaderProps} />
 
+            <div className="relative z-10 mx-auto flex min-h-screen max-w-[1560px] flex-col px-4 pb-[50px] pt-[54px] lg:px-4 lg:pb-[54px] xl:px-3">
+                <main className="mt-0 flex flex-1 flex-col gap-1.5">
                     <section
                         data-testid="workspace-insights-collapsible"
                         className="grid gap-1.5 lg:grid-cols-[minmax(0,1fr)_144px_176px] lg:items-stretch"
@@ -2531,10 +2726,8 @@ const App: React.FC = () => {
                         <div className="flex min-w-0 flex-col gap-1.5">
                             <WorkspaceHistoryCanvas
                                 currentLanguage={currentLang}
-                                selectedItemDock={selectedItemDock}
-                                recentLane={recentLane}
                                 focusSurface={focusSurface}
-                                supportSurface={gallerySupportSurface}
+                                historySurface={historySurface}
                                 activeBranchSummary={activeBranchSummary}
                                 recentBranchSummaries={recentBranchSummaries}
                                 branchSummariesCount={branchSummaries.length}
@@ -2565,6 +2758,8 @@ const App: React.FC = () => {
                     </section>
                 </main>
             </div>
+
+            <WorkspaceBottomFooter />
         </div>
     );
 };

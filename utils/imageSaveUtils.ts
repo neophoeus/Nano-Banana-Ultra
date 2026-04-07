@@ -14,8 +14,17 @@ export type PreparedImageAsset = {
     mimeType: string;
 };
 
+export type PersistedHistoryThumbnail = {
+    url: string;
+    thumbnailSavedFilename?: string;
+    thumbnailInline?: boolean;
+};
+
 export const buildSavedImageLoadUrl = (savedFilename: string): string =>
     `${LOAD_IMAGE_ENDPOINT}?filename=${encodeURIComponent(savedFilename)}`;
+
+export const extractSavedFilename = (savedPath: string | null | undefined): string | undefined =>
+    savedPath ? savedPath.split(/[\\/]/).pop() : undefined;
 
 export const constrainImageDimensions = (
     width: number,
@@ -191,6 +200,35 @@ export const generateThumbnail = (dataUrl: string): Promise<string> => {
         img.src = dataUrl;
     });
 };
+
+export async function persistHistoryThumbnail(dataUrl: string, prefix: string): Promise<PersistedHistoryThumbnail> {
+    let thumbnailUrl = dataUrl;
+
+    try {
+        thumbnailUrl = await generateThumbnail(dataUrl);
+    } catch {
+        thumbnailUrl = dataUrl;
+    }
+
+    try {
+        const savedPath = await saveImageToLocal(thumbnailUrl, `${prefix}-thumb`);
+        const thumbnailSavedFilename = extractSavedFilename(savedPath);
+
+        if (thumbnailSavedFilename) {
+            return {
+                url: buildSavedImageLoadUrl(thumbnailSavedFilename),
+                thumbnailSavedFilename,
+            };
+        }
+    } catch {
+        // Fall back to the inline preview for the current session only.
+    }
+
+    return {
+        url: thumbnailUrl,
+        thumbnailInline: true,
+    };
+}
 /**
  * Fetch a full-resolution image from the local filesystem via the server endpoint.
  * Returns a base64 data URL.

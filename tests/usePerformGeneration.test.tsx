@@ -12,12 +12,14 @@ const {
     generateImageWithGeminiMock,
     saveImageToLocalMock,
     generateThumbnailMock,
+    persistHistoryThumbnailMock,
 } = vi.hoisted(() => ({
     checkApiKeyMock: vi.fn(),
     promptForApiKeyMock: vi.fn(),
     generateImageWithGeminiMock: vi.fn(),
     saveImageToLocalMock: vi.fn(),
     generateThumbnailMock: vi.fn(),
+    persistHistoryThumbnailMock: vi.fn(),
 }));
 
 vi.mock('../services/geminiService', () => ({
@@ -28,6 +30,8 @@ vi.mock('../services/geminiService', () => ({
 
 vi.mock('../utils/imageSaveUtils', () => ({
     buildSavedImageLoadUrl: (savedFilename: string) => `/api/load-image?filename=${encodeURIComponent(savedFilename)}`,
+    extractSavedFilename: (savedPath: string | null | undefined) => savedPath?.split(/[\\/]/).pop(),
+    persistHistoryThumbnail: persistHistoryThumbnailMock,
     saveImageToLocal: saveImageToLocalMock,
     generateThumbnail: generateThumbnailMock,
 }));
@@ -194,9 +198,13 @@ describe('usePerformGeneration', () => {
         generateImageWithGeminiMock.mockReset();
         saveImageToLocalMock.mockReset();
         generateThumbnailMock.mockReset();
+        persistHistoryThumbnailMock.mockReset();
 
         saveImageToLocalMock.mockResolvedValue('D:/output/generated.png');
         generateThumbnailMock.mockResolvedValue('data:image/jpeg;base64,thumb');
+        persistHistoryThumbnailMock.mockResolvedValue({
+            url: 'data:image/jpeg;base64,thumb',
+        });
     });
 
     afterEach(() => {
@@ -213,12 +221,14 @@ describe('usePerformGeneration', () => {
             async (_request, _batchSize, onImageReceived, onLog, _signal, onProgress) => {
                 onLog('Image #1: Success.');
                 onProgress(1, 1);
-                const savedFilename = await onImageReceived('data:image/png;base64,AAA');
+                const receivedResult = await onImageReceived('data:image/png;base64,AAA', 0);
                 return [
                     {
+                        slotIndex: 0,
                         status: 'success',
                         url: 'data:image/png;base64,AAA',
-                        savedFilename,
+                        displayUrl: receivedResult?.displayUrl,
+                        savedFilename: receivedResult?.savedFilename,
                         text: 'Generated reply',
                         thoughts: 'Reasoning',
                         metadata: { actualOutput: { width: 2048, height: 2048 } },
@@ -258,8 +268,11 @@ describe('usePerformGeneration', () => {
                 mode: 'Inpainting',
             }),
         );
-        expect(generateThumbnailMock).toHaveBeenCalledWith('data:image/png;base64,AAA');
-        expect(latestGeneratedImageUrls).toEqual(['/api/load-image?filename=generated.png']);
+        expect(persistHistoryThumbnailMock).toHaveBeenCalledWith(
+            'data:image/png;base64,AAA',
+            'gemini-3.1-flash-image-preview-edit',
+        );
+        expect(latestGeneratedImageUrls).toEqual([]);
         expect(latestSelectedImageIndex).toBe(0);
         expect(latestGenerationMode).toBe('Inpainting');
         expect(latestExecutionMode).toBe('single-turn');
@@ -279,6 +292,7 @@ describe('usePerformGeneration', () => {
                 text: 'Generated reply',
                 thoughts: 'Reasoning',
                 savedFilename: 'generated.png',
+                openedAt: null,
                 conversationId: 'conv-1',
                 conversationBranchOriginId: 'root-turn',
                 parentHistoryId: 'parent-turn',
@@ -286,6 +300,9 @@ describe('usePerformGeneration', () => {
                 sourceHistoryId: 'source-turn',
                 lineageAction: 'editor-follow-up',
                 lineageDepth: 2,
+                metadata: expect.objectContaining({
+                    batchResultIndex: 0,
+                }),
             }),
         );
         expect(latestLogs).toContain('Image #1: Success.');
@@ -361,22 +378,23 @@ describe('usePerformGeneration', () => {
         expect(generateImageWithGeminiMock).toHaveBeenCalledWith(
             expect.objectContaining({
                 executionMode: 'chat-continuation',
-                conversationContext: {
+                conversationContext: expect.objectContaining({
                     conversationId: 'conversation-42',
                     branchOriginId: 'root-turn',
                     activeSourceHistoryId: 'follow-up-turn',
-                    priorTurns: [
+                    priorTurns: expect.arrayContaining([
                         expect.objectContaining({
                             historyId: 'follow-up-turn',
                             thoughtSignature: 'sig-1',
                         }),
-                    ],
-                },
+                    ]),
+                }),
             }),
             1,
             expect.any(Function),
             expect.any(Function),
             expect.any(AbortSignal),
+            expect.any(Function),
             expect.any(Function),
         );
         expect(latestExecutionMode).toBe('chat-continuation');
@@ -429,9 +447,10 @@ describe('usePerformGeneration', () => {
         });
     });
 
-    it('serializes thumbnail generation for multi-image batches', async () => {
+    it('serializes thumbnail generation for multi-image batches and commits them in visual order', async () => {
         generateImageWithGeminiMock.mockResolvedValue([
             {
+                slotIndex: 0,
                 status: 'success',
                 url: 'data:image/png;base64,AAA',
                 savedFilename: 'first.png',
@@ -440,6 +459,7 @@ describe('usePerformGeneration', () => {
                 sessionHints: null,
             },
             {
+                slotIndex: 1,
                 status: 'success',
                 url: 'data:image/png;base64,BBB',
                 savedFilename: 'second.png',
@@ -450,12 +470,12 @@ describe('usePerformGeneration', () => {
         ]);
 
         let activeThumbnailJobs = 0;
-        generateThumbnailMock.mockImplementation(async (imageUrl: string) => {
+        persistHistoryThumbnailMock.mockImplementation(async (imageUrl: string) => {
             activeThumbnailJobs += 1;
             expect(activeThumbnailJobs).toBe(1);
             await Promise.resolve();
             activeThumbnailJobs -= 1;
-            return `${imageUrl}-thumb`;
+            return { url: `${imageUrl}-thumb` };
         });
 
         renderHook();
@@ -472,14 +492,15 @@ describe('usePerformGeneration', () => {
             );
         });
 
-        expect(generateThumbnailMock.mock.calls.map(([url]) => url)).toEqual([
+        expect(persistHistoryThumbnailMock.mock.calls.map(([url]) => url)).toEqual([
             'data:image/png;base64,AAA',
             'data:image/png;base64,BBB',
         ]);
         expect(latestHistory).toHaveLength(2);
         expect(latestHistory.map((item) => item.url)).toEqual([
-            'data:image/png;base64,AAA-thumb',
             'data:image/png;base64,BBB-thumb',
+            'data:image/png;base64,AAA-thumb',
         ]);
+        expect(latestHistory.map((item) => item.metadata?.batchResultIndex)).toEqual([1, 0]);
     });
 });

@@ -44,11 +44,12 @@ describe('HistoryPanel', () => {
                 currentStageSourceHistoryId="turn-stage"
                 selectedId="turn-stage"
                 currentLanguage="zh_TW"
+                thumbnailMode="compact"
             />,
         );
         const visibleText = getVisibleText(markup);
 
-        expect(visibleText).toContain('提示詞歷史');
+        expect(visibleText).toContain('歷史');
         expect(visibleText).toContain('階段來源');
         expect(visibleText).toContain('延續來源');
         expect(markup).toContain('history-stage-source-turn-stage');
@@ -62,6 +63,10 @@ describe('HistoryPanel', () => {
         expect(visibleText).not.toContain('Continuation prompt should stay hidden.');
         expect(markup).not.toContain('Stage source');
         expect(markup).not.toContain('Continuation source');
+        expect(markup).toContain('grid-cols-4');
+        expect(markup).toContain('xl:grid-cols-[repeat(10,minmax(100px,100px))]');
+        expect(markup).toContain('xl:justify-between');
+        expect(markup).toContain('xl:h-[100px] xl:w-[100px]');
     });
 
     it('removes per-card actions and queued metadata from history tokens', () => {
@@ -104,5 +109,57 @@ describe('HistoryPanel', () => {
 
         expect(markup).toContain('history-card-turn-1-missing-media');
         expect(markup).not.toContain('src=""');
+    });
+
+    it('renders transient preview tiles inline ahead of completed history cards with descending slot order', () => {
+        const markup = renderToStaticMarkup(
+            <HistoryPanel
+                history={[
+                    buildTurn({
+                        id: 'turn-fresh',
+                        openedAt: null,
+                    }),
+                    buildTurn({
+                        id: 'turn-opened',
+                        url: 'https://example.com/opened.png',
+                        openedAt: 123,
+                    }),
+                ]}
+                previewTiles={[
+                    {
+                        id: 'preview-0',
+                        slotIndex: 0,
+                        status: 'pending',
+                    },
+                    {
+                        id: 'preview-1',
+                        slotIndex: 1,
+                        status: 'ready',
+                        previewUrl: 'https://example.com/preview.png',
+                    },
+                    {
+                        id: 'preview-2',
+                        slotIndex: 2,
+                        status: 'failed',
+                        error: 'failed',
+                    },
+                ]}
+                onSelect={vi.fn()}
+                currentLanguage="en"
+                thumbnailMode="compact"
+            />,
+        );
+
+        expect(markup).not.toContain('history-preview-grid');
+        expect(markup).toContain('history-preview-pending-0');
+        expect(markup).toContain('history-preview-locked-1');
+        expect(markup).toContain('history-preview-failed-2');
+        expect(markup).toContain('history-fresh-turn-fresh');
+        expect(markup).not.toContain('history-fresh-turn-opened');
+        expect(markup).toContain('backdrop-blur-[3px]');
+        expect(markup).toContain('border-[3px] border-emerald-400');
+        expect(markup.indexOf('history-preview-tile-2')).toBeLessThan(markup.indexOf('history-preview-tile-1'));
+        expect(markup.indexOf('history-preview-tile-1')).toBeLessThan(markup.indexOf('history-preview-tile-0'));
+        expect(markup.indexOf('history-preview-tile-0')).toBeLessThan(markup.indexOf('history-card-turn-fresh'));
     });
 });

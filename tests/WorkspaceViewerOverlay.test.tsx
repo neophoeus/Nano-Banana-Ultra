@@ -261,4 +261,36 @@ describe('WorkspaceViewerOverlay', () => {
         expect(markup).not.toContain('data:image/png;base64,AAAA');
         expect(markup).not.toContain('data:image/jpeg;base64,BBBB');
     });
+
+    it('shows the NEW badge while the current viewer item is still fresh', () => {
+        const markup = renderToStaticMarkup(
+            <WorkspaceViewerOverlay
+                currentLanguage="en"
+                isOpen={true}
+                activeViewerImage="https://example.com/result.png"
+                activeViewerIsFresh={true}
+                generatedImageCount={1}
+                prompt="Viewer prompt"
+                aspectRatio="1:1"
+                size="1K"
+                styleLabel="None"
+                model="Gemini 3.1 Flash"
+                effectiveResultText="Viewer text"
+                structuredData={null}
+                structuredOutputMode={null}
+                formattedStructuredOutput={null}
+                effectiveThoughts={null}
+                thoughtStateMessage="No visible thoughts"
+                provenancePanel={<div>provenance</div>}
+                sessionHintEntries={[]}
+                formatSessionHintKey={(key) => key}
+                formatSessionHintValue={(_key, value) => String(value)}
+                onClose={vi.fn()}
+                onMoveViewer={vi.fn()}
+            />,
+        );
+
+        expect(markup).toContain('workspace-viewer-new-badge');
+        expect(markup).toContain('>New<');
+    });
 });

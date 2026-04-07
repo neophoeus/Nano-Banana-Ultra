@@ -29,6 +29,7 @@ type UseWorkspaceGenerationActionsArgs = {
     primePendingProvenanceContinuation: (sourceHistoryId: string | null) => void;
     resetSelectedOutputState: () => void;
     performGeneration: PerformGeneration;
+    onPrepareGenerate: () => void;
     setIsGenerating: (value: boolean) => void;
     addLog: (message: string) => void;
     showNotification: (message: string, type?: 'info' | 'error') => void;
@@ -49,6 +50,7 @@ export function useWorkspaceGenerationActions({
     primePendingProvenanceContinuation,
     resetSelectedOutputState,
     performGeneration,
+    onPrepareGenerate,
     setIsGenerating,
     addLog,
     showNotification,
@@ -57,6 +59,7 @@ export function useWorkspaceGenerationActions({
     const handleGenerate = useCallback(() => {
         clearPendingProvenanceContext();
         resetSelectedOutputState();
+        onPrepareGenerate();
         performGeneration(prompt, aspectRatio, imageSize, imageStyle, imageModel);
     }, [
         aspectRatio,
@@ -64,6 +67,7 @@ export function useWorkspaceGenerationActions({
         imageModel,
         imageSize,
         imageStyle,
+        onPrepareGenerate,
         performGeneration,
         prompt,
         resetSelectedOutputState,
@@ -77,6 +81,7 @@ export function useWorkspaceGenerationActions({
 
         primePendingProvenanceContinuation(currentStageAsset.sourceHistoryId || null);
         resetSelectedOutputState();
+        onPrepareGenerate();
         performGeneration(
             prompt,
             aspectRatio,
@@ -98,6 +103,7 @@ export function useWorkspaceGenerationActions({
         imageSize,
         imageStyle,
         objectImages,
+        onPrepareGenerate,
         performGeneration,
         primePendingProvenanceContinuation,
         prompt,

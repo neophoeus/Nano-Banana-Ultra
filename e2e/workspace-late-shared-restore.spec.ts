@@ -98,8 +98,8 @@ test('late shared snapshot restore does not overwrite a live draft', async ({ pa
     await page.waitForTimeout(2600);
 
     await expect(promptBox).toHaveValue('Live draft should stay');
-    await expect(page.getByText('0 turns · 0 branches')).toBeVisible();
-    await expect(page.getByText('0 items')).toBeVisible();
+    await expect(page.getByTestId('workspace-unified-history-count')).toContainText('0 items');
+    await expect(page.getByTestId('workspace-unified-history-branches')).toContainText('0 branches');
     await expect(page.getByText('Legacy restore should not win')).toHaveCount(0);
     expect(sharedSnapshotReads).toBeGreaterThan(0);
 });

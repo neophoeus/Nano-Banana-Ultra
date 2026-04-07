@@ -108,6 +108,101 @@ const editorSharedContextFixturePath = fileURLToPath(
 const queuedImportedFixtureDataUrl = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 const editorSharedControlsPrompt = 'Editor surface prompt';
 const sketchSharedControlsPrompt = 'Sketch surface prompt';
+const buildLayoutAlignmentSnapshot = (turnCount: number) => {
+    const history = Array.from({ length: turnCount }, (_, index) => {
+        const turnNumber = turnCount - index;
+
+        return {
+            id: `layout-turn-${turnNumber}`,
+            url: `https://example.com/layout-turn-${turnNumber}.png`,
+            prompt: `Layout turn ${turnNumber}`,
+            aspectRatio: '1:1',
+            size: '1K',
+            style: 'None',
+            model: 'gemini-3.1-flash-image-preview',
+            createdAt: 1710600000000 + turnNumber * 1000,
+            mode: 'Text to Image',
+            executionMode: 'single-turn',
+            status: 'success',
+            text: `Layout turn ${turnNumber} text`,
+            rootHistoryId: 'layout-turn-1',
+            parentHistoryId: turnNumber > 1 ? `layout-turn-${turnNumber - 1}` : undefined,
+            sourceHistoryId: turnNumber > 1 ? `layout-turn-${turnNumber - 1}` : undefined,
+            lineageAction: turnNumber === 1 ? 'root' : 'continue',
+            lineageDepth: turnNumber - 1,
+        };
+    });
+    const newestTurn = history[0];
+
+    return {
+        history,
+        stagedAssets: [
+            {
+                id: 'layout-stage-source',
+                url: queuedImportedFixtureDataUrl,
+                role: 'stage-source',
+                origin: 'history',
+                createdAt: newestTurn.createdAt,
+                sourceHistoryId: newestTurn.id,
+                lineageAction: 'reopen',
+            },
+        ],
+        workflowLogs: ['[10:41:00] Layout alignment snapshot restored.'],
+        workspaceSession: {
+            activeResult: {
+                text: newestTurn.text,
+                thoughts: null,
+                grounding: null,
+                metadata: null,
+                sessionHints: null,
+                historyId: newestTurn.id,
+            },
+            continuityGrounding: null,
+            continuitySessionHints: null,
+            provenanceMode: null,
+            provenanceSourceHistoryId: null,
+            conversationId: null,
+            conversationBranchOriginId: null,
+            conversationActiveSourceHistoryId: null,
+            conversationTurnIds: [],
+            source: 'history',
+            sourceHistoryId: newestTurn.id,
+            updatedAt: newestTurn.createdAt,
+        },
+        branchState: {
+            nameOverrides: {
+                'layout-turn-1': 'Layout Branch',
+            },
+            continuationSourceByBranchOriginId: {
+                'layout-turn-1': newestTurn.id,
+            },
+        },
+        conversationState: {
+            byBranchOriginId: {},
+        },
+        viewState: {
+            generatedImageUrls: [queuedImportedFixtureDataUrl],
+            selectedImageIndex: 0,
+            selectedHistoryId: newestTurn.id,
+        },
+        composerState: {
+            prompt: 'Layout alignment workspace',
+            aspectRatio: '1:1',
+            imageSize: '1K',
+            imageStyle: 'None',
+            imageModel: 'gemini-3.1-flash-image-preview',
+            batchSize: 1,
+            outputFormat: 'images-only',
+            temperature: 1,
+            thinkingLevel: 'minimal',
+            includeThoughts: false,
+            googleSearch: false,
+            imageSearch: false,
+            generationMode: 'Text to Image',
+            executionMode: 'single-turn',
+        },
+    };
+};
 const restoredOfficialConversationSnapshot = {
     history: [
         {
@@ -658,9 +753,9 @@ const visibleProvenancePanel = (scope: Page | Locator) =>
     scope
         .locator('[data-testid="provenance-panel-light"]:visible, [data-testid="provenance-panel-dark"]:visible')
         .first();
-const visibleFilmstripCard = (page: Page) => page.locator('[data-testid^="filmstrip-card-"]:visible').first();
+const visibleFilmstripCard = (page: Page) => page.locator('[data-testid^="history-card-"]:visible').first();
 const visibleFilmstripStageSourceBadge = (page: Page) =>
-    page.locator('[data-testid^="filmstrip-stage-source-"]:visible').first();
+    page.locator('[data-testid^="history-stage-source-"]:visible').first();
 const currentStageSourceCard = (scope: Page | Locator) =>
     scope.locator('[data-testid="current-stage-source"]:visible').first();
 const selectedItemBranchChip = (page: Page) => page.getByTestId('selected-item-summary-chip-branch').first();
@@ -1113,10 +1208,17 @@ const assertStageSourceSurfaces = async (
 };
 
 const assertFilmstripChromeLocalized = async (page: Page) => {
-    await expect(page.getByTestId('filmstrip-title')).toContainText(tt('historyFilmstripTitle'));
-    await expect(page.getByTestId('filmstrip-desc')).toContainText(tt('historyFilmstripDesc'));
-    await expect(page.getByTestId('filmstrip-summary')).toContainText(
-        localizedTemplatePattern('historyFilmstripSummary'),
+    await expect(page.getByTestId('workspace-unified-history-title')).toContainText(
+        tt('workspacePickerPromptHistoryTitle'),
+    );
+    await expect(page.getByTestId('workspace-unified-history-count')).toContainText(
+        localizedTemplatePattern('workspaceInsightsItemsCount'),
+    );
+    await expect(page.getByTestId('workspace-unified-history-branches')).toContainText(
+        localizedTemplatePattern('workspaceInsightsBranchesCount'),
+    );
+    await expect(page.getByTestId('workspace-unified-history-active-branch')).toContainText(
+        tt('workspaceInsightsActiveBranch'),
     );
 };
 
@@ -1662,6 +1764,49 @@ const drawEditorMaskStroke = async (page: Page) => {
     await page.mouse.up();
 };
 
+const assertShellChromePinnedToViewport = async (page: Page) => {
+    await expect(page.getByTestId('workspace-top-header-bar')).toBeVisible();
+    await expect(page.getByTestId('workspace-bottom-footer-bar')).toBeVisible();
+
+    const shellChromeMetrics = await page.evaluate(() => {
+        const header = document.querySelector('[data-testid="workspace-top-header"]');
+        const headerBar = document.querySelector('[data-testid="workspace-top-header-bar"]');
+        const footer = document.querySelector('[data-testid="workspace-bottom-footer"]');
+        const footerBar = document.querySelector('[data-testid="workspace-bottom-footer-bar"]');
+
+        if (
+            !(header instanceof HTMLElement) ||
+            !(headerBar instanceof HTMLElement) ||
+            !(footer instanceof HTMLElement) ||
+            !(footerBar instanceof HTMLElement)
+        ) {
+            return null;
+        }
+
+        const headerStyle = window.getComputedStyle(header);
+        const footerStyle = window.getComputedStyle(footer);
+        const headerRect = headerBar.getBoundingClientRect();
+        const footerRect = footerBar.getBoundingClientRect();
+
+        return {
+            headerPosition: headerStyle.position,
+            headerTop: headerStyle.top,
+            headerDistanceFromViewportTop: Math.abs(headerRect.top),
+            footerPosition: footerStyle.position,
+            footerBottom: footerStyle.bottom,
+            footerDistanceFromViewportBottom: Math.abs(window.innerHeight - footerRect.bottom),
+        };
+    });
+
+    expect(shellChromeMetrics).not.toBeNull();
+    expect(shellChromeMetrics?.headerPosition).toBe('fixed');
+    expect(shellChromeMetrics?.headerTop).toBe('0px');
+    expect(shellChromeMetrics?.headerDistanceFromViewportTop).toBeLessThanOrEqual(1);
+    expect(shellChromeMetrics?.footerPosition).toBe('fixed');
+    expect(shellChromeMetrics?.footerBottom).toBe('0px');
+    expect(shellChromeMetrics?.footerDistanceFromViewportBottom).toBeLessThanOrEqual(1);
+};
+
 const stageImportReview = async (
     page: Page,
     filePath = snapshotFilePath,
@@ -1723,6 +1868,9 @@ const openFirstHistoryRenameDialog = async (page: Page) => {
 };
 
 test.describe('workspace restore flows', () => {
+    const repairedHistoryPreviewPattern =
+        /^(data:image\/jpeg;base64,|\/api\/load-image\?filename=gemini-3\.1-flash-image-preview-history-thumb_.+\.jpg$)/;
+
     test('editor floating shared controls show compact settings summary and button-only actions', async ({ page }) => {
         await openFreshWorkspace(page);
         await composer(page).fill(editorSharedControlsPrompt);
@@ -1790,8 +1938,8 @@ test.describe('workspace restore flows', () => {
             .evaluate((button: HTMLButtonElement) => button.click());
 
         const dialog = await expectAdvancedSettingsDialogVisible(page);
-    await expect(dialog.getByTestId('composer-advanced-grounding-mode-select')).toBeVisible();
-    await expect(dialog.getByTestId('composer-advanced-grounding-guide')).toBeVisible();
+        await expect(dialog.getByTestId('composer-advanced-grounding-mode-select')).toBeVisible();
+        await expect(dialog.getByTestId('composer-advanced-grounding-guide')).toBeVisible();
 
         await dialog
             .getByTestId('composer-advanced-settings-close')
@@ -1884,7 +2032,7 @@ test.describe('workspace restore flows', () => {
         await expect(composer(page)).toHaveValue('Shared prompt from main composer');
 
         await expect(page.locator('[data-testid="side-tools-open-editor"]:visible')).toContainText(
-            tt('workspaceViewerUploadBaseToEdit'),
+            tt('workspaceSideToolUploadToRepaint'),
         );
         await page.locator('#global-upload-input').setInputFiles(editorSharedContextFixturePath);
         await expect(page.getByTestId('image-editor')).toBeVisible();
@@ -2012,7 +2160,12 @@ test.describe('workspace restore flows', () => {
         ).toBeVisible();
         await expect(page.getByText(tt('workspaceRestoreTitle'))).toHaveCount(0);
         await expect(composer(page)).toHaveValue('Local composer prompt');
-        await expect(page.getByText(tt('historyFilmstripSummary', '2', '2'))).toBeVisible();
+        await expect(page.getByTestId('workspace-unified-history-count')).toContainText(
+            tt('workspaceInsightsItemsCount', '2'),
+        );
+        await expect(page.getByTestId('workspace-unified-history-branches')).toContainText(
+            tt('workspaceInsightsBranchesCount', '2'),
+        );
     });
 
     test('replace restores the imported workspace directly without an extra restore step', async ({ page }) => {
@@ -2165,8 +2318,8 @@ test.describe('workspace restore flows', () => {
         await openFreshWorkspace(page);
         await replaceWithImportedWorkspace(page, variantSnapshotFilePath, 'ui-import-variant-workspace.json');
 
-        const bravoVariantCard = page.locator('[data-testid="filmstrip-card-bravo-v2-turn"]:visible').first();
-        const alphaVariantCard = page.locator('[data-testid="filmstrip-card-alpha-v1-turn"]:visible').first();
+        const bravoVariantCard = page.locator('[data-testid="history-card-bravo-v2-turn"]:visible').first();
+        const alphaVariantCard = page.locator('[data-testid="history-card-alpha-v1-turn"]:visible').first();
 
         await withWorkflowStageSourceCard(page, async (stageSourceCard, workflowModal) => {
             await ensureDetailsExpanded(workflowModal, 'current-stage-source-shell');
@@ -2177,8 +2330,8 @@ test.describe('workspace restore flows', () => {
         });
 
         await openVersionsDetailModal(page);
-        await expect(bravoVariantCard.getByTestId('filmstrip-stage-source-bravo-v2-turn')).toBeVisible();
-        await expect(alphaVariantCard.locator('[data-testid="filmstrip-stage-source-alpha-v1-turn"]')).toHaveCount(0);
+        await expect(bravoVariantCard.getByTestId('history-stage-source-bravo-v2-turn')).toBeVisible();
+        await expect(alphaVariantCard.locator('[data-testid="history-stage-source-alpha-v1-turn"]')).toHaveCount(0);
         await expect(bravoVariantCard).not.toContainText(localizedText('Candidate'));
         await expect(alphaVariantCard).not.toContainText(localizedText('Candidate'));
         await expect(activeBranchCard(page)).toContainText(`${localizedText('Continuation source ')}--------`);
@@ -2216,8 +2369,8 @@ test.describe('workspace restore flows', () => {
             await expect(stageSourceCard).toContainText('Variant candidate A');
             await expect(stageSourceCard).toContainText(localizedText('Source'));
         });
-        await expect(alphaVariantCard.getByTestId('filmstrip-stage-source-alpha-v1-turn')).toBeVisible();
-        await expect(bravoVariantCard.locator('[data-testid="filmstrip-stage-source-bravo-v2-turn"]')).toHaveCount(0);
+        await expect(alphaVariantCard.getByTestId('history-stage-source-alpha-v1-turn')).toBeVisible();
+        await expect(bravoVariantCard.locator('[data-testid="history-stage-source-bravo-v2-turn"]')).toHaveCount(0);
         await expect(alphaVariantCard).toBeVisible();
         await expect(bravoVariantCard).toBeVisible();
 
@@ -2519,30 +2672,40 @@ test.describe('workspace restore flows', () => {
     });
 
     test('restored file-backed snapshots reload images through load-image links', async ({ page }) => {
+        await page.route('**/api/load-image?filename=*', async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: 'image/png',
+                body: Buffer.from(
+                    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aRWQAAAAASUVORK5CYII=',
+                    'base64',
+                ),
+            });
+        });
+
         await openWorkspaceWithSnapshot(page, restoredFileBackedSnapshot);
         await dismissRestoreNoticeIfPresent(page);
 
         await expect
-            .poll(async () =>
-                page.evaluate(() => {
-                    const raw = localStorage.getItem('nbu_workspaceSnapshot');
-                    if (!raw) {
-                        return null;
-                    }
+            .poll(async () => {
+                const raw = await page.evaluate(() => localStorage.getItem('nbu_workspaceSnapshot'));
+                const snapshot = raw ? JSON.parse(raw) : null;
 
-                    const snapshot = JSON.parse(raw);
-                    return {
-                        historyUrl: snapshot.history?.[0]?.url || null,
-                        stagedAssetUrl: snapshot.stagedAssets?.[0]?.url || null,
-                        viewerUrl: snapshot.viewState?.generatedImageUrls?.[0] || null,
-                    };
+                return snapshot
+                    ? {
+                          historyUrl: snapshot.history?.[0]?.url || null,
+                          stagedAssetUrl: snapshot.stagedAssets?.[0]?.url || null,
+                          viewerUrl: snapshot.viewState?.generatedImageUrls?.[0] || null,
+                      }
+                    : null;
+            })
+            .toEqual(
+                expect.objectContaining({
+                    historyUrl: expect.stringMatching(repairedHistoryPreviewPattern),
+                    stagedAssetUrl: '/api/load-image?filename=file-backed-turn.png',
+                    viewerUrl: '/api/load-image?filename=file-backed-turn.png',
                 }),
-            )
-            .toEqual({
-                historyUrl: '/api/load-image?filename=file-backed-turn.png',
-                stagedAssetUrl: '/api/load-image?filename=file-backed-turn.png',
-                viewerUrl: '/api/load-image?filename=file-backed-turn.png',
-            });
+            );
 
         const restoredSnapshot = await page.evaluate(() => {
             const raw = localStorage.getItem('nbu_workspaceSnapshot');
@@ -2582,10 +2745,40 @@ test.describe('workspace restore flows', () => {
             .first();
 
         await expect(restoredHistoryImage).toBeVisible();
-        await expect(restoredHistoryImage).toHaveAttribute('src', /\/api\/load-image\?filename=file-backed-turn\.png/);
+        await expect(restoredHistoryImage).toHaveAttribute('src', repairedHistoryPreviewPattern);
         expect(requestedFilenames).toContain('file-backed-turn.png');
 
         await restoredPage.close();
+    });
+
+    test('desktop layout keeps the stage square while aligning the left focus block with the History plus Versions rail', async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width: 1520, height: 1200 });
+        await openWorkspaceWithSnapshot(page, buildLayoutAlignmentSnapshot(12));
+        await dismissRestoreNoticeIfPresent(page);
+
+        const focusState = page.getByTestId('workspace-history-focus-state');
+        const supportRail = page.getByTestId('workspace-history-support-rail');
+        const stageFrame = page.getByTestId('generated-image-stage-frame');
+        const visibleHistoryCards = page.locator('[role="button"][data-testid^="history-card-"]:visible');
+
+        await expect(focusState).toBeVisible();
+        await expect(supportRail).toBeVisible();
+        await expect(stageFrame).toBeVisible();
+        await expect(visibleHistoryCards).toHaveCount(10);
+
+        const [focusBox, supportBox, stageBox] = await Promise.all([
+            focusState.boundingBox(),
+            supportRail.boundingBox(),
+            stageFrame.boundingBox(),
+        ]);
+
+        expect(focusBox).not.toBeNull();
+        expect(supportBox).not.toBeNull();
+        expect(stageBox).not.toBeNull();
+        expect(Math.abs((focusBox?.height || 0) - (supportBox?.height || 0))).toBeLessThanOrEqual(2);
+        expect(Math.abs((stageBox?.width || 0) - (stageBox?.height || 0))).toBeLessThanOrEqual(4);
     });
 
     test('queue batch submit from a file-backed restored stage keeps the browser payload file-backed', async ({
@@ -3020,13 +3213,6 @@ test.describe('workspace restore flows', () => {
             await expect(stageSourceCard).toContainText('#1/2');
             await expect(stageSourceCard).not.toContainText(localizedText('Candidate'));
         });
-
-        const filmstripCard = page.getByTestId('filmstrip-card-queued-imported-turn');
-        await expect(filmstripCard).toBeVisible();
-        await expect(filmstripCard.getByTestId('filmstrip-stage-source-queued-imported-turn')).toBeVisible();
-        await expect(filmstripCard).not.toContainText(tt('workspaceImportReviewExecutionQueuedBatchJob'));
-        await expect(filmstripCard).not.toContainText('#1/2');
-        await expect(filmstripCard).not.toContainText(localizedText('Candidate'));
 
         const historyCard = page.getByTestId('history-card-queued-imported-turn');
         if ((await historyCard.count()) === 0) {
@@ -3473,6 +3659,8 @@ test.describe('workspace restore flows', () => {
         );
         await dismissRestoreNotice(page);
 
+        await assertShellChromePinnedToViewport(page);
+
         const composerPanel = page.getByTestId('composer-settings-panel').first();
         await expect(composerPanel).toBeVisible();
         await openAnswerDetailModal(page);
@@ -3488,7 +3676,7 @@ test.describe('workspace restore flows', () => {
 
         const sideTools = page.locator('[data-testid="workspace-side-tool-panel"]:visible').first();
         await expect(sideTools).toBeVisible();
-    await expect(composerPanel.getByTestId('workspace-side-tool-panel')).toBeVisible();
+        await expect(composerPanel.getByTestId('workspace-side-tool-panel')).toBeVisible();
 
         await openSourcesDetailModal(page);
         const provenancePanel = visibleProvenancePanel(page.getByTestId('workspace-sources-detail-modal'));
@@ -3710,7 +3898,7 @@ test.describe('workspace restore flows', () => {
         );
         await expect(viewer.getByTestId('workspace-viewer-thoughts-details')).toBeVisible();
 
-        await page.getByRole('button', { name: tt('workspaceViewerClose') }).click();
+        await viewer.getByTestId('workspace-viewer-close').click();
         await expect(page.getByTestId('workspace-viewer-overlay')).toHaveCount(0);
     });
 

@@ -153,12 +153,13 @@ export const fr = {
     lblHistoryFailed: 'Échec',
     modeTextToImg: 'Texte vers Image',
     modeImgToImg: 'Image vers Image',
-    clearHistory: 'Vider Galerie',
+    clearHistory: 'Effacer l\'espace de travail',
 
     // Clear History Dialog
-    clearHistoryTitle: 'Vider Galerie',
-    clearHistoryMsg: 'Tout supprimer ? Irréversible.',
-    clearHistoryConfirm: 'Tout Supprimer',
+    clearHistoryTitle: 'Effacer l\'espace de travail',
+    clearHistoryMsg:
+        'Réinitialiser cet espace de travail à son état vide par défaut ? L\'historique, la scène, les tâches en file d\'attente et le contexte de session seront supprimés. Cette action est irréversible.',
+    clearHistoryConfirm: 'Effacer l\'espace de travail',
     clearHistoryCancel: 'Annuler',
 
     // Sketch Pad
@@ -298,6 +299,19 @@ export const fr = {
     queuedBatchJobsImportReadyCount: '{0} prets a importer',
     queuedBatchJobsClosedIssuesCount: '{0} termines avec problemes',
     queuedBatchJobsImportReadyAction: 'Importer les prets',
+    queuedBatchRecoverRecentAction: 'Recuperer les taches batch recentes',
+    queuedBatchRecoverRecentLoading: 'Recuperation des taches recentes...',
+    queuedBatchRecoverRecentNotice: '{0} taches batch recentes recuperees.',
+    queuedBatchRecoverRecentAlreadyTrackedNotice:
+        'Les taches batch distantes recentes sont deja suivies. {0} entrees ont ete actualisees.',
+    queuedBatchRecoverRecentNoneNotice: 'Aucune tache batch distante recente supplementaire n\'a ete trouvee.',
+    queuedBatchRecoverRecentLog:
+        '{0} taches batch distantes recentes recuperees depuis la liste des batchs.',
+    queuedBatchRecoverRecentRefreshedLog:
+        '{0} taches batch distantes deja suivies ont ete actualisees depuis la liste des batchs.',
+    queuedBatchRecoverRecentFailedLog: 'Echec de la recuperation des taches batch recentes : {0}',
+    queuedBatchRecoverRecentMetadataHint:
+        'Les taches distantes recuperees peuvent etre importees a nouveau, mais la liste batch de Gemini ne renvoie ni le prompt d\'origine ni les images de reference, donc ces entrees n\'utilisent que des details locaux simplifies.',
     queuedBatchJobsRefreshAll: 'Tout actualiser',
     queuedBatchJobsTrackedCount: '{0} suivis',
     queuedBatchJobsImportedTag: 'Importe',
@@ -653,6 +667,7 @@ export const fr = {
     workspaceViewerTitle: 'Visualiseur',
     workspaceViewerDesc:
         "Inspectez en un seul endroit l'image actuelle de la scene, le texte de resultat et la provenance.",
+    workspaceViewerNewBadge: 'Nouveau',
     workspaceViewerClose: 'Fermer',
     workspaceViewerImageAlt: 'Image du visualiseur',
     workspaceViewerPrompt: 'Prompt',

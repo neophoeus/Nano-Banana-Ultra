@@ -131,12 +131,12 @@ export const zh_TW = {
     lblHistoryFailed: '失敗',
     modeTextToImg: '文生圖',
     modeImgToImg: '圖生圖',
-    clearHistory: '清空紀錄',
+    clearHistory: '清空工作區',
 
     // Clear History Dialog
-    clearHistoryTitle: '清空歷史紀錄',
-    clearHistoryMsg: '您確定要刪除所有生成的圖片紀錄嗎？此動作無法復原。',
-    clearHistoryConfirm: '確認清空',
+    clearHistoryTitle: '清空工作區',
+    clearHistoryMsg: '確定要把整個工作區重設回預設初始狀態嗎？歷史、舞台、排隊工作與工作階段內容都會清除，且無法復原。',
+    clearHistoryConfirm: '直接清除',
     clearHistoryCancel: '取消',
 
     // Sketch Pad
@@ -424,6 +424,7 @@ export const zh_TW = {
     workspaceSurfacePromptEmpty: '尚未輸入提示詞',
     workspaceViewerTitle: '檢視器',
     workspaceViewerDesc: '把目前階段圖像、結果文字與來源脈絡集中在同一處查看。',
+    workspaceViewerNewBadge: '新',
     workspaceViewerClose: '關閉',
     workspaceViewerImageAlt: '檢視器圖像',
     workspaceViewerPrompt: '提示詞',

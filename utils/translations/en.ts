@@ -142,12 +142,13 @@ export const en = {
     lblHistoryFailed: 'Failed',
     modeTextToImg: 'Txt2Img',
     modeImgToImg: 'Img2Img',
-    clearHistory: 'Clear Gallery',
+    clearHistory: 'Clear Workspace',
 
     // Clear History Dialog
-    clearHistoryTitle: 'Clear Gallery',
-    clearHistoryMsg: 'Delete all generated images from history? This cannot be undone.',
-    clearHistoryConfirm: 'Delete All',
+    clearHistoryTitle: 'Clear Workspace',
+    clearHistoryMsg:
+        'Reset this workspace to its default empty state? History, stage, queued jobs, and session context will be removed. This cannot be undone.',
+    clearHistoryConfirm: 'Reset Workspace',
     clearHistoryCancel: 'Cancel',
 
     // Sketch Pad
@@ -447,6 +448,7 @@ export const en = {
     workspaceSurfacePromptEmpty: 'No prompt yet',
     workspaceViewerTitle: 'Viewer',
     workspaceViewerDesc: 'Inspect the current stage image, result text, and provenance in one place.',
+    workspaceViewerNewBadge: 'New',
     workspaceViewerClose: 'Close',
     workspaceViewerImageAlt: 'Viewer image',
     workspaceViewerPrompt: 'Prompt',

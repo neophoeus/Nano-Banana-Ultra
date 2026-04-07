@@ -21,7 +21,7 @@ const actionClassNameByEmphasis: Record<SelectedItemActionBarAction['emphasis'],
 };
 
 const resolveActionClassName = (action: SelectedItemActionBarAction) =>
-    `inline-flex h-7 shrink-0 items-center justify-center rounded-full border px-3 text-[11px] font-semibold whitespace-nowrap transition-colors ${actionClassNameByEmphasis[action.emphasis]}`;
+    `inline-flex h-6 shrink-0 items-center justify-center rounded-full border px-2.5 text-[11px] font-semibold whitespace-nowrap transition-colors ${actionClassNameByEmphasis[action.emphasis]}`;
 
 const resolveOverflowActionClassName = (action: SelectedItemActionBarAction) =>
     action.emphasis === 'primary'
@@ -53,13 +53,13 @@ const SelectedItemActionBar: React.FC<SelectedItemActionBarComponentProps> = ({
         <div
             data-testid="selected-item-action-bar"
             data-layout-bucket={layoutBucket}
-            className="nbu-stage-hero-filmstrip-shell min-w-0 overflow-hidden rounded-[20px] border px-2.5 py-2"
+            className="nbu-stage-hero-filmstrip-shell min-w-0 overflow-hidden rounded-[20px] border px-2 py-1.5"
         >
             <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                 {isSelectedItemOnStage ? (
                     <span
                         data-testid="selected-item-action-on-stage"
-                        className="inline-flex h-7 shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 text-[11px] font-semibold text-emerald-700 whitespace-nowrap dark:border-emerald-500/25 dark:bg-emerald-950/25 dark:text-emerald-200"
+                        className="inline-flex h-6 shrink-0 items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 text-[11px] font-semibold text-emerald-700 whitespace-nowrap dark:border-emerald-500/25 dark:bg-emerald-950/25 dark:text-emerald-200"
                     >
                         {onStageLabel}
                     </span>
@@ -81,7 +81,7 @@ const SelectedItemActionBar: React.FC<SelectedItemActionBarComponentProps> = ({
                             data-testid="selected-item-action-overflow-trigger"
                             aria-label={overflowLabel}
                             title={overflowLabel}
-                            className="inline-flex h-7 w-7 cursor-pointer list-none items-center justify-center rounded-full border border-slate-200/80 bg-white/92 text-sm font-semibold text-slate-700 transition-colors hover:border-amber-300 hover:text-amber-700 dark:border-slate-700/80 dark:bg-slate-900/88 dark:text-slate-100 dark:hover:border-amber-500/35 dark:hover:text-amber-200 [&::-webkit-details-marker]:hidden"
+                            className="inline-flex h-6 w-6 cursor-pointer list-none items-center justify-center rounded-full border border-slate-200/80 bg-white/92 text-sm font-semibold text-slate-700 transition-colors hover:border-amber-300 hover:text-amber-700 dark:border-slate-700/80 dark:bg-slate-900/88 dark:text-slate-100 dark:hover:border-amber-500/35 dark:hover:text-amber-200 [&::-webkit-details-marker]:hidden"
                         >
                             •••
                         </summary>

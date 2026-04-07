@@ -9,9 +9,12 @@ describe('WorkspaceTopHeader', () => {
             <WorkspaceTopHeader headerConsole={<div>console</div>} currentLanguage="en" onLanguageChange={vi.fn()} />,
         );
 
-        expect(markup).toContain('Nano Banana Ultra');
+        expect(markup).toContain('NANO BANANA ULTRA');
         expect(markup).toContain('workspace-brand-logo');
+        expect(markup).toContain('workspace-top-header');
+        expect(markup).toContain('workspace-top-header-bar');
         expect(markup).toContain('console');
+        expect(markup).toContain('fixed inset-x-0 top-0');
         expect(markup).toContain('rounded-t-none');
         expect(markup).toContain('rounded-b-[24px]');
         expect(markup).not.toContain('>NBU<');

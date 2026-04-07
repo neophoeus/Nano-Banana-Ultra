@@ -153,12 +153,13 @@ export const es = {
     lblHistoryFailed: 'Fallo',
     modeTextToImg: 'Texto a Imagen',
     modeImgToImg: 'Imagen a Imagen',
-    clearHistory: 'Borrar Galería',
+    clearHistory: 'Borrar espacio de trabajo',
 
     // Clear History Dialog
-    clearHistoryTitle: 'Borrar Galería',
-    clearHistoryMsg: '¿Borrar todo el historial de imágenes? No se puede deshacer.',
-    clearHistoryConfirm: 'Borrar Todo',
+    clearHistoryTitle: 'Borrar espacio de trabajo',
+    clearHistoryMsg:
+        '¿Restablecer este espacio de trabajo a su estado vacío predeterminado? Se eliminarán el historial, el escenario, los trabajos en cola y el contexto de la sesión. No se puede deshacer.',
+    clearHistoryConfirm: 'Borrar espacio de trabajo',
     clearHistoryCancel: 'Cancelar',
 
     // Sketch Pad
@@ -298,6 +299,19 @@ export const es = {
     queuedBatchJobsImportReadyCount: '{0} listos para importar',
     queuedBatchJobsClosedIssuesCount: '{0} cerrados con problemas',
     queuedBatchJobsImportReadyAction: 'Importar listos',
+    queuedBatchRecoverRecentAction: 'Recuperar trabajos por lotes recientes',
+    queuedBatchRecoverRecentLoading: 'Recuperando trabajos recientes...',
+    queuedBatchRecoverRecentNotice: 'Se recuperaron {0} trabajos por lotes recientes.',
+    queuedBatchRecoverRecentAlreadyTrackedNotice:
+        'Los trabajos por lotes remotos recientes ya estan siendo seguidos. Se actualizaron {0} entradas.',
+    queuedBatchRecoverRecentNoneNotice: 'No se encontraron trabajos por lotes remotos recientes adicionales.',
+    queuedBatchRecoverRecentLog:
+        'Se recuperaron {0} trabajos por lotes remotos recientes desde la lista de lotes.',
+    queuedBatchRecoverRecentRefreshedLog:
+        'Se actualizaron {0} trabajos por lotes remotos ya seguidos desde la lista de lotes.',
+    queuedBatchRecoverRecentFailedLog: 'Error al recuperar trabajos por lotes recientes: {0}',
+    queuedBatchRecoverRecentMetadataHint:
+        'Los trabajos remotos recuperados se pueden importar de nuevo, pero la lista de batch de Gemini no devuelve el prompt original ni las imagenes de referencia, asi que estas entradas usan solo detalles locales simplificados.',
     queuedBatchJobsRefreshAll: 'Actualizar todo',
     queuedBatchJobsTrackedCount: '{0} seguidos',
     queuedBatchJobsImportedTag: 'Importado',
@@ -655,6 +669,7 @@ export const es = {
     workspaceViewerTitle: 'Visor',
     workspaceViewerDesc:
         'Revisa en un solo lugar la imagen actual del escenario, el texto de resultado y la procedencia.',
+    workspaceViewerNewBadge: 'Nuevo',
     workspaceViewerClose: 'Cerrar',
     workspaceViewerImageAlt: 'Imagen del visor',
     workspaceViewerPrompt: 'Prompt',

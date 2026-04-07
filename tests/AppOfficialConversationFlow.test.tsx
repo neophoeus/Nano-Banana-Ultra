@@ -8,9 +8,10 @@ import { WORKSPACE_SNAPSHOT_STORAGE_KEY } from '../utils/workspacePersistence';
 import { LANGUAGE_STORAGE_KEY } from '../utils/translations';
 import { THEME_STORAGE_KEY } from '../utils/theme';
 
-const { saveImageToLocalMock, generateThumbnailMock, loadFullImageMock } = vi.hoisted(() => ({
+const { saveImageToLocalMock, generateThumbnailMock, persistHistoryThumbnailMock, loadFullImageMock } = vi.hoisted(() => ({
     saveImageToLocalMock: vi.fn(),
     generateThumbnailMock: vi.fn(),
+    persistHistoryThumbnailMock: vi.fn(),
     loadFullImageMock: vi.fn(),
 }));
 
@@ -34,6 +35,7 @@ vi.mock('../utils/imageSaveUtils', async () => {
     const actual = await vi.importActual<typeof import('../utils/imageSaveUtils')>('../utils/imageSaveUtils');
     return {
         ...actual,
+        persistHistoryThumbnail: persistHistoryThumbnailMock,
         saveImageToLocal: saveImageToLocalMock,
         generateThumbnail: generateThumbnailMock,
         loadFullImage: loadFullImageMock,
@@ -206,10 +208,12 @@ describe('App official conversation flow', () => {
 
         saveImageToLocalMock.mockReset();
         generateThumbnailMock.mockReset();
+        persistHistoryThumbnailMock.mockReset();
         loadFullImageMock.mockReset();
 
         saveImageToLocalMock.mockResolvedValue('D:/output/conversation.png');
         generateThumbnailMock.mockResolvedValue('data:image/png;base64,BBB');
+        persistHistoryThumbnailMock.mockResolvedValue({ url: 'data:image/png;base64,BBB' });
         loadFullImageMock.mockResolvedValue(null);
 
         fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {

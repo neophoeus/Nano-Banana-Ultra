@@ -95,20 +95,39 @@ const isNonEmptyAssetUrl = (value: unknown): value is string => typeof value ===
 const buildLoadImageUrl = (savedFilename: string): string =>
     `${LOAD_IMAGE_ENDPOINT}?filename=${encodeURIComponent(savedFilename)}`;
 
+const getHistoryThumbnailLoadUrl = (item: GeneratedImage): string | null =>
+    typeof item.thumbnailSavedFilename === 'string' && item.thumbnailSavedFilename.trim().length > 0
+        ? buildLoadImageUrl(item.thumbnailSavedFilename)
+        : null;
+
+const hasPersistableInlineThumbnail = (item: GeneratedImage): boolean =>
+    item.thumbnailInline === true && isInlineAssetUrl(item.url);
+
+const isLegacyFullResolutionHistoryUrl = (item: GeneratedImage): boolean =>
+    Boolean(
+        item.savedFilename && !getHistoryThumbnailLoadUrl(item) && item.url === buildLoadImageUrl(item.savedFilename),
+    );
+
 const shouldStripInlineGeneratedStageAssetForPersistence = (asset: StageAsset): boolean =>
     isInlineAssetUrl(asset.url) &&
     !asset.savedFilename &&
     (asset.origin === 'generated' || asset.origin === 'history' || asset.origin === 'editor');
 
 const buildPersistableHistoryItem = (item: GeneratedImage): GeneratedImage => {
-    if (item.savedFilename && isInlineAssetUrl(item.url)) {
+    const thumbnailLoadUrl = getHistoryThumbnailLoadUrl(item);
+
+    if (thumbnailLoadUrl) {
         return {
             ...item,
-            url: buildLoadImageUrl(item.savedFilename),
+            url: thumbnailLoadUrl,
         };
     }
 
-    if (!item.savedFilename && isInlineAssetUrl(item.url)) {
+    if (hasPersistableInlineThumbnail(item)) {
+        return item;
+    }
+
+    if (isLegacyFullResolutionHistoryUrl(item) || isInlineAssetUrl(item.url)) {
         return {
             ...item,
             url: '',
@@ -183,14 +202,24 @@ const collectRuntimeInlineHistoryIds = (
 };
 
 const buildRuntimeHistoryItem = (item: GeneratedImage, preservedInlineHistoryIds: Set<string>): GeneratedImage => {
-    if (item.savedFilename && isInlineAssetUrl(item.url)) {
+    const thumbnailLoadUrl = getHistoryThumbnailLoadUrl(item);
+
+    if (thumbnailLoadUrl) {
         return {
             ...item,
-            url: buildLoadImageUrl(item.savedFilename),
+            url: thumbnailLoadUrl,
         };
     }
 
-    if (!item.savedFilename && isInlineAssetUrl(item.url) && !preservedInlineHistoryIds.has(item.id)) {
+    if (hasPersistableInlineThumbnail(item)) {
+        return item;
+    }
+
+    if (
+        isLegacyFullResolutionHistoryUrl(item) ||
+        (!item.savedFilename && isInlineAssetUrl(item.url) && !preservedInlineHistoryIds.has(item.id)) ||
+        (item.savedFilename && isInlineAssetUrl(item.url) && !preservedInlineHistoryIds.has(item.id))
+    ) {
         return {
             ...item,
             url: '',
@@ -240,9 +269,10 @@ const buildRuntimeWorkspaceSnapshot = (snapshot: WorkspacePersistenceSnapshot): 
     const filteredGeneratedImageUrls = normalized.viewState.generatedImageUrls.filter((url) => !isInlineAssetUrl(url));
     const restoredStageUrl =
         currentStageAsset?.url ||
-        selectedHistoryItem?.url ||
         filteredGeneratedImageUrls[0] ||
-        (selectedHistoryItem?.savedFilename ? buildLoadImageUrl(selectedHistoryItem.savedFilename) : null);
+        (selectedHistoryItem?.savedFilename ? buildLoadImageUrl(selectedHistoryItem.savedFilename) : null) ||
+        selectedHistoryItem?.url ||
+        null;
 
     return sanitizeWorkspaceSnapshot({
         ...normalized,
@@ -284,7 +314,9 @@ const buildPersistableWorkspaceSnapshot = (
     const restoredStageUrl =
         filteredGeneratedImageUrls[0] ||
         currentStageAsset?.url ||
-        (selectedHistoryItem?.savedFilename ? buildLoadImageUrl(selectedHistoryItem.savedFilename) : null);
+        (selectedHistoryItem?.savedFilename ? buildLoadImageUrl(selectedHistoryItem.savedFilename) : null) ||
+        selectedHistoryItem?.url ||
+        null;
 
     return sanitizeWorkspaceSnapshot({
         ...normalized,
@@ -346,6 +378,12 @@ const sanitizeHistory = (value: unknown): GeneratedImage[] => {
         return [
             {
                 ...(item as GeneratedImage),
+                openedAt:
+                    typeof item.openedAt === 'number' && Number.isFinite(item.openedAt)
+                        ? item.openedAt
+                        : item.openedAt === null
+                          ? null
+                          : undefined,
                 sessionHints:
                     sanitizeSessionHintsForStorage(
                         isRecord(item.sessionHints) ? (item.sessionHints as Record<string, unknown>) : null,

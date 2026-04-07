@@ -151,12 +151,13 @@ export const ja = {
     lblHistoryFailed: '失敗',
     modeTextToImg: 'テキスト生成',
     modeImgToImg: '画像生成',
-    clearHistory: '履歴を全削除',
+    clearHistory: 'ワークスペースを消去',
 
     // Clear History Dialog
-    clearHistoryTitle: '履歴の削除',
-    clearHistoryMsg: '生成された画像の履歴をすべて削除しますか？この操作は取り消せません。',
-    clearHistoryConfirm: '全削除',
+    clearHistoryTitle: 'ワークスペースを消去',
+    clearHistoryMsg:
+        'このワークスペースを既定の空の状態に戻しますか？履歴、ステージ、キュー済みジョブ、セッション内容が削除されます。この操作は取り消せません。',
+    clearHistoryConfirm: 'ワークスペースを消去',
     clearHistoryCancel: 'キャンセル',
 
     // Sketch Pad
@@ -296,6 +297,18 @@ export const ja = {
     queuedBatchJobsImportReadyCount: 'インポート可能 {0}',
     queuedBatchJobsClosedIssuesCount: '問題あり終了 {0}',
     queuedBatchJobsImportReadyAction: '準備済みをインポート',
+    queuedBatchRecoverRecentAction: '最近のバッチジョブを復旧',
+    queuedBatchRecoverRecentLoading: '最近のジョブを復旧中...',
+    queuedBatchRecoverRecentNotice: '最近のバッチジョブを {0} 件復旧しました。',
+    queuedBatchRecoverRecentAlreadyTrackedNotice:
+        '最近のリモートバッチジョブはすでに一覧で追跡中です。{0} 件を更新しました。',
+    queuedBatchRecoverRecentNoneNotice: '追加で復旧できる最近のリモートバッチジョブは見つかりませんでした。',
+    queuedBatchRecoverRecentLog: 'バッチ一覧から最近のリモートバッチジョブを {0} 件復旧しました。',
+    queuedBatchRecoverRecentRefreshedLog:
+        'バッチ一覧から追跡中のリモートバッチジョブ {0} 件を更新しました。',
+    queuedBatchRecoverRecentFailedLog: '最近のバッチジョブの復旧に失敗しました: {0}',
+    queuedBatchRecoverRecentMetadataHint:
+        '復旧したリモートジョブは再インポートできますが、Gemini の batch 一覧は元の prompt や参照画像を返さないため、これらの項目には簡略化されたローカル情報のみが入ります。',
     queuedBatchJobsRefreshAll: 'すべて更新',
     queuedBatchJobsTrackedCount: '追跡中 {0}',
     queuedBatchJobsImportedTag: 'インポート済み',
@@ -634,6 +647,7 @@ export const ja = {
     workspaceSurfacePromptEmpty: 'まだプロンプトはありません',
     workspaceViewerTitle: 'ビューアー',
     workspaceViewerDesc: '現在のステージ画像、結果テキスト、由来情報を一か所で確認します。',
+    workspaceViewerNewBadge: '新規',
     workspaceViewerClose: '閉じる',
     workspaceViewerImageAlt: 'ビューアー画像',
     workspaceViewerPrompt: 'プロンプト',

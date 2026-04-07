@@ -4,6 +4,44 @@ This changelog is compiled from the repository's local git tags plus the publish
 
 ## Unreleased
 
+## v3.3.0 - 2026-04-07
+
+- Release title: Nano Banana Ultra 3.3.0 - Unified History Workspace, Restore Hardening & Shell Chrome
+
+- Fixed shell chrome header/footer pass:
+    - pinned `WorkspaceTopHeader` to the viewport top and added a matching fixed bottom footer so the main shell now has persistent top-and-bottom chrome instead of a flow-only header with no footer treatment
+    - aligned both bars to the existing `1560px` shell width, mirrored the footer geometry against the header with top rounded corners and square bottom corners, and increased App top/bottom content padding so the workspace body no longer scrolls underneath those fixed bars
+    - added the footer copy `🍌 NANO BANANA ULTRA • Designed by Neophoeus Art • Powered by Gemini`, wired `Neophoeus Art` to `https://neophoeus.art/`, kept the link visually consistent with the surrounding footer text instead of emphasizing it separately, and updated the shared brand label in both header and footer to uppercase `NANO BANANA ULTRA`
+    - expanded validation for the shell chrome with focused `WorkspaceTopHeader` / `WorkspaceBottomFooter` markup coverage plus a Playwright restore assertion that directly checks the header stays fixed at `top: 0` and the footer stays fixed at `bottom: 0` against the live viewport edge
+    - revalidated the session with `npm run build`, the package Vitest run at `80 files / 687 tests`, and `npm run test:e2e:restore:shell-owners` at `3 / 3`
+
+- Interactive batch preview, freshness, and unified-history viewer flow:
+    - removed the old stage-local batch thumbnail strip for interactive multi-image runs and moved all in-flight batch progress into the right-side unified history rail, where Generate now creates one preview slot per requested result immediately and fills those slots in place as the backend returns each image
+    - introduced transient batch preview sessions with per-slot `pending` / `ready` / `failed` state, kept locked-ready previews blurred and darkened until the full batch completes, and merged those preview tiles into the same compact history grid instead of rendering them on a separate row
+    - preserved the intended visual contract that newer batch results live on the left and older items stay on the right, including first-page preview-slot reservation inside `WorkspaceUnifiedHistoryPanel` so transient previews and committed history share one consistent ordering model
+    - decoupled viewing from generation so selecting older history during an active batch no longer cancels the running generation, while Generate still clears the current stage source immediately and the viewer now traverses completed successful history items instead of the removed stage-local batch strip
+    - added freshness lifecycle support for completed successful results through `openedAt`, a persistent green glow around unopened history items, and a viewer-level `New` badge that remains until the user leaves that item; failed turns stay out of freshness treatment and viewer traversal
+    - fixed the post-completion selection mismatch by ordering committed interactive-batch history items by descending `batchResultIndex` before prepending them into formal history and before emitting batch-complete callbacks, so preview order, committed history order, and auto-open all land on the same leftmost new card instead of selecting an item that still rendered on the right
+    - persisted the freshness/opened state through workspace snapshot sanitation and restore so reload or restore keeps the same unopened/new semantics instead of clearing them prematurely
+
+- Batch preview/history validation follow-through:
+    - expanded focused regression coverage for `HistoryPanel`, `WorkspaceUnifiedHistoryPanel`, `WorkspaceViewerOverlay`, `GeneratedImage`, `useWorkspaceStageViewer`, `useHistorySourceOrchestration`, `usePerformGeneration`, and `workspacePersistence`, then reran the focused Vitest slice to `9 files / 67 tests` after the final committed-history ordering fix
+
+- Workspace restore and unified history shell follow-up:
+    - replaced the split `RecentHistoryFilmstrip` plus gallery stack with one App-owned `WorkspaceUnifiedHistoryPanel`, so the right desktop rail now keeps selected-item context, history paging, branch summary chips, clear-workspace affordance, and Versions inside a single aligned surface contract instead of mixing separate recent-lane and gallery ownership paths
+    - rebuilt `HistoryPanel` so the embedded history surface can run in continuous compact mode, added a lazy-mounted `LazyHistoryImage` media path for history cards, kept mobile at four visible slots, and moved desktop to a true ten-up row with `100px` thumbnails plus auto-distributed horizontal spacing instead of the earlier fixed-gap `96px` contract
+    - tightened the desktop shell geometry around a height-driven square stage by switching `GeneratedImage` to an XL height-owned square frame, stretching the left focus block to the combined History plus Versions rail height, shifting the desktop split to `0.6fr / 1.4fr`, and trimming selected-item / unified-history / Versions chrome in a second pass so the square-stage alignment remains intact without giving back thumbnail density
+
+- Workspace clear semantics, thumbnail persistence, and restore hardening:
+    - changed the old gallery-clear action into a true workspace reset flow through `useWorkspaceResetActions`, so clearing now resets the workspace snapshot, prompt history, transient modals, settings-session draft state, and sketch/editor transient surfaces instead of only deleting history cards while leaving stale workspace state behind
+    - added persisted history-thumbnail ownership through `thumbnailSavedFilename`, `thumbnailInline`, `extractSavedFilename(...)`, and `persistHistoryThumbnail(...)`, so normal generations and queued-batch imports now save dedicated history previews when possible and keep inline thumbnail fallbacks only when persistence is unavailable
+    - hardened restore and reopen behavior for legacy file-backed history turns by keeping runtime history cards on placeholders when they only have full-resolution file-backed URLs, reopening the selected stage from the original saved image, and background-repairing missing legacy thumbnails after a reopen when the original file can still be loaded locally
+    - aligned workspace persistence, official-conversation tests, queued-batch tests, and restore browser assertions to the new thumbnail contract, including repaired `/api/load-image?...history-thumb...` preview URLs and the no-white-screen late shared-restore path against the unified-history counters
+
+- Validation follow-through:
+    - added new focused regression coverage for `WorkspaceUnifiedHistoryPanel`, `LazyHistoryImage`, `useWorkspaceResetActions`, legacy thumbnail repair in `useHistorySourceOrchestration`, file-backed thumbnail persistence in `workspacePersistence`, and the desktop square-stage/history-rail alignment browser case inside `e2e/workspace-restore.spec.ts`
+    - revalidated the session through the package Vitest script at `79 files / 683 tests` and reran the full Playwright restore suite to `60 / 60` after the desktop `100px` second-pass density changes
+
 ## v3.2.7 - 2026-04-06
 
 - Release title: Nano Banana Ultra 3.2.7 - Queued Batch Recovery, Retry & Cleanup

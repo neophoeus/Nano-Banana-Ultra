@@ -88,6 +88,7 @@ export const zh_CN = {
     workspaceSurfacePromptEmpty: '还没有提示词',
     workspaceViewerTitle: '查看器',
     workspaceViewerDesc: '在同一个位置查看当前阶段图像、结果文本与来源脉络。',
+    workspaceViewerNewBadge: '新',
     workspaceViewerClose: '关闭',
     workspaceViewerImageAlt: '查看器图像',
     workspaceViewerPrompt: '提示词',
@@ -172,12 +173,12 @@ export const zh_CN = {
     lblHistoryFailed: '失败',
     modeTextToImg: '文生图',
     modeImgToImg: '图生图',
-    clearHistory: '清空记录',
+    clearHistory: '清空工作区',
 
     // Clear History Dialog
-    clearHistoryTitle: '清空历史记录',
-    clearHistoryMsg: '您确定要删除所有生成的图片记录吗？此操作无法撤销。',
-    clearHistoryConfirm: '确认清空',
+    clearHistoryTitle: '清空工作区',
+    clearHistoryMsg: '您确定要将整个工作区重置为默认初始状态吗？历史、舞台、排队任务与会话内容都会被清除，且无法撤销。',
+    clearHistoryConfirm: '直接清除',
     clearHistoryCancel: '取消',
 
     // Sketch Pad
@@ -313,6 +314,16 @@ export const zh_CN = {
     queuedBatchJobsImportReadyCount: '{0} 个可导入',
     queuedBatchJobsClosedIssuesCount: '{0} 个异常结束',
     queuedBatchJobsImportReadyAction: '导入可用结果',
+    queuedBatchRecoverRecentAction: '救回最近批处理任务',
+    queuedBatchRecoverRecentLoading: '正在救回最近任务...',
+    queuedBatchRecoverRecentNotice: '已救回 {0} 个最近批处理任务。',
+    queuedBatchRecoverRecentAlreadyTrackedNotice: '最近的远端批处理任务已在清单中，并已刷新 {0} 条。',
+    queuedBatchRecoverRecentNoneNotice: '没有找到其他可补回的最近远端批处理任务。',
+    queuedBatchRecoverRecentLog: '已从批处理清单救回 {0} 个最近远端批处理任务。',
+    queuedBatchRecoverRecentRefreshedLog: '已从批处理清单刷新 {0} 个已追踪的远端批处理任务。',
+    queuedBatchRecoverRecentFailedLog: '救回最近批处理任务失败：{0}',
+    queuedBatchRecoverRecentMetadataHint:
+        '救回后的远端任务仍可重新导入，但 Gemini 的 batch 清单不会返回原始 prompt 或参考图，因此这些条目只会保留简化后的本地信息。',
     queuedBatchJobsRefreshAll: '全部刷新',
     queuedBatchJobsTrackedCount: '追踪中 {0} 个',
     queuedBatchJobsImportedTag: '已导入',

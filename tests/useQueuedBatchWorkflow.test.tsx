@@ -15,6 +15,7 @@ const {
     importQueuedBatchJobResultsMock,
     saveImageToLocalMock,
     generateThumbnailMock,
+    persistHistoryThumbnailMock,
 } = vi.hoisted(() => ({
     checkApiKeyMock: vi.fn(),
     submitQueuedBatchJobMock: vi.fn(),
@@ -24,6 +25,7 @@ const {
     importQueuedBatchJobResultsMock: vi.fn(),
     saveImageToLocalMock: vi.fn(),
     generateThumbnailMock: vi.fn(),
+    persistHistoryThumbnailMock: vi.fn(),
 }));
 
 vi.mock('../services/geminiService', () => ({
@@ -37,6 +39,8 @@ vi.mock('../services/geminiService', () => ({
 
 vi.mock('../utils/imageSaveUtils', () => ({
     buildSavedImageLoadUrl: (savedFilename: string) => `/api/load-image?filename=${encodeURIComponent(savedFilename)}`,
+    extractSavedFilename: (savedPath: string | null | undefined) => savedPath?.split(/[\\/]/).pop(),
+    persistHistoryThumbnail: persistHistoryThumbnailMock,
     saveImageToLocal: saveImageToLocalMock,
     generateThumbnail: generateThumbnailMock,
 }));
@@ -225,9 +229,11 @@ describe('useQueuedBatchWorkflow', () => {
         importQueuedBatchJobResultsMock.mockReset();
         saveImageToLocalMock.mockReset();
         generateThumbnailMock.mockReset();
+        persistHistoryThumbnailMock.mockReset();
 
         saveImageToLocalMock.mockResolvedValue('D:/saved/job.png');
         generateThumbnailMock.mockResolvedValue('data:image/jpeg;base64,thumb');
+        persistHistoryThumbnailMock.mockResolvedValue({ url: 'data:image/jpeg;base64,thumb' });
     });
 
     afterEach(() => {
@@ -527,7 +533,7 @@ describe('useQueuedBatchWorkflow', () => {
                 batchResultIndex: 0,
             }),
         );
-        expect(generateThumbnailMock).toHaveBeenCalledWith('data:image/png;base64,AAA');
+        expect(persistHistoryThumbnailMock).toHaveBeenCalledWith('data:image/png;base64,AAA', `${readyJob.model}-batch`);
         expect(latestHistory).toHaveLength(1);
         expect(latestHistory[0]).toEqual(
             expect.objectContaining({
@@ -668,7 +674,7 @@ describe('useQueuedBatchWorkflow', () => {
             });
 
         saveImageToLocalMock.mockResolvedValue('D:/saved/imported.png');
-        generateThumbnailMock.mockImplementation(async (imageUrl: string) => `${imageUrl}-thumb`);
+        persistHistoryThumbnailMock.mockImplementation(async (imageUrl: string) => ({ url: `${imageUrl}-thumb` }));
 
         renderHook([firstReadyJob, secondReadyJob]);
 
@@ -728,7 +734,7 @@ describe('useQueuedBatchWorkflow', () => {
         });
 
         saveImageToLocalMock.mockResolvedValue('D:/saved/imported.png');
-        generateThumbnailMock.mockResolvedValue('data:image/png;base64,AAA-thumb');
+        persistHistoryThumbnailMock.mockResolvedValue({ url: 'data:image/png;base64,AAA-thumb' });
 
         renderHook([retryableReadyJob, failedReadyJob]);
 

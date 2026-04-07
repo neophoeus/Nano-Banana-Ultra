@@ -153,12 +153,13 @@ export const ru = {
     lblHistoryFailed: 'Сбой',
     modeTextToImg: 'Текст в Картинку',
     modeImgToImg: 'Картинка в Картинку',
-    clearHistory: 'Очистить Галерею',
+    clearHistory: 'Очистить рабочее пространство',
 
     // Clear History Dialog
-    clearHistoryTitle: 'Очистить Галерею',
-    clearHistoryMsg: 'Удалить всё? Это необратимо.',
-    clearHistoryConfirm: 'Удалить Всё',
+    clearHistoryTitle: 'Очистить рабочее пространство',
+    clearHistoryMsg:
+        'Сбросить это рабочее пространство к исходному пустому состоянию? История, сцена, задания в очереди и контекст сессии будут удалены. Это необратимо.',
+    clearHistoryConfirm: 'Очистить рабочее пространство',
     clearHistoryCancel: 'Отмена',
 
     // Sketch Pad
@@ -298,6 +299,19 @@ export const ru = {
     queuedBatchJobsImportReadyCount: 'Готово к импорту: {0}',
     queuedBatchJobsClosedIssuesCount: 'Закрыто с проблемами: {0}',
     queuedBatchJobsImportReadyAction: 'Импортировать готовые',
+    queuedBatchRecoverRecentAction: 'Восстановить недавние пакетные задания',
+    queuedBatchRecoverRecentLoading: 'Восстановление недавних заданий...',
+    queuedBatchRecoverRecentNotice: 'Восстановлено {0} недавних пакетных заданий.',
+    queuedBatchRecoverRecentAlreadyTrackedNotice:
+        'Недавние удаленные пакетные задания уже отслеживаются. Обновлено {0} записей.',
+    queuedBatchRecoverRecentNoneNotice: 'Других недавних удаленных пакетных заданий не найдено.',
+    queuedBatchRecoverRecentLog:
+        'Восстановлено {0} недавних удаленных пакетных заданий из списка batch.',
+    queuedBatchRecoverRecentRefreshedLog:
+        'Обновлено {0} уже отслеживаемых удаленных пакетных заданий из списка batch.',
+    queuedBatchRecoverRecentFailedLog: 'Не удалось восстановить недавние пакетные задания: {0}',
+    queuedBatchRecoverRecentMetadataHint:
+        'Восстановленные удаленные задания можно импортировать повторно, но список batch Gemini не возвращает исходный prompt или референсные изображения, поэтому эти записи содержат только упрощенные локальные сведения.',
     queuedBatchJobsRefreshAll: 'Обновить все',
     queuedBatchJobsTrackedCount: 'Отслеживается: {0}',
     queuedBatchJobsImportedTag: 'Импортировано',
@@ -651,6 +665,7 @@ export const ru = {
     workspaceViewerTitle: 'Просмотр',
     workspaceViewerDesc:
         'Просматривайте текущее изображение сцены, текст результата и сведения об источнике в одном месте.',
+    workspaceViewerNewBadge: 'Новое',
     workspaceViewerClose: 'Закрыть',
     workspaceViewerImageAlt: 'Изображение просмотра',
     workspaceViewerPrompt: 'Промпт',
