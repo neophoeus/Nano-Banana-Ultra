@@ -28,6 +28,7 @@ const baseProps = {
     structuredOutputMode: 'off' as const,
     thinkingLevel: 'high' as const,
     includeThoughts: true,
+    stickySendIntent: 'independent' as const,
     currentStageAsset: null,
     availableGroundingModes: ['off', 'google-search', 'image-search', 'google-search-plus-image-search'] as const,
     temperature: 1,
@@ -40,6 +41,7 @@ const baseProps = {
     getImportedQueuedHistoryItems: () => [],
     activeImportedQueuedHistoryId: null,
     onPromptChange: vi.fn(),
+    onStickySendIntentChange: vi.fn(),
     onToggleEnterToSubmit: vi.fn(),
     onGenerate: vi.fn(),
     onQueueBatchJob: vi.fn(),
@@ -100,6 +102,23 @@ describe('ComposerSettingsPanel toolbar layout', () => {
         expect(markup).toContain('composer-style-strip');
         expect(markup).toContain('composer-style-button');
         expect(markup).toContain('composer-advanced-settings-button');
+        expect(markup).toContain('composer-sticky-send-intent');
+        expect(markup).toContain('composer-sticky-send-intent-toggle');
+        expect(markup).toContain('composer-sticky-send-intent-thumb');
+        expect(markup).toContain('composer-sticky-send-intent-info-trigger');
+        expect(markup).toContain('composer-sticky-send-intent-independent');
+        expect(markup).toContain('composer-sticky-send-intent-memory');
+        expect(markup).toContain('data-active-intent="independent"');
+        expect(markup).toContain('data-memory-available="false"');
+        expect(markup).toContain('aria-pressed="false"');
+        expect(markup).toContain('Next send');
+        expect(markup).toContain('Independent send');
+        expect(markup).toContain('Memory send');
+        expect(markup).not.toContain('composer-sticky-send-intent-info-card');
+        expect(markup).not.toContain(
+            'Uses the selected image and tools without replaying official conversation memory.',
+        );
+        expect(markup).toContain('Creative brief');
         expect(markup.indexOf('composer-settings-row')).toBeLessThan(markup.indexOf('composer-image-tools-slot'));
         expect(markup.indexOf('composer-image-tools-slot')).toBeLessThan(markup.indexOf('composer-quick-tools'));
         expect(markup).toContain('Generation Settings');
@@ -168,12 +187,45 @@ describe('ComposerSettingsPanel toolbar layout', () => {
         expect(markup).not.toContain('Export Workspace');
         expect(markup).not.toContain('Import Workspace');
         expect(markup).not.toContain('composer-style-clear');
+        expect(markup).not.toContain('New Conversation');
+        expect(markup).not.toContain('Follow-up Edit');
         expect(markup).toContain('min-h-10');
         expect(markup).toContain('py-2');
-        expect(markup).toContain('border-amber-200 bg-amber-50');
+        expect(markup).toContain('Memory send is available only when quantity is 1.');
+        expect(markup).toContain('bg-slate-200/95');
+        expect(markup).toContain('dark:bg-slate-950');
+        expect(markup).toContain('bg-amber-500');
+        expect(markup).toContain('text-white dark:text-slate-950');
+        expect(markup).toContain('px-2.5 py-1.5');
     });
 
-    it('renders a clear affordance on the style strip between generation settings and follow-up source when style is active', () => {
+    it('switches the prompt surface copy when memory send intent is active', () => {
+        const markup = renderToStaticMarkup(
+            <ComposerSettingsPanel
+                {...baseProps}
+                stickySendIntent="memory"
+                batchSize={1}
+                groundingMode="off"
+                imageModel="gemini-3.1-flash-image-preview"
+                capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
+            />,
+        );
+
+        expect(markup).toContain('Next send');
+        expect(markup).toContain('Independent send');
+        expect(markup).toContain('Memory send');
+        expect(markup).toContain('composer-sticky-send-intent-toggle');
+        expect(markup).toContain('composer-sticky-send-intent-thumb');
+        expect(markup).toContain('data-active-intent="memory"');
+        expect(markup).toContain('aria-pressed="true"');
+        expect(markup).not.toContain('composer-sticky-send-intent-info-card');
+        expect(markup).not.toContain('Keeps the next send inside official conversation memory.');
+        expect(markup).toContain('Dialogue');
+        expect(markup).toContain('Continue the earlier dialogue and describe how this round should change...');
+        expect(markup).toContain('New Conversation');
+    });
+
+    it('keeps style visible while folding follow-up source context into the follow-up edit action', () => {
         const markup = renderToStaticMarkup(
             <ComposerSettingsPanel
                 {...baseProps}
@@ -198,14 +250,13 @@ describe('ComposerSettingsPanel toolbar layout', () => {
         expect(markup).toContain('Style');
         expect(markup).toContain('Cinematic');
         expect(markup).toContain('composer-style-clear');
-        expect(markup).toContain('composer-follow-up-source-strip');
-        expect(markup).toContain('Follow-up source');
+        expect(markup).toContain('composer-sticky-send-intent');
+        expect(markup).not.toContain('composer-follow-up-source-strip');
+        expect(markup).toContain('Follow-up Edit');
         expect(markup).toContain('History · Reopen');
         expect(markup.indexOf('composer-settings-button')).toBeLessThan(markup.indexOf('composer-style-strip'));
-        expect(markup.indexOf('composer-style-strip')).toBeLessThan(markup.indexOf('composer-follow-up-source-strip'));
-        expect(markup.indexOf('composer-follow-up-source-strip')).toBeLessThan(
-            markup.indexOf('composer-image-tools-slot'),
-        );
+        expect(markup.indexOf('composer-style-strip')).toBeLessThan(markup.indexOf('composer-sticky-send-intent'));
+        expect(markup.indexOf('composer-sticky-send-intent')).toBeLessThan(markup.indexOf('composer-image-tools-slot'));
     });
 
     it('replaces the inline queued jobs panel with a compact status button when tracked jobs exist', () => {

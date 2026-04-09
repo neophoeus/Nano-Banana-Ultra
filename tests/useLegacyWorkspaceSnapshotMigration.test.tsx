@@ -71,9 +71,15 @@ describe('useLegacyWorkspaceSnapshotMigration', () => {
             return null;
         }
 
-        act(() => {
-            root.render(<Harness />);
-        });
+        const rerender = () => {
+            act(() => {
+                root.render(<Harness />);
+            });
+        };
+
+        rerender();
+
+        return { rerender };
     };
 
     beforeEach(() => {
@@ -137,5 +143,32 @@ describe('useLegacyWorkspaceSnapshotMigration', () => {
 
         expect(applyWorkspaceSnapshot).not.toHaveBeenCalled();
         expect(addLog).not.toHaveBeenCalled();
+    });
+
+    it('does not retry shared snapshot migration after a later transition into an intentionally empty workspace', async () => {
+        currentSnapshot = buildSnapshot({
+            composerState: {
+                ...EMPTY_WORKSPACE_SNAPSHOT.composerState,
+                prompt: 'Live draft prompt',
+            },
+        });
+        loadSharedWorkspaceSnapshotMock.mockResolvedValue(buildSharedSnapshot('Legacy prompt'));
+
+        const { rerender } = renderHook();
+
+        const initialSharedReadCount = loadSharedWorkspaceSnapshotMock.mock.calls.length;
+        const initialApplyCount = applyWorkspaceSnapshot.mock.calls.length;
+        const initialLogCount = addLog.mock.calls.length;
+
+        currentSnapshot = EMPTY_WORKSPACE_SNAPSHOT;
+        rerender();
+
+        await act(async () => {
+            await Promise.resolve();
+        });
+
+        expect(loadSharedWorkspaceSnapshotMock).toHaveBeenCalledTimes(initialSharedReadCount);
+        expect(applyWorkspaceSnapshot).toHaveBeenCalledTimes(initialApplyCount);
+        expect(addLog).toHaveBeenCalledTimes(initialLogCount);
     });
 });

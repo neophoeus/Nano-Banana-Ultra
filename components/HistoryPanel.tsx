@@ -73,7 +73,7 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
     const titleIconClassName = isEmbedded ? 'h-4 w-4 text-slate-400 dark:text-slate-500' : 'h-4 w-4';
     const gridClassName =
         thumbnailMode === 'compact'
-            ? 'grid w-full min-w-0 grid-cols-4 gap-1.5 xl:grid-cols-[repeat(10,minmax(100px,100px))] xl:justify-between xl:gap-x-0 xl:gap-y-1'
+            ? 'grid w-full min-w-0 grid-cols-4 gap-1.5 xl:grid-cols-[repeat(6,minmax(100px,100px))] xl:justify-between xl:gap-x-0 xl:gap-y-1'
             : 'grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4';
     const cardSizeClassName =
         thumbnailMode === 'compact'

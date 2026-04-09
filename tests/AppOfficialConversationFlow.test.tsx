@@ -155,6 +155,7 @@ const restoredOfficialConversationSnapshot = {
         includeThoughts: true,
         googleSearch: false,
         imageSearch: false,
+        stickySendIntent: 'memory',
         generationMode: 'Follow-up Edit',
         executionMode: 'chat-continuation',
     },
@@ -428,5 +429,54 @@ describe('App official conversation flow', () => {
 
         expect(localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe('zh_TW');
         expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark');
+    });
+
+    it('switches between support-family views inside the shared detail surface', async () => {
+        await act(async () => {
+            root.render(<App />);
+        });
+
+        const outputEntry = await waitFor(() => {
+            const button = container.querySelector(
+                '[data-testid="workspace-response-open-details"]',
+            ) as HTMLButtonElement | null;
+            expect(button).toBeTruthy();
+            return button!;
+        });
+        await clickElement(outputEntry);
+
+        await waitFor(() => {
+            expect(container.querySelector('[data-testid="workspace-response-detail-modal"]')).toBeTruthy();
+        });
+
+        expect(container.querySelector('[data-testid="workspace-output-detail-summary"]')).toBeTruthy();
+
+        const evidenceTab = await waitFor(() => {
+            const button = container.querySelector(
+                '[data-testid="workspace-support-detail-tab-sources"]',
+            ) as HTMLButtonElement | null;
+            expect(button).toBeTruthy();
+            return button!;
+        });
+        await clickElement(evidenceTab);
+
+        await waitFor(() => {
+            expect(container.querySelector('[data-testid="workspace-sources-detail-modal"]')).toBeTruthy();
+        });
+
+        expect(container.querySelector('[data-testid="workspace-evidence-detail-summary"]')).toBeTruthy();
+
+        const thoughtsTab = await waitFor(() => {
+            const button = container.querySelector(
+                '[data-testid="workspace-support-detail-tab-progress"]',
+            ) as HTMLButtonElement | null;
+            expect(button).toBeTruthy();
+            return button!;
+        });
+        await clickElement(thoughtsTab);
+
+        await waitFor(() => {
+            expect(container.querySelector('[data-testid="workspace-progress-detail-modal"]')).toBeTruthy();
+        });
     });
 });

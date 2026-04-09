@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { encodeWorkflowMessage } from '../utils/workflowTimeline';
 import {
     buildWorkspaceSnapshotMigrationFingerprint,
@@ -29,6 +29,16 @@ export const useLegacyWorkspaceSnapshotMigration = ({
     applyWorkspaceSnapshot,
     addLog,
 }: UseLegacyWorkspaceSnapshotMigrationArgs): void => {
+    const composeCurrentWorkspaceSnapshotRef = useRef(composeCurrentWorkspaceSnapshot);
+    const applyWorkspaceSnapshotRef = useRef(applyWorkspaceSnapshot);
+    const addLogRef = useRef(addLog);
+
+    useEffect(() => {
+        composeCurrentWorkspaceSnapshotRef.current = composeCurrentWorkspaceSnapshot;
+        applyWorkspaceSnapshotRef.current = applyWorkspaceSnapshot;
+        addLogRef.current = addLog;
+    }, [addLog, applyWorkspaceSnapshot, composeCurrentWorkspaceSnapshot]);
+
     useEffect(() => {
         if (typeof window === 'undefined' || window.self !== window.top) {
             return undefined;
@@ -37,7 +47,7 @@ export const useLegacyWorkspaceSnapshotMigration = ({
         let cancelled = false;
 
         const run = async () => {
-            const currentSnapshot = composeCurrentWorkspaceSnapshot();
+            const currentSnapshot = composeCurrentWorkspaceSnapshotRef.current();
             if (!isWorkspaceSnapshotEffectivelyEmpty(currentSnapshot)) {
                 return;
             }
@@ -47,7 +57,7 @@ export const useLegacyWorkspaceSnapshotMigration = ({
                 return;
             }
 
-            const latestSnapshot = composeCurrentWorkspaceSnapshot();
+            const latestSnapshot = composeCurrentWorkspaceSnapshotRef.current();
             if (!isWorkspaceSnapshotEffectivelyEmpty(latestSnapshot)) {
                 return;
             }
@@ -58,9 +68,9 @@ export const useLegacyWorkspaceSnapshotMigration = ({
                 return;
             }
 
-            applyWorkspaceSnapshot(sharedSnapshot, { announceRestoreToast: true });
+            applyWorkspaceSnapshotRef.current(sharedSnapshot, { announceRestoreToast: true });
             rememberLegacyWorkspaceMigration(SHARED_WORKSPACE_SNAPSHOT_SOURCE, fingerprint);
-            addLog(
+            addLogRef.current(
                 encodeWorkflowMessage(
                     'workspaceSnapshotImportedLog',
                     SHARED_WORKSPACE_SNAPSHOT_SOURCE,
@@ -74,5 +84,5 @@ export const useLegacyWorkspaceSnapshotMigration = ({
         return () => {
             cancelled = true;
         };
-    }, [addLog, applyWorkspaceSnapshot, composeCurrentWorkspaceSnapshot, t]);
+    }, []);
 };

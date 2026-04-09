@@ -99,6 +99,7 @@ export const buildWorkspaceComposerStateFromHistoryItem = (item: GeneratedImage)
             (groundingMode === 'image-search' || groundingMode === 'google-search-plus-image-search'
                 ? true
                 : Boolean(item.grounding?.imageSearch)),
+        stickySendIntent: 'independent',
         generationMode: item.mode || 'Text to Image',
         executionMode,
     };

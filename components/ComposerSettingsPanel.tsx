@@ -15,6 +15,7 @@ import {
     OutputFormat,
     QueuedBatchJob,
     StageAsset,
+    StickySendIntent,
     StructuredOutputMode,
     ThinkingLevel,
     TurnLineageAction,
@@ -48,6 +49,7 @@ export type ComposerSettingsPanelProps = {
     thinkingLevel: ThinkingLevel;
     includeThoughts: boolean;
     groundingMode: GroundingMode;
+    stickySendIntent: StickySendIntent;
     imageModel: ImageModel;
     currentStageAsset: StageAsset | null;
     capability: (typeof MODEL_CAPABILITIES)[ImageModel];
@@ -62,6 +64,7 @@ export type ComposerSettingsPanelProps = {
     getImportedQueuedHistoryItems: (job: QueuedBatchJob) => GeneratedImage[];
     activeImportedQueuedHistoryId: string | null;
     onPromptChange: (value: string) => void;
+    onStickySendIntentChange: (value: StickySendIntent) => void;
     onToggleEnterToSubmit: () => void;
     onGenerate: () => void;
     onQueueBatchJob: () => void;
@@ -132,6 +135,16 @@ const renderDismissIcon = () => (
         <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M18 6 6 18" />
     </svg>
 );
+
+const renderInfoIcon = () => (
+    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5">
+        <circle cx="10" cy="10" r="7.25" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M10 8v4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="10" cy="5.6" r="0.9" fill="currentColor" />
+    </svg>
+);
+
+const SEND_INTENT_INFO_AUTO_CLOSE_MS = 3200;
 
 const STRUCTURED_OUTPUT_GUIDE_FIELD_KEYS: Record<StructuredOutputMode, string[]> = {
     off: [],
@@ -211,6 +224,7 @@ function ComposerSettingsPanel({
     thinkingLevel,
     includeThoughts,
     groundingMode,
+    stickySendIntent = 'independent',
     imageModel,
     currentStageAsset,
     capability,
@@ -225,6 +239,7 @@ function ComposerSettingsPanel({
     getImportedQueuedHistoryItems,
     activeImportedQueuedHistoryId,
     onPromptChange,
+    onStickySendIntentChange,
     onToggleEnterToSubmit,
     onGenerate,
     onQueueBatchJob,
@@ -261,7 +276,43 @@ function ComposerSettingsPanel({
 }: ComposerSettingsPanelProps) {
     const fallbackPromptTextareaRef = React.useRef<HTMLTextAreaElement | null>(null);
     const resolvedPromptTextareaRef = promptTextareaRef ?? fallbackPromptTextareaRef;
+    const sendIntentInfoCardId = React.useId();
+    const sendIntentInfoRootRef = React.useRef<HTMLDivElement | null>(null);
+    const sendIntentInfoAutoCloseTimerRef = React.useRef<number | null>(null);
+    const [sendIntentInfoOpen, setSendIntentInfoOpen] = React.useState(false);
+    const [sendIntentInfoVariant, setSendIntentInfoVariant] = React.useState<StickySendIntent | 'memory-unavailable'>(
+        stickySendIntent,
+    );
     const t = (key: string) => getTranslation(currentLanguage, key);
+    const resolveIntentText = (key: string, fallback: string) => {
+        const value = t(key);
+        return value === key ? fallback : value;
+    };
+    const sendIntentTitle = resolveIntentText('composerSendIntentTitle', t('workspaceTopHeaderSendIntent'));
+    const independentSendIntentLabel = resolveIntentText(
+        'workspaceSendIntentIndependent',
+        t('workspaceViewerNewConversation'),
+    );
+    const memorySendIntentLabel = resolveIntentText('workspaceSendIntentMemory', t('workspaceViewerFollowUpEdit'));
+    const independentSendIntentButtonLabel = resolveIntentText(
+        'composerSendIntentIndependent',
+        independentSendIntentLabel,
+    );
+    const memorySendIntentButtonLabel = resolveIntentText('composerSendIntentMemory', memorySendIntentLabel);
+    const promptSurfaceLabel =
+        stickySendIntent === 'memory'
+            ? resolveIntentText('composerPromptLabelMemory', t('promptLabel'))
+            : resolveIntentText('composerPromptLabelIndependent', t('promptLabel'));
+    const promptSurfacePlaceholder =
+        stickySendIntent === 'memory'
+            ? resolveIntentText('composerPromptPlaceholderMemory', placeholder)
+            : resolveIntentText('composerPromptPlaceholderIndependent', placeholder);
+    const independentSendIntentHelp = resolveIntentText(
+        'composerSendIntentHelperIndependent',
+        independentSendIntentButtonLabel,
+    );
+    const memorySendIntentHelp = resolveIntentText('composerSendIntentHelperMemory', memorySendIntentButtonLabel);
+    const sendIntentInfoButtonLabel = resolveIntentText('composerSendIntentInfoButton', t('workspacePanelViewDetails'));
     const getStructuredOutputModeLabel = (value: StructuredOutputMode) => {
         switch (value) {
             case 'scene-brief':
@@ -410,9 +461,108 @@ function ComposerSettingsPanel({
     const normalizedStyleLabel = imageStyleLabel.trim();
     const displayedStyleLabel = normalizedStyleLabel.length > 0 ? normalizedStyleLabel : t('styleNone');
     const hasActiveStyle = displayedStyleLabel !== t('styleNone');
+    const canUseMemorySendIntent = batchSize === 1;
+    const sendIntentDisabledReason = !canUseMemorySendIntent
+        ? resolveIntentText(
+              'composerSendIntentDisabledReason',
+              queueBatchConversationNotice || memorySendIntentButtonLabel,
+          )
+        : null;
+    const clearSendIntentInfoAutoClose = React.useCallback(() => {
+        if (sendIntentInfoAutoCloseTimerRef.current !== null) {
+            window.clearTimeout(sendIntentInfoAutoCloseTimerRef.current);
+            sendIntentInfoAutoCloseTimerRef.current = null;
+        }
+    }, []);
+    const closeSendIntentInfoCard = React.useCallback(() => {
+        clearSendIntentInfoAutoClose();
+        setSendIntentInfoOpen(false);
+    }, [clearSendIntentInfoAutoClose]);
+    const openSendIntentInfoCard = React.useCallback(
+        (variant: StickySendIntent | 'memory-unavailable', mode: 'auto' | 'manual') => {
+            clearSendIntentInfoAutoClose();
+            setSendIntentInfoVariant(variant);
+            setSendIntentInfoOpen(true);
+            if (mode === 'auto') {
+                sendIntentInfoAutoCloseTimerRef.current = window.setTimeout(() => {
+                    setSendIntentInfoOpen(false);
+                    sendIntentInfoAutoCloseTimerRef.current = null;
+                }, SEND_INTENT_INFO_AUTO_CLOSE_MS);
+            }
+        },
+        [clearSendIntentInfoAutoClose],
+    );
+    React.useEffect(() => () => clearSendIntentInfoAutoClose(), [clearSendIntentInfoAutoClose]);
+    React.useEffect(() => {
+        if (!sendIntentInfoOpen) {
+            return undefined;
+        }
+
+        const handlePointerDown = (event: PointerEvent) => {
+            if (!sendIntentInfoRootRef.current?.contains(event.target as Node)) {
+                closeSendIntentInfoCard();
+            }
+        };
+
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                closeSendIntentInfoCard();
+            }
+        };
+
+        document.addEventListener('pointerdown', handlePointerDown);
+        document.addEventListener('keydown', handleEscape);
+
+        return () => {
+            document.removeEventListener('pointerdown', handlePointerDown);
+            document.removeEventListener('keydown', handleEscape);
+        };
+    }, [closeSendIntentInfoCard, sendIntentInfoOpen]);
+    const sendIntentInfoTitle =
+        sendIntentInfoVariant === 'memory' || sendIntentInfoVariant === 'memory-unavailable'
+            ? memorySendIntentButtonLabel
+            : independentSendIntentButtonLabel;
+    const sendIntentInfoBody =
+        sendIntentInfoVariant === 'memory' || sendIntentInfoVariant === 'memory-unavailable'
+            ? memorySendIntentHelp
+            : independentSendIntentHelp;
+    const sendIntentInfoReason = sendIntentInfoVariant === 'memory-unavailable' ? sendIntentDisabledReason : null;
+    const handleSendIntentInfoButtonClick = () => {
+        if (sendIntentInfoOpen) {
+            closeSendIntentInfoCard();
+            return;
+        }
+        openSendIntentInfoCard(stickySendIntent, 'manual');
+    };
+    const handleSendIntentToggle = () => {
+        if (stickySendIntent === 'memory') {
+            onStickySendIntentChange('independent');
+            openSendIntentInfoCard('independent', 'auto');
+            return;
+        }
+
+        if (!canUseMemorySendIntent) {
+            openSendIntentInfoCard('memory-unavailable', 'auto');
+            return;
+        }
+
+        onStickySendIntentChange('memory');
+        openSendIntentInfoCard('memory', 'auto');
+    };
+    const sendIntentToggleAriaLabel =
+        stickySendIntent === 'memory'
+            ? `${sendIntentTitle}: ${memorySendIntentButtonLabel}. ${independentSendIntentButtonLabel}.`
+            : canUseMemorySendIntent
+              ? `${sendIntentTitle}: ${independentSendIntentButtonLabel}. ${memorySendIntentButtonLabel}.`
+              : `${sendIntentTitle}: ${independentSendIntentButtonLabel}. ${sendIntentDisabledReason ?? memorySendIntentButtonLabel}.`;
+    const showStartNewConversationAction = stickySendIntent === 'memory';
     const followUpSourceSummary = currentStageAsset
         ? `${getStageOriginLabel(currentStageAsset.origin)}${currentStageAsset.lineageAction ? ` · ${getLineageActionLabel(currentStageAsset.lineageAction)}` : ''}`
         : null;
+    const followUpGenerateLabel = t('workspaceViewerFollowUpEdit');
+    const followUpGenerateAriaLabel = followUpSourceSummary
+        ? `${followUpGenerateLabel}. ${t('composerFollowUpSource')}: ${followUpSourceSummary}.`
+        : followUpGenerateLabel;
     const settingsSummaryItems = [
         {
             key: 'model',
@@ -649,19 +799,112 @@ function ComposerSettingsPanel({
                         </button>
                     )}
                 </div>
-                {followUpSourceSummary && (
-                    <div
-                        data-testid="composer-follow-up-source-strip"
-                        className="nbu-inline-panel flex h-10 w-full min-w-0 items-center gap-1.5 overflow-hidden rounded-[20px] px-2.5 sm:w-auto sm:max-w-[18rem]"
-                    >
-                        <span className="inline-flex h-6 shrink-0 items-center rounded-full border border-slate-200/80 bg-white/92 px-2.5 text-[10px] font-black uppercase tracking-[0.16em] text-slate-700 dark:border-slate-700/80 dark:bg-slate-900/88 dark:text-slate-200">
-                            {t('composerFollowUpSource')}
-                        </span>
-                        <span className="inline-flex h-6 min-w-0 flex-1 items-center rounded-full border border-slate-200/80 bg-white/88 px-2 text-[10px] font-semibold leading-none text-slate-700 dark:border-slate-700/80 dark:bg-slate-900/80 dark:text-slate-200">
-                            <span className="truncate">{followUpSourceSummary}</span>
-                        </span>
+                <div
+                    data-testid="composer-sticky-send-intent"
+                    className="nbu-inline-panel flex w-full min-w-0 flex-col gap-1.5 rounded-[20px] px-2.5 py-2 sm:w-auto sm:min-w-[17rem]"
+                >
+                    <div className="flex min-w-0 items-start justify-between gap-1.5">
+                        <div
+                            data-testid="composer-sticky-send-intent-title"
+                            className="min-w-0 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400"
+                        >
+                            {sendIntentTitle}
+                        </div>
+                        <div ref={sendIntentInfoRootRef} className="relative flex shrink-0 items-start">
+                            <button
+                                type="button"
+                                data-testid="composer-sticky-send-intent-info-trigger"
+                                aria-label={sendIntentInfoButtonLabel}
+                                aria-controls={sendIntentInfoOpen ? sendIntentInfoCardId : undefined}
+                                aria-expanded={sendIntentInfoOpen}
+                                aria-haspopup="dialog"
+                                title={sendIntentInfoButtonLabel}
+                                onClick={handleSendIntentInfoButtonClick}
+                                className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-300/90 bg-slate-100/95 text-slate-600 transition-colors hover:border-amber-300 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-300 dark:border-slate-700/90 dark:bg-slate-950 dark:text-slate-500 dark:hover:border-amber-400/40 dark:hover:text-slate-200"
+                            >
+                                {renderInfoIcon()}
+                            </button>
+                            {sendIntentInfoOpen && (
+                                <div
+                                    id={sendIntentInfoCardId}
+                                    role="dialog"
+                                    aria-label={sendIntentInfoTitle}
+                                    data-testid="composer-sticky-send-intent-info-card"
+                                    className="absolute right-0 top-full z-40 mt-2 w-[min(18rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-200/90 bg-white px-3 py-3 text-left shadow-[0_18px_45px_rgba(15,23,42,0.14)] dark:border-slate-700/90 dark:bg-slate-950 dark:shadow-[0_18px_50px_rgba(0,0,0,0.34)]"
+                                >
+                                    <div
+                                        data-testid="composer-sticky-send-intent-info-title"
+                                        className="inline-flex rounded-full bg-amber-300 px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-slate-950"
+                                    >
+                                        {sendIntentInfoTitle}
+                                    </div>
+                                    <div
+                                        data-testid="composer-sticky-send-intent-info-body"
+                                        className="mt-2 text-[11px] leading-5 text-slate-700 dark:text-slate-200"
+                                    >
+                                        {sendIntentInfoBody}
+                                    </div>
+                                    {sendIntentInfoReason && (
+                                        <div
+                                            data-testid="composer-sticky-send-intent-info-reason"
+                                            className="mt-2 rounded-2xl border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-[11px] leading-4 text-amber-800 dark:border-amber-500/20 dark:bg-amber-950/20 dark:text-amber-100"
+                                        >
+                                            {sendIntentInfoReason}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                )}
+                    <button
+                        type="button"
+                        data-testid="composer-sticky-send-intent-toggle"
+                        data-active-intent={stickySendIntent}
+                        data-memory-available={canUseMemorySendIntent ? 'true' : 'false'}
+                        aria-label={sendIntentToggleAriaLabel}
+                        aria-pressed={stickySendIntent === 'memory'}
+                        onClick={handleSendIntentToggle}
+                        className="group relative grid w-full min-w-0 grid-cols-2 gap-1 rounded-full border border-slate-300/90 bg-slate-200/95 p-1 shadow-inner shadow-slate-300/70 transition-colors hover:border-slate-400/80 focus:outline-none focus:ring-2 focus:ring-amber-300 dark:border-slate-800 dark:bg-slate-950 dark:shadow-black/30 sm:w-auto sm:min-w-[15rem]"
+                    >
+                        <span
+                            data-testid="composer-sticky-send-intent-thumb"
+                            data-active-intent={stickySendIntent}
+                            aria-hidden="true"
+                            className={`pointer-events-none absolute bottom-1 top-1 rounded-full bg-amber-500 transition-all duration-200 ease-out dark:bg-amber-300 ${
+                                stickySendIntent === 'memory'
+                                    ? 'left-[calc(50%+0.125rem)] right-1 shadow-[0_10px_24px_rgba(245,158,11,0.18)] dark:shadow-none'
+                                    : 'left-1 right-[calc(50%+0.125rem)] shadow-[0_10px_24px_rgba(245,158,11,0.18)] dark:shadow-none'
+                            }`}
+                        />
+                        <span
+                            data-testid="composer-sticky-send-intent-independent"
+                            data-selected={stickySendIntent === 'independent' ? 'true' : 'false'}
+                            aria-hidden="true"
+                            className={`relative z-10 flex min-w-0 items-center justify-center rounded-full px-2.5 py-1.5 text-[10px] font-semibold leading-none transition-colors ${
+                                stickySendIntent === 'independent'
+                                    ? 'text-white dark:text-slate-950'
+                                    : 'text-slate-600 dark:text-slate-500'
+                            }`}
+                        >
+                            <span className="truncate">{independentSendIntentButtonLabel}</span>
+                        </span>
+                        <span
+                            data-testid="composer-sticky-send-intent-memory"
+                            data-selected={stickySendIntent === 'memory' ? 'true' : 'false'}
+                            data-available={canUseMemorySendIntent ? 'true' : 'false'}
+                            aria-hidden="true"
+                            className={`relative z-10 flex min-w-0 items-center justify-center rounded-full px-2.5 py-1.5 text-[10px] font-semibold leading-none transition-colors ${
+                                stickySendIntent === 'memory'
+                                    ? 'text-white dark:text-slate-950'
+                                    : canUseMemorySendIntent
+                                      ? 'text-slate-600 dark:text-slate-500'
+                                      : 'text-slate-500 dark:text-slate-600'
+                            }`}
+                        >
+                            <span className="truncate">{memorySendIntentButtonLabel}</span>
+                        </span>
+                    </button>
+                </div>
             </div>
 
             <div className="grid gap-1.5 lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)_240px] xl:grid-cols-[minmax(300px,320px)_minmax(0,1fr)_270px]">
@@ -674,7 +917,7 @@ function ComposerSettingsPanel({
                         <div className="mb-1.5 flex flex-wrap items-start justify-between gap-1.5 px-1">
                             <div>
                                 <h3 className="text-[15px] font-black text-slate-900 dark:text-slate-100">
-                                    {t('promptLabel')}
+                                    {promptSurfaceLabel}
                                 </h3>
                             </div>
                             <button onClick={onToggleEnterToSubmit} className="nbu-chip">
@@ -704,7 +947,7 @@ function ComposerSettingsPanel({
                                     <textarea
                                         ref={resolvedPromptTextareaRef}
                                         className="nbu-composer-dock-textarea nbu-scrollbar-subtle h-36 w-full resize-none overflow-y-auto rounded-[26px] border px-4 py-3.5 pr-12 text-sm leading-6 outline-none transition-all focus:ring-4 focus:ring-amber-100/70 dark:focus:ring-amber-500/10"
-                                        placeholder={placeholder}
+                                        placeholder={promptSurfacePlaceholder}
                                         value={prompt}
                                         onChange={(e) => onPromptChange(e.target.value)}
                                         onKeyDown={(e) => {
@@ -795,14 +1038,31 @@ function ComposerSettingsPanel({
                         </div>
                     )}
                     <div className="mt-1.5 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-1">
-                        {!isGenerating && (
+                        {showStartNewConversationAction && !isGenerating && (
                             <Button variant="secondary" onClick={onStartNewConversation} className="rounded-[16px]">
                                 {t('workspaceViewerNewConversation')}
                             </Button>
                         )}
                         {currentStageAsset && !isGenerating && (
-                            <Button variant="secondary" onClick={onFollowUpGenerate} className="rounded-[16px]">
-                                {t('workspaceViewerFollowUpEdit')}
+                            <Button
+                                variant="secondary"
+                                onClick={onFollowUpGenerate}
+                                aria-label={followUpGenerateAriaLabel}
+                                title={
+                                    followUpSourceSummary
+                                        ? `${t('composerFollowUpSource')}: ${followUpSourceSummary}`
+                                        : undefined
+                                }
+                                className="min-w-0 justify-start rounded-[16px] px-3 text-left"
+                            >
+                                <span className="flex min-w-0 flex-col items-start gap-0.5 text-left leading-none">
+                                    <span>{followUpGenerateLabel}</span>
+                                    {followUpSourceSummary ? (
+                                        <span className="max-w-full truncate text-[11px] font-semibold normal-case tracking-normal text-slate-600 dark:text-slate-300">
+                                            {followUpSourceSummary}
+                                        </span>
+                                    ) : null}
+                                </span>
                             </Button>
                         )}
                     </div>

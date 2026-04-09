@@ -10,13 +10,14 @@ import { getTranslation, Language } from '../utils/translations';
 
 type HarnessProps = {
     currentLanguage: Language;
+    stickySendIntent: 'independent' | 'memory';
     getStageOriginLabel: (origin?: StageAsset['origin']) => string;
     getLineageActionLabel: (action?: TurnLineageAction) => string;
 };
 
 const promptTextareaRef = createRef<HTMLTextAreaElement>();
 
-function HookHarness({ currentLanguage, getStageOriginLabel, getLineageActionLabel }: HarnessProps) {
+function HookHarness({ currentLanguage, stickySendIntent, getStageOriginLabel, getLineageActionLabel }: HarnessProps) {
     const t = (key: string) => getTranslation(currentLanguage, key);
     const props = useComposerSettingsPanelProps({
         prompt: 'Test prompt',
@@ -31,6 +32,7 @@ function HookHarness({ currentLanguage, getStageOriginLabel, getLineageActionLab
         thinkingLevel: 'high',
         includeThoughts: true,
         groundingMode: 'off',
+        stickySendIntent,
         imageModel: 'gemini-3.1-flash-image-preview',
         aspectRatio: '1:1',
         imageSize: '2K',
@@ -62,6 +64,7 @@ function HookHarness({ currentLanguage, getStageOriginLabel, getLineageActionLab
         activeImportedQueuedHistoryId: null,
         promptTextareaRef,
         setPrompt: vi.fn(),
+        setStickySendIntent: vi.fn() as any,
         toggleEnterToSubmit: vi.fn(),
         handleGenerate: vi.fn(),
         handleQueueBatchJob: vi.fn(),
@@ -96,7 +99,12 @@ function HookHarness({ currentLanguage, getStageOriginLabel, getLineageActionLab
         getLineageActionLabel,
     });
 
-    return <div data-testid="follow-up-source-line">{`${t('composerFollowUpSource')}: ${props.getStageOriginLabel('history')} · ${props.getLineageActionLabel('reopen')}`}</div>;
+    return (
+        <>
+            <div data-testid="follow-up-source-line">{`${t('composerFollowUpSource')}: ${props.getStageOriginLabel('history')} · ${props.getLineageActionLabel('reopen')}`}</div>
+            <div data-testid="send-intent-state">{props.stickySendIntent}</div>
+        </>
+    );
 }
 
 describe('useComposerSettingsPanelProps', () => {
@@ -124,6 +132,7 @@ describe('useComposerSettingsPanelProps', () => {
             root.render(
                 <HookHarness
                     currentLanguage="en"
+                    stickySendIntent="independent"
                     getStageOriginLabel={() => 'History'}
                     getLineageActionLabel={() => 'Reopen'}
                 />,
@@ -136,6 +145,7 @@ describe('useComposerSettingsPanelProps', () => {
             root.render(
                 <HookHarness
                     currentLanguage="ja"
+                    stickySendIntent="independent"
                     getStageOriginLabel={() => '履歴'}
                     getLineageActionLabel={() => '再表示'}
                 />,
@@ -144,5 +154,33 @@ describe('useComposerSettingsPanelProps', () => {
 
         expect(container.textContent).toContain('フォローアップ元: 履歴 · 再表示');
         expect(container.textContent).not.toContain('Follow-up source: 履歴 · 再表示');
+    });
+
+    it('updates the exposed sticky send intent in the same render when the value changes', () => {
+        act(() => {
+            root.render(
+                <HookHarness
+                    currentLanguage="en"
+                    stickySendIntent="independent"
+                    getStageOriginLabel={() => 'History'}
+                    getLineageActionLabel={() => 'Reopen'}
+                />,
+            );
+        });
+
+        expect(container.querySelector('[data-testid="send-intent-state"]')?.textContent).toBe('independent');
+
+        act(() => {
+            root.render(
+                <HookHarness
+                    currentLanguage="en"
+                    stickySendIntent="memory"
+                    getStageOriginLabel={() => 'History'}
+                    getLineageActionLabel={() => 'Reopen'}
+                />,
+            );
+        });
+
+        expect(container.querySelector('[data-testid="send-intent-state"]')?.textContent).toBe('memory');
     });
 });

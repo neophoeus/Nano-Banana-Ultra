@@ -13,7 +13,7 @@ type RenderTracker = {
 const trackers = vi.hoisted(() => ({
     generatedImage: { renders: 0, changedKeys: [] as string[][] },
     recentHistoryFilmstrip: { renders: 0, changedKeys: [] as string[][] },
-    workspaceHistoryCanvas: { renders: 0, changedKeys: [] as string[][] },
+    workspaceUnifiedHistoryPanel: { renders: 0, changedKeys: [] as string[][] },
     composerSettingsPanel: { renders: 0, changedKeys: [] as string[][] },
     workspaceSideToolPanel: { renders: 0, changedKeys: [] as string[][] },
 }));
@@ -51,19 +51,13 @@ vi.mock('../components/RecentHistoryFilmstrip', async () => {
     return { default: Component };
 });
 
-vi.mock('../components/WorkspaceHistoryCanvas', async () => {
+vi.mock('../components/WorkspaceUnifiedHistoryPanel', async () => {
     const ReactModule = await vi.importActual<typeof import('react')>('react');
     const Component = ReactModule.memo((props: Record<string, unknown>) => {
         const previousPropsRef = ReactModule.useRef<Record<string, unknown>>();
-        recordRender(trackers.workspaceHistoryCanvas, props, previousPropsRef.current);
+        recordRender(trackers.workspaceUnifiedHistoryPanel, props, previousPropsRef.current);
         previousPropsRef.current = props;
-        return (
-            <div data-testid="mock-workspace-history-canvas">
-                {props.recentLane as React.ReactNode}
-                {props.focusSurface as React.ReactNode}
-                {props.supportSurface as React.ReactNode}
-            </div>
-        );
+        return <div data-testid="mock-workspace-unified-history-panel" />;
     });
     return { default: Component };
 });
@@ -330,7 +324,7 @@ describe('Phase B render stability', () => {
     it('does not rerender stage/history memo surfaces when toggling advanced settings', async () => {
         const initialGeneratedImageRenders = trackers.generatedImage.renders;
         const initialRecentHistoryRenders = trackers.recentHistoryFilmstrip.renders;
-        const initialHistoryCanvasRenders = trackers.workspaceHistoryCanvas.renders;
+        const initialHistoryPanelRenders = trackers.workspaceUnifiedHistoryPanel.renders;
 
         await clickButton('Advanced Settings');
 
@@ -341,9 +335,9 @@ describe('Phase B render stability', () => {
             'RecentHistoryFilmstrip',
         );
         assertNoAdditionalRenders(
-            trackers.workspaceHistoryCanvas,
-            initialHistoryCanvasRenders,
-            'WorkspaceHistoryCanvas',
+            trackers.workspaceUnifiedHistoryPanel,
+            initialHistoryPanelRenders,
+            'WorkspaceUnifiedHistoryPanel',
         );
         expect(trackers.composerSettingsPanel.renders).toBeGreaterThan(0);
     });
@@ -351,7 +345,7 @@ describe('Phase B render stability', () => {
     it('does not rerender stage/history memo surfaces when opening references from the composer owner route', async () => {
         const initialGeneratedImageRenders = trackers.generatedImage.renders;
         const initialRecentHistoryRenders = trackers.recentHistoryFilmstrip.renders;
-        const initialHistoryCanvasRenders = trackers.workspaceHistoryCanvas.renders;
+        const initialHistoryPanelRenders = trackers.workspaceUnifiedHistoryPanel.renders;
 
         await clickButton('Open References');
 
@@ -362,16 +356,16 @@ describe('Phase B render stability', () => {
             'RecentHistoryFilmstrip',
         );
         assertNoAdditionalRenders(
-            trackers.workspaceHistoryCanvas,
-            initialHistoryCanvasRenders,
-            'WorkspaceHistoryCanvas',
+            trackers.workspaceUnifiedHistoryPanel,
+            initialHistoryPanelRenders,
+            'WorkspaceUnifiedHistoryPanel',
         );
     });
 
     it('does not rerender stage/history memo surfaces when toggling theme', async () => {
         const initialGeneratedImageRenders = trackers.generatedImage.renders;
         const initialRecentHistoryRenders = trackers.recentHistoryFilmstrip.renders;
-        const initialHistoryCanvasRenders = trackers.workspaceHistoryCanvas.renders;
+        const initialHistoryPanelRenders = trackers.workspaceUnifiedHistoryPanel.renders;
 
         await clickButtonByAriaLabel('Switch to Dark Mode');
 
@@ -382,19 +376,21 @@ describe('Phase B render stability', () => {
             'RecentHistoryFilmstrip',
         );
         assertNoAdditionalRenders(
-            trackers.workspaceHistoryCanvas,
-            initialHistoryCanvasRenders,
-            'WorkspaceHistoryCanvas',
+            trackers.workspaceUnifiedHistoryPanel,
+            initialHistoryPanelRenders,
+            'WorkspaceUnifiedHistoryPanel',
         );
     });
 
-    it('keeps image tools outside the history canvas and embeds them inside the composer shell-owner row', async () => {
-        const historyCanvas = await waitFor(() =>
-            document.querySelector('[data-testid="mock-workspace-history-canvas"]'),
+    it('keeps image tools outside the history surface and embeds them inside the composer shell-owner row', async () => {
+        const historyPanel = await waitFor(() =>
+            document.querySelector('[data-testid="mock-workspace-unified-history-panel"]'),
         );
         const actionsComposerRow = await waitFor(() =>
             document.querySelector('[data-testid="workspace-actions-composer-row"]'),
         );
+        const mainShell = await waitFor(() => document.querySelector('[data-testid="workspace-main-shell"]'));
+        const workColumn = await waitFor(() => document.querySelector('[data-testid="workspace-work-column"]'));
         const sideToolPanel = await waitFor(() =>
             document.querySelector('[data-testid="mock-workspace-side-tool-panel"]'),
         );
@@ -405,19 +401,24 @@ describe('Phase B render stability', () => {
         expect(actionsComposerRow).toBeTruthy();
         expect(actionsComposerRow?.getAttribute('class')).not.toContain('xl:max-w-[1320px]');
         expect(actionsComposerRow?.getAttribute('class')).not.toContain('xl:mr-auto');
-        expect(historyCanvas?.querySelector('[data-testid="mock-workspace-side-tool-panel"]')).toBeNull();
+        expect(mainShell?.getAttribute('class')).toContain('xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]');
+        expect(workColumn?.contains(historyPanel)).toBe(true);
+        expect(workColumn?.contains(actionsComposerRow)).toBe(true);
+        expect(historyPanel?.querySelector('[data-testid="mock-workspace-side-tool-panel"]')).toBeNull();
         expect(actionsComposerRow?.contains(sideToolPanel)).toBe(true);
         expect(actionsComposerRow?.contains(composerSettingsPanel)).toBe(true);
         expect(composerSettingsPanel?.contains(sideToolPanel)).toBe(true);
     });
 
-    it('keeps the top launchers on one row and trims response and source launchers to title-only buttons', async () => {
+    it('keeps the top launchers as a compact three-button rail', async () => {
         const topLauncherRow = await waitFor(() =>
             document.querySelector('[data-testid="workspace-insights-collapsible"]'),
         );
-        const workflowButton = await waitFor(() => document.querySelector('[data-testid="workspace-workflow-card"]'));
-        const answerButton = await waitFor(() =>
-            document.querySelector('[data-testid="workspace-answer-open-details"]'),
+        const progressButton = await waitFor(() =>
+            document.querySelector('[data-testid="workspace-progress-open-details"]'),
+        );
+        const responseButton = await waitFor(() =>
+            document.querySelector('[data-testid="workspace-response-open-details"]'),
         );
         const sourceButton = await waitFor(() =>
             document.querySelector('[data-testid="workspace-sources-open-details"]'),
@@ -426,25 +427,35 @@ describe('Phase B render stability', () => {
 
         expect(
             Array.from(topLauncherRow?.children || []).map((element) => element.getAttribute('data-testid')),
-        ).toEqual(['workspace-workflow-card', 'workspace-answer-open-details', 'workspace-sources-open-details']);
-        expect(normalizeText(answerButton?.textContent)).toBe('Response');
-        expect(normalizeText(sourceButton?.textContent)).toBe('Source Trail');
-        expect(normalizeText(answerButton?.textContent)).not.toContain('Existing output');
-        const answerSignal = answerButton?.querySelector('[data-testid="workspace-answer-signal"]');
+        ).toEqual([
+            'workspace-progress-open-details',
+            'workspace-response-open-details',
+            'workspace-sources-open-details',
+        ]);
+        expect(normalizeText(progressButton?.textContent)).toBe('Progress');
+        expect(normalizeText(responseButton?.textContent)).toBe('Response');
+        expect(normalizeText(sourceButton?.textContent)).toBe('Sources');
+        expect(normalizeText(responseButton?.textContent)).not.toContain('Existing output');
+        const progressSignal = progressButton?.querySelector('[data-testid="workspace-progress-signal"]');
+        const responseSignal = responseButton?.querySelector('[data-testid="workspace-response-signal"]');
         const sourceSignal = sourceButton?.querySelector('[data-testid="workspace-sources-signal"]');
 
-        expect(answerSignal).toBeTruthy();
-        expect(answerSignal?.getAttribute('class')).toContain('h-3.5');
-        expect(answerSignal?.innerHTML).toContain('animate-pulse');
-        expect(answerSignal?.innerHTML).toContain('bg-amber-300/60');
+        expect(progressSignal).toBeTruthy();
+        expect(progressSignal?.getAttribute('class')).toContain('h-3.5');
+        expect(progressSignal?.innerHTML).not.toContain('animate-pulse');
+        expect(progressSignal?.innerHTML).toContain('bg-slate-200/65');
+        expect(responseSignal).toBeTruthy();
+        expect(responseSignal?.getAttribute('class')).toContain('h-3.5');
+        expect(responseSignal?.innerHTML).toContain('animate-pulse');
+        expect(responseSignal?.innerHTML).toContain('bg-amber-300/60');
         expect(sourceSignal).toBeTruthy();
         expect(sourceSignal?.innerHTML).not.toContain('animate-pulse');
-        expect(sourceSignal?.innerHTML).toContain('bg-white/90');
-        expect(topLauncherRow?.getAttribute('class')).toContain('lg:grid-cols-[minmax(0,1fr)_144px_176px]');
-        expect(workflowButton?.getAttribute('class')).toContain('h-[40px]');
-        expect(workflowButton?.getAttribute('class')).toContain('hover:-translate-y-0.5');
-        expect(answerButton?.getAttribute('class')).toContain('h-[40px]');
-        expect(answerButton?.getAttribute('class')).toContain('hover:-translate-y-0.5');
+        expect(sourceSignal?.innerHTML).toContain('bg-slate-200/65');
+        expect(topLauncherRow?.getAttribute('class')).toContain('grid-cols-3');
+        expect(progressButton?.getAttribute('class')).toContain('h-[40px]');
+        expect(progressButton?.getAttribute('class')).toContain('hover:-translate-y-0.5');
+        expect(responseButton?.getAttribute('class')).toContain('h-[40px]');
+        expect(responseButton?.getAttribute('class')).toContain('hover:-translate-y-0.5');
         expect(sourceButton?.getAttribute('class')).toContain('h-[40px]');
         expect(sourceButton?.getAttribute('class')).toContain('hover:-translate-y-0.5');
     });

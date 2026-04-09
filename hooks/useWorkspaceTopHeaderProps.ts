@@ -8,19 +8,22 @@ type UseWorkspaceTopHeaderPropsArgs = {
     headerConsole: ReactNode;
     currentLanguage: Language;
     onLanguageChange: Dispatch<SetStateAction<Language>>;
+    supportRail?: ReactNode;
 };
 
 export function useWorkspaceTopHeaderProps({
     headerConsole,
     currentLanguage,
     onLanguageChange,
+    supportRail,
 }: UseWorkspaceTopHeaderPropsArgs): WorkspaceTopHeaderProps {
     return useMemo(
         () => ({
             headerConsole,
             currentLanguage,
             onLanguageChange,
+            supportRail,
         }),
-        [headerConsole, currentLanguage, onLanguageChange],
+        [headerConsole, currentLanguage, onLanguageChange, supportRail],
     );
 }

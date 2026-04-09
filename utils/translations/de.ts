@@ -65,6 +65,19 @@ export const de = {
     modelGemini31Flash: 'Nano Banana 2 (gemini-3.1-flash-image-preview)',
     modelGemini25Flash: 'Nano Banana (gemini-2.5-flash-image)',
     promptLabel: 'Prompt',
+    composerPromptLabelIndependent: 'Kreativbrief',
+    composerPromptLabelMemory: 'Dialogue',
+    composerPromptPlaceholderIndependent: 'Beschreibe, was du in dieser Runde erzeugen oder andern mochtest...',
+    composerPromptPlaceholderMemory:
+        'Setze den bisherigen Dialogue fort und beschreibe, wie diese Runde angepasst werden soll...',
+    composerSendIntentTitle: 'Naechster Versand',
+    composerSendIntentIndependent: 'Unabhaengig senden',
+    composerSendIntentMemory: 'Mit Speicher senden',
+    composerSendIntentHelperIndependent:
+        'Verwendet das aktuelle Bild und die aktuellen Werkzeuge, spielt aber keinen offiziellen Gespraechsspeicher erneut ab.',
+    composerSendIntentHelperMemory: 'Der naechste Versand nutzt den offiziellen Gespraechsspeicher weiter.',
+    composerSendIntentDisabledReason: 'Senden mit Speicher ist nur bei Menge 1 verfuegbar.',
+    composerSendIntentInfoButton: 'Details zur Senderegel',
     rewrite: 'KI-Optimierung',
     random: 'Überraschung',
     clear: 'Leeren',
@@ -409,6 +422,9 @@ export const de = {
     workspaceTopHeaderReferenceTray: 'Referenzablage',
     workspaceTopHeaderObjectRefs: 'Objekt-Refs {0}',
     workspaceTopHeaderCharacterRefs: 'Charakter-Refs {0}',
+    workspaceTopHeaderSendIntent: 'Senden',
+    workspaceSendIntentIndependent: 'Unabhangig',
+    workspaceSendIntentMemory: 'Speicher',
     followUpEditRequiresStageImage:
         'Stellen Sie zuerst ein Bild auf die Szene, bevor Sie eine Folgebearbeitung ausfuhren.',
     editorBaseStageNotice: 'Das aktuell auf der Szene platzierte Bild dient jetzt als Editor-Basis.',
@@ -687,6 +703,11 @@ export const de = {
     workspaceViewerResultTextEmpty:
         'Wenn das ausgewahlte Modell Bilder und Text zuruckgibt, erscheint das Ergebnis hier.',
     workspaceViewerThoughts: 'Gedanken',
+    workspaceProgressChronologicalHint:
+        'Hier erscheinen die Denk-Updates des aktiven Durchgangs in zeitlicher Reihenfolge.',
+    workspaceSupportProgress: 'Fortschritt',
+    workspaceSupportResponse: 'Antwort',
+    workspaceSupportSources: 'Quellen',
     workspaceViewerProvenance: 'Herkunft',
     workspaceViewerSessionHints: 'Sitzungshinweise',
     workspaceViewerSessionHintsEmpty:
@@ -766,6 +787,8 @@ export const de = {
     historyBadgeParent: 'Eltern',
     historyBadgeCandidate: 'Kandidat',
     historyBadgeActive: 'Aktiv',
+    historyBadgeMemory: 'Speicher',
+    historyBadgeThread: 'Thread',
     workflowStageLabelSystem: 'System',
     workflowStageLabelInput: 'Eingabe',
     workflowStageLabelRequest: 'Anfrage',

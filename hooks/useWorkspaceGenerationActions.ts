@@ -1,5 +1,5 @@
 import { MutableRefObject, useCallback } from 'react';
-import { AspectRatio, ImageModel, ImageSize, ImageStyle, StageAsset } from '../types';
+import { AspectRatio, ImageModel, ImageSize, ImageStyle, StageAsset, StickySendIntent } from '../types';
 
 type PerformGeneration = (
     targetPrompt: string,

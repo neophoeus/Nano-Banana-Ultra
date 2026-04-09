@@ -25,7 +25,7 @@ describe('WorkspaceResponseRail', () => {
         expect(markup).not.toContain('workspace-thoughts-card');
         expect(markup).not.toContain('workspace-thoughts-details');
         expect(markup).not.toContain('workspace-thoughts-summary');
-        expect(markup).not.toContain('workspace-workflow-card');
+        expect(markup).not.toContain('workspace-progress-open-details');
         expect(markup).not.toContain('Queued Batch Jobs');
         expect(markup).not.toContain('Grounded result');
         expect(markup).not.toContain('xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.92fr)]');

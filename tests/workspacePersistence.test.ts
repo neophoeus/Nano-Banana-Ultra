@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { WorkspacePersistenceSnapshot } from '../types';
 import { buildConversationRequestContext } from '../utils/conversationState';
 import {
+    clearSharedWorkspaceSnapshot,
     EMPTY_WORKSPACE_SNAPSHOT,
     exportWorkspaceSnapshotDocument,
     loadWorkspaceSnapshot,
@@ -140,8 +141,45 @@ describe('workspacePersistence', () => {
 
         expect(parsed).not.toBeNull();
         expect(parsed?.composerState.prompt).toBe('Base composer prompt');
+        expect(parsed?.composerState.stickySendIntent).toBe('independent');
         expect(parsed?.history).toHaveLength(1);
         expect(parsed?.workflowLogs).toEqual(baseSnapshot.workflowLogs);
+    });
+
+    it('defaults legacy snapshots without sticky send intent to independent', () => {
+        const restored = sanitizeWorkspaceSnapshot({
+            ...EMPTY_WORKSPACE_SNAPSHOT,
+            composerState: {
+                prompt: 'Legacy composer prompt',
+                aspectRatio: '1:1',
+                imageSize: '2K',
+                imageStyle: 'None',
+                imageModel: 'gemini-3.1-flash-image-preview',
+                batchSize: 1,
+                outputFormat: 'images-only',
+                temperature: 1,
+                thinkingLevel: 'minimal',
+                includeThoughts: true,
+                googleSearch: false,
+                imageSearch: false,
+                generationMode: 'Text to Image',
+                executionMode: 'chat-continuation',
+            },
+        });
+
+        expect(restored.composerState.stickySendIntent).toBe('independent');
+    });
+
+    it('preserves sticky send intent when provided explicitly', () => {
+        const restored = sanitizeWorkspaceSnapshot({
+            ...EMPTY_WORKSPACE_SNAPSHOT,
+            composerState: {
+                ...EMPTY_WORKSPACE_SNAPSHOT.composerState,
+                stickySendIntent: 'memory',
+            },
+        });
+
+        expect(restored.composerState.stickySendIntent).toBe('memory');
     });
 
     it('merges imported turns with remapped ids and branch overrides', () => {
@@ -450,6 +488,27 @@ describe('workspacePersistence', () => {
         );
         expect(requestInit.body).not.toContain('UNSAVEDSHAREDHISTORYPAYLOAD');
         expect(requestInit.body).not.toContain('UNSAVEDSHAREDSTAGEPAYLOAD');
+    });
+
+    it('posts an explicit empty snapshot when intentionally clearing the shared backup', async () => {
+        const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+        vi.stubGlobal('fetch', fetchMock);
+
+        await clearSharedWorkspaceSnapshot();
+
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/workspace-snapshot');
+        const requestInit = fetchMock.mock.calls[0]?.[1] as { body?: string; method?: string; keepalive?: boolean };
+        const uploadedSnapshot = JSON.parse(requestInit.body || '{}') as WorkspacePersistenceSnapshot;
+
+        expect(requestInit.method).toBe('POST');
+        expect(requestInit.keepalive).toBe(true);
+        expect(uploadedSnapshot.history).toEqual([]);
+        expect(uploadedSnapshot.stagedAssets).toEqual([]);
+        expect(uploadedSnapshot.viewState.generatedImageUrls).toEqual([]);
+        expect(uploadedSnapshot.viewState.selectedHistoryId).toBeNull();
+        expect(uploadedSnapshot.composerState.prompt).toBe('');
+        expect(uploadedSnapshot.workspaceSession.activeResult).toBeNull();
     });
 
     it('does not revive unsaved inline generated payloads when loading legacy local snapshots', () => {

@@ -1,5 +1,4 @@
 import { useCallback, useMemo } from 'react';
-import { getExecutionModeLabel, inferExecutionModeFromHistoryItem } from '../utils/executionMode';
 import { BranchSummary } from '../utils/lineage';
 import {
     GeneratedImage,
@@ -169,6 +168,20 @@ export function useHistoryPresentationHelpers({
         [queuedBatchPositionLabelByHistoryId],
     );
 
+    const getConversationCue = useCallback(
+        (item: GeneratedImage) => {
+            const threadAnchorId = item.conversationBranchOriginId || item.conversationId;
+            const hasThread = Boolean(threadAnchorId);
+
+            return {
+                isMemoryTurn: item.executionMode === 'chat-continuation' || hasThread,
+                threadLabel:
+                    hasThread && threadAnchorId ? `${t('historyBadgeThread')} ${getShortTurnId(threadAnchorId)}` : null,
+            };
+        },
+        [getShortTurnId, t],
+    );
+
     const renderHistoryActionButton = useCallback(
         ({ label, onClick, testId, variant = 'secondary', stopPropagation = false }: RenderHistoryActionButtonArgs) => (
             <button
@@ -282,6 +295,7 @@ export function useHistoryPresentationHelpers({
             isCurrentStageSource = false,
             isActive = false,
         }: RenderHistoryTurnBadgesArgs) => {
+            const conversationCue = getConversationCue(item);
             const queuedBatchPositionBadge = queuedBatchPositionLabelByHistoryId[item.id] ? (
                 <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:bg-[#181d26] dark:text-gray-300">
                     {queuedBatchPositionLabelByHistoryId[item.id]}
@@ -293,17 +307,21 @@ export function useHistoryPresentationHelpers({
                         {t('workspaceImportReviewExecutionQueuedBatchJob')}
                     </span>
                 ) : null;
+            const memoryBadge = conversationCue.isMemoryTurn ? (
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+                    {t('historyBadgeMemory')}
+                </span>
+            ) : null;
+            const threadBadge = conversationCue.threadLabel ? (
+                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-mono text-gray-500 dark:bg-[#181d26] dark:text-gray-400">
+                    {conversationCue.threadLabel}
+                </span>
+            ) : null;
             const baseModeBadge = (
                 <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-gray-600 dark:bg-[#181d26] dark:text-gray-300">
                     {item.mode || t('historyModeImage')}
                 </span>
             );
-            const executionModeBadge =
-                item.executionMode === 'queued-batch-job' ? null : (
-                    <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:bg-[#181d26] dark:text-gray-400">
-                        {getExecutionModeLabel(item.executionMode)}
-                    </span>
-                );
             const splitDepthBadge = (
                 <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-gray-500 dark:bg-[#181d26] dark:text-gray-400">
                     D{item.lineageDepth || 0}
@@ -338,7 +356,8 @@ export function useHistoryPresentationHelpers({
                 return (
                     <>
                         {baseModeBadge}
-                        {executionModeBadge}
+                        {memoryBadge}
+                        {threadBadge}
                         {queuedBatchBadge}
                         {queuedBatchPositionBadge}
                         {promotionBadge}
@@ -356,6 +375,8 @@ export function useHistoryPresentationHelpers({
                         <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-200">
                             {branchLabel || t('historyBranchMain')}
                         </span>
+                        {memoryBadge}
+                        {threadBadge}
                         {queuedBatchBadge}
                         {queuedBatchPositionBadge}
                         {promotionBadge}
@@ -379,6 +400,8 @@ export function useHistoryPresentationHelpers({
             return (
                 <>
                     {lineageBadge}
+                    {memoryBadge}
+                    {threadBadge}
                     {queuedBatchBadge}
                     {queuedBatchPositionBadge}
                     {promotionBadge}
@@ -387,7 +410,14 @@ export function useHistoryPresentationHelpers({
                 </>
             );
         },
-        [getLineageActionLabel, getShortTurnId, isPromotedContinuationSource, queuedBatchPositionLabelByHistoryId, t],
+        [
+            getConversationCue,
+            getLineageActionLabel,
+            getShortTurnId,
+            isPromotedContinuationSource,
+            queuedBatchPositionLabelByHistoryId,
+            t,
+        ],
     );
 
     const renderActiveBranchSummaryContent = useCallback(
@@ -582,12 +612,20 @@ export function useHistoryPresentationHelpers({
                 });
             }
 
-            const executionMode = inferExecutionModeFromHistoryItem(selectedItem.item);
-            if (executionMode !== 'single-turn') {
+            const conversationCue = getConversationCue(selectedItem.item);
+            if (conversationCue.isMemoryTurn) {
                 chips.push({
-                    key: 'execution-mode',
+                    key: 'memory',
                     group: 'tail',
-                    label: getExecutionModeLabel(executionMode),
+                    label: t('historyBadgeMemory'),
+                });
+            }
+
+            if (conversationCue.threadLabel) {
+                chips.push({
+                    key: 'thread',
+                    group: 'tail',
+                    label: conversationCue.threadLabel,
                 });
             }
 
@@ -614,7 +652,7 @@ export function useHistoryPresentationHelpers({
                 chips,
             };
         },
-        [getLineageActionLabel, getQueuedBatchPositionLabel, t],
+        [getConversationCue, getLineageActionLabel, getQueuedBatchPositionLabel, t],
     );
 
     return {

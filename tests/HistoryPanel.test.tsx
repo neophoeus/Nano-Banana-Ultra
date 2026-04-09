@@ -64,7 +64,7 @@ describe('HistoryPanel', () => {
         expect(markup).not.toContain('Stage source');
         expect(markup).not.toContain('Continuation source');
         expect(markup).toContain('grid-cols-4');
-        expect(markup).toContain('xl:grid-cols-[repeat(10,minmax(100px,100px))]');
+        expect(markup).toContain('xl:grid-cols-[repeat(6,minmax(100px,100px))]');
         expect(markup).toContain('xl:justify-between');
         expect(markup).toContain('xl:h-[100px] xl:w-[100px]');
     });

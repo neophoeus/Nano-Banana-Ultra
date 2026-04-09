@@ -66,6 +66,7 @@ describe('useWorkspaceGenerationContext', () => {
                 },
                 history,
                 conversationState: EMPTY_WORKSPACE_CONVERSATION_STATE,
+                stickySendIntent: 'independent',
                 branchOriginIdByTurnId: {
                     [continuationTurn.id]: continuationTurn.id,
                     [viewedTurn.id]: continuationTurn.id,
@@ -138,6 +139,7 @@ describe('useWorkspaceGenerationContext', () => {
                 },
                 history,
                 conversationState,
+                stickySendIntent: 'memory',
                 branchOriginIdByTurnId: {
                     [branchSourceTurn.id]: 'root-turn',
                     [viewedTurn.id]: 'root-turn',
@@ -161,6 +163,60 @@ describe('useWorkspaceGenerationContext', () => {
             branchOriginId: branchSourceTurn.id,
             activeSourceHistoryId: branchSourceTurn.id,
         });
+    });
+
+    it('does not build official conversation context when sticky send intent is independent', () => {
+        const sourceTurn = buildTurn({
+            id: 'source-turn',
+            rootHistoryId: 'source-turn',
+            lineageAction: 'root',
+        });
+        const history = [sourceTurn];
+        const conversationState: WorkspaceConversationState = {
+            byBranchOriginId: {
+                [sourceTurn.id]: {
+                    conversationId: 'conversation-1',
+                    branchOriginId: sourceTurn.id,
+                    activeSourceHistoryId: sourceTurn.id,
+                    turnIds: [sourceTurn.id],
+                    startedAt: 1,
+                    updatedAt: 2,
+                },
+            },
+        };
+        let conversationContext: ReturnType<
+            ReturnType<typeof useWorkspaceGenerationContext>['getConversationRequestContext']
+        > | null = null;
+
+        const TestView = () => {
+            const { getConversationRequestContext } = useWorkspaceGenerationContext({
+                currentStageAsset: buildStageAsset({
+                    sourceHistoryId: sourceTurn.id,
+                    lineageAction: 'reopen',
+                }),
+                workspaceSession: {
+                    ...EMPTY_WORKSPACE_SESSION,
+                    source: 'history',
+                    sourceHistoryId: sourceTurn.id,
+                    sourceLineageAction: 'continue',
+                    conversationBranchOriginId: sourceTurn.id,
+                },
+                history,
+                conversationState,
+                stickySendIntent: 'independent',
+                branchOriginIdByTurnId: {
+                    [sourceTurn.id]: sourceTurn.id,
+                },
+                getHistoryTurnById: createHistoryLookup(history),
+            });
+
+            conversationContext = getConversationRequestContext({ batchSize: 1 });
+            return null;
+        };
+
+        renderToStaticMarkup(<TestView />);
+
+        expect(conversationContext).toBeNull();
     });
 
     it('uses the current stage source for follow-up edits even when the active continuation source points elsewhere', () => {
@@ -197,6 +253,7 @@ describe('useWorkspaceGenerationContext', () => {
                 },
                 history,
                 conversationState: EMPTY_WORKSPACE_CONVERSATION_STATE,
+                stickySendIntent: 'independent',
                 branchOriginIdByTurnId: {
                     [continuationTurn.id]: continuationTurn.id,
                     [stageTurn.id]: continuationTurn.id,

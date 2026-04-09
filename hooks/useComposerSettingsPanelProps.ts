@@ -9,6 +9,7 @@ import {
     OutputFormat,
     QueuedBatchJob,
     StageAsset,
+    StickySendIntent,
     StructuredOutputMode,
     ThinkingLevel,
     TurnLineageAction,
@@ -44,6 +45,7 @@ type UseComposerSettingsPanelPropsArgs = {
     thinkingLevel: ThinkingLevel;
     includeThoughts: boolean;
     groundingMode: GroundingMode;
+    stickySendIntent: StickySendIntent;
     imageModel: ComposerSettingsPanelProps['imageModel'];
     aspectRatio: AspectRatio;
     imageSize: ImageSize;
@@ -68,6 +70,7 @@ type UseComposerSettingsPanelPropsArgs = {
     activeImportedQueuedHistoryId: string | null;
     promptTextareaRef: MutableRefObject<HTMLTextAreaElement | null>;
     setPrompt: (value: string) => void;
+    setStickySendIntent: Dispatch<SetStateAction<StickySendIntent>>;
     toggleEnterToSubmit: () => void;
     handleGenerate: () => void;
     handleQueueBatchJob: () => void;
@@ -115,6 +118,7 @@ export function useComposerSettingsPanelProps({
     thinkingLevel,
     includeThoughts,
     groundingMode,
+    stickySendIntent,
     imageModel,
     aspectRatio,
     imageSize,
@@ -139,6 +143,7 @@ export function useComposerSettingsPanelProps({
     activeImportedQueuedHistoryId,
     promptTextareaRef,
     setPrompt,
+    setStickySendIntent,
     toggleEnterToSubmit,
     handleGenerate,
     handleQueueBatchJob,
@@ -186,6 +191,7 @@ export function useComposerSettingsPanelProps({
     );
     const latestHandlersRef = useRef({
         setPrompt,
+        setStickySendIntent,
         toggleEnterToSubmit,
         handleGenerate,
         handleQueueBatchJob,
@@ -224,6 +230,7 @@ export function useComposerSettingsPanelProps({
     useLayoutEffect(() => {
         latestHandlersRef.current = {
             setPrompt,
+            setStickySendIntent,
             toggleEnterToSubmit,
             handleGenerate,
             handleQueueBatchJob,
@@ -260,6 +267,7 @@ export function useComposerSettingsPanelProps({
         };
     }, [
         setPrompt,
+        setStickySendIntent,
         toggleEnterToSubmit,
         handleGenerate,
         handleQueueBatchJob,
@@ -307,6 +315,7 @@ export function useComposerSettingsPanelProps({
             thinkingLevel,
             includeThoughts,
             groundingMode,
+            stickySendIntent,
             imageModel,
             currentStageAsset,
             capability,
@@ -334,6 +343,7 @@ export function useComposerSettingsPanelProps({
             activeImportedQueuedHistoryId,
             promptTextareaRef,
             onPromptChange: (value: string) => latestHandlersRef.current.setPrompt(value),
+            onStickySendIntentChange: (value: StickySendIntent) => latestHandlersRef.current.setStickySendIntent(value),
             onToggleEnterToSubmit: () => latestHandlersRef.current.toggleEnterToSubmit(),
             onGenerate: () => latestHandlersRef.current.handleGenerate(),
             onQueueBatchJob: () => latestHandlersRef.current.handleQueueBatchJob(),
@@ -400,6 +410,7 @@ export function useComposerSettingsPanelProps({
             thinkingLevel,
             includeThoughts,
             groundingMode,
+            stickySendIntent,
             imageModel,
             aspectRatio,
             imageSize,

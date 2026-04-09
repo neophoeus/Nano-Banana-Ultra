@@ -6,7 +6,11 @@ import WorkspaceTopHeader from '../components/WorkspaceTopHeader';
 describe('WorkspaceTopHeader', () => {
     it('renders the simplified global header chrome only', () => {
         const markup = renderToStaticMarkup(
-            <WorkspaceTopHeader headerConsole={<div>console</div>} currentLanguage="en" onLanguageChange={vi.fn()} />,
+            <WorkspaceTopHeader
+                headerConsole={<div>console</div>}
+                currentLanguage="en"
+                onLanguageChange={vi.fn()}
+            />,
         );
 
         expect(markup).toContain('NANO BANANA ULTRA');

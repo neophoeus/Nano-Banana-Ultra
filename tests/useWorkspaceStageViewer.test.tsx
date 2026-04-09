@@ -88,6 +88,28 @@ describe('buildStageTopRightModel', () => {
         ]);
     });
 
+    it('keeps stage context but removes source-owner actions when continue or branch handlers are omitted', () => {
+        const model = buildStageTopRightModel(
+            createArgs({
+                onContinueFromStageSource: undefined,
+                onBranchFromStageSource: undefined,
+            }),
+        );
+
+        expect(model?.contextChips.map((chip) => chip.key)).toEqual([
+            'stage-source',
+            'branch',
+            'continuation-differs',
+            'result-status',
+        ]);
+        expect(model?.visibleActions.map((action) => action.key)).toEqual(['edit', 'open-viewer']);
+        expect(model?.overflowActions.map((action) => action.key)).toEqual([
+            'add-object-reference',
+            'add-character-reference',
+            'clear',
+        ]);
+    });
+
     it('builds the no-linked-history exception with object reference promoted into the visible set', () => {
         const model = buildStageTopRightModel(
             createArgs({

@@ -95,6 +95,7 @@ export type StructuredOutputMode =
     | 'revision-brief'
     | 'variation-compare';
 export type GroundingMode = 'off' | 'google-search' | 'image-search' | 'google-search-plus-image-search';
+export type StickySendIntent = 'independent' | 'memory';
 export type WorkspaceSettingsDraft = {
     imageModel: ImageModel;
     aspectRatio: AspectRatio;
@@ -376,6 +377,7 @@ export interface WorkspaceComposerState {
     includeThoughts: boolean;
     googleSearch: boolean;
     imageSearch: boolean;
+    stickySendIntent?: StickySendIntent;
     generationMode: string;
     executionMode: ExecutionMode;
 }

@@ -6,9 +6,10 @@ type UseWorkspaceResetActionsArgs = {
     handleClearResults: () => void;
     clearAssetRoles: (roles: Array<'object' | 'character' | 'stage-source'>) => void;
     applyEmptyWorkspaceSnapshot: () => void;
+    clearSharedWorkspaceSnapshot: () => void | Promise<void>;
     clearPromptHistory: () => void;
     setActiveWorkspaceDetailModal: Dispatch<
-        SetStateAction<'workflow' | 'answer' | 'sources' | 'versions' | 'queued-jobs' | null>
+        SetStateAction<'progress' | 'response' | 'sources' | 'versions' | 'queued-jobs' | null>
     >;
     setIsAdvancedSettingsOpen: Dispatch<SetStateAction<boolean>>;
     setIsSketchPadOpen: Dispatch<SetStateAction<boolean>>;
@@ -23,6 +24,7 @@ export function useWorkspaceResetActions({
     handleClearResults,
     clearAssetRoles,
     applyEmptyWorkspaceSnapshot,
+    clearSharedWorkspaceSnapshot,
     clearPromptHistory,
     setActiveWorkspaceDetailModal,
     setIsAdvancedSettingsOpen,
@@ -39,6 +41,7 @@ export function useWorkspaceResetActions({
 
     const handleClearGalleryHistory = useCallback(() => {
         applyEmptyWorkspaceSnapshot();
+        void clearSharedWorkspaceSnapshot();
         clearPromptHistory();
         setActiveWorkspaceDetailModal(null);
         setIsAdvancedSettingsOpen(false);
@@ -50,6 +53,7 @@ export function useWorkspaceResetActions({
         lastPromotedHistoryIdRef.current = null;
     }, [
         applyEmptyWorkspaceSnapshot,
+        clearSharedWorkspaceSnapshot,
         clearPromptHistory,
         lastPromotedHistoryIdRef,
         setActiveWorkspaceDetailModal,

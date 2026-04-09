@@ -113,6 +113,7 @@ const restoredOfficialConversationSnapshot = {
         includeThoughts: true,
         googleSearch: false,
         imageSearch: false,
+        stickySendIntent: 'memory',
         generationMode: 'Follow-up Edit',
         executionMode: 'chat-continuation',
     },

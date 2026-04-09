@@ -44,6 +44,8 @@ const baseProps = {
     getImportedQueuedHistoryItems: () => [],
     activeImportedQueuedHistoryId: null,
     onPromptChange: vi.fn(),
+    stickySendIntent: 'independent' as const,
+    onStickySendIntentChange: vi.fn(),
     onToggleEnterToSubmit: vi.fn(),
     onGenerate: vi.fn(),
     onQueueBatchJob: vi.fn(),
@@ -100,6 +102,7 @@ describe('ComposerSettingsPanel prompt focus wiring', () => {
             root.unmount();
         });
         container.remove();
+        vi.useRealTimers();
         vi.restoreAllMocks();
         (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = false;
     });
@@ -202,6 +205,163 @@ describe('ComposerSettingsPanel prompt focus wiring', () => {
 
         expect(container.querySelector('[data-testid="composer-style-strip"]')).toBeInstanceOf(HTMLDivElement);
         expect(container.querySelector('[data-testid="composer-style-clear"]')).toBeNull();
+    });
+
+    it('routes whole-button toggle clicks through the explicit change handler', () => {
+        const onStickySendIntentChange = vi.fn();
+
+        act(() => {
+            root.render(
+                <ComposerSettingsPanel
+                    {...baseProps}
+                    batchSize={1}
+                    stickySendIntent="memory"
+                    onStickySendIntentChange={onStickySendIntentChange}
+                />,
+            );
+        });
+
+        let independentButton = container.querySelector(
+            '[data-testid="composer-sticky-send-intent-independent"]',
+        ) as HTMLSpanElement;
+        let memoryButton = container.querySelector(
+            '[data-testid="composer-sticky-send-intent-memory"]',
+        ) as HTMLSpanElement;
+        let toggle = container.querySelector('[data-testid="composer-sticky-send-intent-toggle"]') as HTMLButtonElement;
+        const thumb = container.querySelector('[data-testid="composer-sticky-send-intent-thumb"]') as HTMLSpanElement;
+
+        expect(toggle.getAttribute('aria-pressed')).toBe('true');
+        expect(independentButton.getAttribute('data-selected')).toBe('false');
+        expect(memoryButton.getAttribute('data-selected')).toBe('true');
+        expect(toggle.getAttribute('data-active-intent')).toBe('memory');
+        expect(thumb.getAttribute('data-active-intent')).toBe('memory');
+
+        act(() => {
+            toggle.click();
+        });
+
+        expect(onStickySendIntentChange).toHaveBeenNthCalledWith(1, 'independent');
+
+        act(() => {
+            root.render(
+                <ComposerSettingsPanel
+                    {...baseProps}
+                    batchSize={1}
+                    stickySendIntent="independent"
+                    onStickySendIntentChange={onStickySendIntentChange}
+                />,
+            );
+        });
+
+        independentButton = container.querySelector(
+            '[data-testid="composer-sticky-send-intent-independent"]',
+        ) as HTMLSpanElement;
+        memoryButton = container.querySelector(
+            '[data-testid="composer-sticky-send-intent-memory"]',
+        ) as HTMLSpanElement;
+        toggle = container.querySelector('[data-testid="composer-sticky-send-intent-toggle"]') as HTMLButtonElement;
+
+        expect(toggle.getAttribute('aria-pressed')).toBe('false');
+        expect(independentButton.getAttribute('data-selected')).toBe('true');
+        expect(memoryButton.getAttribute('data-selected')).toBe('false');
+
+        act(() => {
+            toggle.click();
+        });
+
+        expect(onStickySendIntentChange).toHaveBeenNthCalledWith(2, 'memory');
+    });
+
+    it('opens the info card instead of switching when memory is unavailable', () => {
+        vi.useFakeTimers();
+        const onStickySendIntentChange = vi.fn();
+
+        act(() => {
+            root.render(
+                <ComposerSettingsPanel
+                    {...baseProps}
+                    batchSize={3}
+                    stickySendIntent="independent"
+                    onStickySendIntentChange={onStickySendIntentChange}
+                />,
+            );
+        });
+
+        const toggle = container.querySelector('[data-testid="composer-sticky-send-intent-toggle"]') as HTMLButtonElement;
+
+        act(() => {
+            toggle.click();
+        });
+
+        expect(onStickySendIntentChange).not.toHaveBeenCalled();
+        expect(container.textContent).toContain('Keeps the next send inside official conversation memory.');
+        expect(container.textContent).toContain('Memory send is available only when quantity is 1.');
+
+        act(() => {
+            vi.advanceTimersByTime(3300);
+        });
+
+        expect(container.querySelector('[data-testid="composer-sticky-send-intent-info-card"]')).toBeNull();
+    });
+
+    it('keeps the manually opened info card visible until it is dismissed', () => {
+        vi.useFakeTimers();
+
+        act(() => {
+            root.render(<ComposerSettingsPanel {...baseProps} batchSize={3} stickySendIntent="independent" />);
+        });
+
+        const infoTrigger = container.querySelector(
+            '[data-testid="composer-sticky-send-intent-info-trigger"]',
+        ) as HTMLButtonElement;
+
+        act(() => {
+            infoTrigger.click();
+        });
+
+        expect(
+            (container.querySelector('[data-testid="composer-sticky-send-intent-info-card"]') as HTMLDivElement)
+                .className,
+        ).toContain('bg-white');
+        expect(container.textContent).toContain(
+            'Uses the selected image and tools without replaying official conversation memory.',
+        );
+
+        act(() => {
+            vi.advanceTimersByTime(3300);
+        });
+
+        expect(container.querySelector('[data-testid="composer-sticky-send-intent-info-card"]')).toBeTruthy();
+
+        act(() => {
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        });
+
+        expect(container.querySelector('[data-testid="composer-sticky-send-intent-info-card"]')).toBeNull();
+    });
+
+    it('only shows the new conversation reset action while memory send intent is active', () => {
+        act(() => {
+            root.render(<ComposerSettingsPanel {...baseProps} batchSize={1} stickySendIntent="independent" />);
+        });
+
+        expect(
+            container.querySelector('[data-testid="composer-sticky-send-intent-toggle"]')?.getAttribute(
+                'data-active-intent',
+            ),
+        ).toBe('independent');
+        expect(container.textContent).not.toContain('New Conversation');
+
+        act(() => {
+            root.render(<ComposerSettingsPanel {...baseProps} batchSize={1} stickySendIntent="memory" />);
+        });
+
+        expect(
+            container.querySelector('[data-testid="composer-sticky-send-intent-toggle"]')?.getAttribute(
+                'data-active-intent',
+            ),
+        ).toBe('memory');
+        expect(container.textContent).toContain('New Conversation');
     });
 
     it('opens the queued jobs modal from the status button when tracked jobs exist', () => {

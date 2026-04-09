@@ -144,8 +144,38 @@ describe('WorkspaceUnifiedHistoryPanel', () => {
         expect(visibleText).not.toContain('Prompt A should stay hidden.');
         expect(visibleText).not.toContain('Prompt B should stay hidden.');
         expect(markup).toContain('grid-cols-4');
-        expect(markup).toContain('xl:grid-cols-[repeat(10,minmax(100px,100px))]');
+        expect(markup).toContain('xl:grid-cols-[repeat(6,minmax(100px,100px))]');
         expect(markup).toContain('xl:justify-between');
+    });
+
+    it('renders versions and workspace snapshot utility actions when callbacks are supplied', () => {
+        const onOpenVersionsDetails = vi.fn();
+        const onImportWorkspace = vi.fn();
+        const onExportWorkspace = vi.fn();
+
+        renderPanel({
+            onOpenVersionsDetails,
+            onImportWorkspace,
+            onExportWorkspace,
+        });
+
+        const versionsButton = container.querySelector('[data-testid="history-versions-open-details"]');
+        const importButton = container.querySelector('[data-testid="history-import-workspace"]');
+        const exportButton = container.querySelector('[data-testid="history-export-workspace"]');
+
+        expect(versionsButton).not.toBeNull();
+        expect(importButton).not.toBeNull();
+        expect(exportButton).not.toBeNull();
+
+        flushSync(() => {
+            (versionsButton as HTMLButtonElement).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            (importButton as HTMLButtonElement).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            (exportButton as HTMLButtonElement).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        });
+
+        expect(onOpenVersionsDetails).toHaveBeenCalledTimes(1);
+        expect(onImportWorkspace).toHaveBeenCalledTimes(1);
+        expect(onExportWorkspace).toHaveBeenCalledTimes(1);
     });
 
     it('uses four-slot mobile pagination when the desktop layout is unavailable', () => {
@@ -181,16 +211,16 @@ describe('WorkspaceUnifiedHistoryPanel', () => {
         expect(container.innerHTML).not.toContain('history-card-turn-a');
     });
 
-    it('uses desktop page size 10 and exposes first or last pager controls', () => {
+    it('uses desktop page size 6 and exposes first or last pager controls', () => {
         renderPanel({
             history: buildHistory(21),
             branchSummariesCount: 3,
         });
 
-        expect(container.textContent).toContain('1/3');
+        expect(container.textContent).toContain('1/4');
         expect(container.innerHTML).toContain('history-card-turn-01');
-        expect(container.innerHTML).toContain('history-card-turn-10');
-        expect(container.innerHTML).not.toContain('history-card-turn-11');
+        expect(container.innerHTML).toContain('history-card-turn-06');
+        expect(container.innerHTML).not.toContain('history-card-turn-07');
 
         const lastButton = container.querySelector(
             '[data-testid="workspace-unified-history-page-last"]',
@@ -199,7 +229,7 @@ describe('WorkspaceUnifiedHistoryPanel', () => {
             lastButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         });
 
-        expect(container.textContent).toContain('3/3');
+        expect(container.textContent).toContain('4/4');
         expect(container.innerHTML).toContain('history-card-turn-21');
         expect(container.innerHTML).not.toContain('history-card-turn-01');
 
@@ -210,7 +240,7 @@ describe('WorkspaceUnifiedHistoryPanel', () => {
             firstButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         });
 
-        expect(container.textContent).toContain('1/3');
+        expect(container.textContent).toContain('1/4');
         expect(container.innerHTML).toContain('history-card-turn-01');
         expect(container.innerHTML).not.toContain('history-card-turn-21');
     });
@@ -281,12 +311,12 @@ describe('WorkspaceUnifiedHistoryPanel', () => {
             branchSummariesCount: 2,
         });
 
-        expect(container.textContent).toContain('1/2');
+        expect(container.textContent).toContain('1/3');
         expect(container.innerHTML).toContain('history-preview-tile-3');
         expect(container.innerHTML).toContain('history-preview-tile-0');
         expect(container.innerHTML).toContain('history-card-turn-01');
-        expect(container.innerHTML).toContain('history-card-turn-06');
-        expect(container.innerHTML).not.toContain('history-card-turn-07');
+        expect(container.innerHTML).toContain('history-card-turn-02');
+        expect(container.innerHTML).not.toContain('history-card-turn-03');
         expect(container.innerHTML.indexOf('history-preview-tile-3')).toBeLessThan(
             container.innerHTML.indexOf('history-preview-tile-2'),
         );
@@ -301,9 +331,9 @@ describe('WorkspaceUnifiedHistoryPanel', () => {
             nextButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         });
 
-        expect(container.textContent).toContain('2/2');
-        expect(container.innerHTML).toContain('history-card-turn-07');
-        expect(container.innerHTML).toContain('history-card-turn-12');
+        expect(container.textContent).toContain('2/3');
+        expect(container.innerHTML).toContain('history-card-turn-03');
+        expect(container.innerHTML).toContain('history-card-turn-08');
         expect(container.innerHTML).not.toContain('history-preview-tile-3');
         expect(container.innerHTML).not.toContain('history-card-turn-01');
     });

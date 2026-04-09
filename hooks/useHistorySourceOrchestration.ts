@@ -8,6 +8,7 @@ import {
     TurnLineageAction,
     WorkspaceConversationState,
     WorkspaceSessionState,
+    StickySendIntent,
 } from '../types';
 import { loadFullImage, persistHistoryThumbnail } from '../utils/imageSaveUtils';
 import { encodeWorkflowMessage } from '../utils/workflowTimeline';
@@ -62,6 +63,7 @@ type UseHistorySourceOrchestrationArgs = {
     applySelectedResultArtifacts: (artifacts: ResultArtifacts | null) => void;
     promoteResultArtifactsToSession: PromoteResultArtifactsToSession;
     setPendingProvenanceContext: Dispatch<SetStateAction<PendingProvenanceContext | null>>;
+    setStickySendIntent: Dispatch<SetStateAction<StickySendIntent>>;
     setConversationState: Dispatch<SetStateAction<WorkspaceConversationState>>;
     setBranchContinuationSourceByBranchOriginId: Dispatch<SetStateAction<Record<string, string>>>;
     setHistory: Dispatch<SetStateAction<GeneratedImageType[]>>;
@@ -147,6 +149,7 @@ export function useHistorySourceOrchestration({
     applySelectedResultArtifacts,
     promoteResultArtifactsToSession,
     setPendingProvenanceContext,
+    setStickySendIntent,
     setConversationState,
     setBranchContinuationSourceByBranchOriginId,
     setHistory,
@@ -226,6 +229,7 @@ export function useHistorySourceOrchestration({
     const handleStartNewConversation = useCallback(() => {
         handleClearResults();
         setPendingProvenanceContext(null);
+        setStickySendIntent('independent');
         resetSelectedOutputState();
         resetWorkspaceSession();
         setConversationState(EMPTY_WORKSPACE_CONVERSATION_STATE);
@@ -242,6 +246,7 @@ export function useHistorySourceOrchestration({
         setConversationState,
         setEditingImageSource,
         setPendingProvenanceContext,
+        setStickySendIntent,
         showNotification,
         t,
     ]);

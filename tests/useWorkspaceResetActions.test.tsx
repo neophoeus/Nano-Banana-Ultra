@@ -18,6 +18,7 @@ describe('useWorkspaceResetActions', () => {
         const handleClearResults = vi.fn();
         const clearAssetRoles = vi.fn();
         const applyEmptyWorkspaceSnapshot = vi.fn();
+        const clearSharedWorkspaceSnapshot = vi.fn();
         const clearPromptHistory = vi.fn();
         const setActiveWorkspaceDetailModal = vi.fn() as any;
         const setIsAdvancedSettingsOpen = vi.fn() as any;
@@ -33,6 +34,7 @@ describe('useWorkspaceResetActions', () => {
                 handleClearResults,
                 clearAssetRoles,
                 applyEmptyWorkspaceSnapshot,
+                clearSharedWorkspaceSnapshot,
                 clearPromptHistory,
                 setActiveWorkspaceDetailModal,
                 setIsAdvancedSettingsOpen,
@@ -55,6 +57,7 @@ describe('useWorkspaceResetActions', () => {
             handleClearResults,
             clearAssetRoles,
             applyEmptyWorkspaceSnapshot,
+            clearSharedWorkspaceSnapshot,
             clearPromptHistory,
             setActiveWorkspaceDetailModal,
             setIsAdvancedSettingsOpen,
@@ -100,6 +103,7 @@ describe('useWorkspaceResetActions', () => {
         });
 
         expect(context.applyEmptyWorkspaceSnapshot).toHaveBeenCalledTimes(1);
+        expect(context.clearSharedWorkspaceSnapshot).toHaveBeenCalledTimes(1);
         expect(context.clearPromptHistory).toHaveBeenCalledTimes(1);
         expect(context.setActiveWorkspaceDetailModal).toHaveBeenCalledWith(null);
         expect(context.setIsAdvancedSettingsOpen).toHaveBeenCalledWith(false);

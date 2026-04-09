@@ -8,6 +8,7 @@ import {
     ImageSize,
     ImageStyle,
     OutputFormat,
+    StickySendIntent,
     StructuredOutputMode,
     ThinkingLevel,
     WorkspaceComposerState,
@@ -52,6 +53,8 @@ type UseComposerStateReturn = {
     setGoogleSearch: Dispatch<SetStateAction<boolean>>;
     imageSearch: boolean;
     setImageSearch: Dispatch<SetStateAction<boolean>>;
+    stickySendIntent: StickySendIntent;
+    setStickySendIntent: Dispatch<SetStateAction<StickySendIntent>>;
     composerState: WorkspaceComposerState;
     applyComposerState: (nextComposerState: WorkspaceComposerState) => void;
     setGroundingMode: (mode: GroundingMode) => void;
@@ -96,6 +99,9 @@ export function useComposerState({
     const [includeThoughts, setIncludeThoughts] = useState(initialComposerState.includeThoughts);
     const [googleSearch, setGoogleSearch] = useState(initialComposerState.googleSearch);
     const [imageSearch, setImageSearch] = useState(initialComposerState.imageSearch);
+    const [stickySendIntent, setStickySendIntent] = useState<StickySendIntent>(
+        initialComposerState.stickySendIntent ?? 'independent',
+    );
 
     const composerState = useMemo<WorkspaceComposerState>(
         () => ({
@@ -112,6 +118,7 @@ export function useComposerState({
             includeThoughts,
             googleSearch,
             imageSearch,
+            stickySendIntent,
             generationMode,
             executionMode,
         }),
@@ -126,6 +133,7 @@ export function useComposerState({
             imageSize,
             imageStyle,
             includeThoughts,
+            stickySendIntent,
             outputFormat,
             prompt,
             structuredOutputMode,
@@ -158,6 +166,7 @@ export function useComposerState({
             setIncludeThoughts(nextComposerState.includeThoughts);
             setGoogleSearch(nextComposerState.googleSearch);
             setImageSearch(nextComposerState.imageSearch);
+            setStickySendIntent(nextComposerState.stickySendIntent ?? 'independent');
             syncPresentationState(nextComposerState);
         },
         [syncPresentationState],
@@ -252,6 +261,8 @@ export function useComposerState({
         setGoogleSearch,
         imageSearch,
         setImageSearch,
+        stickySendIntent,
+        setStickySendIntent,
         composerState,
         applyComposerState,
         setGroundingMode,

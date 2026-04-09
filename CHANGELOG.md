@@ -4,9 +4,23 @@ This changelog is compiled from the repository's local git tags plus the publish
 
 ## Unreleased
 
+## v3.4.0 - 2026-04-09
+
+- Release title: Nano Banana Ultra 3.4.0 - Support Surface Closeout & Sticky Send Intent
+- Release prep summary:
+    - finalized the shared support surface around `Progress`, `Response`, and `Sources`; earlier internal `Thoughts` / `Output` / `Evidence` phrasing now resolves to those three user-facing surfaces inside one support detail shell with in-surface tab switching
+    - `Progress` now uses the intended middle-version contract: a trimmed top summary, a compact workflow summary block, a latest accumulated-thought snapshot card, and a chronological thought stream; the older workflow timeline list and Progress-owned current-stage-source / continuity cards remain removed
+    - `Response` now uses one compact preview line even for structured output while preserving the existing response-rail body, `Sources` keeps labeled source/support count chips plus only distinct provenance metadata rows, and the standalone legacy Thoughts detail component remains absent from the live app
+    - sticky send intent is now an explicit persisted composer/workspace field; legacy restores default to `independent`, official conversation replay activates only when intent is `memory`, and restored official-conversation fixtures now carry that intent explicitly instead of inferring it from stale conversation metadata
+    - post-closeout Composer send-intent UX follow-through replaced the old split-button surface with one true whole-button `Next send` toggle, tightened the control width and padding, strengthened the active amber treatment for clearer contrast, moved the explanatory copy into a manual `i` info card, auto-opened that card on successful or blocked toggle attempts, kept blocked `Independent -> Memory` clicks on `Quantity != 1` as explanation-only no-ops instead of silent failures, and removed the now-redundant top-header intent chip once the Composer surface was clear enough
+    - unified history remains the main owner for versions / import / export utility actions and desktop history density is locked to 6 visible slots; restore/browser coverage was rewritten away from the removed selected-item dock and legacy history-canvas selectors to the current main-shell, stage, versions, and file-backed thumbnail contracts
+    - `Clear Workspace` now explicitly clears the shared workspace backup while legacy shared-snapshot migration stays startup-only, preventing stale backup replays from relighting the `Progress` / `Response` / `Sources` support signals after a reset; inactive support signals now use a muted slate off-state instead of the earlier bright white dot
+    - finalized the support-family v2 lock by renaming the remaining live `WorkspaceWorkflow*` support components and tests to `WorkspaceProgress*`, keeping deprecated wording only in archived docs
+    - validation realigned stale restore Playwright assertions away from the removed Progress-owned current-stage-source / continuity cards and onto surviving owner surfaces and persisted selection cues, then reran the earlier sticky-intent/browser follow-through slice at `3 / 3`, the post-header-dedup focused Vitest pass at `4 files / 24 tests`, the full restore Playwright spec at `62 / 62`, the full `npm run test:e2e` suite at `64 / 64`, and the full Vitest suite at `84 files / 712 tests`
+
 ## v3.3.1 - 2026-04-08
 
-- Release title: Nano Banana Ultra 3.3.1 - Sidecar Metadata Fidelity, Viewer Expansion & Temperature UX
+- Release title: Nano Banana Ul44tra 3.3.1 - Sidecar Metadata Fidelity, Viewer Expansion & Temperature UX
 - Release prep summary:
     - Per-image sidecar metadata contract, save-path enrichment, and thumbnail filename alignment:
         - added a shared `ImageSidecarMetadata` / `SavedImageActualOutput` contract plus sidecar builder and normalizer helpers so interactive generation, queued-batch imports, and plugin save/load flows persist the same richer per-image JSON payload instead of loosely shaped metadata objects

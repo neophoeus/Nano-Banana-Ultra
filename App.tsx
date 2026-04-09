@@ -14,8 +14,6 @@ import {
     ThinkingLevel,
     GroundingMetadata,
     ProvenanceContinuityMode,
-    SelectedItemActionBarProps,
-    SelectedItemSummaryStripProps,
     StageAsset,
     ResultArtifacts,
     SessionContinuitySource,
@@ -25,24 +23,24 @@ import ComposerAdvancedSettingsDialog from './components/ComposerAdvancedSetting
 import ComposerSettingsPanel from './components/ComposerSettingsPanel';
 import PanelLoadingFallback from './components/PanelLoadingFallback';
 import QueuedBatchJobsPanel from './components/QueuedBatchJobsPanel';
-import SelectedItemActionBar from './components/SelectedItemActionBar';
-import SelectedItemSummaryStrip from './components/SelectedItemSummaryStrip';
 import SurfaceLoadingFallback from './components/SurfaceLoadingFallback';
 import WorkspaceDetailModal from './components/WorkspaceDetailModal';
-import WorkspaceHistoryCanvas from './components/WorkspaceHistoryCanvas';
-import WorkspaceInsightsSidebar from './components/WorkspaceInsightsSidebar';
 import WorkspaceOverlayStack from './components/WorkspaceOverlayStack';
 import WorkspaceResponseRail from './components/WorkspaceResponseRail';
 import WorkspaceSideToolPanel from './components/WorkspaceSideToolPanel';
+import WorkspaceSupportDetailSurface from './components/WorkspaceSupportDetailSurface';
 import WorkspaceBottomFooter from './components/WorkspaceBottomFooter';
+import WorkspaceEvidenceDetailPanel from './components/WorkspaceEvidenceDetailPanel';
+import WorkspaceOutputDetailPanel from './components/WorkspaceOutputDetailPanel';
 import WorkspaceTopHeader from './components/WorkspaceTopHeader';
 import WorkspaceUnifiedHistoryPanel from './components/WorkspaceUnifiedHistoryPanel';
 import WorkspaceVersionsDetailPanel from './components/WorkspaceVersionsDetailPanel';
-import WorkspaceWorkflowCard from './components/WorkspaceWorkflowCard';
-import WorkspaceWorkflowDetailPanel from './components/WorkspaceWorkflowDetailPanel';
+import WorkspaceProgressCard from './components/WorkspaceProgressCard';
+import WorkspaceProgressDetailPanel from './components/WorkspaceProgressDetailPanel';
 import { Language, ensureLanguageLoaded, getTranslation, persistLanguagePreference } from './utils/translations';
 import { ASPECT_RATIOS, IMAGE_MODELS, MODEL_CAPABILITIES, OUTPUT_FORMATS, THINKING_LEVELS } from './constants';
 import {
+    clearSharedWorkspaceSnapshot,
     EMPTY_WORKSPACE_COMPOSER_STATE,
     EMPTY_WORKSPACE_SNAPSHOT,
     EMPTY_WORKSPACE_SESSION,
@@ -56,7 +54,6 @@ import {
     getGroundingModeLabel,
 } from './utils/groundingMode';
 import { inferExecutionModeFromHistoryItem } from './utils/executionMode';
-import { buildWorkflowTimeline, renderWorkflowMessage } from './utils/workflowTimeline';
 import { EMPTY_WORKSPACE_CONVERSATION_STATE } from './utils/conversationState';
 import { useImageGeneration } from './hooks/useImageGeneration';
 import { usePerformGeneration } from './hooks/usePerformGeneration';
@@ -109,34 +106,13 @@ const GroundingProvenancePanel = lazy(() => import('./components/GroundingProven
 const SketchPad = lazy(() => import('./components/SketchPad'));
 const getShortTurnId = (historyId?: string | null) => (historyId ? historyId.slice(0, 8) : '--------');
 
-type WorkflowThoughtEntry = {
+type ProgressThoughtEntry = {
     id: string;
     shortId: string;
     prompt: string | null;
     thoughts: string;
     createdAtLabel: string;
     createdAtMs: number | null;
-};
-
-const parseWorkflowTimestampMs = (timestamp: string | null | undefined, anchorMs: number): number | null => {
-    if (!timestamp) {
-        return null;
-    }
-
-    const match = timestamp.match(/^(\d{2}):(\d{2}):(\d{2})$/);
-    if (!match) {
-        return null;
-    }
-
-    const parsedDate = new Date(anchorMs);
-    parsedDate.setHours(Number(match[1]), Number(match[2]), Number(match[3]), 0);
-
-    let parsedMs = parsedDate.getTime();
-    if (parsedMs - anchorMs > 12 * 60 * 60 * 1000) {
-        parsedMs -= 24 * 60 * 60 * 1000;
-    }
-
-    return parsedMs;
 };
 
 const areWorkspaceSettingsDraftsEqual = (left: WorkspaceSettingsDraft, right: WorkspaceSettingsDraft) =>
@@ -154,6 +130,9 @@ const TopLauncherSignal = ({ active, dataTestId }: { active: boolean; dataTestId
     const activeOuterClassName =
         'bg-amber-300/60 shadow-[0_0_18px_rgba(251,191,36,0.52)] dark:bg-amber-300/40 dark:shadow-[0_0_20px_rgba(251,191,36,0.36)]';
     const activeInnerClassName = 'bg-amber-400 ring-2 ring-amber-100/90 dark:bg-amber-300 dark:ring-amber-400/30';
+    const inactiveOuterClassName =
+        'bg-slate-200/65 ring-1 ring-slate-500/15 shadow-inner shadow-slate-400/20 opacity-95 dark:bg-slate-700/40 dark:ring-slate-400/20 dark:shadow-black/20';
+    const inactiveInnerClassName = 'bg-slate-500/70 dark:bg-slate-400/70';
 
     return (
         <span
@@ -163,14 +142,12 @@ const TopLauncherSignal = ({ active, dataTestId }: { active: boolean; dataTestId
         >
             <span
                 className={`absolute inset-0 rounded-full transition-all duration-300 ${
-                    active
-                        ? `${activeOuterClassName} animate-pulse opacity-100`
-                        : 'bg-white/90 ring-1 ring-slate-300/80 opacity-100 dark:bg-slate-100/10 dark:ring-slate-500/70'
+                    active ? `${activeOuterClassName} animate-pulse opacity-100` : inactiveOuterClassName
                 }`}
             />
             <span
                 className={`relative h-1.5 w-1.5 rounded-full transition-all duration-300 ${
-                    active ? activeInnerClassName : 'bg-slate-400 dark:bg-slate-200'
+                    active ? activeInnerClassName : inactiveInnerClassName
                 }`}
             />
         </span>
@@ -191,7 +168,7 @@ const App: React.FC = () => {
     const [settingsSessionDraft, setSettingsSessionDraft] = useState<WorkspaceSettingsDraft | null>(null);
     const [settingsSessionReturnToGeneration, setSettingsSessionReturnToGeneration] = useState(false);
     const [activeWorkspaceDetailModal, setActiveWorkspaceDetailModal] = useState<
-        'workflow' | 'answer' | 'sources' | 'versions' | 'queued-jobs' | null
+        'progress' | 'response' | 'sources' | 'versions' | 'queued-jobs' | null
     >(null);
     const [editingImageSource, setEditingImageSource] = useState<string | null>(null);
     const [batchProgress, setBatchProgress] = useState({ completed: 0, total: 0 });
@@ -286,6 +263,8 @@ const App: React.FC = () => {
         setGoogleSearch,
         imageSearch,
         setImageSearch,
+        stickySendIntent,
+        setStickySendIntent,
         composerState,
         applyComposerState,
         setGroundingMode,
@@ -1031,7 +1010,6 @@ const App: React.FC = () => {
         branchSummaryByOriginId,
         lineageRootGroups,
         activeBranchSummary,
-        selectedItemModel,
         currentStageSourceHistoryId,
         currentStageSourceTurn,
         currentStageBranchSummary,
@@ -1063,6 +1041,7 @@ const App: React.FC = () => {
         workspaceSession,
         history,
         conversationState,
+        stickySendIntent,
         branchOriginIdByTurnId,
         getHistoryTurnById,
     });
@@ -1457,6 +1436,7 @@ const App: React.FC = () => {
         handleClearResults,
         clearAssetRoles,
         applyEmptyWorkspaceSnapshot,
+        clearSharedWorkspaceSnapshot,
         clearPromptHistory,
         setActiveWorkspaceDetailModal,
         setIsAdvancedSettingsOpen,
@@ -1493,6 +1473,7 @@ const App: React.FC = () => {
         applySelectedResultArtifacts,
         promoteResultArtifactsToSession,
         setPendingProvenanceContext,
+        setStickySendIntent,
         setConversationState,
         setBranchContinuationSourceByBranchOriginId,
         setHistory,
@@ -1550,8 +1531,6 @@ const App: React.FC = () => {
         t,
     });
     const {
-        buildSelectedItemActionBarProps,
-        buildSelectedItemSummaryStripProps,
         renderHistoryTurnSnapshotContent,
         renderHistoryTurnActionRow,
         renderHistoryTurnBadges,
@@ -1571,28 +1550,6 @@ const App: React.FC = () => {
         isPromotedContinuationSource,
         t,
     });
-    const selectedItemActionBarProps = useMemo<SelectedItemActionBarProps | null>(
-        () => buildSelectedItemActionBarProps(selectedItemModel),
-        [buildSelectedItemActionBarProps, selectedItemModel],
-    );
-    const selectedItemSummaryStripProps = useMemo<SelectedItemSummaryStripProps | null>(
-        () => buildSelectedItemSummaryStripProps(selectedItemModel),
-        [buildSelectedItemSummaryStripProps, selectedItemModel],
-    );
-    const selectedItemDock = useMemo(
-        () =>
-            selectedItemSummaryStripProps || selectedItemActionBarProps ? (
-                <div data-testid="selected-item-dock" className="grid min-w-0 gap-1.5">
-                    {selectedItemSummaryStripProps ? (
-                        <SelectedItemSummaryStrip currentLanguage={currentLang} {...selectedItemSummaryStripProps} />
-                    ) : null}
-                    {selectedItemActionBarProps ? (
-                        <SelectedItemActionBar currentLanguage={currentLang} {...selectedItemActionBarProps} />
-                    ) : null}
-                </div>
-            ) : null,
-        [currentLang, selectedItemActionBarProps, selectedItemSummaryStripProps],
-    );
 
     const {
         viewSettings,
@@ -1822,13 +1779,13 @@ const App: React.FC = () => {
     const handleCloseWorkspaceDetailModal = useCallback(() => {
         setActiveWorkspaceDetailModal(null);
     }, []);
-    const handleOpenWorkflowDetails = useCallback(() => {
-        setActiveWorkspaceDetailModal('workflow');
+    const handleOpenProgressDetails = useCallback(() => {
+        setActiveWorkspaceDetailModal('progress');
     }, []);
-    const handleOpenAnswerDetails = useCallback(() => {
-        setActiveWorkspaceDetailModal('answer');
+    const handleOpenResponseDetails = useCallback(() => {
+        setActiveWorkspaceDetailModal('response');
     }, []);
-    const handleOpenSourceDetails = useCallback(() => {
+    const handleOpenSourcesDetails = useCallback(() => {
         setActiveWorkspaceDetailModal('sources');
     }, []);
     const handleOpenVersionsDetails = useCallback(() => {
@@ -1853,6 +1810,7 @@ const App: React.FC = () => {
         thinkingLevel,
         includeThoughts,
         groundingMode,
+        stickySendIntent,
         imageModel,
         aspectRatio,
         imageSize,
@@ -1877,6 +1835,7 @@ const App: React.FC = () => {
         activeImportedQueuedHistoryId: currentStageSourceHistoryId,
         promptTextareaRef: composerPromptTextareaRef,
         setPrompt,
+        setStickySendIntent,
         toggleEnterToSubmit,
         handleGenerate,
         handleQueueBatchJob,
@@ -1965,11 +1924,6 @@ const App: React.FC = () => {
         ),
         [currentLang, systemStatusRefreshToken, t],
     );
-    const workspaceTopHeaderProps = useWorkspaceTopHeaderProps({
-        headerConsole,
-        currentLanguage: currentLang,
-        onLanguageChange: handleLanguageChange,
-    });
     const focusComposerPromptTextarea = useCallback(() => {
         if (typeof window === 'undefined') {
             return;
@@ -2248,16 +2202,6 @@ const App: React.FC = () => {
         : generatedImageUrls.length > 0
           ? getStageOriginLabel('generated')
           : null;
-    const handleContinueFromStageSource = useCallback(() => {
-        if (currentStageHasLinkedHistoryTurn && currentStageSourceTurn) {
-            handleContinueFromHistoryTurn(currentStageSourceTurn);
-        }
-    }, [currentStageHasLinkedHistoryTurn, currentStageSourceTurn, handleContinueFromHistoryTurn]);
-    const handleBranchFromStageSource = useCallback(() => {
-        if (currentStageHasLinkedHistoryTurn && currentStageSourceTurn) {
-            handleBranchFromHistoryTurn(currentStageSourceTurn);
-        }
-    }, [currentStageHasLinkedHistoryTurn, currentStageSourceTurn, handleBranchFromHistoryTurn]);
     const darkProvenancePanel = useMemo(
         () => (
             <Suspense
@@ -2306,8 +2250,6 @@ const App: React.FC = () => {
         onClear: handleClearCurrentStage,
         onAddToObjectReference: handleAddToObjectReference,
         onAddToCharacterReference: capability.maxCharacters > 0 ? handleAddToCharacterReference : undefined,
-        onContinueFromStageSource: currentStageHasLinkedHistoryTurn ? handleContinueFromStageSource : undefined,
-        onBranchFromStageSource: currentStageHasLinkedHistoryTurn ? handleBranchFromStageSource : undefined,
         currentLanguage: currentLang,
         currentLog: logs.length > 0 ? logs[logs.length - 1] : '',
         currentStageOriginLabel,
@@ -2405,7 +2347,6 @@ const App: React.FC = () => {
                 currentLanguage={currentLang}
                 history={history}
                 previewTiles={activeBatchPreviewSession?.tiles || []}
-                selectedItemDock={selectedItemDock || undefined}
                 selectedHistoryId={selectedHistoryId}
                 currentStageSourceHistoryId={currentStageSourceHistoryId}
                 activeBranchSummary={activeBranchSummary}
@@ -2413,6 +2354,9 @@ const App: React.FC = () => {
                 onSelect={handleHistorySelect}
                 isPromotedContinuationSource={isPromotedContinuationSource}
                 getBranchAccentClassName={getBranchAccentClassName}
+                onOpenVersionsDetails={handleOpenVersionsDetails}
+                onImportWorkspace={handleOpenWorkspaceImportPicker}
+                onExportWorkspace={handleExportWorkspaceSnapshot}
                 onClearWorkspace={handleClearGalleryHistory}
             />
         ),
@@ -2423,20 +2367,24 @@ const App: React.FC = () => {
             currentLang,
             currentStageSourceHistoryId,
             getBranchAccentClassName,
+            handleExportWorkspaceSnapshot,
             handleClearGalleryHistory,
             handleHistorySelect,
+            handleOpenVersionsDetails,
+            handleOpenWorkspaceImportPicker,
             history,
             isPromotedContinuationSource,
             selectedHistoryId,
-            selectedItemDock,
         ],
     );
     const stagePanelClassName =
         'min-w-0 nbu-shell-panel nbu-shell-surface-stage-hero min-h-[400px] overflow-hidden p-3 lg:min-h-0 lg:flex-1 xl:h-full xl:min-h-0 xl:p-0';
     const topLauncherCompactButtonClassName =
-        'group nbu-shell-panel flex h-[40px] min-w-0 items-center justify-center px-3 py-2 text-center transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_18px_40px_rgba(2,6,23,0.38)] min-h-[40px]';
+        'group nbu-shell-panel flex h-[40px] min-w-0 items-center justify-center px-2.5 py-2 text-center transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_18px_40px_rgba(2,6,23,0.38)] min-h-[40px]';
     const topLauncherCompactLabelClassName =
-        'whitespace-nowrap text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400';
+        'whitespace-nowrap text-[9px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 sm:text-[10px]';
+    const supportDetailTabButtonClassName =
+        'rounded-full border px-3 py-1.5 text-[11px] font-semibold transition-colors';
     const responseTextPlaceholder =
         effectiveStructuredOutputMode !== 'off'
             ? t('workspaceViewerStructuredOutput')
@@ -2454,7 +2402,44 @@ const App: React.FC = () => {
         effectiveSessionHints?.groundingMetadataReturned ||
         effectiveSessionHints?.groundingSupportsReturned,
     );
-    const workflowThoughtEntries = useMemo<WorkflowThoughtEntry[]>(() => {
+    const supportRail = (
+        <>
+            <WorkspaceProgressCard
+                currentLanguage={currentLang}
+                thoughtsText={effectiveThoughts}
+                onOpenDetails={handleOpenProgressDetails}
+            />
+            <button
+                type="button"
+                data-testid="workspace-response-open-details"
+                onClick={handleOpenResponseDetails}
+                className={`${topLauncherCompactButtonClassName} nbu-shell-surface-output-strip hover:border-emerald-300 dark:hover:border-emerald-500/30`}
+            >
+                <span className="flex min-w-0 items-center gap-2">
+                    <TopLauncherSignal active={hasResponseInfo} dataTestId="workspace-response-signal" />
+                    <span className={topLauncherCompactLabelClassName}>{t('workspaceSupportResponse')}</span>
+                </span>
+            </button>
+            <button
+                type="button"
+                data-testid="workspace-sources-open-details"
+                onClick={handleOpenSourcesDetails}
+                className={`${topLauncherCompactButtonClassName} nbu-shell-surface-provenance-summary hover:border-sky-300 dark:hover:border-sky-500/30`}
+            >
+                <span className="flex min-w-0 items-center gap-2">
+                    <TopLauncherSignal active={hasSourceTrailInfo} dataTestId="workspace-sources-signal" />
+                    <span className={topLauncherCompactLabelClassName}>{t('workspaceSupportSources')}</span>
+                </span>
+            </button>
+        </>
+    );
+    const workspaceTopHeaderProps = useWorkspaceTopHeaderProps({
+        headerConsole,
+        currentLanguage: currentLang,
+        onLanguageChange: handleLanguageChange,
+        supportRail,
+    });
+    const progressThoughtEntries = useMemo<ProgressThoughtEntry[]>(() => {
         const historyTurns =
             workspaceSession.conversationTurnIds.length > 0
                 ? workspaceSession.conversationTurnIds
@@ -2516,102 +2501,6 @@ const App: React.FC = () => {
         workspaceSession.conversationTurnIds,
         workspaceSession.sourceHistoryId,
     ]);
-    const workflowTimelineAnchorMs = useMemo(() => {
-        const candidates = [
-            workspaceSession.updatedAt,
-            currentStageSourceTurn?.createdAt,
-            currentStageBranchSummary?.updatedAt,
-            activeBranchSummary?.updatedAt,
-            history[0]?.createdAt,
-        ].filter((value): value is number => typeof value === 'number' && value > 0);
-
-        return candidates.length > 0 ? Math.max(...candidates) : Date.now();
-    }, [
-        activeBranchSummary?.updatedAt,
-        currentStageBranchSummary?.updatedAt,
-        currentStageSourceTurn?.createdAt,
-        history,
-        workspaceSession.updatedAt,
-    ]);
-    const workflowTimelineEntries = useMemo(
-        () =>
-            buildWorkflowTimeline(logs, 14)
-                .slice()
-                .reverse()
-                .map((entry, index, timelineEntries) => ({
-                    ...entry,
-                    displayMessage: renderWorkflowMessage(entry.message, t),
-                    sortTimestampMs: parseWorkflowTimestampMs(entry.timestamp, workflowTimelineAnchorMs),
-                    sortOrder: timelineEntries.length - index,
-                })),
-        [logs, t, workflowTimelineAnchorMs],
-    );
-    const workflowDetailContextPanel = useMemo(
-        () => (
-            <WorkspaceInsightsSidebar
-                currentLanguage={currentLang}
-                showHeader={false}
-                compact={true}
-                showWorkflowSummary={false}
-                showThoughtsSection={false}
-                latestWorkflowEntry={latestWorkflowEntry}
-                isGenerating={isGenerating}
-                batchProgress={batchProgress}
-                queuedJobs={queuedJobs}
-                resultStatusSummary={groundingResolutionStatusSummary}
-                resultStatusTone={groundingResolutionStatusTone}
-                thoughtsText={effectiveThoughts}
-                thoughtsPlaceholder={thoughtStateMessage}
-                currentStageAsset={currentStageAsset}
-                currentStageBranchSummary={currentStageBranchSummary}
-                currentStageSourceTurn={currentStageSourceTurn}
-                currentStageSourceHistoryId={currentStageAsset?.sourceHistoryId || null}
-                activeBranchSummary={null}
-                sessionContinuitySignals={sessionContinuitySignals}
-                conversationSummary={conversationSummary}
-                conversationSourceTurn={conversationSourceTurn}
-                sessionSourceTurn={sessionSourceTurn}
-                branchLabelByTurnId={branchLabelByTurnId}
-                onHistorySelect={handleHistorySelect}
-                getStageOriginLabel={getStageOriginLabel}
-                getLineageActionLabel={getLineageActionLabel}
-                getLineageActionDescription={getLineageActionDescription}
-                getShortTurnId={getShortTurnId}
-                getBranchAccentClassName={getBranchAccentClassName}
-                renderHistoryTurnSnapshotContent={renderHistoryTurnSnapshotContent}
-                renderHistoryTurnBadges={renderHistoryTurnBadges}
-                renderHistoryTurnActionRow={renderHistoryTurnActionRow}
-            />
-        ),
-        [
-            batchProgress,
-            branchLabelByTurnId,
-            conversationSourceTurn,
-            conversationSummary,
-            currentLang,
-            currentStageAsset,
-            currentStageBranchSummary,
-            currentStageSourceTurn,
-            effectiveThoughts,
-            getBranchAccentClassName,
-            getLineageActionDescription,
-            getLineageActionLabel,
-            getShortTurnId,
-            getStageOriginLabel,
-            groundingResolutionStatusSummary,
-            groundingResolutionStatusTone,
-            handleHistorySelect,
-            isGenerating,
-            latestWorkflowEntry,
-            queuedJobs,
-            renderHistoryTurnActionRow,
-            renderHistoryTurnBadges,
-            renderHistoryTurnSnapshotContent,
-            sessionContinuitySignals,
-            sessionSourceTurn,
-            thoughtStateMessage,
-        ],
-    );
     const sideToolPanel = useMemo(
         () => (
             <WorkspaceSideToolPanel
@@ -2704,55 +2593,123 @@ const App: React.FC = () => {
         ],
     );
     const workspaceDetailOverlays =
-        activeWorkspaceDetailModal === 'workflow' ? (
-            <WorkspaceDetailModal
-                dataTestId="workspace-workflow-detail-modal"
-                title={t('workflowStatusLabel')}
-                closeLabel={t('workspaceViewerClose')}
-                onClose={handleCloseWorkspaceDetailModal}
-                compact={true}
-            >
-                <WorkspaceWorkflowDetailPanel
-                    currentLanguage={currentLang}
-                    entries={workflowTimelineEntries}
-                    batchProgress={batchProgress}
-                    queuedJobs={queuedJobs}
-                    resultStatusSummary={groundingResolutionStatusSummary}
-                    resultStatusTone={groundingResolutionStatusTone}
-                    thoughtEntries={workflowThoughtEntries}
-                    thoughtsText={effectiveThoughts}
-                    thoughtsPlaceholder={thoughtStateMessage}
-                    contextPanel={workflowDetailContextPanel}
-                />
-            </WorkspaceDetailModal>
-        ) : activeWorkspaceDetailModal === 'answer' ? (
-            <WorkspaceDetailModal
-                dataTestId="workspace-answer-detail-modal"
-                title={t('workspacePanelResponseEyebrow')}
-                closeLabel={t('workspaceViewerClose')}
-                onClose={handleCloseWorkspaceDetailModal}
-            >
-                <WorkspaceResponseRail
-                    currentLanguage={currentLang}
-                    resultText={effectiveResultText}
-                    structuredData={effectiveStructuredData}
-                    structuredOutputMode={effectiveStructuredOutputMode}
-                    formattedStructuredOutput={formattedStructuredOutput}
-                    resultPlaceholder={responseTextPlaceholder}
-                    onReplacePrompt={handleReplacePromptFromStructuredOutput}
-                    onAppendPrompt={handleAppendPromptFromStructuredOutput}
-                    presentation="detail-panel"
-                />
-            </WorkspaceDetailModal>
-        ) : activeWorkspaceDetailModal === 'sources' ? (
-            <WorkspaceDetailModal
-                dataTestId="workspace-sources-detail-modal"
-                title={t('workspaceInsightsSourcesCitations')}
-                closeLabel={t('workspaceViewerClose')}
-                onClose={handleCloseWorkspaceDetailModal}
-            >
-                {contextProvenanceDetailPanel}
-            </WorkspaceDetailModal>
+        activeWorkspaceDetailModal === 'progress' ||
+        activeWorkspaceDetailModal === 'response' ||
+        activeWorkspaceDetailModal === 'sources' ? (
+            (() => {
+                const supportDetailHeaderExtra = (
+                    <div data-testid="workspace-support-detail-tabs" className="mt-3 flex flex-wrap items-center gap-2">
+                        <button
+                            type="button"
+                            data-testid="workspace-support-detail-tab-progress"
+                            onClick={handleOpenProgressDetails}
+                            className={`${supportDetailTabButtonClassName} ${
+                                activeWorkspaceDetailModal === 'progress'
+                                    ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200'
+                                    : 'border-gray-200/80 text-gray-600 hover:border-amber-300 hover:text-amber-700 dark:border-gray-700 dark:text-gray-300 dark:hover:border-amber-500/30 dark:hover:text-amber-200'
+                            }`}
+                        >
+                            {t('workspaceSupportProgress')}
+                        </button>
+                        <button
+                            type="button"
+                            data-testid="workspace-support-detail-tab-response"
+                            onClick={handleOpenResponseDetails}
+                            className={`${supportDetailTabButtonClassName} ${
+                                activeWorkspaceDetailModal === 'response'
+                                    ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200'
+                                    : 'border-gray-200/80 text-gray-600 hover:border-emerald-300 hover:text-emerald-700 dark:border-gray-700 dark:text-gray-300 dark:hover:border-emerald-500/30 dark:hover:text-emerald-200'
+                            }`}
+                        >
+                            {t('workspaceSupportResponse')}
+                        </button>
+                        <button
+                            type="button"
+                            data-testid="workspace-support-detail-tab-sources"
+                            onClick={handleOpenSourcesDetails}
+                            className={`${supportDetailTabButtonClassName} ${
+                                activeWorkspaceDetailModal === 'sources'
+                                    ? 'border-sky-300 bg-sky-50 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-200'
+                                    : 'border-gray-200/80 text-gray-600 hover:border-sky-300 hover:text-sky-700 dark:border-gray-700 dark:text-gray-300 dark:hover:border-sky-500/30 dark:hover:text-sky-200'
+                            }`}
+                        >
+                            {t('workspaceSupportSources')}
+                        </button>
+                    </div>
+                );
+
+                if (activeWorkspaceDetailModal === 'progress') {
+                    return (
+                        <WorkspaceSupportDetailSurface
+                            dataTestId="workspace-progress-detail-modal"
+                            title={t('workspaceSupportProgress')}
+                            closeLabel={t('workspaceViewerClose')}
+                            onClose={handleCloseWorkspaceDetailModal}
+                            compact={true}
+                            headerExtra={supportDetailHeaderExtra}
+                        >
+                            <WorkspaceProgressDetailPanel
+                                currentLanguage={currentLang}
+                                thoughtEntries={progressThoughtEntries}
+                                latestWorkflowEntry={latestWorkflowEntry}
+                                isGenerating={isGenerating}
+                                batchProgress={batchProgress}
+                                queuedJobs={queuedJobs}
+                                resultStatusSummary={groundingResolutionStatusSummary}
+                                resultStatusTone={groundingResolutionStatusTone}
+                                thoughtsText={effectiveThoughts}
+                                thoughtsPlaceholder={thoughtStateMessage}
+                            />
+                        </WorkspaceSupportDetailSurface>
+                    );
+                }
+
+                if (activeWorkspaceDetailModal === 'response') {
+                    return (
+                        <WorkspaceSupportDetailSurface
+                            dataTestId="workspace-response-detail-modal"
+                            title={t('workspaceSupportResponse')}
+                            closeLabel={t('workspaceViewerClose')}
+                            onClose={handleCloseWorkspaceDetailModal}
+                            headerExtra={supportDetailHeaderExtra}
+                        >
+                            <WorkspaceOutputDetailPanel
+                                currentLanguage={currentLang}
+                                resultText={effectiveResultText}
+                                structuredData={effectiveStructuredData}
+                                structuredOutputMode={effectiveStructuredOutputMode}
+                                formattedStructuredOutput={formattedStructuredOutput}
+                                resultPlaceholder={responseTextPlaceholder}
+                                onReplacePrompt={handleReplacePromptFromStructuredOutput}
+                                onAppendPrompt={handleAppendPromptFromStructuredOutput}
+                                presentation="detail-panel"
+                            />
+                        </WorkspaceSupportDetailSurface>
+                    );
+                }
+
+                return (
+                    <WorkspaceSupportDetailSurface
+                        dataTestId="workspace-sources-detail-modal"
+                        title={t('workspaceSupportSources')}
+                        closeLabel={t('workspaceViewerClose')}
+                        onClose={handleCloseWorkspaceDetailModal}
+                        headerExtra={supportDetailHeaderExtra}
+                    >
+                        <WorkspaceEvidenceDetailPanel
+                            currentLanguage={currentLang}
+                            provenanceSummaryRows={provenanceSummaryRows}
+                            provenanceContinuityMessage={provenanceContinuityMessage}
+                            groundingStateMessage={groundingStateMessage}
+                            groundingSupportMessage={groundingSupportMessage}
+                            totalSourceCount={selectedSources.length}
+                            totalSupportBundleCount={selectedSupportBundles.length}
+                        >
+                            {contextProvenanceDetailPanel}
+                        </WorkspaceEvidenceDetailPanel>
+                    </WorkspaceSupportDetailSurface>
+                );
+            })()
         ) : activeWorkspaceDetailModal === 'versions' ? (
             <WorkspaceDetailModal
                 dataTestId="workspace-versions-detail-modal"
@@ -2914,82 +2871,32 @@ const App: React.FC = () => {
 
             <WorkspaceTopHeader {...workspaceTopHeaderProps} />
 
-            <div className="relative z-10 mx-auto flex min-h-screen max-w-[1560px] flex-col px-4 pb-[50px] pt-[54px] lg:px-4 lg:pb-[54px] xl:px-3">
-                <main className="mt-0 flex flex-1 flex-col gap-1.5">
+            <div className="relative z-10 mx-auto flex min-h-screen max-w-[1560px] flex-col px-4 pb-[50px] pt-[100px] lg:px-4 lg:pb-[54px] xl:px-3 xl:pt-[58px]">
+                <main className="mt-0 flex flex-1 flex-col gap-1.5 xl:min-h-0">
                     <section
-                        data-testid="workspace-insights-collapsible"
-                        className="grid gap-1.5 lg:grid-cols-[minmax(0,1fr)_144px_176px] lg:items-stretch"
+                        data-testid="workspace-main-shell"
+                        className="grid min-w-0 gap-1.5 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] xl:items-stretch"
                     >
-                        <WorkspaceWorkflowCard
-                            currentLanguage={currentLang}
-                            latestWorkflowEntry={latestWorkflowEntry}
-                            isGenerating={isGenerating}
-                            thoughtsText={effectiveThoughts}
-                            onOpenDetails={handleOpenWorkflowDetails}
-                        />
-
-                        <button
-                            type="button"
-                            data-testid="workspace-answer-open-details"
-                            onClick={handleOpenAnswerDetails}
-                            className={`${topLauncherCompactButtonClassName} nbu-shell-surface-output-strip hover:border-emerald-300 dark:hover:border-emerald-500/30`}
-                        >
-                            <span className="flex min-w-0 items-center gap-2">
-                                <TopLauncherSignal active={hasResponseInfo} dataTestId="workspace-answer-signal" />
-                                <span className={topLauncherCompactLabelClassName}>
-                                    {t('workspacePanelResponseEyebrow')}
-                                </span>
-                            </span>
-                        </button>
-
-                        <button
-                            type="button"
-                            data-testid="workspace-sources-open-details"
-                            onClick={handleOpenSourceDetails}
-                            className={`${topLauncherCompactButtonClassName} nbu-shell-surface-provenance-summary hover:border-sky-300 dark:hover:border-sky-500/30`}
-                        >
-                            <span className="flex min-w-0 items-center gap-2">
-                                <TopLauncherSignal active={hasSourceTrailInfo} dataTestId="workspace-sources-signal" />
-                                <span className={topLauncherCompactLabelClassName}>
-                                    {t('workspacePanelSourceTrailEyebrow')}
-                                </span>
-                            </span>
-                        </button>
-                    </section>
-
-                    <section className="grid gap-1.5">
-                        <div className="flex min-w-0 flex-col gap-1.5">
-                            <WorkspaceHistoryCanvas
-                                currentLanguage={currentLang}
-                                focusSurface={focusSurface}
-                                historySurface={historySurface}
-                                activeBranchSummary={activeBranchSummary}
-                                recentBranchSummaries={recentBranchSummaries}
-                                branchSummariesCount={branchSummaries.length}
-                                sessionUpdatedLabel={sessionUpdatedLabel}
-                                selectedHistoryId={selectedHistoryId}
-                                lineageRootGroups={lineageRootGroups}
-                                onExportWorkspace={handleExportWorkspaceSnapshot}
-                                onImportWorkspace={handleOpenWorkspaceImportPicker}
-                                onOpenVersionsDetails={handleOpenVersionsDetails}
-                                onHistorySelect={handleHistorySelect}
-                                onRenameBranch={handleRenameBranch}
-                                getShortTurnId={getShortTurnId}
-                                getBranchAccentClassName={getBranchAccentClassName}
-                                renderHistoryTurnSnapshotContent={renderHistoryTurnSnapshotContent}
-                                renderHistoryTurnBadges={renderHistoryTurnBadges}
-                                renderHistoryTurnActionRow={renderHistoryTurnActionRow}
-                                renderActiveBranchSummaryContent={renderActiveBranchSummaryContent}
-                            />
+                        <div data-testid="workspace-stage-column" className="min-w-0 xl:min-h-0 xl:h-full">
+                            {focusSurface}
                         </div>
-                    </section>
 
-                    <section data-testid="workspace-actions-composer-row" className="min-w-0">
-                        <ComposerSettingsPanel
-                            {...composerSettingsPanelProps}
-                            imageToolsPanel={sideToolPanel}
-                            onClearStyle={handleClearStyle}
-                        />
+                        <div
+                            data-testid="workspace-work-column"
+                            className="grid min-w-0 gap-1.5 xl:min-h-0 xl:h-full xl:grid-rows-[minmax(0,1fr)_auto]"
+                        >
+                            <div data-testid="workspace-history-column" className="min-w-0 xl:min-h-0 xl:h-full">
+                                {historySurface}
+                            </div>
+
+                            <section data-testid="workspace-actions-composer-row" className="min-w-0 xl:min-h-0">
+                                <ComposerSettingsPanel
+                                    {...composerSettingsPanelProps}
+                                    imageToolsPanel={sideToolPanel}
+                                    onClearStyle={handleClearStyle}
+                                />
+                            </section>
+                        </div>
                     </section>
                 </main>
             </div>

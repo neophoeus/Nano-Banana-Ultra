@@ -70,6 +70,7 @@ export const EMPTY_WORKSPACE_COMPOSER_STATE: WorkspaceComposerState = {
     includeThoughts: true,
     googleSearch: false,
     imageSearch: false,
+    stickySendIntent: 'independent',
     generationMode: 'Text to Image',
     executionMode: 'single-turn',
 };
@@ -646,6 +647,10 @@ const sanitizeWorkspaceComposerState = (value: unknown): WorkspaceComposerState 
         includeThoughts: Boolean(value.includeThoughts),
         googleSearch: Boolean(value.googleSearch),
         imageSearch: Boolean(value.imageSearch),
+        stickySendIntent:
+            value.stickySendIntent === 'memory' || value.stickySendIntent === 'independent'
+                ? value.stickySendIntent
+                : EMPTY_WORKSPACE_COMPOSER_STATE.stickySendIntent,
         generationMode:
             typeof value.generationMode === 'string'
                 ? value.generationMode
@@ -794,7 +799,10 @@ export const loadSharedWorkspaceSnapshot = async (): Promise<WorkspacePersistenc
     }
 };
 
-export const saveSharedWorkspaceSnapshot = async (snapshot: WorkspacePersistenceSnapshot): Promise<void> => {
+export const saveSharedWorkspaceSnapshot = async (
+    snapshot: WorkspacePersistenceSnapshot,
+    options?: { allowClearing?: boolean },
+): Promise<void> => {
     const normalized = sanitizeWorkspaceSnapshot(snapshot);
     const persistableSnapshot = buildPersistableWorkspaceSnapshot(normalized);
     const hasContent = Boolean(
@@ -810,7 +818,7 @@ export const saveSharedWorkspaceSnapshot = async (snapshot: WorkspacePersistence
         normalized.workspaceSession.conversationId,
     );
 
-    if (!hasContent) {
+    if (!hasContent && !options?.allowClearing) {
         return;
     }
 
@@ -826,6 +834,10 @@ export const saveSharedWorkspaceSnapshot = async (snapshot: WorkspacePersistence
     } catch {
         // Ignore backup persistence failures and keep local snapshot writes non-blocking.
     }
+};
+
+export const clearSharedWorkspaceSnapshot = async (): Promise<void> => {
+    await saveSharedWorkspaceSnapshot(EMPTY_WORKSPACE_SNAPSHOT, { allowClearing: true });
 };
 
 export const exportWorkspaceSnapshotDocument = (snapshot: WorkspacePersistenceSnapshot): string =>

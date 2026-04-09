@@ -139,6 +139,50 @@ describe('useHistoryPresentationHelpers', () => {
         expect((markup.match(/Queued Batch Result/g) || []).length).toBe(1);
     });
 
+    it('uses passive memory and thread cues instead of execution mode labels', () => {
+        const memoryTurn = buildTurn({
+            id: 'turn-memory',
+            executionMode: 'chat-continuation',
+            conversationId: 'conversation-1234',
+            conversationBranchOriginId: 'thread-1234',
+        });
+
+        const TestView = () => {
+            const { renderHistoryTurnBadges } = useHistoryPresentationHelpers({
+                history: [memoryTurn],
+                branchSummaryByOriginId: {},
+                effectiveBranchContinuationSourceByBranchOriginId: {},
+                getBranchAccentClassName: () => 'border-gray-200 bg-white text-gray-700',
+                getContinueActionLabel: () => 'Continue',
+                getLineageActionLabel: () => 'Continue',
+                getShortTurnId: () => 'thr-1234',
+                handleBranchFromHistoryTurn: vi.fn(),
+                handleContinueFromHistoryTurn: vi.fn(),
+                handleHistorySelect: vi.fn(),
+                handleRenameBranch: vi.fn(),
+                isPromotedContinuationSource: () => false,
+                t: (key) =>
+                    ({
+                        historyBadgeMemory: 'Memory',
+                        historyBadgeThread: 'Thread',
+                        historyModeImage: 'Image',
+                        historyBadgeCandidate: 'Candidate',
+                        historyBadgeParent: 'Parent',
+                        workspaceSourceBadge: 'Source',
+                        workspaceImportReviewExecutionQueuedBatchJob: 'Queued Batch Result',
+                    })[key] || key,
+            });
+
+            return <div>{renderHistoryTurnBadges({ item: memoryTurn, variant: 'stage-source' })}</div>;
+        };
+
+        const markup = renderToStaticMarkup(<TestView />);
+
+        expect(markup).toContain('Memory');
+        expect(markup).toContain('Thread thr-1234');
+        expect(markup).not.toContain('Chat Continuation');
+    });
+
     it('builds selected-item summary strip props in the frozen canonical order', () => {
         const earlierQueuedTurn = buildTurn({
             id: 'turn-queued-1',
@@ -219,7 +263,6 @@ describe('useHistoryPresentationHelpers', () => {
             'size',
             'aspect-ratio',
             'queued-batch-position',
-            'execution-mode',
             'mode',
             'created-at',
         ]);

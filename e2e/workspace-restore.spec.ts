@@ -328,6 +328,17 @@ const restoredOfficialConversationSnapshot = {
         imageSearch: false,
         generationMode: 'Follow-up Edit',
         executionMode: 'chat-continuation',
+        stickySendIntent: 'memory',
+    },
+};
+
+const restoredBlockedMemoryIntentSnapshot = {
+    ...restoredOfficialConversationSnapshot,
+    composerState: {
+        ...restoredOfficialConversationSnapshot.composerState,
+        batchSize: 3,
+        stickySendIntent: 'independent',
+        executionMode: 'single-turn',
     },
 };
 
@@ -756,11 +767,22 @@ const visibleProvenancePanel = (scope: Page | Locator) =>
 const visibleFilmstripCard = (page: Page) => page.locator('[data-testid^="history-card-"]:visible').first();
 const visibleFilmstripStageSourceBadge = (page: Page) =>
     page.locator('[data-testid^="history-stage-source-"]:visible').first();
-const currentStageSourceCard = (scope: Page | Locator) =>
-    scope.locator('[data-testid="current-stage-source"]:visible').first();
-const selectedItemBranchChip = (page: Page) => page.getByTestId('selected-item-summary-chip-branch').first();
-const workflowDetailThoughtEntry = (page: Page) =>
-    page.locator('[data-testid^="workspace-workflow-detail-thought-entry-"]:visible').first();
+const stageTopRightChip = (
+    page: Page,
+    key: 'stage-source' | 'branch' | 'continuation-differs' | 'result-status',
+) =>
+    page
+        .locator(
+            `[data-testid="stage-top-right-chip-${key}"]:visible, [data-testid="stage-top-right-overflow-chip-${key}"]:visible`,
+        )
+        .first();
+const followUpEditButton = (page: Page) =>
+    page
+        .getByTestId('composer-settings-panel')
+        .getByRole('button', { name: new RegExp(escapeRegExp(tt('workspaceViewerFollowUpEdit'))) })
+        .first();
+const progressDetailThoughtEntry = (page: Page) =>
+    page.locator('[data-testid^="workspace-progress-detail-thought-entry-"]:visible').first();
 const activeBranchCard = (page: Page) =>
     page
         .locator(
@@ -794,6 +816,23 @@ const openVersionsDetailModal = async (page: Page) => {
     await expect(page.getByTestId('workspace-versions-detail-modal')).toBeVisible();
 };
 
+const withVersionsDetailModal = async <T>(page: Page, callback: (modal: Locator) => Promise<T>) => {
+    const modal = page.getByTestId('workspace-versions-detail-modal');
+    const wasOpen = await isLocatorVisible(modal);
+
+    if (!wasOpen) {
+        await openVersionsDetailModal(page);
+    }
+
+    const result = await callback(page.getByTestId('workspace-versions-detail-modal'));
+
+    if (!wasOpen) {
+        await closeVersionsDetailModal(page);
+    }
+
+    return result;
+};
+
 const openSourcesDetailModal = async (page: Page) => {
     const modal = page.getByTestId('workspace-sources-detail-modal');
     if (await isLocatorVisible(modal)) {
@@ -804,26 +843,26 @@ const openSourcesDetailModal = async (page: Page) => {
     await expect(page.getByTestId('workspace-sources-detail-modal')).toBeVisible();
 };
 
-const openAnswerDetailModal = async (page: Page) => {
-    const modal = page.getByTestId('workspace-answer-detail-modal');
+const openResponseDetailModal = async (page: Page) => {
+    const modal = page.getByTestId('workspace-response-detail-modal');
     if (await isLocatorVisible(modal)) {
         return;
     }
 
-    await clickFirstVisible(page.getByTestId('workspace-answer-open-details'));
-    await expect(page.getByTestId('workspace-answer-detail-modal')).toBeVisible();
+    await clickFirstVisible(page.getByTestId('workspace-response-open-details'));
+    await expect(page.getByTestId('workspace-response-detail-modal')).toBeVisible();
 };
 
-const openWorkflowDetailModal = async (page: Page) => {
-    const modal = page.getByTestId('workspace-workflow-detail-modal');
+const openProgressDetailModal = async (page: Page) => {
+    const modal = page.getByTestId('workspace-progress-detail-modal');
     if (await isLocatorVisible(modal)) {
         return;
     }
 
-    const workflowCard = page.locator('[data-testid="workspace-workflow-card"]:visible').first();
-    await workflowCard.scrollIntoViewIfNeeded();
-    await workflowCard.evaluate((element: HTMLElement) => element.click());
-    await expect(page.getByTestId('workspace-workflow-detail-modal')).toBeVisible();
+    const progressButton = page.locator('[data-testid="workspace-progress-open-details"]:visible').first();
+    await progressButton.scrollIntoViewIfNeeded();
+    await progressButton.evaluate((element: HTMLElement) => element.click());
+    await expect(page.getByTestId('workspace-progress-detail-modal')).toBeVisible();
 };
 
 const openQueuedBatchDetailModal = async (page: Page) => {
@@ -862,8 +901,8 @@ const closeSourcesDetailModal = async (page: Page) => {
     await expect(page.getByTestId('workspace-sources-detail-modal')).toHaveCount(0);
 };
 
-const closeWorkflowDetailModal = async (page: Page) => {
-    const modal = page.getByTestId('workspace-workflow-detail-modal');
+const closeProgressDetailModal = async (page: Page) => {
+    const modal = page.getByTestId('workspace-progress-detail-modal');
     if (!(await isLocatorVisible(modal))) {
         return;
     }
@@ -871,11 +910,11 @@ const closeWorkflowDetailModal = async (page: Page) => {
     await modal
         .getByRole('button', { name: tt('workspaceViewerClose') })
         .evaluate((button: HTMLButtonElement) => button.click());
-    await expect(page.getByTestId('workspace-workflow-detail-modal')).toHaveCount(0);
+    await expect(page.getByTestId('workspace-progress-detail-modal')).toHaveCount(0);
 };
 
-const closeAnswerDetailModal = async (page: Page) => {
-    const modal = page.getByTestId('workspace-answer-detail-modal');
+const closeResponseDetailModal = async (page: Page) => {
+    const modal = page.getByTestId('workspace-response-detail-modal');
     if (!(await isLocatorVisible(modal))) {
         return;
     }
@@ -883,18 +922,18 @@ const closeAnswerDetailModal = async (page: Page) => {
     await modal
         .getByRole('button', { name: tt('workspaceViewerClose') })
         .evaluate((button: HTMLButtonElement) => button.click());
-    await expect(page.getByTestId('workspace-answer-detail-modal')).toHaveCount(0);
+    await expect(page.getByTestId('workspace-response-detail-modal')).toHaveCount(0);
 };
 
-type WorkspaceDetailModalName = 'versions' | 'sources' | 'answer' | 'workflow' | 'queued-jobs';
+type WorkspaceDetailModalName = 'versions' | 'sources' | 'response' | 'progress' | 'queued-jobs';
 
 const getVisibleWorkspaceDetailModal = async (page: Page): Promise<WorkspaceDetailModalName | null> => {
-    if (await isLocatorVisible(page.getByTestId('workspace-workflow-detail-modal'))) {
-        return 'workflow';
+    if (await isLocatorVisible(page.getByTestId('workspace-progress-detail-modal'))) {
+        return 'progress';
     }
 
-    if (await isLocatorVisible(page.getByTestId('workspace-answer-detail-modal'))) {
-        return 'answer';
+    if (await isLocatorVisible(page.getByTestId('workspace-response-detail-modal'))) {
+        return 'response';
     }
 
     if (await isLocatorVisible(page.getByTestId('workspace-sources-detail-modal'))) {
@@ -920,8 +959,11 @@ const reopenWorkspaceDetailModal = async (page: Page, modalName: WorkspaceDetail
         case 'sources':
             await openSourcesDetailModal(page);
             return;
-        case 'answer':
-            await openAnswerDetailModal(page);
+        case 'response':
+            await openResponseDetailModal(page);
+            return;
+        case 'progress':
+            await openProgressDetailModal(page);
             return;
         case 'queued-jobs':
             await openQueuedBatchDetailModal(page);
@@ -966,33 +1008,23 @@ const ensureDetailsExpanded = async (scope: Page | Locator, testId: string) => {
     }
 };
 
-const withWorkflowDetailModal = async <T>(page: Page, callback: (workflowModal: Locator) => Promise<T>): Promise<T> => {
+const withProgressDetailModal = async <T>(page: Page, callback: (progressModal: Locator) => Promise<T>): Promise<T> => {
     const previouslyVisibleModal = await getVisibleWorkspaceDetailModal(page);
-    const wasOpen = previouslyVisibleModal === 'workflow';
+    const wasOpen = previouslyVisibleModal === 'progress';
 
     if (!wasOpen) {
-        await openWorkflowDetailModal(page);
+        await openProgressDetailModal(page);
     }
 
-    const result = await callback(page.getByTestId('workspace-workflow-detail-modal'));
+    const result = await callback(page.getByTestId('workspace-progress-detail-modal'));
 
     if (!wasOpen) {
-        await closeWorkflowDetailModal(page);
+        await closeProgressDetailModal(page);
         await reopenWorkspaceDetailModal(page, previouslyVisibleModal);
     }
 
     return result;
 };
-
-const withWorkflowStageSourceCard = async <T>(
-    page: Page,
-    callback: (stageSourceCard: Locator, workflowModal: Locator) => Promise<T>,
-): Promise<T> =>
-    withWorkflowDetailModal(page, async (workflowModal) => {
-        const stageSourceCard = currentStageSourceCard(workflowModal);
-        await expect(stageSourceCard).toBeVisible();
-        return callback(stageSourceCard, workflowModal);
-    });
 
 const withSourcesDetailModal = async <T>(page: Page, callback: (sourcesModal: Locator) => Promise<T>): Promise<T> => {
     const modal = page.getByTestId('workspace-sources-detail-modal');
@@ -1027,25 +1059,6 @@ const clickFirstVisible = async (locator: Locator) => {
 
 const clickSummary = async (locator: Locator) => {
     await locator.first().evaluate((element: HTMLElement) => element.click());
-};
-
-const clickSelectedItemAction = async (page: Page, actionKey: 'open' | 'continue' | 'branch' | 'rename-branch') => {
-    const directAction = page.getByTestId(`selected-item-action-${actionKey}`).first();
-    if (await isLocatorVisible(directAction)) {
-        await directAction.click();
-        return;
-    }
-
-    const overflowTrigger = page.getByTestId('selected-item-action-overflow-trigger').first();
-    if (await isLocatorVisible(overflowTrigger)) {
-        await overflowTrigger.click();
-        const overflowAction = page.getByTestId(`selected-item-action-overflow-action-${actionKey}`).first();
-        await expect(overflowAction).toBeVisible();
-        await overflowAction.click();
-        return;
-    }
-
-    await expect(directAction).toBeVisible();
 };
 
 const openGalleryPanel = async (page: Page) => {
@@ -1134,38 +1147,35 @@ const assertCurrentStageSourceCard = async (
     page: Page,
     options: {
         sourceLabel?: string;
-        actionLabel: 'Reopen' | 'Continue' | 'Branch';
+        actionLabel?: 'Reopen' | 'Continue' | 'Branch';
         branchLabel?: string;
         expectOpenAction?: boolean;
         expectContinueAction?: boolean;
         expectBranchAction?: boolean;
     },
 ) => {
-    await withWorkflowStageSourceCard(page, async (stageSourceCard, workflowModal) => {
-        await expect(stageSourceCard).toContainText(tt('workspaceInsightsCurrentImage'));
-        if (options.sourceLabel) {
-            await expect(stageSourceCard).toContainText(options.sourceLabel);
-        }
-        await expect(stageSourceCard).toContainText(localizedFollowUpAction(options.actionLabel));
-        if (options.branchLabel) {
-            await expect(stageSourceCard).toContainText(options.branchLabel);
-        }
-        if (options.expectOpenAction) {
-            await ensureDetailsExpanded(workflowModal, 'current-stage-source-shell');
-            await ensureDetailsExpanded(workflowModal, 'current-stage-source-details');
-            await expect(stageSourceCard.getByTestId('current-stage-source-open')).toBeVisible();
-        }
-        if (options.expectContinueAction) {
-            await ensureDetailsExpanded(workflowModal, 'current-stage-source-shell');
-            await ensureDetailsExpanded(workflowModal, 'current-stage-source-details');
-            await expect(stageSourceCard.getByTestId('current-stage-source-continue')).toBeVisible();
-        }
-        if (options.expectBranchAction) {
-            await ensureDetailsExpanded(workflowModal, 'current-stage-source-shell');
-            await ensureDetailsExpanded(workflowModal, 'current-stage-source-details');
-            await expect(stageSourceCard.getByTestId('current-stage-source-branch')).toBeVisible();
-        }
-    });
+    const followUpSourceSummary = options.actionLabel
+        ? `${options.sourceLabel || tt('stageOriginHistory')} · ${localizedFollowUpAction(options.actionLabel)}`
+        : options.sourceLabel || tt('stageOriginHistory');
+
+    await expect(followUpEditButton(page)).toBeVisible();
+    await expect(followUpEditButton(page)).toContainText(tt('workspaceViewerFollowUpEdit'));
+    await expect(followUpEditButton(page)).toContainText(followUpSourceSummary);
+
+    if (options.branchLabel) {
+        await expect(stageTopRightChip(page, 'branch')).toContainText(options.branchLabel);
+    }
+
+    if (options.expectOpenAction || options.expectContinueAction) {
+        await withVersionsDetailModal(page, async () => {
+            if (options.expectOpenAction) {
+                await expect(activeBranchCard(page).getByTestId('active-branch-open-latest')).toBeVisible();
+            }
+            if (options.expectContinueAction) {
+                await expect(activeBranchCard(page).getByTestId('active-branch-continue-latest')).toBeVisible();
+            }
+        });
+    }
 };
 
 const assertStageSourceSurfaces = async (
@@ -1198,7 +1208,9 @@ const assertStageSourceSurfaces = async (
         branchLabel: options.branchLabel,
     });
     await expect(visibleFilmstripStageSourceBadge(page)).toContainText(localizedText('Stage Source'));
-    await expect(page.locator('[data-testid="context-workflow-summary"]:visible').first()).toContainText(timelineText);
+    await openProgressDetailModal(page);
+    await expect(page.getByTestId('workspace-progress-detail-modal')).toContainText(timelineText);
+    await closeProgressDetailModal(page);
     await expect(page.getByTestId('global-log-stage-source-entry')).toHaveCount(0);
     await expect(page.getByTestId('global-log-stage-source-badge')).toHaveCount(0);
     await expect(page.getByTestId('global-log-minimized-source')).toHaveCount(0);
@@ -1243,9 +1255,34 @@ const assertComposerChromeLocalized = async (page: Page) => {
     await closeVersionsDetailModal(page);
 
     const advancedToggle = page.getByRole('button', { name: tt('composerToolbarAdvancedSettings') }).first();
+    const sendIntentToggle = page.getByTestId('composer-sticky-send-intent-toggle');
+    const sendIntentInfoTrigger = page.getByTestId('composer-sticky-send-intent-info-trigger');
+    const sendIntentInfoCard = page.getByTestId('composer-sticky-send-intent-info-card');
+    const independentSendButton = page.getByTestId('composer-sticky-send-intent-independent');
+    const memorySendButton = page.getByTestId('composer-sticky-send-intent-memory');
+
     await expect(advancedToggle).toBeVisible();
-    await expect(page.getByRole('heading', { name: tt('promptLabel') }).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: tt('composerPromptLabelIndependent') }).first()).toBeVisible();
+    await expect(sendIntentToggle).toBeVisible();
+    await expect(sendIntentToggle).toHaveAttribute('data-active-intent', 'independent');
+    await expect(sendIntentToggle).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.getByTestId('composer-sticky-send-intent-title')).toContainText(tt('composerSendIntentTitle'));
+    await expect(sendIntentInfoTrigger).toBeVisible();
+    await expect(sendIntentInfoCard).toHaveCount(0);
+    await expect(independentSendButton).toContainText(tt('composerSendIntentIndependent'));
+    await expect(memorySendButton).toContainText(tt('composerSendIntentMemory'));
+    await expect(independentSendButton).toHaveAttribute('data-selected', 'true');
+    await expect(memorySendButton).toHaveAttribute('data-selected', 'false');
+    await expect(page.getByRole('button', { name: tt('workspaceViewerNewConversation') })).toHaveCount(0);
     await expect(page.getByRole('button', { name: tt('composerQueueBatchJob') })).toBeVisible();
+
+    await sendIntentInfoTrigger.click();
+
+    await expect(sendIntentInfoCard).toContainText(tt('composerSendIntentHelperIndependent'));
+
+    await page.keyboard.press('Escape');
+
+    await expect(sendIntentInfoCard).toHaveCount(0);
 
     await advancedToggle.click();
 
@@ -1275,19 +1312,19 @@ const renameBranchFromGallery = async (page: Page, nextLabel: string) => {
 };
 
 const assertBranchLabelPropagates = async (page: Page, branchLabel: string) => {
-    await withWorkflowStageSourceCard(page, async (stageSourceCard) => {
-        await expect(stageSourceCard).toContainText(branchLabel);
+    await expect(stageTopRightChip(page, 'branch')).toContainText(branchLabel);
+    await expect(page.getByTestId('workspace-unified-history-active-branch')).toContainText(branchLabel);
+    await withVersionsDetailModal(page, async () => {
+        await expect(activeBranchCard(page)).toContainText(branchLabel);
     });
-    await expect(page.locator('[data-testid="history-versions-shell"]:visible').first()).toContainText(branchLabel);
-    await expect(selectedItemBranchChip(page)).toContainText(branchLabel);
 };
 
 const assertBranchLabelCleared = async (page: Page, branchLabel: string) => {
-    await withWorkflowStageSourceCard(page, async (stageSourceCard) => {
-        await expect(stageSourceCard).not.toContainText(branchLabel);
+    await expect(stageTopRightChip(page, 'branch')).not.toContainText(branchLabel);
+    await expect(page.getByTestId('workspace-unified-history-active-branch')).not.toContainText(branchLabel);
+    await withVersionsDetailModal(page, async () => {
+        await expect(activeBranchCard(page)).not.toContainText(branchLabel);
     });
-    await expect(page.locator('[data-testid="history-versions-shell"]:visible').first()).not.toContainText(branchLabel);
-    await expect(selectedItemBranchChip(page)).not.toContainText(branchLabel);
 };
 
 const assertProvenanceSummary = async (
@@ -1389,31 +1426,32 @@ const assertOfficialConversationSummary = async (
         expectStageBadge?: boolean;
     },
 ) => {
-    await openWorkflowDetailModal(page);
+    await assertCurrentStageSourceCard(page, {
+        sourceLabel: tt('stageOriginHistory'),
+        actionLabel: 'Continue',
+        branchLabel: options.branchLabel,
+    });
 
-    const card = page
-        .getByTestId('workspace-workflow-detail-modal')
-        .getByTestId('conversation-continuity-card')
-        .first();
-    await expect(card).toContainText(localizedText('Official Conversation'));
-    await expect(card).toContainText(options.conversationIdShort);
-    await expect(card).toContainText(options.turnCount);
-    await expect(card).toContainText(
-        tt('workspaceInsightsConversationBranchActiveSource', options.branchLabel, options.activeSourceShortId),
-    );
-    await expect(card).toContainText(options.prompt);
-    await ensureDetailsExpanded(page, 'continuity-source-section');
-    await ensureDetailsExpanded(page, 'conversation-continuity-details');
-    await expect(card.getByTestId('conversation-continuity-open')).toHaveCount(1);
-    await expect(card.getByTestId('conversation-continuity-continue')).toHaveCount(0);
-    await expect(card.getByTestId('conversation-continuity-branch')).toHaveCount(0);
-    if (options.expectStageBadge) {
-        await expect(card.getByTestId('conversation-stage-source-badge').first()).toContainText(
-            localizedText('Current Stage Source'),
+    await expect(page.getByTestId('composer-sticky-send-intent-toggle')).toHaveAttribute('data-active-intent', 'memory');
+    await expect(page.getByTestId('composer-sticky-send-intent-toggle')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByTestId('composer-sticky-send-intent-memory')).toHaveAttribute('data-selected', 'true');
+    await expect(
+        page.getByTestId('composer-settings-panel').getByRole('heading', { name: tt('composerPromptLabelMemory') }).first(),
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: tt('workspaceViewerNewConversation') })).toBeVisible();
+
+    await withVersionsDetailModal(page, async () => {
+        await expect(activeBranchCard(page)).toContainText(options.branchLabel);
+        await expect(activeBranchCard(page)).toContainText(
+            `${localizedText('Continuation source ')}${options.activeSourceShortId}`,
         );
-    }
+        await expect(activeBranchCard(page)).toContainText(options.prompt);
+    });
 
-    await closeWorkflowDetailModal(page);
+    if (options.expectStageBadge) {
+        await expect(stageTopRightChip(page, 'stage-source')).toBeVisible();
+        await expect(visibleFilmstripStageSourceBadge(page)).toContainText(localizedText('Stage Source'));
+    }
 };
 
 const assertOfficialConversationGeneratePayload = (payload: Record<string, unknown>, prompt: string) => {
@@ -1858,18 +1896,17 @@ const replaceWithImportedWorkspace = async (
 };
 
 const openFirstHistoryRenameDialog = async (page: Page) => {
-    await openGalleryPanel(page);
-    const firstCard = page.locator('[data-testid^="history-card-"]').first();
-    await expect(firstCard).toBeVisible();
-    await firstCard.click();
-    await clickSelectedItemAction(page, 'rename-branch');
+    await openVersionsDetailModal(page);
+    await activeBranchCard(page)
+        .getByRole('button', { name: tt('historyActionRename') })
+        .evaluate((button: HTMLButtonElement) => button.click());
     await expect(page.getByTestId('branch-rename-dialog')).toBeVisible();
     return page.getByTestId('branch-rename-dialog').locator('form').first();
 };
 
 test.describe('workspace restore flows', () => {
     const repairedHistoryPreviewPattern =
-        /^(data:image\/jpeg;base64,|\/api\/load-image\?filename=gemini-3\.1-flash-image-preview-history-thumb_.+\.jpg$)/;
+        /^(data:image\/jpeg;base64,|\/api\/load-image\?filename=(?:gemini-3\.1-flash-image-preview-history-thumb_.+\.jpg|file-backed-turn-thumbnail\.jpg)$)/;
 
     test('editor floating shared controls show compact settings summary and button-only actions', async ({ page }) => {
         await openFreshWorkspace(page);
@@ -2175,7 +2212,6 @@ test.describe('workspace restore flows', () => {
         await expect(composer(page)).toHaveValue('Imported workspace prompt');
         await assertCurrentStageSourceCard(page, {
             sourceLabel: tt('stageOriginHistory'),
-            actionLabel: 'Branch',
             branchLabel: 'Imported Branch',
         });
         await expect(visibleFilmstripStageSourceBadge(page)).toContainText(localizedText('Stage Source'));
@@ -2312,22 +2348,15 @@ test.describe('workspace restore flows', () => {
         });
     });
 
-    test('restored batch variants remain candidates until explicitly promoted, and only one source stays active per branch', async ({
-        page,
-    }) => {
+    test('restored batch variants keep only one active source per branch after promotion', async ({ page }) => {
         await openFreshWorkspace(page);
         await replaceWithImportedWorkspace(page, variantSnapshotFilePath, 'ui-import-variant-workspace.json');
 
         const bravoVariantCard = page.locator('[data-testid="history-card-bravo-v2-turn"]:visible').first();
         const alphaVariantCard = page.locator('[data-testid="history-card-alpha-v1-turn"]:visible').first();
 
-        await withWorkflowStageSourceCard(page, async (stageSourceCard, workflowModal) => {
-            await ensureDetailsExpanded(workflowModal, 'current-stage-source-shell');
-            await ensureDetailsExpanded(workflowModal, 'current-stage-source-details');
-            await expect(stageSourceCard).toContainText('Variant candidate B');
-            await expect(stageSourceCard).toContainText(localizedText('Candidate'));
-            await expect(stageSourceCard.getByTestId('current-stage-source-continue')).toHaveCount(0);
-        });
+        await expect(stageTopRightChip(page, 'stage-source')).toBeVisible();
+        await expect(bravoVariantCard.getByTestId('history-stage-source-bravo-v2-turn')).toBeVisible();
 
         await openVersionsDetailModal(page);
         await expect(bravoVariantCard.getByTestId('history-stage-source-bravo-v2-turn')).toBeVisible();
@@ -2345,10 +2374,6 @@ test.describe('workspace restore flows', () => {
         await expect(
             page.getByText(localizedText('Variant promoted as the active continuation source.'), { exact: true }),
         ).toBeVisible();
-        await withWorkflowStageSourceCard(page, async (stageSourceCard) => {
-            await expect(stageSourceCard).toContainText(localizedText('Source'));
-            await expect(stageSourceCard.getByTestId('current-stage-source-continue')).toHaveCount(0);
-        });
         await expect(bravoVariantCard).toBeVisible();
         await expect(alphaVariantCard).toBeVisible();
 
@@ -2360,24 +2385,23 @@ test.describe('workspace restore flows', () => {
         await closeVersionsDetailModal(page);
 
         await alphaVariantCard.click();
-        await clickSelectedItemAction(page, 'continue');
-
-        await expect(
-            page.getByText(localizedText('Variant promoted as the active continuation source.'), { exact: true }),
-        ).toBeVisible();
-        await withWorkflowStageSourceCard(page, async (stageSourceCard) => {
-            await expect(stageSourceCard).toContainText('Variant candidate A');
-            await expect(stageSourceCard).toContainText(localizedText('Source'));
+        await assertCurrentStageSourceCard(page, {
+            sourceLabel: tt('stageOriginHistory'),
+            actionLabel: 'Reopen',
         });
         await expect(alphaVariantCard.getByTestId('history-stage-source-alpha-v1-turn')).toBeVisible();
+        await expect(alphaVariantCard.locator('[data-testid="history-continuation-source-alpha-v1-turn"]')).toHaveCount(
+            0,
+        );
         await expect(bravoVariantCard.locator('[data-testid="history-stage-source-bravo-v2-turn"]')).toHaveCount(0);
+        await expect(bravoVariantCard.getByTestId('history-continuation-source-bravo-v2-turn')).toBeVisible();
         await expect(alphaVariantCard).toBeVisible();
         await expect(bravoVariantCard).toBeVisible();
 
         await openVersionsDetailModal(page);
-        await expect(activeBranchCard(page)).toContainText(`${localizedText('Continuation source ')}alpha-v1`);
+        await expect(activeBranchCard(page)).toContainText(`${localizedText('Continuation source ')}bravo-v2`);
         await expect(page.locator('[data-testid="active-branch-continue-latest"]:visible').first()).toContainText(
-            localizedText('Promote Variant'),
+            localizedText('Source Active'),
         );
     });
 
@@ -2392,7 +2416,9 @@ test.describe('workspace restore flows', () => {
 
         const firstFilmstripCard = visibleFilmstripCard(page);
         await firstFilmstripCard.click();
-        await clickSelectedItemAction(page, 'continue');
+        await openVersionsDetailModal(page);
+        await page.locator('[data-testid="active-branch-continue-latest"]:visible').first().click();
+        await closeVersionsDetailModal(page);
 
         await assertStageSourceSurfaces(page, {
             composerValue: 'Imported workspace prompt',
@@ -2403,7 +2429,7 @@ test.describe('workspace restore flows', () => {
         });
     });
 
-    test('filmstrip chrome follows the active UI language for headings, summary, and hover actions', async ({
+    test('filmstrip chrome follows the active UI language for headings, summary, and utility actions', async ({
         page,
     }) => {
         await openFreshWorkspace(page);
@@ -2412,13 +2438,21 @@ test.describe('workspace restore flows', () => {
 
         await assertFilmstripChromeLocalized(page);
 
-        const firstFilmstripCard = visibleFilmstripCard(page);
-        await firstFilmstripCard.click();
-        await expect(page.getByTestId('selected-item-action-continue')).toContainText(tt('historyContinueFromTurn'));
-        await expect(page.getByTestId('selected-item-action-branch')).toContainText(tt('historyActionBranch'));
+        await expect(page.getByTestId('history-versions-open-details')).toContainText(tt('workspaceInsightsVersions'));
+        await expect(page.getByTestId('history-import-workspace')).toContainText(tt('composerToolbarImportWorkspace'));
+        await expect(page.getByTestId('history-export-workspace')).toContainText(tt('composerToolbarExportWorkspace'));
+
+        await openVersionsDetailModal(page);
+        await expect(page.locator('[data-testid="active-branch-open-latest"]:visible').first()).toContainText(
+            tt('historyActionOpenLatest'),
+        );
+        await expect(page.locator('[data-testid="active-branch-continue-latest"]:visible').first()).toContainText(
+            tt('historyContinueFromTurn'),
+        );
+        await closeVersionsDetailModal(page);
     });
 
-    test('filmstrip branch preserves the composer while syncing stage-source surfaces and header hint', async ({
+    test('filmstrip reopen preserves the composer while syncing stage-source surfaces and header hint', async ({
         page,
     }) => {
         await openFreshWorkspace(page);
@@ -2426,13 +2460,13 @@ test.describe('workspace restore flows', () => {
         await dismissRestoreNotice(page);
         await composer(page).fill('Filmstrip branch draft');
 
-        await clickSelectedItemAction(page, 'branch');
+        await visibleFilmstripCard(page).click();
 
         await assertStageSourceSurfaces(page, {
             composerValue: 'Filmstrip branch draft',
-            followUpSource: 'Branch',
-            toastKey: 'historySourceBranchNotice',
-            timelineKey: 'historySourceBranchLog',
+            followUpSource: 'Reopen',
+            toastKey: 'historySourceReopenNotice',
+            timelineKey: 'historySourceReopenLog',
             branchLabel: 'Imported Branch',
         });
     });
@@ -2599,12 +2633,14 @@ test.describe('workspace restore flows', () => {
 
         await expect(page.getByText(tt('branchRenameResetNotice'), { exact: true })).toBeVisible();
         await assertBranchLabelCleared(page, 'Imported Alt Path');
-        await expect(page.locator('[data-testid="history-versions-shell"]:visible').first()).toContainText(
+        await expect(page.getByTestId('workspace-unified-history-active-branch')).toContainText(
             tt('historyBranchNumber').replace('{0}', '1'),
         );
     });
 
-    test('gallery tab keeps imported history actions on open-plus-rename only', async ({ page }) => {
+    test('history surface keeps imported cards selection-only while versions owns branch controls', async ({
+        page,
+    }) => {
         await openFreshWorkspace(page);
         await replaceWithImportedWorkspace(page);
         await dismissRestoreNotice(page);
@@ -2618,12 +2654,14 @@ test.describe('workspace restore flows', () => {
         await expect(firstCard.locator('[data-testid^="history-branch-"]')).toHaveCount(0);
 
         await firstCard.click();
-        await expect(page.getByTestId('selected-item-action-bar')).toBeVisible();
-        await expect(page.getByTestId('selected-item-action-on-stage')).toBeVisible();
-        await expect(page.getByTestId('selected-item-action-continue')).toBeVisible();
-        await expect(page.getByTestId('selected-item-action-branch')).toBeVisible();
-        await expect(page.getByTestId('selected-item-action-rename-branch')).toBeVisible();
-        await expect(page.getByTestId('picker-sheet-close')).toHaveCount(0);
+        await expect(page.getByTestId('selected-item-action-bar')).toHaveCount(0);
+        await expect(page.getByTestId('workspace-unified-history-utility-actions')).toBeVisible();
+
+        await openVersionsDetailModal(page);
+        await expect(page.locator('[data-testid="active-branch-open-latest"]:visible').first()).toBeVisible();
+        await expect(page.locator('[data-testid="active-branch-continue-latest"]:visible').first()).toBeVisible();
+        await expect(activeBranchCard(page).getByRole('button', { name: tt('historyActionRename') })).toBeVisible();
+        await closeVersionsDetailModal(page);
     });
 
     test('export workspace triggers a JSON download', async ({ page }) => {
@@ -2751,34 +2789,36 @@ test.describe('workspace restore flows', () => {
         await restoredPage.close();
     });
 
-    test('desktop layout keeps the stage square while aligning the left focus block with the History plus Versions rail', async ({
+    test('desktop layout aligns the 40/60 workspace shell columns while keeping paginated history visible', async ({
         page,
     }) => {
         await page.setViewportSize({ width: 1520, height: 1200 });
         await openWorkspaceWithSnapshot(page, buildLayoutAlignmentSnapshot(12));
         await dismissRestoreNoticeIfPresent(page);
 
-        const focusState = page.getByTestId('workspace-history-focus-state');
-        const supportRail = page.getByTestId('workspace-history-support-rail');
+        const mainShell = page.getByTestId('workspace-main-shell');
+        const stageColumn = page.getByTestId('workspace-stage-column');
+        const workColumn = page.getByTestId('workspace-work-column');
+        const historyColumn = page.getByTestId('workspace-history-column');
         const stageFrame = page.getByTestId('generated-image-stage-frame');
         const visibleHistoryCards = page.locator('[role="button"][data-testid^="history-card-"]:visible');
 
-        await expect(focusState).toBeVisible();
-        await expect(supportRail).toBeVisible();
+        await expect(mainShell).toBeVisible();
+        await expect(stageColumn).toBeVisible();
+        await expect(workColumn).toBeVisible();
+        await expect(historyColumn).toBeVisible();
         await expect(stageFrame).toBeVisible();
-        await expect(visibleHistoryCards).toHaveCount(10);
+        await expect(visibleHistoryCards).toHaveCount(6);
 
-        const [focusBox, supportBox, stageBox] = await Promise.all([
-            focusState.boundingBox(),
-            supportRail.boundingBox(),
-            stageFrame.boundingBox(),
+        const [stageColumnBox, workColumnBox] = await Promise.all([
+            stageColumn.boundingBox(),
+            workColumn.boundingBox(),
         ]);
 
-        expect(focusBox).not.toBeNull();
-        expect(supportBox).not.toBeNull();
-        expect(stageBox).not.toBeNull();
-        expect(Math.abs((focusBox?.height || 0) - (supportBox?.height || 0))).toBeLessThanOrEqual(2);
-        expect(Math.abs((stageBox?.width || 0) - (stageBox?.height || 0))).toBeLessThanOrEqual(4);
+        expect(stageColumnBox).not.toBeNull();
+        expect(workColumnBox).not.toBeNull();
+        expect(Math.abs((stageColumnBox?.height || 0) - (workColumnBox?.height || 0))).toBeLessThanOrEqual(2);
+        expect((workColumnBox?.width || 0) - (stageColumnBox?.width || 0)).toBeGreaterThan(0);
     });
 
     test('queue batch submit from a file-backed restored stage keeps the browser payload file-backed', async ({
@@ -3208,11 +3248,6 @@ test.describe('workspace restore flows', () => {
         );
 
         await panel.getByTestId('queued-batch-job-job-imported-open').click();
-        await withWorkflowStageSourceCard(page, async (stageSourceCard) => {
-            await expect(stageSourceCard).toContainText(tt('workspaceImportReviewExecutionQueuedBatchJob'));
-            await expect(stageSourceCard).toContainText('#1/2');
-            await expect(stageSourceCard).not.toContainText(localizedText('Candidate'));
-        });
 
         const historyCard = page.getByTestId('history-card-queued-imported-turn');
         if ((await historyCard.count()) === 0) {
@@ -3229,10 +3264,25 @@ test.describe('workspace restore flows', () => {
         }
 
         await panel.getByTestId('queued-batch-job-job-imported-open-latest').click();
-        await withWorkflowStageSourceCard(page, async (stageSourceCard) => {
-            await expect(stageSourceCard).toContainText('#2/2');
-            await expect(stageSourceCard).toContainText('Imported queued results alternate angle');
-        });
+        const latestHistoryCard = page.getByTestId('history-card-queued-imported-turn-2');
+        if ((await latestHistoryCard.count()) === 0) {
+            await openGalleryPanel(page);
+        }
+        await expect(latestHistoryCard).toBeVisible();
+        await expect(latestHistoryCard.getByTestId('history-stage-source-queued-imported-turn-2')).toBeVisible();
+        await expect
+            .poll(() =>
+                page.evaluate(() => {
+                    const raw = localStorage.getItem('nbu_workspaceSnapshot');
+                    if (!raw) {
+                        return null;
+                    }
+
+                    const snapshot = JSON.parse(raw);
+                    return snapshot.viewState?.selectedHistoryId ?? null;
+                }),
+            )
+            .toBe('queued-imported-turn-2');
 
         await expect(panel.getByTestId('queued-batch-job-job-failed')).toContainText('Failed storyboard batch');
         await expect(panel.getByTestId('queued-batch-job-job-failed-state')).toContainText(
@@ -3242,24 +3292,22 @@ test.describe('workspace restore flows', () => {
         await expect(panel.getByTestId('queued-batch-job-job-failed')).toContainText(tt('queuedBatchTimelineClosed'));
     });
 
-    test('session continuity source card exposes direct source actions after restore', async ({ page }) => {
+    test('versions detail keeps restore source routing on the owner surface', async ({ page }) => {
         await openFreshWorkspace(page);
         await replaceWithImportedWorkspace(page);
         await dismissRestoreNotice(page);
 
-        await openWorkflowDetailModal(page);
+        await openProgressDetailModal(page);
+        await expect(page.getByTestId('workspace-progress-detail-modal').getByTestId('session-continuity-source-card')).toHaveCount(
+            0,
+        );
+        await closeProgressDetailModal(page);
 
-        const sessionSourceCard = page
-            .getByTestId('workspace-workflow-detail-modal')
-            .getByTestId('session-continuity-source-card')
-            .first();
-        await expect(sessionSourceCard).toContainText('Imported branch turn');
-        await ensureDetailsExpanded(page, 'continuity-source-section');
-        await ensureDetailsExpanded(page, 'session-continuity-details');
-        await expect(sessionSourceCard.getByTestId('session-continuity-open')).toHaveCount(1);
-        await expect(sessionSourceCard.getByTestId('session-continuity-continue')).toHaveCount(0);
-        await expect(sessionSourceCard.getByTestId('session-continuity-branch')).toHaveCount(0);
-        await closeWorkflowDetailModal(page);
+        await withVersionsDetailModal(page, async () => {
+            await expect(activeBranchCard(page)).toContainText('Imported branch turn');
+            await expect(activeBranchCard(page).getByTestId('active-branch-open-latest')).toBeVisible();
+            await expect(activeBranchCard(page).getByTestId('active-branch-continue-latest')).toBeVisible();
+        });
     });
 
     test('restore rehydrates official conversation state from the snapshot and keeps conversation source routing visible', async ({
@@ -3315,11 +3363,11 @@ test.describe('workspace restore flows', () => {
 
         await expect.poll(() => capturedBodies.length).toBe(1);
         assertOfficialConversationGeneratePayload(capturedBodies[0], prompt);
-        await openAnswerDetailModal(page);
-        await expect(page.getByTestId('workspace-answer-detail-modal')).toContainText(
+        await openResponseDetailModal(page);
+        await expect(page.getByTestId('workspace-response-detail-modal')).toContainText(
             'Browser official conversation reply',
         );
-        await closeAnswerDetailModal(page);
+        await closeResponseDetailModal(page);
         await assertOfficialConversationPostGenerateState(page, prompt);
     });
 
@@ -3360,12 +3408,69 @@ test.describe('workspace restore flows', () => {
 
         await expect.poll(() => capturedBodies.length).toBe(1);
         assertOfficialConversationGeneratePayload(capturedBodies[0], prompt);
-        await openAnswerDetailModal(page);
-        await expect(page.getByTestId('workspace-answer-detail-modal')).toContainText(
+        await openResponseDetailModal(page);
+        await expect(page.getByTestId('workspace-response-detail-modal')).toContainText(
             'Browser official conversation reply',
         );
-        await closeAnswerDetailModal(page);
+        await closeResponseDetailModal(page);
         await assertOfficialConversationPostGenerateState(page, prompt);
+    });
+
+    test('memory restore keeps the send-intent toggle and reset action aligned with the active state', async ({
+        page,
+    }) => {
+        await openWorkspaceWithSnapshot(page, restoredOfficialConversationSnapshot);
+
+        const sendIntentToggle = page.getByTestId('composer-sticky-send-intent-toggle');
+        const sendIntentInfoCard = page.getByTestId('composer-sticky-send-intent-info-card');
+        const independentSendButton = page.getByTestId('composer-sticky-send-intent-independent');
+        const memorySendButton = page.getByTestId('composer-sticky-send-intent-memory');
+        const newConversationButton = page.getByRole('button', { name: tt('workspaceViewerNewConversation') });
+
+        await expect(page.getByTestId('workspace-restore-notice')).toHaveCount(0);
+        await expect(sendIntentToggle).toHaveAttribute('data-active-intent', 'memory');
+        await expect(sendIntentToggle).toHaveAttribute('aria-pressed', 'true');
+        await expect(sendIntentInfoCard).toHaveCount(0);
+        await expect(independentSendButton).toHaveAttribute('data-selected', 'false');
+        await expect(memorySendButton).toHaveAttribute('data-selected', 'true');
+        await expect(newConversationButton).toBeVisible();
+
+        await sendIntentToggle.click();
+
+        await expect(sendIntentToggle).toHaveAttribute('data-active-intent', 'independent');
+        await expect(sendIntentToggle).toHaveAttribute('aria-pressed', 'false');
+        await expect(sendIntentInfoCard).toContainText(tt('composerSendIntentHelperIndependent'));
+        await expect(independentSendButton).toHaveAttribute('data-selected', 'true');
+        await expect(memorySendButton).toHaveAttribute('data-selected', 'false');
+        await expect(newConversationButton).toHaveCount(0);
+
+        await sendIntentToggle.click();
+
+        await expect(sendIntentToggle).toHaveAttribute('data-active-intent', 'memory');
+        await expect(sendIntentToggle).toHaveAttribute('aria-pressed', 'true');
+        await expect(sendIntentInfoCard).toContainText(tt('composerSendIntentHelperMemory'));
+        await expect(independentSendButton).toHaveAttribute('data-selected', 'false');
+        await expect(memorySendButton).toHaveAttribute('data-selected', 'true');
+        await expect(newConversationButton).toBeVisible();
+    });
+
+    test('blocked whole-button toggle keeps independent active and opens the memory explanation card', async ({
+        page,
+    }) => {
+        await openWorkspaceWithSnapshot(page, restoredBlockedMemoryIntentSnapshot);
+
+        const sendIntentToggle = page.getByTestId('composer-sticky-send-intent-toggle');
+        const sendIntentInfoCard = page.getByTestId('composer-sticky-send-intent-info-card');
+
+        await expect(sendIntentToggle).toHaveAttribute('data-active-intent', 'independent');
+        await expect(sendIntentToggle).toHaveAttribute('data-memory-available', 'false');
+        await expect(page.getByRole('button', { name: tt('workspaceViewerNewConversation') })).toHaveCount(0);
+
+        await sendIntentToggle.click();
+
+        await expect(sendIntentToggle).toHaveAttribute('data-active-intent', 'independent');
+        await expect(sendIntentInfoCard).toContainText(tt('composerSendIntentHelperMemory'));
+        await expect(sendIntentInfoCard).toContainText(tt('composerSendIntentDisabledReason'));
     });
 
     test('provenance detail inspector links sources to citation bundles and reuses the selected detail in the composer', async ({
@@ -3557,9 +3662,9 @@ test.describe('workspace restore flows', () => {
         ]);
 
         await ensureWorkspaceInsightsExpanded(page);
-        await expect(page.locator('[data-testid="context-workflow-summary"]:visible').first()).toContainText(
-            'Reload log history loaded',
-        );
+        await openProgressDetailModal(page);
+        await expect(page.getByTestId('workspace-progress-detail-modal')).toContainText('Reload log history loaded');
+        await closeProgressDetailModal(page);
     });
 
     test('narrow shell owner routes keep image tools, advanced settings, and workflow log reachable after import', async ({
@@ -3635,16 +3740,14 @@ test.describe('workspace restore flows', () => {
                 element.open = true;
             }
         });
-        const contextWorkflow = page.locator('[data-testid="context-workflow-summary"]:visible').first();
-        await expect(contextWorkflow).toBeVisible();
-        await expect(contextWorkflow).toContainText(
+        await openProgressDetailModal(page);
+        const progressModal = page.getByTestId('workspace-progress-detail-modal');
+        await expect(progressModal.getByTestId('workspace-progress-workflow-summary')).toBeVisible();
+        await expect(progressModal).toContainText(
             localizedMessageByKey('workspaceSnapshotImportedLog', 'ui-import-provenance-live-workspace.json', '1'),
         );
-        await openWorkflowDetailModal(page);
-        await expect(
-            page.getByTestId('workspace-workflow-detail-modal').getByTestId('current-stage-source'),
-        ).toBeVisible();
-        await closeWorkflowDetailModal(page);
+        await expect(progressModal.getByTestId('workspace-progress-detail-list')).toBeVisible();
+        await closeProgressDetailModal(page);
     });
 
     test('desktop shell owner layout keeps model output, context rail, and provenance separated after import', async ({
@@ -3663,16 +3766,16 @@ test.describe('workspace restore flows', () => {
 
         const composerPanel = page.getByTestId('composer-settings-panel').first();
         await expect(composerPanel).toBeVisible();
-        await openAnswerDetailModal(page);
+        await openResponseDetailModal(page);
         const responseRail = page
-            .getByTestId('workspace-answer-detail-modal')
+            .getByTestId('workspace-response-detail-modal')
             .locator('[data-testid="workspace-response-rail"]:visible')
             .first();
         await expect(responseRail).toBeVisible();
         await expect(responseRail.getByTestId('workspace-model-output-card')).toBeVisible();
         await expect(responseRail.getByTestId('workspace-response-text-card')).toBeVisible();
         await expect(responseRail.getByTestId('workspace-thoughts-card')).toHaveCount(0);
-        await closeAnswerDetailModal(page);
+        await closeResponseDetailModal(page);
 
         const sideTools = page.locator('[data-testid="workspace-side-tool-panel"]:visible').first();
         await expect(sideTools).toBeVisible();
@@ -3690,15 +3793,17 @@ test.describe('workspace restore flows', () => {
                 element.open = true;
             }
         });
-
-        const contextWorkflow = page.locator('[data-testid="context-workflow-summary"]:visible').first();
-        await expect(contextWorkflow).toBeVisible();
-        await expect(contextWorkflow).toContainText(
+        await openProgressDetailModal(page);
+        const progressModal = page.getByTestId('workspace-progress-detail-modal');
+        await expect(progressModal.getByTestId('workspace-progress-workflow-summary')).toBeVisible();
+        await expect(progressModal).toContainText(
             localizedMessageByKey('workspaceSnapshotImportedLog', 'ui-import-provenance-live-workspace.json', '1'),
         );
-        await openWorkflowDetailModal(page);
-        await expect(workflowDetailThoughtEntry(page)).toBeVisible();
-        await closeWorkflowDetailModal(page);
+        await expect(progressModal.getByTestId('workspace-progress-detail-list')).toBeVisible();
+        await expect(progressModal).toContainText(
+            tt('groundingProvenanceThoughtNotRequested'),
+        );
+        await closeProgressDetailModal(page);
     });
 
     test('dark mode keeps shell owner surfaces readable after import', async ({ page }) => {
@@ -3718,14 +3823,14 @@ test.describe('workspace restore flows', () => {
         await expect(page.locator('html')).toHaveClass(/dark/);
         await expect(page.locator(`button[title="${tt('switchLight')}"]`).first()).toBeVisible();
 
-        await openAnswerDetailModal(page);
+        await openResponseDetailModal(page);
         const responseRail = page
-            .getByTestId('workspace-answer-detail-modal')
+            .getByTestId('workspace-response-detail-modal')
             .locator('[data-testid="workspace-response-rail"]:visible')
             .first();
         await expect(responseRail.getByTestId('workspace-model-output-card')).toBeVisible();
         await expect(responseRail.getByTestId('workspace-thoughts-card')).toHaveCount(0);
-        await closeAnswerDetailModal(page);
+        await closeResponseDetailModal(page);
 
         await openSourcesDetailModal(page);
         const provenancePanel = visibleProvenancePanel(page.getByTestId('workspace-sources-detail-modal'));
@@ -3739,15 +3844,17 @@ test.describe('workspace restore flows', () => {
                 element.open = true;
             }
         });
-
-        const contextWorkflow = page.locator('[data-testid="context-workflow-summary"]:visible').first();
-        await expect(contextWorkflow).toBeVisible();
-        await expect(contextWorkflow).toContainText(
+        await openProgressDetailModal(page);
+        const progressModal = page.getByTestId('workspace-progress-detail-modal');
+        await expect(progressModal.getByTestId('workspace-progress-workflow-summary')).toBeVisible();
+        await expect(progressModal).toContainText(
             localizedMessageByKey('workspaceSnapshotImportedLog', 'ui-import-provenance-live-workspace.json', '1'),
         );
-        await openWorkflowDetailModal(page);
-        await expect(workflowDetailThoughtEntry(page)).toBeVisible();
-        await closeWorkflowDetailModal(page);
+        await expect(progressModal.getByTestId('workspace-progress-detail-list')).toBeVisible();
+        await expect(progressModal).toContainText(
+            tt('groundingProvenanceThoughtNotRequested'),
+        );
+        await closeProgressDetailModal(page);
 
         await page.getByRole('button', { name: tt('composerToolbarAdvancedSettings') }).click();
         await expect(
@@ -3864,9 +3971,9 @@ test.describe('workspace restore flows', () => {
         });
         await dismissRestoreNoticeIfPresent(page);
 
-        await openAnswerDetailModal(page);
+        await openResponseDetailModal(page);
         const responseRail = page
-            .getByTestId('workspace-answer-detail-modal')
+            .getByTestId('workspace-response-detail-modal')
             .locator('[data-testid="workspace-response-rail"]:visible')
             .first();
         await expect(responseRail).toBeVisible();
@@ -3875,14 +3982,14 @@ test.describe('workspace restore flows', () => {
         );
         await expect(responseRail.getByTestId('workspace-model-output-card')).toContainText('Night portrait');
         await expect(responseRail.getByTestId('workspace-thoughts-card')).toHaveCount(0);
-        await closeAnswerDetailModal(page);
+        await closeResponseDetailModal(page);
 
         await ensureWorkspaceInsightsExpanded(page);
-        await openWorkflowDetailModal(page);
-        await expect(workflowDetailThoughtEntry(page)).toBeVisible();
-        await closeWorkflowDetailModal(page);
+        await openProgressDetailModal(page);
+        await expect(progressDetailThoughtEntry(page)).toBeVisible();
+        await closeProgressDetailModal(page);
 
-        await page.getByTestId('workspace-history-focus-state').locator('img').first().click();
+        await openFirstHistoryViewer(page);
 
         const viewer = page.getByTestId('workspace-viewer-overlay');
         await expect(viewer).toBeVisible();
@@ -4008,9 +4115,9 @@ test.describe('workspace restore flows', () => {
         });
         await dismissRestoreNoticeIfPresent(page);
 
-        await openAnswerDetailModal(page);
+        await openResponseDetailModal(page);
         const responseRail = page
-            .getByTestId('workspace-answer-detail-modal')
+            .getByTestId('workspace-response-detail-modal')
             .locator('[data-testid="workspace-response-rail"]:visible')
             .first();
         await expect(responseRail).toBeVisible();
@@ -4023,7 +4130,7 @@ test.describe('workspace restore flows', () => {
         await expect(composer(page)).toHaveValue(
             'Keep Variation B as the base and borrow only the rear fog density from Variation C.',
         );
-        await closeAnswerDetailModal(page);
+        await closeResponseDetailModal(page);
     });
 
     test('provenance reuse updates the composer through append and replace actions', async ({ page }) => {

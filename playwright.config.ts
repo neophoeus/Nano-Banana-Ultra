@@ -3,6 +3,8 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
     testDir: './e2e',
     timeout: 30_000,
+    globalSetup: './e2e/globalSetup.ts',
+    globalTeardown: './e2e/globalTeardown.ts',
     expect: {
         timeout: 10_000,
     },

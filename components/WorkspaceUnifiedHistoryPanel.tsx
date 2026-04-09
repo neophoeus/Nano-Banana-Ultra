@@ -6,7 +6,7 @@ import { BranchSummary } from '../utils/lineage';
 import { getTranslation, Language } from '../utils/translations';
 import HistoryPanel from './HistoryPanel';
 
-const DESKTOP_HISTORY_PAGE_SIZE = 10;
+const DESKTOP_HISTORY_PAGE_SIZE = 6;
 const MOBILE_HISTORY_PAGE_SIZE = 4;
 
 type WorkspaceUnifiedHistoryPanelProps = {
@@ -20,6 +20,9 @@ type WorkspaceUnifiedHistoryPanelProps = {
     onSelect: (item: GeneratedImage) => void;
     isPromotedContinuationSource: (item: GeneratedImage) => boolean;
     getBranchAccentClassName: (branchOriginId: string, branchLabel: string) => string;
+    onOpenVersionsDetails?: () => void;
+    onImportWorkspace?: () => void;
+    onExportWorkspace?: () => void;
     onClearWorkspace: () => void;
     previewTiles?: BatchPreviewTile[];
 };
@@ -35,6 +38,9 @@ function WorkspaceUnifiedHistoryPanel({
     onSelect,
     isPromotedContinuationSource,
     getBranchAccentClassName,
+    onOpenVersionsDetails,
+    onImportWorkspace,
+    onExportWorkspace,
     onClearWorkspace,
     previewTiles = [],
 }: WorkspaceUnifiedHistoryPanelProps) {
@@ -43,6 +49,8 @@ function WorkspaceUnifiedHistoryPanel({
     const [page, setPage] = useState(0);
     const pageSize = isDesktop ? DESKTOP_HISTORY_PAGE_SIZE : MOBILE_HISTORY_PAGE_SIZE;
     const t = (key: string) => getTranslation(currentLanguage, key);
+    const utilityActionButtonClassName =
+        'rounded-full border border-gray-200/80 px-1.5 py-1 text-[11px] font-semibold text-gray-600 transition-colors hover:border-amber-300 hover:text-amber-700 dark:border-gray-700 dark:text-gray-300 dark:hover:border-amber-500/40 dark:hover:text-amber-200';
     const itemCountLabel = t('workspaceInsightsItemsCount').replace('{0}', String(history.length));
     const branchCountLabel = t('workspaceInsightsBranchesCount').replace('{0}', String(branchSummariesCount));
     const previewTileCount = previewTiles.length;
@@ -138,6 +146,44 @@ function WorkspaceUnifiedHistoryPanel({
                 </div>
 
                 <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                    {onOpenVersionsDetails || onImportWorkspace || onExportWorkspace ? (
+                        <div
+                            data-testid="workspace-unified-history-utility-actions"
+                            className="flex min-w-0 flex-wrap items-center gap-1.5"
+                        >
+                            {onOpenVersionsDetails ? (
+                                <button
+                                    type="button"
+                                    data-testid="history-versions-open-details"
+                                    onClick={onOpenVersionsDetails}
+                                    className={utilityActionButtonClassName}
+                                >
+                                    {t('workspaceInsightsVersions')}
+                                </button>
+                            ) : null}
+                            {onImportWorkspace ? (
+                                <button
+                                    type="button"
+                                    data-testid="history-import-workspace"
+                                    onClick={onImportWorkspace}
+                                    className={utilityActionButtonClassName}
+                                >
+                                    {t('composerToolbarImportWorkspace')}
+                                </button>
+                            ) : null}
+                            {onExportWorkspace ? (
+                                <button
+                                    type="button"
+                                    data-testid="history-export-workspace"
+                                    onClick={onExportWorkspace}
+                                    className={utilityActionButtonClassName}
+                                >
+                                    {t('composerToolbarExportWorkspace')}
+                                </button>
+                            ) : null}
+                        </div>
+                    ) : null}
+
                     {totalPages > 1 ? (
                         <div
                             data-testid="workspace-unified-history-pagination"

@@ -3,6 +3,7 @@ import {
     GeneratedImage,
     GenerationLineageContext,
     StageAsset,
+    StickySendIntent,
     WorkspaceConversationState,
     WorkspaceSessionState,
 } from '../types';
@@ -13,6 +14,7 @@ type UseWorkspaceGenerationContextArgs = {
     workspaceSession: WorkspaceSessionState;
     history: GeneratedImage[];
     conversationState: WorkspaceConversationState;
+    stickySendIntent: StickySendIntent;
     branchOriginIdByTurnId: Record<string, string>;
     getHistoryTurnById: (historyId?: string | null) => GeneratedImage | null;
 };
@@ -22,6 +24,7 @@ export function useWorkspaceGenerationContext({
     workspaceSession,
     history,
     conversationState,
+    stickySendIntent,
     branchOriginIdByTurnId,
     getHistoryTurnById,
 }: UseWorkspaceGenerationContextArgs) {
@@ -72,6 +75,10 @@ export function useWorkspaceGenerationContext({
 
     const getConversationRequestContext = useCallback(
         ({ batchSize }: { batchSize: number }) => {
+            if (stickySendIntent !== 'memory') {
+                return null;
+            }
+
             if (batchSize > 1) {
                 return null;
             }
@@ -104,6 +111,7 @@ export function useWorkspaceGenerationContext({
             branchOriginIdByTurnId,
             conversationState,
             history,
+            stickySendIntent,
             workspaceSession.conversationBranchOriginId,
             workspaceSession.sourceLineageAction,
             workspaceSession.sourceHistoryId,

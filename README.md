@@ -94,9 +94,15 @@ Nano Banana Ultra currently supports three Gemini image-model paths, each presen
 
 ## Version Overview
 
-### Latest Release: 3.3.1
+### Latest Release: 3.4.0
 
-Latest release: 3.3.1. See [CHANGELOG.md](CHANGELOG.md) for release details.
+Latest release: 3.4.0. See [CHANGELOG.md](CHANGELOG.md) for release details.
+
+### 3.4.x
+
+Version 3.4.x is where Nano Banana Ultra 3.x becomes truly usable as an everyday product. It turns the earlier 3.x groundwork into a clearer, steadier creative workspace: simpler support surfaces, more intentional follow-up behavior, more trustworthy history and restore flows, and a more cohesive generate-review-reuse loop.
+
+In short, 3.4.x is the practical 3.x baseline.
 
 ### 3.x
 
@@ -230,9 +236,15 @@ Nano Banana Ultra 目前支援三條 Gemini 影像模型路徑，並會依模型
 
 ## 版本總覽
 
-### 最新版本：3.3.1
+### 最新版本：3.4.0
 
-最新版本：3.3.1。版本細節請見 [CHANGELOG.md](CHANGELOG.md)。
+最新版本：3.4.0。版本細節請見 [CHANGELOG.md](CHANGELOG.md)。
+
+### 3.4.x
+
+3.4.x 才是 Nano Banana Ultra 3.x 真正進入日常可用狀態的版本。它把前面 3.x 累積的方向正式收斂成更清楚、更穩定、也更像產品的創作工作區：support surfaces 更簡潔、follow-up 行為更明確、history 與 restore 更可靠，整體 generate-review-reuse 流程也終於真正接起來。
+
+簡單說，3.4.x 才是 3.x 的實用基準版。
 
 ### 3.x
 

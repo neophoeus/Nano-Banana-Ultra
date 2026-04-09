@@ -132,7 +132,8 @@
       "googleSearch": false,
       "imageSearch": false,
       "generationMode": "Follow-up Edit",
-      "executionMode": "chat-continuation"
+      "executionMode": "chat-continuation",
+      "stickySendIntent": "memory"
     }
   }
 }
