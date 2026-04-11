@@ -291,6 +291,13 @@ describe('App official conversation flow', () => {
                 );
             }
 
+            if (url === '/api/prompt/random') {
+                return new Response(JSON.stringify({ text: '繁體中文測試提示詞' }), {
+                    status: 200,
+                    headers: { 'Content-Type': 'application/json' },
+                });
+            }
+
             throw new Error(`Unhandled fetch: ${url}`);
         });
 
@@ -436,6 +443,32 @@ describe('App official conversation flow', () => {
 
         expect(localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe('zh_TW');
         expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe('dark');
+    });
+
+    it('uses the restored UI language for prompt helpers immediately on first render', async () => {
+        localStorage.removeItem(WORKSPACE_SNAPSHOT_STORAGE_KEY);
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, 'zh_TW');
+
+        await act(async () => {
+            root.render(<App />);
+        });
+
+        const surpriseButton = await waitFor(() => {
+            const button = container.querySelector(
+                '[data-testid="composer-quick-tool-inspiration"]',
+            ) as HTMLButtonElement | null;
+            expect(button).toBeTruthy();
+            return button!;
+        });
+        await clickElement(surpriseButton);
+
+        const requestBody = await waitFor(() => {
+            const call = fetchMock.mock.calls.find(([input]) => String(input) === '/api/prompt/random');
+            expect(call).toBeTruthy();
+            return JSON.parse(String(call?.[1]?.body || '{}'));
+        });
+
+        expect(requestBody.lang).toBe('zh_TW');
     });
 
     it('switches between support-family views inside the shared detail surface', async () => {

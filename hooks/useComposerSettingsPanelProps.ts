@@ -38,6 +38,7 @@ type UseComposerSettingsPanelPropsArgs = {
     enterToSubmit: boolean;
     isGenerating: boolean;
     isEnhancingPrompt: boolean;
+    activePromptTool?: ComposerSettingsPanelProps['activePromptTool'];
     currentLanguage: Language;
     imageStyleLabel: string;
     outputFormat: OutputFormat;
@@ -80,6 +81,7 @@ type UseComposerSettingsPanelPropsArgs = {
     handleFollowUpGenerate: () => void;
     handleSurpriseMe: () => void;
     handleSmartRewrite: () => void;
+    handleImageToPrompt?: (file: File) => void | Promise<void>;
     openSettings: () => void;
     openAdvancedSettings: () => void;
     setActivePickerSheet: Dispatch<SetStateAction<PickerSheet>>;
@@ -111,6 +113,7 @@ export function useComposerSettingsPanelProps({
     enterToSubmit,
     isGenerating,
     isEnhancingPrompt,
+    activePromptTool,
     currentLanguage,
     imageStyleLabel,
     outputFormat,
@@ -153,6 +156,7 @@ export function useComposerSettingsPanelProps({
     handleFollowUpGenerate,
     handleSurpriseMe,
     handleSmartRewrite,
+    handleImageToPrompt,
     openSettings,
     openAdvancedSettings,
     setActivePickerSheet,
@@ -201,6 +205,7 @@ export function useComposerSettingsPanelProps({
         handleFollowUpGenerate,
         handleSurpriseMe,
         handleSmartRewrite,
+        handleImageToPrompt,
         openSettings,
         openAdvancedSettings,
         setActivePickerSheet,
@@ -240,6 +245,7 @@ export function useComposerSettingsPanelProps({
             handleFollowUpGenerate,
             handleSurpriseMe,
             handleSmartRewrite,
+            handleImageToPrompt,
             openSettings,
             openAdvancedSettings,
             setActivePickerSheet,
@@ -277,6 +283,7 @@ export function useComposerSettingsPanelProps({
         handleFollowUpGenerate,
         handleSurpriseMe,
         handleSmartRewrite,
+        handleImageToPrompt,
         setActivePickerSheet,
         setIsAdvancedSettingsOpen,
         setOutputFormat,
@@ -308,6 +315,7 @@ export function useComposerSettingsPanelProps({
             enterToSubmit,
             isGenerating,
             isEnhancingPrompt,
+            activePromptTool,
             currentLanguage,
             imageStyleLabel,
             outputFormat,
@@ -353,6 +361,7 @@ export function useComposerSettingsPanelProps({
             onFollowUpGenerate: () => latestHandlersRef.current.handleFollowUpGenerate(),
             onSurpriseMe: () => latestHandlersRef.current.handleSurpriseMe(),
             onSmartRewrite: () => latestHandlersRef.current.handleSmartRewrite(),
+            onImageToPrompt: latestHandlersRef.current.handleImageToPrompt,
             onOpenStyles: () => latestHandlersRef.current.setActivePickerSheet('styles'),
             onOpenSettings: () => latestHandlersRef.current.openSettings(),
             onToggleAdvancedSettings: () => latestHandlersRef.current.openAdvancedSettings(),
@@ -401,6 +410,7 @@ export function useComposerSettingsPanelProps({
             enterToSubmit,
             isGenerating,
             isEnhancingPrompt,
+            activePromptTool,
             currentLanguage,
             imageStyleLabel,
             outputFormat,

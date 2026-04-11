@@ -1,4 +1,5 @@
 import { GenerateOptions, GenerateResponse, ImageReceivedResult, ImageStyle, QueuedBatchJobStats } from '../types';
+import { Language } from '../utils/translations';
 
 const jsonHeaders = {
     'Content-Type': 'application/json',
@@ -52,31 +53,49 @@ export const promptForApiKey = async (): Promise<void> => {
 
 // --- Text Utilities (Prompt Engineering) ---
 
-export const enhancePromptWithGemini = async (currentPrompt: string, lang: string = 'en'): Promise<string> => {
-    try {
-        const response = await fetchJson<{ text: string }>('/api/prompt/enhance', {
-            method: 'POST',
-            headers: jsonHeaders,
-            body: JSON.stringify({ currentPrompt, lang }),
-        });
-        return response.text?.trim() || currentPrompt;
-    } catch (e) {
-        console.warn('Prompt enhancement failed, using original.', e);
-        return currentPrompt;
+export const enhancePromptWithGemini = async (currentPrompt: string, lang: Language): Promise<string> => {
+    const response = await fetchJson<{ text: string }>('/api/prompt/enhance', {
+        method: 'POST',
+        headers: jsonHeaders,
+        body: JSON.stringify({ currentPrompt, lang }),
+    });
+
+    const promptText = response.text?.trim();
+    if (!promptText) {
+        throw new Error('Prompt enhancement returned empty text.');
     }
+
+    return promptText;
 };
 
-export const generateRandomPrompt = async (lang: string = 'en'): Promise<string> => {
-    try {
-        const response = await fetchJson<{ text: string }>('/api/prompt/random', {
-            method: 'POST',
-            headers: jsonHeaders,
-            body: JSON.stringify({ lang }),
-        });
-        return response.text?.trim() || 'A creative artistic image';
-    } catch (e) {
-        return 'A beautiful creative image, 8k resolution.';
+export const generateRandomPrompt = async (lang: Language): Promise<string> => {
+    const response = await fetchJson<{ text: string }>('/api/prompt/random', {
+        method: 'POST',
+        headers: jsonHeaders,
+        body: JSON.stringify({ lang }),
+    });
+
+    const promptText = response.text?.trim();
+    if (!promptText) {
+        throw new Error('Random prompt generation returned empty text.');
     }
+
+    return promptText;
+};
+
+export const generatePromptFromImage = async (imageDataUrl: string, lang: Language): Promise<string> => {
+    const response = await fetchJson<{ text: string }>('/api/prompt/image-to-prompt', {
+        method: 'POST',
+        headers: jsonHeaders,
+        body: JSON.stringify({ imageDataUrl, lang }),
+    });
+
+    const promptText = response.text?.trim();
+    if (!promptText) {
+        throw new Error('Image to prompt returned empty text.');
+    }
+
+    return promptText;
 };
 
 // --- Image Generation Logic ---
@@ -478,7 +497,10 @@ export const generateImageWithGemini = async (
     options: GenerateOptions,
     batchSize: number = 1,
     onImageReceived?:
-        | ((url: string, slotIndex: number) => Promise<ImageReceivedResult | undefined> | ImageReceivedResult | undefined)
+        | ((
+              url: string,
+              slotIndex: number,
+          ) => Promise<ImageReceivedResult | undefined> | ImageReceivedResult | undefined)
         | undefined,
     onLog?: (msg: string) => void,
     abortSignal?: AbortSignal,

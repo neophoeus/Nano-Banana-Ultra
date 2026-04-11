@@ -20,6 +20,7 @@ type WorkspaceSideToolPanelProps = {
     showNotification: (message: string, type?: 'info' | 'error') => void;
     handleRemoveObjectReference: (index: number) => void;
     handleRemoveCharacterReference: (index: number) => void;
+    handleClearAllReferences?: () => void;
 };
 
 function WorkspaceSideToolPanel({
@@ -38,6 +39,7 @@ function WorkspaceSideToolPanel({
     showNotification,
     handleRemoveObjectReference,
     handleRemoveCharacterReference,
+    handleClearAllReferences,
 }: WorkspaceSideToolPanelProps) {
     const t = (key: string) => getTranslation(currentLanguage, key);
     const { isDesktop, isOpen: isPanelOpen, setIsOpen: setIsPanelOpen } = useResponsivePanelState();
@@ -112,6 +114,8 @@ function WorkspaceSideToolPanel({
               ]
             : []),
     ];
+    const totalReferenceCount = objectImages.length + characterImages.length;
+    const clearAllReferencesDisabled = !handleClearAllReferences || totalReferenceCount === 0 || isGenerating;
     const renderDisclosureChevron = () => (
         <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -180,71 +184,69 @@ function WorkspaceSideToolPanel({
                 </div>
             </div>
 
-            <div data-testid="workspace-side-tools-sketch-card" className="nbu-inline-panel p-2.5">
-                <Button
-                    variant="secondary"
-                    onClick={onOpenSketchPad}
-                    icon={sketchpadIcon}
-                    className={`${actionButtonClassName} w-full`}
-                    data-testid="side-tools-open-sketchpad"
-                >
-                    <span className="block min-w-0 leading-[1.2]">{t('workspaceSideToolDrawReferenceSketch')}</span>
-                </Button>
-            </div>
-
             <div
                 ref={referencesRootRef}
                 data-testid="workspace-side-tools-references-card"
                 className="relative nbu-inline-panel p-2.5"
             >
                 <div className="space-y-1.5 overflow-visible">
-                    <button
-                        type="button"
-                        data-testid="workspace-side-tools-references-toggle"
-                        aria-expanded={isReferencesOpen}
-                        aria-controls={isReferencesOpen ? referencesCardId : undefined}
-                        aria-haspopup="dialog"
-                        onClick={() => setIsReferencesOpen((previous) => !previous)}
-                        className="flex w-full items-start justify-between gap-2 rounded-[16px] border border-slate-200/80 bg-white/80 px-3 py-2 text-left transition-colors hover:border-amber-200 hover:bg-amber-50/85 dark:border-slate-700/80 dark:bg-slate-900/70 dark:hover:border-amber-500/20 dark:hover:bg-amber-950/15"
+                    <Button
+                        variant="secondary"
+                        onClick={onOpenSketchPad}
+                        icon={sketchpadIcon}
+                        className={`${actionButtonClassName} w-full`}
+                        data-testid="side-tools-open-sketchpad"
                     >
-                        <div className="min-w-0 flex-1 space-y-1 overflow-hidden">
+                        <span className="block min-w-0 leading-[1.2]">{t('workspaceSideToolDrawReferenceSketch')}</span>
+                    </Button>
+
+                    <div className="rounded-[16px] border border-slate-200/80 bg-white/80 px-3 py-2 dark:border-slate-700/80 dark:bg-slate-900/70">
+                        <div className="flex min-w-0 items-center justify-between gap-2 overflow-hidden">
                             <span className="inline-flex h-6 shrink-0 items-center rounded-full border border-slate-200/80 bg-white/85 px-2.5 text-[10px] font-black uppercase tracking-[0.16em] text-slate-600 dark:border-slate-700/80 dark:bg-slate-900/85 dark:text-slate-300">
                                 {t('workspaceSheetTitleReferences')}
                             </span>
+                            <button
+                                type="button"
+                                data-testid="workspace-side-tools-references-clear-all"
+                                aria-label={t('clear')}
+                                title={t('clear')}
+                                onClick={() => handleClearAllReferences?.()}
+                                disabled={clearAllReferencesDisabled}
+                                className="inline-flex shrink-0 items-center justify-center rounded-full border border-red-200/80 bg-red-50/90 px-2.5 py-1.5 text-[11px] font-semibold text-red-600 transition-colors hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-45 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200 dark:hover:border-red-800 dark:hover:bg-red-950/50"
+                            >
+                                {t('clear')}
+                            </button>
+                        </div>
+
+                        <button
+                            type="button"
+                            data-testid="workspace-side-tools-references-toggle"
+                            aria-expanded={isReferencesOpen}
+                            aria-controls={isReferencesOpen ? referencesCardId : undefined}
+                            aria-haspopup="dialog"
+                            onClick={() => setIsReferencesOpen((previous) => !previous)}
+                            className="mt-1 flex w-full rounded-[12px] px-0.5 py-1 text-left transition-colors hover:text-slate-900 dark:hover:text-slate-100"
+                        >
                             <div
                                 data-testid="workspace-side-tools-references-summary"
-                                className="min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]"
+                                className="min-w-0 flex flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-[11px]"
                             >
                                 {referenceSummaryItems.map((item) => (
                                     <span
                                         key={item.key}
                                         data-testid={`workspace-side-tools-references-summary-${item.key}`}
-                                        className={item.isActive
-                                            ? 'shrink-0 font-black tracking-[0.01em] text-amber-700 dark:text-amber-200'
-                                            : 'shrink-0 font-semibold text-slate-500 dark:text-slate-400'}
+                                        className={
+                                            item.isActive
+                                                ? 'shrink-0 font-black tracking-[0.01em] text-amber-700 dark:text-amber-200'
+                                                : 'shrink-0 font-semibold text-slate-500 dark:text-slate-400'
+                                        }
                                     >
                                         {`${item.label} ${item.count}/${item.max}`}
                                     </span>
                                 ))}
                             </div>
-                        </div>
-                        <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200/80 bg-white/85 text-slate-500 dark:border-slate-700/80 dark:bg-slate-900/80 dark:text-slate-300">
-                            <svg
-                                aria-hidden="true"
-                                className="h-4 w-4"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="1.8"
-                            >
-                                {isReferencesOpen ? (
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 7l10 10M17 7 7 17" />
-                                ) : (
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12M6 12h12" />
-                                )}
-                            </svg>
-                        </span>
-                    </button>
+                        </button>
+                    </div>
 
                     {isReferencesOpen && (
                         <div

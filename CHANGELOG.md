@@ -1,5 +1,34 @@
 # Changelog
 
+## v3.4.3 - 2026-04-11
+
+- Release title: Nano Banana Ultra 3.4.3 - Image to Prompt Quick Tool, Prompt Locale Locking & Scaffolded Surprise Me
+- Release prep summary:
+    - composer quick-tool expansion and prompt-action state polish:
+        - added `Image to Prompt` as a true composer quick tool with localized labels, hidden file-picker wiring, and active helper spinner state so uploaded reference images can replace the composer prompt directly instead of routing through a separate surface
+        - removed the old placeholder quick-tool slot, kept `Surprise Me` and `Auto Rewrite` as peers, and propagated the current language code instead of a display-label alias through prompt-helper requests so rewrite, random, and image-to-prompt all submit the intended backend locale
+        - added the matching prompt-tool success and failure locale strings across the maintained translations and kept sibling quick-tool actions blocked while another helper is already running
+
+    - prompt backend modernization and image-to-prompt contract recovery:
+        - rebuilt the rewrite and random prompt instructions around richer prompt-only output with optional multiline segmentation, explicit supported-language naming, and route-level temperature tuning so both helpers stay direct-to-model without regressing into labeled commentary
+        - hardened prompt-tool locale locking so `Auto Rewrite`, `Surprise Me`, and `Image to Prompt` now stay pinned to the active UI language from the first render onward by seeding App language state from `resolvePreferredLanguage()`, persisting language switches before lazy locale loading completes, and reapplying the preferred language immediately during startup restoration instead of letting helper requests slip through the old temporary English default
+        - removed the remaining hidden English prompt-helper fallbacks by tightening the frontend prompt services around explicit `Language` inputs, rejecting empty helper payloads instead of silently substituting generic English filler, and normalizing unsupported backend `lang` values back to the maintained locale set before building prompt instructions
+        - redesigned `Surprise Me` away from the old English theme-seed list and into high-variance scaffold families so the model now invents subject, setting, composition, lighting, materials, style blend, narrative clue, and unexpected twist itself while still being forced to answer in the active UI language
+        - added `/api/prompt/image-to-prompt` end to end, including inline data-url parsing on the backend plus a new frontend `generatePromptFromImage(...)` service path and the matching hook workflow for image upload, resize, request, and prompt replacement
+        - restored the recovered six-section Image to Prompt contract with `Scene Overview`, `Subjects and Composition`, `Visual Details`, `Lighting and Color`, `Mood and Style`, and `Final Prompt`, while preserving the earlier uncertainty wording and illegible-text handling instead of the later precision-heavy variant and extending the contract so the full structured brief also stays in the requested UI language unless visible source text must remain unchanged
+        - further tightened the Image to Prompt section guidance without changing the six-part shape: `Scene Overview` now emphasizes environment / scale / genre-or-era / visible creative twist, `Subjects and Composition` now covers main subject hierarchy plus composition and camera angle, `Visual Details` now explicitly calls for secondary elements, depth-of-field behavior, and hidden details only when truly visible, `Lighting and Color` now owns palette logic and atmospheric depth, and `Mood and Style` now distinguishes emotional tone, style fusion, and rendering finish
+        - aligned the prompt route error path so missing API keys and malformed image payloads are classified through the same backend response family used by the other prompt tools
+
+    - references surface merge and workspace utility follow-through:
+        - merged `Draw Reference Sketch` into the `References` ownership path, replacing the separate sketch card with one combined references surface that keeps the floating reference dialog and summary counts while exposing sketch launch from the same card
+        - added a compact right-aligned `Clear` action on the references card that clears object and character references together when present, and kept the control disabled when the workspace has nothing attached or generation is active
+        - tightened workspace API-key connection behavior so already-ready environments skip the extra prompt-for-key alert and only open the key prompt when readiness checks actually fail
+
+    - regression coverage and verification:
+        - expanded focused regression coverage for the composer image-upload helper path, active quick-tool spinner behavior, merged references clear-all control, restored image-to-prompt helper contract, image-to-prompt route registration, startup language restoration, backend language normalization, and the new scaffold-driven `Surprise Me` request contract
+        - revalidated the localized prompt stack with focused Vitest at `4 files / 26 tests` across `promptHelpers`, `pluginOfficialConversationIntegration`, `usePromptTools`, and `AppOfficialConversationFlow`, and kept `npm run build` green
+        - completed live browser smoke verification in the running Vite app for both `zh_TW` and `es`, confirming that `Surprise Me`, `Auto Rewrite`, and `Image to Prompt` all sent the correct locale code and produced localized real-model output; the same pass also confirmed that upstream Gemini image analysis rejects `.ico` uploads and some degenerate tiny PNGs even though normal screenshot PNGs work correctly
+
 ## v3.4.2 - 2026-04-10
 
 - Release title: Nano Banana Ultra 3.4.2 - Composer Reflow, Instruction / Conversation UX & Smart Overlay Placement

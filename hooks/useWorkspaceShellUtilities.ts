@@ -42,8 +42,10 @@ export function useWorkspaceShellUtilities({ setApiKeyReady }: UseWorkspaceShell
 
     const handleApiKeyConnect = useCallback(async (): Promise<boolean> => {
         try {
-            await promptForApiKey();
             const ready = await checkApiKey();
+            if (!ready) {
+                await promptForApiKey();
+            }
             setApiKeyReady(ready);
             setSystemStatusRefreshToken((previous) => previous + 1);
             return ready;

@@ -12,6 +12,7 @@ const baseProps = {
     enterToSubmit: false,
     isGenerating: false,
     isEnhancingPrompt: false,
+    activePromptTool: null,
     currentLanguage: 'en' as const,
     imageStyleLabel: 'None',
     modelLabel: getTranslation('en', 'modelGemini31Flash'),
@@ -50,6 +51,7 @@ const baseProps = {
     onStartNewConversation: vi.fn(),
     onFollowUpGenerate: vi.fn(),
     onOpenEditor: vi.fn(),
+    onImageToPrompt: vi.fn(),
     onSurpriseMe: vi.fn(),
     onSmartRewrite: vi.fn(),
     onOpenPromptHistory: vi.fn(),
@@ -139,9 +141,11 @@ describe('ComposerSettingsPanel toolbar layout', () => {
         expect(markup).toContain('dark:bg-emerald-500/18');
         expect(markup).toContain('dark:bg-amber-400/18');
         expect(markup).toContain('dark:bg-violet-500/18');
-        expect(markup).toContain('composer-quick-tool-placeholder');
+        expect(markup).toContain('composer-quick-tool-image-to-prompt');
+        expect(markup).toContain('Image to Prompt');
         expect(markup).toContain('Surprise Me');
         expect(markup).toContain('Auto Rewrite');
+        expect(markup).not.toContain('composer-quick-tool-placeholder');
         expect(markup).not.toContain('Templates');
         expect(markup).not.toContain('History');
         expect(markup).toContain('Advanced settings');
@@ -228,9 +232,28 @@ describe('ComposerSettingsPanel toolbar layout', () => {
         expect(markup).not.toContain('composer-sticky-send-intent-info-card');
         expect(markup).not.toContain('Keeps the next send inside official conversation memory.');
         expect(markup).toContain('Conversation');
-        expect(markup).toContain('Continue the conversation and describe how this round should change with remembered context...');
+        expect(markup).toContain(
+            'Continue the conversation and describe how this round should change with remembered context...',
+        );
         expect(markup).toContain('New Conversation');
         expect(markup).toContain('border-red-200/80 bg-red-50/90');
+    });
+
+    it('shows a spinner only for the active quick tool while helper actions are busy', () => {
+        const markup = renderToStaticMarkup(
+            <ComposerSettingsPanel
+                {...baseProps}
+                isEnhancingPrompt={true}
+                activePromptTool="rewrite"
+                groundingMode="off"
+                imageModel="gemini-3.1-flash-image-preview"
+                capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
+            />,
+        );
+
+        expect(markup).toContain('composer-quick-tool-spinner-rewrite');
+        expect(markup).not.toContain('composer-quick-tool-spinner-image-to-prompt');
+        expect(markup).not.toContain('composer-quick-tool-spinner-inspiration');
     });
 
     it('keeps style visible while folding follow-up source context into the follow-up edit action', () => {

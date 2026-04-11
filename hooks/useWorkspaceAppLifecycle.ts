@@ -51,14 +51,16 @@ export function useWorkspaceAppLifecycle({
         const restoreLanguagePreference = async () => {
             const preferredLanguage = resolvePreferredLanguage();
 
+            if (!cancelled) {
+                persistLanguagePreference(preferredLanguage);
+                setCurrentLang(preferredLanguage);
+            }
+
             try {
                 await ensureLanguageLoaded(preferredLanguage);
                 if (cancelled) {
                     return;
                 }
-
-                setCurrentLang(preferredLanguage);
-                persistLanguagePreference(preferredLanguage);
             } catch (error) {
                 console.error(`Failed to restore language preference ${preferredLanguage}.`, error);
                 if (cancelled) {

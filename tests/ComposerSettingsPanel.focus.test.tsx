@@ -13,6 +13,7 @@ const baseProps = {
     enterToSubmit: false,
     isGenerating: false,
     isEnhancingPrompt: false,
+    activePromptTool: null,
     currentLanguage: 'en' as const,
     imageStyleLabel: 'None',
     modelLabel: getTranslation('en', 'modelGemini31Flash'),
@@ -54,6 +55,7 @@ const baseProps = {
     onStartNewConversation: vi.fn(),
     onFollowUpGenerate: vi.fn(),
     onOpenEditor: vi.fn(),
+    onImageToPrompt: vi.fn(),
     onSurpriseMe: vi.fn(),
     onSmartRewrite: vi.fn(),
     onOpenPromptHistory: vi.fn(),
@@ -164,6 +166,81 @@ describe('ComposerSettingsPanel prompt focus wiring', () => {
         expect(container.querySelector('[data-testid="composer-reference-context-button"]')).toBeNull();
     });
 
+    it('routes the Image to Prompt quick tool through the hidden file input and forwards the selected file', () => {
+        const onImageToPrompt = vi.fn();
+        const inputClickSpy = vi.spyOn(HTMLInputElement.prototype, 'click');
+
+        act(() => {
+            root.render(<ComposerSettingsPanel {...baseProps} onImageToPrompt={onImageToPrompt} />);
+        });
+
+        const triggerButton = container.querySelector(
+            '[data-testid="composer-quick-tool-image-to-prompt"]',
+        ) as HTMLButtonElement;
+        const input = container.querySelector('[data-testid="composer-image-to-prompt-input"]') as HTMLInputElement;
+        const file = new File(['pixel'], 'reference.png', { type: 'image/png' });
+
+        act(() => {
+            triggerButton.click();
+        });
+
+        expect(inputClickSpy).toHaveBeenCalledTimes(1);
+
+        Object.defineProperty(input, 'files', {
+            configurable: true,
+            value: [file],
+        });
+
+        act(() => {
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+
+        expect(onImageToPrompt).toHaveBeenCalledTimes(1);
+        expect(onImageToPrompt).toHaveBeenCalledWith(file);
+    });
+
+    it('shows only the active quick-tool spinner and blocks sibling quick-tool actions while busy', () => {
+        const onSurpriseMe = vi.fn();
+        const onSmartRewrite = vi.fn();
+
+        act(() => {
+            root.render(
+                <ComposerSettingsPanel
+                    {...baseProps}
+                    isEnhancingPrompt={true}
+                    activePromptTool="image-to-prompt"
+                    onSurpriseMe={onSurpriseMe}
+                    onSmartRewrite={onSmartRewrite}
+                />,
+            );
+        });
+
+        const imageButton = container.querySelector(
+            '[data-testid="composer-quick-tool-image-to-prompt"]',
+        ) as HTMLButtonElement;
+        const surpriseButton = container.querySelector(
+            '[data-testid="composer-quick-tool-inspiration"]',
+        ) as HTMLButtonElement;
+        const rewriteButton = container.querySelector(
+            '[data-testid="composer-quick-tool-rewrite"]',
+        ) as HTMLButtonElement;
+
+        expect(container.querySelector('[data-testid="composer-quick-tool-spinner-image-to-prompt"]')).toBeTruthy();
+        expect(container.querySelector('[data-testid="composer-quick-tool-spinner-inspiration"]')).toBeNull();
+        expect(container.querySelector('[data-testid="composer-quick-tool-spinner-rewrite"]')).toBeNull();
+        expect(imageButton.disabled).toBe(true);
+        expect(surpriseButton.disabled).toBe(true);
+        expect(rewriteButton.disabled).toBe(true);
+
+        act(() => {
+            surpriseButton.click();
+            rewriteButton.click();
+        });
+
+        expect(onSurpriseMe).not.toHaveBeenCalled();
+        expect(onSmartRewrite).not.toHaveBeenCalled();
+    });
+
     it('keeps the style strip always visible and routes clear separately from opening the style modal', () => {
         const onOpenStyles = vi.fn();
         const onClearStyle = vi.fn();
@@ -256,9 +333,7 @@ describe('ComposerSettingsPanel prompt focus wiring', () => {
         independentButton = container.querySelector(
             '[data-testid="composer-sticky-send-intent-independent"]',
         ) as HTMLSpanElement;
-        memoryButton = container.querySelector(
-            '[data-testid="composer-sticky-send-intent-memory"]',
-        ) as HTMLSpanElement;
+        memoryButton = container.querySelector('[data-testid="composer-sticky-send-intent-memory"]') as HTMLSpanElement;
         toggle = container.querySelector('[data-testid="composer-sticky-send-intent-toggle"]') as HTMLButtonElement;
 
         expect(toggle.getAttribute('aria-pressed')).toBe('false');
@@ -287,7 +362,9 @@ describe('ComposerSettingsPanel prompt focus wiring', () => {
             );
         });
 
-        const toggle = container.querySelector('[data-testid="composer-sticky-send-intent-toggle"]') as HTMLButtonElement;
+        const toggle = container.querySelector(
+            '[data-testid="composer-sticky-send-intent-toggle"]',
+        ) as HTMLButtonElement;
 
         act(() => {
             toggle.click();
@@ -346,9 +423,9 @@ describe('ComposerSettingsPanel prompt focus wiring', () => {
         });
 
         expect(
-            container.querySelector('[data-testid="composer-sticky-send-intent-toggle"]')?.getAttribute(
-                'data-active-intent',
-            ),
+            container
+                .querySelector('[data-testid="composer-sticky-send-intent-toggle"]')
+                ?.getAttribute('data-active-intent'),
         ).toBe('independent');
         expect(container.textContent).not.toContain('New Conversation');
 
@@ -357,9 +434,9 @@ describe('ComposerSettingsPanel prompt focus wiring', () => {
         });
 
         expect(
-            container.querySelector('[data-testid="composer-sticky-send-intent-toggle"]')?.getAttribute(
-                'data-active-intent',
-            ),
+            container
+                .querySelector('[data-testid="composer-sticky-send-intent-toggle"]')
+                ?.getAttribute('data-active-intent'),
         ).toBe('memory');
         expect(container.textContent).toContain('New Conversation');
     });
@@ -371,36 +448,38 @@ describe('ComposerSettingsPanel prompt focus wiring', () => {
             root.render(
                 <ComposerSettingsPanel
                     {...baseProps}
-                    queuedJobs={[
-                        {
-                            localId: 'job-ready',
-                            name: 'batches/job-ready',
-                            displayName: 'Ready queue job',
-                            state: 'JOB_STATE_SUCCEEDED',
-                            model: 'gemini-3.1-flash-image-preview',
-                            prompt: 'Import later',
-                            generationMode: 'Text to Image',
-                            aspectRatio: '1:1',
-                            imageSize: '1K',
-                            style: 'None',
-                            outputFormat: 'images-only',
-                            temperature: 1,
-                            thinkingLevel: 'minimal',
-                            includeThoughts: true,
-                            googleSearch: false,
-                            imageSearch: false,
-                            batchSize: 1,
-                            objectImageCount: 0,
-                            characterImageCount: 0,
-                            createdAt: 1710400000000,
-                            updatedAt: 1710400010000,
-                            startedAt: 1710400005000,
-                            completedAt: 1710400010000,
-                            lastPolledAt: 1710400010000,
-                            importedAt: null,
-                            error: null,
-                        },
-                    ] as any}
+                    queuedJobs={
+                        [
+                            {
+                                localId: 'job-ready',
+                                name: 'batches/job-ready',
+                                displayName: 'Ready queue job',
+                                state: 'JOB_STATE_SUCCEEDED',
+                                model: 'gemini-3.1-flash-image-preview',
+                                prompt: 'Import later',
+                                generationMode: 'Text to Image',
+                                aspectRatio: '1:1',
+                                imageSize: '1K',
+                                style: 'None',
+                                outputFormat: 'images-only',
+                                temperature: 1,
+                                thinkingLevel: 'minimal',
+                                includeThoughts: true,
+                                googleSearch: false,
+                                imageSearch: false,
+                                batchSize: 1,
+                                objectImageCount: 0,
+                                characterImageCount: 0,
+                                createdAt: 1710400000000,
+                                updatedAt: 1710400010000,
+                                startedAt: 1710400005000,
+                                completedAt: 1710400010000,
+                                lastPolledAt: 1710400010000,
+                                importedAt: null,
+                                error: null,
+                            },
+                        ] as any
+                    }
                     onOpenQueuedBatchJobs={onOpenQueuedBatchJobs}
                 />,
             );

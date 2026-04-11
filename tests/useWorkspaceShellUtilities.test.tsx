@@ -87,8 +87,7 @@ describe('useWorkspaceShellUtilities', () => {
         expect(latestHook?.notification).toBeNull();
     });
 
-    it('prompts for the API key, refreshes status, and persists enter-to-submit toggles', async () => {
-        promptForApiKeyMock.mockResolvedValue(undefined);
+    it('checks API readiness first, skips the alert when already ready, and persists enter-to-submit toggles', async () => {
         checkApiKeyMock.mockResolvedValue(true);
 
         renderHook();
@@ -100,7 +99,7 @@ describe('useWorkspaceShellUtilities', () => {
             expect(ready).toBe(true);
         });
 
-        expect(promptForApiKeyMock).toHaveBeenCalledTimes(1);
+        expect(promptForApiKeyMock).not.toHaveBeenCalled();
         expect(checkApiKeyMock).toHaveBeenCalledTimes(1);
         expect(latestApiKeyReady).toBe(true);
         expect(latestHook?.systemStatusRefreshToken).toBe(1);
@@ -110,5 +109,22 @@ describe('useWorkspaceShellUtilities', () => {
         });
         expect(latestHook?.enterToSubmit).toBe(false);
         expect(localStorage.getItem('nbu_enterToSubmit')).toBe('false');
+    });
+
+    it('still prompts when the API key is actually missing', async () => {
+        promptForApiKeyMock.mockResolvedValue(undefined);
+        checkApiKeyMock.mockResolvedValue(false);
+
+        renderHook();
+
+        await act(async () => {
+            const ready = await latestHook?.handleApiKeyConnect();
+            expect(ready).toBe(false);
+        });
+
+        expect(checkApiKeyMock).toHaveBeenCalledTimes(1);
+        expect(promptForApiKeyMock).toHaveBeenCalledTimes(1);
+        expect(latestApiKeyReady).toBe(false);
+        expect(latestHook?.systemStatusRefreshToken).toBe(1);
     });
 });

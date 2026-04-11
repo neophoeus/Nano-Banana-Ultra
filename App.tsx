@@ -37,7 +37,13 @@ import WorkspaceUnifiedHistoryPanel from './components/WorkspaceUnifiedHistoryPa
 import WorkspaceVersionsDetailPanel from './components/WorkspaceVersionsDetailPanel';
 import WorkspaceProgressCard from './components/WorkspaceProgressCard';
 import WorkspaceProgressDetailPanel from './components/WorkspaceProgressDetailPanel';
-import { Language, ensureLanguageLoaded, getTranslation, persistLanguagePreference } from './utils/translations';
+import {
+    Language,
+    ensureLanguageLoaded,
+    getTranslation,
+    persistLanguagePreference,
+    resolvePreferredLanguage,
+} from './utils/translations';
 import { ASPECT_RATIOS, IMAGE_MODELS, MODEL_CAPABILITIES, OUTPUT_FORMATS, THINKING_LEVELS } from './constants';
 import {
     clearSharedWorkspaceSnapshot,
@@ -160,7 +166,7 @@ const App: React.FC = () => {
     const initialComposerState = initialWorkspaceSnapshot.composerState || EMPTY_WORKSPACE_COMPOSER_STATE;
     const [apiKeyReady, setApiKeyReady] = useState(false);
     const isDarkTheme = useDocumentThemeMode();
-    const [currentLang, setCurrentLang] = useState<Language>('en');
+    const [currentLang, setCurrentLang] = useState<Language>(() => resolvePreferredLanguage());
     const [areInitialPreferencesReady, setAreInitialPreferencesReady] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editorMode, setEditorMode] = useState<EditorMode>('inpaint');
@@ -369,11 +375,10 @@ const App: React.FC = () => {
                 return;
             }
 
+            persistLanguagePreference(nextLanguage);
+            setCurrentLang(nextLanguage);
+
             void ensureLanguageLoaded(nextLanguage)
-                .then(() => {
-                    persistLanguagePreference(nextLanguage);
-                    setCurrentLang(nextLanguage);
-                })
                 .catch((error) => {
                     console.error(`Failed to load translations for ${nextLanguage}.`, error);
                 });
@@ -1096,8 +1101,10 @@ const App: React.FC = () => {
 
     const {
         isEnhancingPrompt: isEnhancingComposerPrompt,
+        activePromptTool: activeComposerPromptTool,
         handleSmartRewrite: handleComposerSmartRewrite,
         handleSurpriseMe: handleComposerSurpriseMe,
+        handleImageToPrompt: handleComposerImageToPrompt,
     } = usePromptTools({
         currentLanguage: currentLang,
         prompt,
@@ -1426,6 +1433,9 @@ const App: React.FC = () => {
         },
         [handleRemoveCharacterReference, isEditing, setEditorCharacterImages],
     );
+    const handleClearAllReferences = useCallback(() => {
+        clearAssetRoles(['object', 'character']);
+    }, [clearAssetRoles]);
 
     const { handleClearCurrentStage, handleClearGalleryHistory } = useWorkspaceResetActions({
         lastPromotedHistoryIdRef,
@@ -1811,6 +1821,7 @@ const App: React.FC = () => {
         enterToSubmit,
         isGenerating,
         isEnhancingPrompt: isEnhancingComposerPrompt,
+        activePromptTool: activeComposerPromptTool,
         currentLanguage: currentLang,
         imageStyleLabel: getStyleLabel(imageStyle),
         outputFormat,
@@ -1853,6 +1864,7 @@ const App: React.FC = () => {
         handleFollowUpGenerate,
         handleSurpriseMe: handleComposerSurpriseMe,
         handleSmartRewrite: handleComposerSmartRewrite,
+        handleImageToPrompt: handleComposerImageToPrompt,
         openSettings: openGenerationSettingsSession,
         openAdvancedSettings: openAdvancedSettingsSession,
         setActivePickerSheet,
@@ -2559,9 +2571,11 @@ const App: React.FC = () => {
                 showNotification={showNotification}
                 handleRemoveObjectReference={handleRemoveObjectReference}
                 handleRemoveCharacterReference={handleRemoveCharacterReference}
+                handleClearAllReferences={handleClearAllReferences}
             />
         ),
         [
+            handleClearAllReferences,
             canRepaintCurrentImage,
             capability.maxCharacters,
             capability.maxObjects,

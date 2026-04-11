@@ -22,6 +22,7 @@ describe('WorkspaceSideToolPanel', () => {
                 showNotification={vi.fn()}
                 handleRemoveObjectReference={vi.fn()}
                 handleRemoveCharacterReference={vi.fn()}
+                handleClearAllReferences={vi.fn()}
             />,
         );
 
@@ -30,15 +31,17 @@ describe('WorkspaceSideToolPanel', () => {
         expect(markup).toContain('Repaint Current Image');
         expect(markup).toContain('Draw Reference Sketch');
         expect(markup).toContain('References');
+        expect(markup).toContain('>Clear<');
+        expect(markup).toContain('border-red-200/80 bg-red-50/90');
         expect(markup).toContain('Objects 1/4');
         expect(markup).toContain('Characters 1/2');
         expect(markup).toContain('workspace-side-tools-actions-card');
-        expect(markup).toContain('workspace-side-tools-sketch-card');
         expect(markup).toContain('workspace-side-tools-references-card');
         expect(markup).toContain('workspace-side-tools-actions');
         expect(markup).toContain('workspace-side-tool-panel-disclosure');
         expect(markup).toContain('workspace-side-tool-panel-summary');
         expect(markup).toContain('workspace-side-tools-references-toggle');
+        expect(markup).toContain('workspace-side-tools-references-clear-all');
         expect(markup).toContain('workspace-side-tools-references-summary');
         expect(markup).toContain('workspace-side-tools-references-summary-object');
         expect(markup).toContain('workspace-side-tools-references-summary-character');
@@ -54,6 +57,7 @@ describe('WorkspaceSideToolPanel', () => {
         expect(markup).toContain('leading-[1.15]');
         expect(markup).toContain('h-5');
         expect(markup).not.toContain('data-testid="workspace-side-tool-references"');
+        expect(markup).not.toContain('M12 6v12M6 12h12');
         expect(markup).not.toContain('Actions');
         expect(markup).not.toContain('Upload Base Image');
         expect(markup).not.toContain('Base image');
@@ -62,8 +66,10 @@ describe('WorkspaceSideToolPanel', () => {
         expect(markup).not.toContain('Rec. < 2');
         expect(markup).not.toContain('Object References');
         expect(markup).not.toContain('Character References');
+        expect(markup).not.toContain('Clear All');
         expect(markup).not.toContain('Edit Current Image');
         expect(markup).not.toContain('Open SketchPad');
+        expect(markup).not.toContain('workspace-side-tools-sketch-card');
     });
 
     it('shows upload image to edit when no current image is available', () => {
@@ -84,6 +90,7 @@ describe('WorkspaceSideToolPanel', () => {
                 showNotification={vi.fn()}
                 handleRemoveObjectReference={vi.fn()}
                 handleRemoveCharacterReference={vi.fn()}
+                handleClearAllReferences={vi.fn()}
             />,
         );
 
@@ -119,6 +126,7 @@ describe('WorkspaceSideToolPanel', () => {
                 showNotification={vi.fn()}
                 handleRemoveObjectReference={vi.fn()}
                 handleRemoveCharacterReference={vi.fn()}
+                handleClearAllReferences={vi.fn()}
             />,
         );
 
