@@ -5,9 +5,11 @@ import {
     loadImageDimensions,
     prepareImageAssetFromFile,
 } from '../utils/imageSaveUtils';
+import { resolveCurrentStageSelectionFirstSourceOverride } from '../utils/generationSourceOverride';
 import { findClosestAspectRatio, findClosestImageSize } from '../utils/canvasWorkspace';
 import {
     AspectRatio,
+    ContinuationLineageAction,
     EditorMode,
     ImageModel,
     ImageSize,
@@ -36,6 +38,13 @@ export type EditorContextSnapshot = {
     imageSearch: boolean;
     editorInitialRatio?: AspectRatio;
     editorInitialSize?: ImageSize;
+    sourceHistoryId?: string | null;
+    sourceLineageAction?: ContinuationLineageAction | null;
+};
+
+type GenerationSourceOverride = {
+    sourceHistoryId: string | null;
+    sourceLineageAction?: ContinuationLineageAction | null;
 };
 
 type PickerSheet =
@@ -50,6 +59,10 @@ type PickerSheet =
     | null;
 
 type UseWorkspaceEditorActionsArgs = {
+    history: GeneratedImage[];
+    branchOriginIdByTurnId: Record<string, string>;
+    workspaceSessionSourceHistoryId: string | null;
+    workspaceSessionSourceLineageAction?: ContinuationLineageAction | null;
     objectImages: string[];
     characterImages: string[];
     aspectRatio: AspectRatio;
@@ -104,7 +117,10 @@ type UseWorkspaceEditorActionsArgs = {
     showNotification: (message: string, type?: 'info' | 'error') => void;
     addLog: (message: string) => void;
     t: (key: string) => string;
-    primePendingProvenanceContinuation: (sourceHistoryId: string | null) => void;
+    primePendingProvenanceContinuation: (
+        sourceHistoryId: string | null,
+        options?: { useExplicitSource?: boolean },
+    ) => void;
     performGeneration: (
         prompt: string,
         aspectRatio: AspectRatio | undefined,
@@ -117,6 +133,7 @@ type UseWorkspaceEditorActionsArgs = {
         mode?: string,
         objectImageInputs?: string[],
         characterImageInputs?: string[],
+        sourceOverride?: GenerationSourceOverride | null,
     ) => Promise<void> | void;
     queueBatchJobFromEditor: (submission: {
         prompt: string;
@@ -127,10 +144,15 @@ type UseWorkspaceEditorActionsArgs = {
         objectImageInputs?: string[];
         characterImageInputs?: string[];
         generationMode?: string;
+        sourceOverride?: GenerationSourceOverride | null;
     }) => Promise<void>;
 };
 
 export function useWorkspaceEditorActions({
+    history,
+    branchOriginIdByTurnId,
+    workspaceSessionSourceHistoryId,
+    workspaceSessionSourceLineageAction,
     objectImages,
     characterImages,
     aspectRatio,
@@ -177,6 +199,34 @@ export function useWorkspaceEditorActions({
     performGeneration,
     queueBatchJobFromEditor,
 }: UseWorkspaceEditorActionsArgs) {
+    const resolveEditorSourceOverride = useCallback(
+        (entrySource: 'stage' | 'upload'): GenerationSourceOverride => {
+            if (entrySource === 'upload') {
+                return {
+                    sourceHistoryId: null,
+                    sourceLineageAction: null,
+                };
+            }
+
+            return resolveCurrentStageSelectionFirstSourceOverride({
+                sourceHistoryId: currentStageAsset?.sourceHistoryId ?? null,
+                currentStageLineageAction: currentStageAsset?.lineageAction,
+                history,
+                branchOriginIdByTurnId,
+                workspaceSessionSourceHistoryId,
+                workspaceSessionSourceLineageAction,
+            });
+        },
+        [
+            branchOriginIdByTurnId,
+            currentStageAsset?.lineageAction,
+            currentStageAsset?.sourceHistoryId,
+            history,
+            workspaceSessionSourceHistoryId,
+            workspaceSessionSourceLineageAction,
+        ],
+    );
+
     const closeEditor = useCallback(
         (options?: { discardSharedContext?: boolean }) => {
             const shouldRestoreSharedContext = options?.discardSharedContext ?? true;
@@ -201,12 +251,19 @@ export function useWorkspaceEditorActions({
     );
 
     const openEditorWithSource = useCallback(
-        async (nextImageSource: string, sourceDimensions?: { width: number; height: number }) => {
+        async (
+            nextImageSource: string,
+            options?: {
+                sourceDimensions?: { width: number; height: number };
+                entrySource?: 'stage' | 'upload';
+            },
+        ) => {
             let editorInitialRatio = aspectRatio;
             let editorInitialSize = imageSize;
+            const entrySource = options?.entrySource ?? 'stage';
 
             try {
-                const measuredDimensions = sourceDimensions || (await loadImageDimensions(nextImageSource));
+                const measuredDimensions = options?.sourceDimensions || (await loadImageDimensions(nextImageSource));
                 const constrainedDimensions = constrainImageDimensions(
                     measuredDimensions.width,
                     measuredDimensions.height,
@@ -227,6 +284,8 @@ export function useWorkspaceEditorActions({
                 console.error('Failed to resolve editor entry settings.', error);
             }
 
+            const sourceOverride = resolveEditorSourceOverride(entrySource);
+
             setEditorContextSnapshot({
                 prompt: '',
                 objectImages: [...objectImages],
@@ -245,6 +304,8 @@ export function useWorkspaceEditorActions({
                 imageSearch,
                 editorInitialRatio,
                 editorInitialSize,
+                sourceHistoryId: sourceOverride.sourceHistoryId,
+                sourceLineageAction: sourceOverride.sourceLineageAction,
             });
             setEditorMode('inpaint');
             setEditorRetouchLockedRatio(editorInitialRatio);
@@ -268,6 +329,7 @@ export function useWorkspaceEditorActions({
             includeThoughts,
             outputFormat,
             objectImages,
+            resolveEditorSourceOverride,
             setAspectRatio,
             setActivePickerSheet,
             setEditorMode,
@@ -379,8 +441,11 @@ export function useWorkspaceEditorActions({
             prepareImageAssetFromFile(file)
                 .then((prepared) => {
                     void openEditorWithSource(prepared.dataUrl, {
-                        width: prepared.width,
-                        height: prepared.height,
+                        sourceDimensions: {
+                            width: prepared.width,
+                            height: prepared.height,
+                        },
+                        entrySource: 'upload',
                     });
 
                     if (prepared.wasResized) {
@@ -404,7 +469,7 @@ export function useWorkspaceEditorActions({
     const handleOpenEditor = useCallback(() => {
         const activeUrl = getActiveImageUrl();
         if (activeUrl) {
-            void openEditorWithSource(activeUrl);
+            void openEditorWithSource(activeUrl, { entrySource: 'stage' });
             return;
         }
 
@@ -428,7 +493,19 @@ export function useWorkspaceEditorActions({
             extraCharacterImages?: string[],
             targetRatio?: AspectRatio,
         ) => {
-            primePendingProvenanceContinuation(currentStageAsset?.sourceHistoryId ?? null);
+            const sourceOverride = editorContextSnapshot
+                ? {
+                      sourceHistoryId: editorContextSnapshot.sourceHistoryId ?? null,
+                      sourceLineageAction: editorContextSnapshot.sourceLineageAction ?? null,
+                  }
+                : undefined;
+            const provenanceSourceHistoryId = sourceOverride
+                ? (sourceOverride.sourceHistoryId ?? null)
+                : (currentStageAsset?.sourceHistoryId ?? null);
+
+            primePendingProvenanceContinuation(provenanceSourceHistoryId, {
+                useExplicitSource: Boolean(sourceOverride),
+            });
             returnToWorkspaceFromEditor();
             performGeneration(
                 editPrompt,
@@ -442,9 +519,11 @@ export function useWorkspaceEditorActions({
                 mode,
                 extraObjectImages,
                 extraCharacterImages,
+                sourceOverride,
             );
         },
         [
+            editorContextSnapshot,
             currentStageAsset?.sourceHistoryId,
             imageModel,
             performGeneration,
@@ -464,6 +543,13 @@ export function useWorkspaceEditorActions({
             extraCharacterImages?: string[],
             targetRatio?: AspectRatio,
         ) => {
+            const sourceOverride = editorContextSnapshot
+                ? {
+                      sourceHistoryId: editorContextSnapshot.sourceHistoryId ?? null,
+                      sourceLineageAction: editorContextSnapshot.sourceLineageAction ?? null,
+                  }
+                : undefined;
+
             returnToWorkspaceFromEditor();
             await queueBatchJobFromEditor({
                 prompt: editPrompt,
@@ -474,13 +560,10 @@ export function useWorkspaceEditorActions({
                 objectImageInputs: extraObjectImages,
                 characterImageInputs: extraCharacterImages,
                 generationMode: 'Editor Edit',
+                sourceOverride,
             });
         },
-        [
-            aspectRatio,
-            queueBatchJobFromEditor,
-            returnToWorkspaceFromEditor,
-        ],
+        [aspectRatio, editorContextSnapshot, queueBatchJobFromEditor, returnToWorkspaceFromEditor],
     );
 
     const handleSketchReplaceCancel = useCallback(() => {

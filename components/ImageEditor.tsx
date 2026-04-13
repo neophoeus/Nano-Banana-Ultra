@@ -4,6 +4,7 @@ import { WORKSPACE_EDITOR_Z_INDEX } from '../constants/workspaceOverlays';
 import { EditorMode, ImageSize, AspectRatio, ImageModel } from '../types';
 import { Language, getTranslation } from '../utils/translations';
 import { MODEL_CAPABILITIES } from '../constants';
+import { buildEditorPrompt } from '../utils/editorPromptBuilder';
 import {
     appendPointToLatestStroke,
     applyPanDelta,
@@ -108,6 +109,9 @@ interface ViewportState {
 const MAX_DIMENSION = 4096;
 const DOODLE_COLORS = ['#ef4444', '#eab308', '#3b82f6', '#22c55e', '#ffffff']; // Red, Yellow, Blue, Green, White
 
+const normalizeVisibleTextLabels = (labels: TextLabel[]): string[] =>
+    Array.from(new Set(labels.map((label) => label.text.trim()).filter((label) => label.length > 0)));
+
 const ImageEditor: React.FC<ImageEditorProps> = ({
     initialImageUrl,
     initialPrompt,
@@ -207,6 +211,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         createHistoryState({ paths: [], texts: [] }),
     );
     const [doodleColor, setDoodleColor] = useState<string>('#ef4444');
+    const [showTextToolFirstUseNotice, setShowTextToolFirstUseNotice] = useState(false);
     const [showTextInput, setShowTextInput] = useState<{ x: number; y: number } | null>(null);
     const textInputRef = useRef<HTMLInputElement>(null);
 
@@ -236,6 +241,32 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     const maskPaths = maskHistory.present;
     const doodlePaths = doodleHistory.present.paths;
     const textLabels = doodleHistory.present.texts;
+    const visibleTextLabels = normalizeVisibleTextLabels(textLabels);
+    const textToolButtonTitle = `${t('editorTextToolHintTitle')}: ${t('editorTextToolHintBody')}`;
+    const activateRetouchMode = (target: RetouchMode) => {
+        setRetouchMode(target);
+        if (target === 'mask') {
+            setActiveTool('brush');
+            return;
+        }
+
+        setActiveTool('pen');
+    };
+
+    const handleActivateTextTool = useCallback(() => {
+        setActiveTool('text');
+        setShowTextToolFirstUseNotice(true);
+    }, []);
+
+    const handleConfirmTextToolFirstUse = useCallback(() => {
+        setShowTextToolFirstUseNotice(false);
+    }, []);
+
+    useEffect(() => {
+        if (mode !== 'inpaint' || retouchMode !== 'doodle' || activeTool !== 'text') {
+            setShowTextToolFirstUseNotice(false);
+        }
+    }, [activeTool, mode, retouchMode]);
 
     // --- Initialization ---
     useEffect(() => {
@@ -580,9 +611,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         if (hasData) {
             setShowRetouchSwitchConfirm({ target });
         } else {
-            setRetouchMode(target);
-            if (target === 'mask') setActiveTool('brush');
-            else setActiveTool('pen');
+            activateRetouchMode(target);
         }
     };
 
@@ -593,12 +622,10 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         // Clear data of previous mode
         if (target === 'mask') {
             setDoodleHistory(resetHistoryState({ paths: [], texts: [] }));
-            setActiveTool('brush');
         } else {
             setMaskHistory(resetHistoryState([]));
-            setActiveTool('pen');
         }
-        setRetouchMode(target);
+        activateRetouchMode(target);
         setShowRetouchSwitchConfirm(null);
     };
 
@@ -672,8 +699,22 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
 
-        let finalPrompt = prompt;
-        let finalModeLabel = mode === 'inpaint' ? 'Inpainting' : 'Outpainting';
+        const promptResult = buildEditorPrompt({
+            mode,
+            retouchMode,
+            prompt,
+            visibleTextLabels,
+            outpaintContext:
+                mode === 'outpaint'
+                    ? {
+                          frameDims,
+                          originalDims,
+                          imgTransform,
+                      }
+                    : undefined,
+        });
+        let finalPrompt = promptResult.finalPrompt;
+        const finalModeLabel = promptResult.finalModeLabel;
 
         if (mode === 'inpaint') {
             if (retouchMode === 'mask') {
@@ -682,14 +723,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                 ctx.globalCompositeOperation = 'destination-out';
                 drawStrokesToCanvas(ctx, maskPaths, { strokeStyle: '#000000' });
                 ctx.globalCompositeOperation = 'source-over';
-
-                // Auto-Prompt for Mask
-                if (!finalPrompt || finalPrompt.trim() === '') {
-                    finalPrompt =
-                        'Seamlessly inpaint the masked area to naturally match the surrounding context in structure, texture, lighting, and perspective.';
-                } else {
-                    finalPrompt = `${finalPrompt}, seamlessly match the lighting, perspective, and texture of the surrounding area.`;
-                }
             } else {
                 // Doodle Mode: Image + Doodle + Text (Source Over) -> Img2Img/Inpaint with doodle baked in
                 // We draw the original image, then doodles on top.
@@ -702,14 +735,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                     textAlign: 'left',
                     textBaseline: 'middle',
                 });
-
-                // Auto-Prompt for Doodle
-                if (!finalPrompt || finalPrompt.trim() === '') {
-                    finalPrompt =
-                        'Modify the image based on the drawn doodles and text annotations, and seamlessly integrate the changes into the existing scene.';
-                } else {
-                    finalPrompt = `${finalPrompt}, with strict adherence to the drawn doodle structure and embedded text labels.`;
-                }
             }
         } else {
             // Outpaint Logic (Source Image with transforms)
@@ -717,34 +742,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
             ctx.translate(imgTransform.x, imgTransform.y);
             ctx.scale(imgTransform.scale, imgTransform.scale);
             ctx.drawImage(imgElement, -originalDims.w / 2, -originalDims.h / 2);
-
-            const cx = frameDims.w / 2;
-            const cy = frameDims.h / 2;
-            const imgCX = cx + imgTransform.x;
-            const imgCY = cy + imgTransform.y;
-            const sw = originalDims.w * imgTransform.scale;
-            const sh = originalDims.h * imgTransform.scale;
-            const imgLeft = imgCX - sw / 2;
-            const imgRight = imgCX + sw / 2;
-            const imgTop = imgCY - sh / 2;
-            const imgBottom = imgCY + sh / 2;
-
-            const coversCanvas =
-                imgLeft <= 1 && imgRight >= frameDims.w - 1 && imgTop <= 1 && imgBottom >= frameDims.h - 1;
-
-            if (coversCanvas) {
-                const defaultReframeInstruction =
-                    'High-fidelity upscale. Sharpen details, improve texture quality, and maintain the original composition, lighting, and color balance.';
-                if (!finalPrompt || finalPrompt.trim() === '') finalPrompt = defaultReframeInstruction;
-                else finalPrompt = `${finalPrompt}, ${defaultReframeInstruction}`;
-            } else {
-                // Image is smaller than canvas -> Extrapolate/Outpaint
-                // Updated instruction to be universally applicable (Objects, People, Scenery)
-                const defaultExtendInstruction =
-                    'Extrapolate the scene to fill the empty canvas. Seamlessly extend any cropped subjects and naturally continue the environment, preserving anatomy, geometry, texture, perspective, lighting, and overall fidelity.';
-                if (!finalPrompt || finalPrompt.trim() === '') finalPrompt = defaultExtendInstruction;
-                else finalPrompt = `${finalPrompt}, ${defaultExtendInstruction}`;
-            }
         }
 
         const base64 = canvas.toDataURL('image/png');
@@ -797,11 +794,12 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
         >
             {toast && (
                 <div
+                    data-testid="editor-toast"
                     className="fixed top-8 left-1/2 -translate-x-1/2 pointer-events-none"
                     style={{ zIndex: WORKSPACE_EDITOR_Z_INDEX.toast }}
                 >
                     <div
-                        className={`${toast.type === 'error' ? 'bg-red-500/90' : 'bg-amber-500/90'} text-white px-6 py-2 rounded-full shadow-2xl backdrop-blur-md font-bold text-sm`}
+                        className={`${toast.type === 'error' ? 'bg-red-500/90' : 'bg-amber-500/90'} max-w-[min(92vw,42rem)] rounded-2xl px-4 py-2.5 text-center text-sm font-bold leading-relaxed text-white shadow-2xl backdrop-blur-md`}
                     >
                         {toast.msg}
                     </div>
@@ -904,11 +902,42 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                 </div>
             )}
 
+            {showTextToolFirstUseNotice && (
+                <div
+                    data-testid="editor-text-first-use-modal"
+                    className="fixed inset-0 bg-black/50 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+                    style={{ zIndex: WORKSPACE_EDITOR_Z_INDEX.exitConfirm }}
+                >
+                    <div className="nbu-modal-shell w-full max-w-md space-y-4 p-6 animate-[scaleIn_0.1s_ease-out]">
+                        <div>
+                            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-amber-600 dark:text-amber-300">
+                                {t('editorTextToolHintTitle')}
+                            </p>
+                            <h3 className="mt-2 text-lg font-bold text-gray-900 dark:text-gray-100">
+                                {t('editorTextFirstUseTitle')}
+                            </h3>
+                            <p className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+                                {t('editorTextFirstUseBody')}
+                            </p>
+                        </div>
+                        <div className="flex justify-end pt-2">
+                            <button
+                                data-testid="editor-text-first-use-confirm"
+                                onClick={handleConfirmTextToolFirstUse}
+                                className="rounded-xl bg-amber-500 px-4 py-2 text-sm font-bold text-black shadow-lg shadow-amber-500/20 transition-colors hover:bg-amber-400"
+                            >
+                                {t('editorTextFirstUseConfirm')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* === MAIN WORKSPACE === */}
             <div className="flex-1 relative bg-gray-200 dark:bg-[#050505] overflow-hidden flex flex-col transition-colors">
                 {/* UI LAYER */}
                 <div className="absolute inset-0 z-50 pointer-events-none flex flex-col justify-between p-4">
-                    <div className="flex justify-between items-start">
+                    <div className="relative z-10 flex justify-between items-start">
                         {/* Top Actions */}
                         <div className="nbu-toolbar-shell pointer-events-auto flex gap-2 p-1.5 transition-colors">
                             <div className="nbu-toolbar-segment grid grid-cols-2 gap-1 p-1">
@@ -1195,6 +1224,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
 
                                 {/* Doodle Pen - Pencil Icon (Explicitly set to ensure it's different) */}
                                 <button
+                                    data-testid="editor-doodle-mode"
                                     onClick={() => handleSwitchRetouchMode('doodle')}
                                     disabled={isGenerating}
                                     className={`p-3 rounded-lg transition-colors disabled:opacity-50 ${retouchMode === 'doodle' && activeTool !== 'pan' ? 'bg-amber-500 text-black shadow-md' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
@@ -1262,9 +1292,11 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                                                 </svg>
                                             </button>
                                             <button
-                                                onClick={() => setActiveTool('text')}
+                                                data-testid="editor-text-tool"
+                                                onClick={handleActivateTextTool}
                                                 className={`p-2 rounded-lg ${activeTool === 'text' ? 'bg-amber-100 text-amber-600' : 'text-gray-400'}`}
-                                                title={t('toolText')}
+                                                title={textToolButtonTitle}
+                                                aria-label={t('editorTextToolHintTitle')}
                                             >
                                                 <svg
                                                     className="w-5 h-5"
@@ -1330,35 +1362,34 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                             </div>
                         </div>
                     </div>
-
-                    <div className="pointer-events-auto mx-auto flex w-full max-w-[560px] items-center gap-3 px-4 pb-4">
-                        <Button
-                            data-testid="editor-generate"
-                            onClick={handleGenerateClick}
-                            disabled={isGenerating}
-                            className={`
-                            flex-1 min-w-0
-                            shadow-[0_0_40px_rgba(245,158,11,0.6)] border border-yellow-200/60 
-                            bg-gradient-to-r from-amber-600 via-yellow-500 to-orange-600 
-                            bg-[length:200%_auto] px-5 py-3.5 rounded-full text-sm font-black tracking-[0.18em] sm:text-base sm:tracking-widest
-                            relative group overflow-hidden transition-all duration-300 animate-gradient-xy hover:scale-105
-                        `}
-                        >
-                            <span className="text-center leading-tight drop-shadow-md">{t('btnRender')}</span>
-                        </Button>
-                        {onQueueBatch ? (
+                    <div className="pointer-events-auto mx-auto flex w-full max-w-[720px] items-center gap-3 px-4 pb-4">
                             <Button
-                                data-testid="editor-queue-batch"
-                                variant="secondary"
-                                onClick={handleQueueBatchClick}
+                                data-testid="editor-generate"
+                                onClick={handleGenerateClick}
                                 disabled={isGenerating}
-                                className="flex-1 min-w-0 rounded-full border border-gray-300/70 px-5 py-3.5 text-sm font-extrabold tracking-[0.12em] text-gray-800 shadow-[0_12px_30px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-0.5 dark:border-gray-600/70 dark:text-gray-100 sm:text-base"
+                                className={`
+                                flex-1 min-w-0
+                                shadow-[0_0_40px_rgba(245,158,11,0.6)] border border-yellow-200/60 
+                                bg-gradient-to-r from-amber-600 via-yellow-500 to-orange-600 
+                                bg-[length:200%_auto] px-5 py-3.5 rounded-full text-sm font-black tracking-[0.18em] sm:text-base sm:tracking-widest
+                                relative group overflow-hidden transition-all duration-300 animate-gradient-xy hover:scale-105
+                            `}
                             >
-                                <span className="text-center leading-tight">{t('composerQueueBatchJob')}</span>
+                                <span className="text-center leading-tight drop-shadow-md">{t('btnRender')}</span>
                             </Button>
-                        ) : null}
+                            {onQueueBatch ? (
+                                <Button
+                                    data-testid="editor-queue-batch"
+                                    variant="secondary"
+                                    onClick={handleQueueBatchClick}
+                                    disabled={isGenerating}
+                                    className="flex-1 min-w-0 rounded-full border border-gray-300/70 px-5 py-3.5 text-sm font-extrabold tracking-[0.12em] text-gray-800 shadow-[0_12px_30px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-0.5 dark:border-gray-600/70 dark:text-gray-100 sm:text-base"
+                                >
+                                    <span className="text-center leading-tight">{t('composerQueueBatchJob')}</span>
+                                </Button>
+                            ) : null}
+                        </div>
                     </div>
-                </div>
 
                 {/* EVENT SURFACE */}
                 <div
@@ -1453,29 +1484,37 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
             {/* TEXT INPUT OVERLAY (Moved to Root for correct positioning) */}
             {showTextInput && (
                 <div
-                    className="absolute z-[200] flex items-center gap-1"
+                    className="absolute z-[200] max-w-[340px]"
                     style={{
                         left: showTextInput.x,
                         top: showTextInput.y,
                         transform: 'translateY(-50%)',
                     }}
                 >
-                    <input
-                        ref={textInputRef}
-                        type="text"
-                        onKeyDown={handleTextSubmit}
-                        className="bg-black/70 text-white border border-white/50 rounded-lg px-3 py-2 text-lg outline-none shadow-xl min-w-[200px] backdrop-blur-sm"
-                        placeholder="Enter text..."
-                        autoFocus
-                    />
-                    <button
-                        onClick={commitText}
-                        className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-lg shadow-lg transition-colors border border-white/20"
-                    >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                    </button>
+                    <div className="rounded-xl border border-white/20 bg-black/70 p-2 shadow-2xl backdrop-blur-md">
+                        <div className="flex items-center gap-1">
+                            <input
+                                ref={textInputRef}
+                                type="text"
+                                onKeyDown={handleTextSubmit}
+                                className="min-w-[220px] bg-transparent px-3 py-2 text-lg text-white outline-none placeholder:text-white/50"
+                                placeholder={t('editorTextInputPlaceholder')}
+                                autoFocus
+                            />
+                            <button
+                                onClick={commitText}
+                                className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-lg shadow-lg transition-colors border border-white/20"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="mt-2 space-y-1 px-1">
+                            <p className="text-[11px] leading-relaxed text-white/85">{t('editorTextInputHintPrimary')}</p>
+                            <p className="text-[11px] leading-relaxed text-white/65">{t('editorTextInputHintSecondary')}</p>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

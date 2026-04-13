@@ -12,27 +12,112 @@ export function registerWorkspaceRoutes(server: any, { geminiApiKey, resolvedDir
     const workspaceSnapshotPath = path.join(resolvedDir, 'workspace_snapshot.json');
     const workspaceSnapshotTempPath = `${workspaceSnapshotPath}.tmp`;
 
+    const isRetryableWorkspaceSnapshotWriteError = (error: unknown) => {
+        const code = (error as NodeJS.ErrnoException)?.code;
+        return code === 'EBUSY' || code === 'EPERM';
+    };
+
+    const cleanupWorkspaceSnapshotTempFile = () => {
+        if (fs.existsSync(workspaceSnapshotTempPath)) {
+            fs.unlinkSync(workspaceSnapshotTempPath);
+        }
+    };
+
+    const getLatestWorkspaceSnapshotCandidatePath = () => {
+        const hasPrimarySnapshot = fs.existsSync(workspaceSnapshotPath);
+        const hasTempSnapshot = fs.existsSync(workspaceSnapshotTempPath);
+
+        if (hasPrimarySnapshot && hasTempSnapshot) {
+            try {
+                const primaryStat = fs.statSync(workspaceSnapshotPath);
+                const tempStat = fs.statSync(workspaceSnapshotTempPath);
+                return tempStat.mtimeMs >= primaryStat.mtimeMs ? workspaceSnapshotTempPath : workspaceSnapshotPath;
+            } catch {
+                return workspaceSnapshotTempPath;
+            }
+        }
+
+        if (hasPrimarySnapshot) {
+            return workspaceSnapshotPath;
+        }
+
+        if (hasTempSnapshot) {
+            return workspaceSnapshotTempPath;
+        }
+
+        return null;
+    };
+
+    const hasUnchangedWorkspaceSnapshotPayload = (payload: string) => {
+        const candidatePath = getLatestWorkspaceSnapshotCandidatePath();
+        if (!candidatePath) {
+            return false;
+        }
+
+        try {
+            return fs.readFileSync(candidatePath, 'utf-8') === payload;
+        } catch {
+            return false;
+        }
+    };
+
+    const finalizeWorkspaceSnapshotWrite = (payload: string) => {
+        try {
+            fs.renameSync(workspaceSnapshotTempPath, workspaceSnapshotPath);
+            return;
+        } catch (error) {
+            if (!isRetryableWorkspaceSnapshotWriteError(error)) {
+                throw error;
+            }
+        }
+
+        try {
+            fs.copyFileSync(workspaceSnapshotTempPath, workspaceSnapshotPath);
+            cleanupWorkspaceSnapshotTempFile();
+            return;
+        } catch (error) {
+            if (!isRetryableWorkspaceSnapshotWriteError(error)) {
+                throw error;
+            }
+        }
+
+        fs.writeFileSync(workspaceSnapshotPath, payload, 'utf-8');
+        cleanupWorkspaceSnapshotTempFile();
+    };
+
     const writeWorkspaceSnapshotWithRetry = (snapshot: Record<string, unknown>) => {
         const payload = JSON.stringify(snapshot, null, 2);
         let lastError: unknown = null;
 
+        if (hasUnchangedWorkspaceSnapshotPayload(payload)) {
+            try {
+                cleanupWorkspaceSnapshotTempFile();
+            } catch {
+                // Best-effort cleanup of stale temp state.
+            }
+            return;
+        }
+
         for (let attempt = 0; attempt < 3; attempt += 1) {
             try {
                 fs.writeFileSync(workspaceSnapshotTempPath, payload, 'utf-8');
-                fs.renameSync(workspaceSnapshotTempPath, workspaceSnapshotPath);
+                finalizeWorkspaceSnapshotWrite(payload);
                 return;
             } catch (error) {
                 lastError = error;
-                try {
-                    if (fs.existsSync(workspaceSnapshotTempPath)) {
-                        fs.unlinkSync(workspaceSnapshotTempPath);
+                if (isRetryableWorkspaceSnapshotWriteError(error)) {
+                    if (attempt === 2 && fs.existsSync(workspaceSnapshotTempPath)) {
+                        return;
                     }
-                } catch {
-                    // Best-effort temp cleanup before retrying.
+                } else {
+                    try {
+                        cleanupWorkspaceSnapshotTempFile();
+                    } catch {
+                        // Best-effort temp cleanup before surfacing a non-retryable write failure.
+                    }
                 }
 
-                const code = (error as NodeJS.ErrnoException)?.code;
-                if ((code !== 'EBUSY' && code !== 'EPERM') || attempt === 2) {
+                if (!isRetryableWorkspaceSnapshotWriteError(error) || attempt === 2) {
                     throw error;
                 }
 
@@ -53,11 +138,7 @@ export function registerWorkspaceRoutes(server: any, { geminiApiKey, resolvedDir
     };
 
     const loadWorkspaceSnapshotBackup = () => {
-        const candidatePath = fs.existsSync(workspaceSnapshotPath)
-            ? workspaceSnapshotPath
-            : fs.existsSync(workspaceSnapshotTempPath)
-              ? workspaceSnapshotTempPath
-              : null;
+        const candidatePath = getLatestWorkspaceSnapshotCandidatePath();
 
         if (!candidatePath) {
             return null;

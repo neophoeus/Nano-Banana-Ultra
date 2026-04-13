@@ -1,6 +1,7 @@
-import { Dispatch, SetStateAction, useCallback } from 'react';
-import { GeneratedImage, StageAsset, TurnLineageAction } from '../types';
-import { BranchRenameDialogState } from './useWorkspaceSurfaceState';
+import { useCallback } from 'react';
+import type { Dispatch, FormEvent, SetStateAction } from 'react';
+import type { GeneratedImage, StageAsset, TurnLineageAction } from '../types';
+import type { BranchRenameDialogState } from './useWorkspaceSurfaceState';
 
 type UseWorkspaceBranchPresentationArgs = {
     autoBranchLabelByOriginId: Record<string, string>;
@@ -19,6 +20,8 @@ type UseWorkspaceBranchPresentationArgs = {
 };
 
 const getNormalizedBranchName = (value: string) => value.trim().replace(/\s+/g, ' ').slice(0, 40);
+const normalizePresentationLineageAction = (action?: TurnLineageAction) =>
+    action === 'editor-follow-up' ? 'continue' : action;
 
 export function useWorkspaceBranchPresentation({
     autoBranchLabelByOriginId,
@@ -39,20 +42,19 @@ export function useWorkspaceBranchPresentation({
 
     const getLineageActionLabel = useCallback(
         (action?: TurnLineageAction) => {
-            if (!action || action === 'root') {
+            const normalizedAction = normalizePresentationLineageAction(action);
+
+            if (!normalizedAction || normalizedAction === 'root') {
                 return t('lineageActionRoot');
             }
-            if (action === 'continue') {
+            if (normalizedAction === 'continue') {
                 return t('lineageActionContinue');
             }
-            if (action === 'branch') {
+            if (normalizedAction === 'branch') {
                 return t('lineageActionBranch');
             }
-            if (action === 'reopen') {
+            if (normalizedAction === 'reopen') {
                 return t('lineageActionReopen');
-            }
-            if (action === 'editor-follow-up') {
-                return t('lineageActionEditor');
             }
             return t('lineageActionReplay');
         },
@@ -86,20 +88,19 @@ export function useWorkspaceBranchPresentation({
 
     const getLineageActionDescription = useCallback(
         (action?: TurnLineageAction) => {
-            if (!action || action === 'root') {
+            const normalizedAction = normalizePresentationLineageAction(action);
+
+            if (!normalizedAction || normalizedAction === 'root') {
                 return t('lineageActionDescRoot');
             }
-            if (action === 'continue') {
+            if (normalizedAction === 'continue') {
                 return t('lineageActionDescContinue');
             }
-            if (action === 'branch') {
+            if (normalizedAction === 'branch') {
                 return t('lineageActionDescBranch');
             }
-            if (action === 'reopen') {
+            if (normalizedAction === 'reopen') {
                 return t('lineageActionDescReopen');
-            }
-            if (action === 'editor-follow-up') {
-                return t('lineageActionDescEditor');
             }
             return t('lineageActionDescReplay');
         },
@@ -130,7 +131,7 @@ export function useWorkspaceBranchPresentation({
     );
 
     const handleSubmitBranchRename = useCallback(
-        (event?: React.FormEvent<HTMLFormElement>) => {
+        (event?: FormEvent<HTMLFormElement>) => {
             event?.preventDefault();
 
             if (!branchRenameDialog) {

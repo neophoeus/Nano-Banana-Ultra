@@ -1,5 +1,20 @@
 import { MutableRefObject, useCallback } from 'react';
-import { AspectRatio, ImageModel, ImageSize, ImageStyle, StageAsset, StickySendIntent } from '../types';
+import { resolveCurrentStageSelectionFirstSourceOverride } from '../utils/generationSourceOverride';
+import {
+    AspectRatio,
+    ContinuationLineageAction,
+    GeneratedImage,
+    ImageModel,
+    ImageSize,
+    ImageStyle,
+    StageAsset,
+    StickySendIntent,
+} from '../types';
+
+type GenerationSourceOverride = {
+    sourceHistoryId: string | null;
+    sourceLineageAction?: 'continue' | 'branch' | null;
+};
 
 type PerformGeneration = (
     targetPrompt: string,
@@ -13,6 +28,7 @@ type PerformGeneration = (
     explicitMode?: string,
     extraObjectImages?: string[],
     extraCharacterImages?: string[],
+    sourceOverride?: GenerationSourceOverride | null,
 ) => Promise<void> | void;
 
 type UseWorkspaceGenerationActionsArgs = {
@@ -22,11 +38,18 @@ type UseWorkspaceGenerationActionsArgs = {
     imageSize: ImageSize;
     imageStyle: ImageStyle;
     imageModel: ImageModel;
+    history: GeneratedImage[];
+    branchOriginIdByTurnId: Record<string, string>;
+    workspaceSessionSourceHistoryId: string | null;
+    workspaceSessionSourceLineageAction?: ContinuationLineageAction | null;
     objectImages: string[];
     characterImages: string[];
     currentStageAsset: StageAsset | null | undefined;
     clearPendingProvenanceContext: () => void;
-    primePendingProvenanceContinuation: (sourceHistoryId: string | null) => void;
+    primePendingProvenanceContinuation: (
+        sourceHistoryId: string | null,
+        options?: { useExplicitSource?: boolean },
+    ) => void;
     resetSelectedOutputState: () => void;
     performGeneration: PerformGeneration;
     onPrepareGenerate: () => void;
@@ -43,6 +66,10 @@ export function useWorkspaceGenerationActions({
     imageSize,
     imageStyle,
     imageModel,
+    history,
+    branchOriginIdByTurnId,
+    workspaceSessionSourceHistoryId,
+    workspaceSessionSourceLineageAction,
     objectImages,
     characterImages,
     currentStageAsset,
@@ -79,7 +106,18 @@ export function useWorkspaceGenerationActions({
             return;
         }
 
-        primePendingProvenanceContinuation(currentStageAsset.sourceHistoryId || null);
+        const sourceOverride = resolveCurrentStageSelectionFirstSourceOverride({
+            sourceHistoryId: currentStageAsset.sourceHistoryId ?? null,
+            currentStageLineageAction: currentStageAsset.lineageAction,
+            history,
+            branchOriginIdByTurnId,
+            workspaceSessionSourceHistoryId,
+            workspaceSessionSourceLineageAction,
+        });
+
+        primePendingProvenanceContinuation(sourceOverride.sourceHistoryId ?? null, {
+            useExplicitSource: true,
+        });
         resetSelectedOutputState();
         onPrepareGenerate();
         performGeneration(
@@ -94,11 +132,14 @@ export function useWorkspaceGenerationActions({
             'Follow-up Edit',
             objectImages,
             characterImages,
+            sourceOverride,
         );
     }, [
         aspectRatio,
+        branchOriginIdByTurnId,
         characterImages,
         currentStageAsset,
+        history,
         imageModel,
         imageSize,
         imageStyle,
@@ -110,6 +151,8 @@ export function useWorkspaceGenerationActions({
         resetSelectedOutputState,
         showNotification,
         t,
+        workspaceSessionSourceHistoryId,
+        workspaceSessionSourceLineageAction,
     ]);
 
     const handleCancelGeneration = useCallback(() => {

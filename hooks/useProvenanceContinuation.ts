@@ -83,7 +83,7 @@ export function useProvenanceContinuation({
     }, [setPendingProvenanceContext]);
 
     const primePendingProvenanceContinuation = useCallback(
-        (sourceHistoryId?: string | null) => {
+        (sourceHistoryId?: string | null, options?: { useExplicitSource?: boolean }) => {
             const grounding =
                 selectedGrounding ??
                 workspaceSession.activeResult?.grounding ??
@@ -103,15 +103,18 @@ export function useProvenanceContinuation({
                 return false;
             }
 
+            const resolvedSourceHistoryId = options?.useExplicitSource
+                ? (sourceHistoryId ?? null)
+                : sourceHistoryId ??
+                  currentStageAssetSourceHistoryId ??
+                  workspaceSession.provenanceSourceHistoryId ??
+                  workspaceSession.sourceHistoryId ??
+                  null;
+
             setPendingProvenanceContext({
                 grounding,
                 sessionHints,
-                sourceHistoryId:
-                    sourceHistoryId ??
-                    currentStageAssetSourceHistoryId ??
-                    workspaceSession.provenanceSourceHistoryId ??
-                    workspaceSession.sourceHistoryId ??
-                    null,
+                sourceHistoryId: resolvedSourceHistoryId,
             });
             return true;
         },

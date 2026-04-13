@@ -158,7 +158,7 @@ export const useWorkspaceSnapshotActions = ({
             setBranchRenameDialog(null);
             setBranchRenameDraft('');
             setWorkspaceImportReview(null);
-            lastPromotedHistoryIdRef.current = activeResult?.historyId || latestSuccessfulHistoryId;
+            lastPromotedHistoryIdRef.current = latestSuccessfulHistoryId || activeResult?.historyId;
 
             if (announceRestoreToast) {
                 showRestoredToast();

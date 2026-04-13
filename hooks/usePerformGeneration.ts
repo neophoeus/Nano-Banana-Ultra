@@ -53,6 +53,11 @@ function sortBatchHistoryItemsByVisualOrder(items: GeneratedImageType[]): Genera
     });
 }
 
+type GenerationSourceOverride = {
+    sourceHistoryId: string | null;
+    sourceLineageAction?: 'continue' | 'branch' | null;
+};
+
 interface UsePerformGenerationProps {
     t: (key: string) => string;
     apiKeyReady: boolean;
@@ -84,11 +89,16 @@ interface UsePerformGenerationProps {
     setHistory: (val: React.SetStateAction<GeneratedImageType[]>) => void;
     setIsEditing: (val: boolean) => void;
     setEditingImageSource: (val: string | null) => void;
-    getGenerationLineageContext?: (params: { mode: string; editingInput?: string }) => GenerationLineageContext | null;
+    getGenerationLineageContext?: (params: {
+        mode: string;
+        editingInput?: string;
+        sourceOverride?: GenerationSourceOverride | null;
+    }) => GenerationLineageContext | null;
     getConversationRequestContext?: (params: {
         mode: string;
         editingInput?: string;
         batchSize: number;
+        sourceOverride?: GenerationSourceOverride | null;
     }) => ConversationRequestContext | null;
     onBatchPreviewStart?: (args: { sessionId: string; batchSize: number }) => void;
     onBatchPreviewTileUpdate?: (args: { sessionId: string; tile: BatchPreviewTile }) => void;
@@ -149,6 +159,7 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
             explicitMode?: string,
             extraObjectImages?: string[],
             extraCharacterImages?: string[],
+            sourceOverride?: GenerationSourceOverride | null,
         ) => {
             const isStyleTransfer =
                 (objectImages.length > 0 || characterImages.length > 0) && targetStyle !== 'None' && !editingInput;
@@ -206,6 +217,7 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                     mode: explicitMode,
                     editingInput,
                     batchSize: currentBatchSize,
+                    sourceOverride,
                 }) || null;
             const currentExecutionMode = conversationContext
                 ? 'chat-continuation'
@@ -221,7 +233,8 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                 else if (objectImages.length > 0 || characterImages.length > 0) currentMode = 'Image to Image/Mixing';
                 else currentMode = 'Text to Image';
             }
-            const generationLineage = getGenerationLineageContext?.({ mode: currentMode, editingInput }) || null;
+            const generationLineage =
+                getGenerationLineageContext?.({ mode: currentMode, editingInput, sourceOverride }) || null;
             setGenerationMode(currentMode);
             setExecutionMode(currentExecutionMode);
 

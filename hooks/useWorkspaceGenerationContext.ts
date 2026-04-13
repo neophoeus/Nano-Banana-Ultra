@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import {
+    ContinuationLineageAction,
     GeneratedImage,
     GenerationLineageContext,
     StageAsset,
@@ -8,6 +9,12 @@ import {
     WorkspaceSessionState,
 } from '../types';
 import { buildConversationRequestContext, resolveConversationSelectionState } from '../utils/conversationState';
+import { resolveSelectionFirstSourceOverride } from '../utils/generationSourceOverride';
+
+type GenerationSourceOverride = {
+    sourceHistoryId: string | null;
+    sourceLineageAction?: ContinuationLineageAction | null;
+};
 
 type UseWorkspaceGenerationContextArgs = {
     currentStageAsset: StageAsset | null;
@@ -29,14 +36,35 @@ export function useWorkspaceGenerationContext({
     getHistoryTurnById,
 }: UseWorkspaceGenerationContextArgs) {
     const getGenerationLineageContext = useCallback(
-        ({ mode, editingInput }: { mode: string; editingInput?: string }) => {
+        ({
+            mode,
+            editingInput,
+            sourceOverride,
+        }: {
+            mode: string;
+            editingInput?: string;
+            sourceOverride?: GenerationSourceOverride | null;
+        }) => {
+            const hasSourceOverride = sourceOverride !== undefined;
             const isEditingRequest = Boolean(
                 editingInput || mode.includes('Inpaint') || mode.includes('Retouch') || mode.includes('Editor'),
             );
-            const sourceHistoryId = isEditingRequest
-                ? (currentStageAsset?.sourceHistoryId ?? workspaceSession.sourceHistoryId ?? null)
-                : (workspaceSession.sourceHistoryId ?? null);
+            const sourceHistoryId = hasSourceOverride
+                ? (sourceOverride?.sourceHistoryId ?? null)
+                : isEditingRequest
+                  ? (currentStageAsset?.sourceHistoryId ?? workspaceSession.sourceHistoryId ?? null)
+                  : (workspaceSession.sourceHistoryId ?? null);
             const sourceTurn = getHistoryTurnById(sourceHistoryId);
+            const selectionFirstSourceOverride =
+                !hasSourceOverride && sourceHistoryId
+                    ? resolveSelectionFirstSourceOverride({
+                          sourceHistoryId,
+                          history,
+                          branchOriginIdByTurnId,
+                          workspaceSessionSourceHistoryId: workspaceSession.sourceHistoryId,
+                          workspaceSessionSourceLineageAction: workspaceSession.sourceLineageAction,
+                      })
+                    : null;
 
             if (!sourceHistoryId) {
                 return {
@@ -49,9 +77,9 @@ export function useWorkspaceGenerationContext({
             }
 
             let lineageAction: GenerationLineageContext['lineageAction'];
-            if (isEditingRequest) {
-                lineageAction = 'editor-follow-up';
-            } else if (workspaceSession.sourceLineageAction === 'branch') {
+            if (hasSourceOverride) {
+                lineageAction = sourceOverride?.sourceLineageAction === 'branch' ? 'branch' : 'continue';
+            } else if (selectionFirstSourceOverride?.sourceLineageAction === 'branch') {
                 lineageAction = 'branch';
             } else {
                 lineageAction = 'continue';
@@ -66,15 +94,25 @@ export function useWorkspaceGenerationContext({
             } satisfies GenerationLineageContext;
         },
         [
+            branchOriginIdByTurnId,
             currentStageAsset?.sourceHistoryId,
             getHistoryTurnById,
+            history,
             workspaceSession.sourceLineageAction,
             workspaceSession.sourceHistoryId,
         ],
     );
 
     const getConversationRequestContext = useCallback(
-        ({ batchSize }: { batchSize: number }) => {
+        ({
+            batchSize,
+            sourceOverride,
+        }: {
+            mode?: string;
+            editingInput?: string;
+            batchSize: number;
+            sourceOverride?: GenerationSourceOverride | null;
+        }) => {
             if (stickySendIntent !== 'memory') {
                 return null;
             }
@@ -83,20 +121,28 @@ export function useWorkspaceGenerationContext({
                 return null;
             }
 
-            const activeSourceHistoryId = workspaceSession.sourceHistoryId ?? null;
+            const hasSourceOverride = sourceOverride !== undefined;
+            const activeSourceHistoryId = hasSourceOverride
+                ? (sourceOverride?.sourceHistoryId ?? null)
+                : (workspaceSession.sourceHistoryId ?? null);
             if (!activeSourceHistoryId) {
                 return null;
             }
 
+            const resolvedSourceLineageAction = hasSourceOverride
+                ? (sourceOverride?.sourceLineageAction ?? null)
+                : (workspaceSession.sourceLineageAction ?? null);
             const preferredBranchOriginId =
-                workspaceSession.sourceLineageAction === 'branch'
+                resolvedSourceLineageAction === 'branch'
                     ? activeSourceHistoryId
                     : branchOriginIdByTurnId[activeSourceHistoryId] || activeSourceHistoryId;
 
             const conversationSelection = resolveConversationSelectionState(conversationState, {
                 selectedHistoryId: activeSourceHistoryId,
                 preferredBranchOriginId,
-                conversationBranchOriginId: workspaceSession.conversationBranchOriginId,
+                conversationBranchOriginId: hasSourceOverride
+                    ? preferredBranchOriginId
+                    : workspaceSession.conversationBranchOriginId,
             });
             const branchOriginId = conversationSelection.branchOriginId || preferredBranchOriginId;
 

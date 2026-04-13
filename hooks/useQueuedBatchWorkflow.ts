@@ -20,6 +20,7 @@ import {
 } from '../types';
 import { extractSavedFilename, persistHistoryThumbnail, saveImageToLocal } from '../utils/imageSaveUtils';
 import { buildImageSidecarMetadata } from '../utils/imageSidecarMetadata';
+import { resolveCurrentStageSelectionFirstSourceOverride } from '../utils/generationSourceOverride';
 import { sanitizeSessionHintsForStorage } from '../utils/inlineImageDisplay';
 import {
     isQueuedBatchJobAutoImportReady,
@@ -100,6 +101,11 @@ const sortQueuedBatchImportedHistory = (left: GeneratedImage, right: GeneratedIm
     return left.createdAt - right.createdAt;
 };
 
+type GenerationSourceOverride = {
+    sourceHistoryId: string | null;
+    sourceLineageAction?: 'continue' | 'branch' | null;
+};
+
 type RemoteQueuedJobSeed = Pick<
     QueuedBatchJob,
     | 'localId'
@@ -165,10 +171,17 @@ type UseQueuedBatchWorkflowArgs = {
     googleSearch: boolean;
     imageSearch: boolean;
     currentStageAsset: StageAsset | null;
+    branchOriginIdByTurnId: Record<string, string>;
+    workspaceSessionSourceHistoryId: string | null;
+    workspaceSessionSourceLineageAction?: 'continue' | 'branch' | null;
     objectImages: string[];
     characterImages: string[];
     getModelLabel: (model: ImageModel) => string;
-    getGenerationLineageContext: (params: { mode: string; editingInput?: string }) => GenerationLineageContext;
+    getGenerationLineageContext: (params: {
+        mode: string;
+        editingInput?: string;
+        sourceOverride?: GenerationSourceOverride | null;
+    }) => GenerationLineageContext;
     addLog: (message: string) => void;
     showNotification: (message: string, type?: 'info' | 'error') => void;
     setHistory: Dispatch<SetStateAction<GeneratedImage[]>>;
@@ -207,6 +220,7 @@ type EditorQueuedBatchJobSubmission = {
     objectImageInputs?: string[];
     characterImageInputs?: string[];
     generationMode?: string;
+    sourceOverride?: GenerationSourceOverride | null;
 };
 
 type UseQueuedBatchWorkflowReturn = {
@@ -249,6 +263,9 @@ export function useQueuedBatchWorkflow({
     googleSearch,
     imageSearch,
     currentStageAsset,
+    branchOriginIdByTurnId,
+    workspaceSessionSourceHistoryId,
+    workspaceSessionSourceLineageAction,
     objectImages,
     characterImages,
     getModelLabel,
@@ -296,7 +313,17 @@ export function useQueuedBatchWorkflow({
             : objectImages.length > 0 || characterImages.length > 0
               ? 'Image to Image/Mixing'
               : 'Text to Image';
-        const lineageContext = getGenerationLineageContext({ mode: generationMode, editingInput });
+            const sourceOverride = editingInput
+                ? resolveCurrentStageSelectionFirstSourceOverride({
+                  sourceHistoryId: currentStageAsset?.sourceHistoryId ?? null,
+                  currentStageLineageAction: currentStageAsset?.lineageAction,
+                  history,
+                  branchOriginIdByTurnId,
+                  workspaceSessionSourceHistoryId,
+                  workspaceSessionSourceLineageAction,
+                  })
+                : undefined;
+            const lineageContext = getGenerationLineageContext({ mode: generationMode, editingInput, sourceOverride });
 
         return {
             finalPrompt,
@@ -323,8 +350,12 @@ export function useQueuedBatchWorkflow({
         aspectRatio,
         batchSize,
         buildQueuedBatchDisplayName,
+        branchOriginIdByTurnId,
         characterImages,
+        history,
+        currentStageAsset?.lineageAction,
         currentStageAsset?.url,
+        currentStageAsset?.sourceHistoryId,
         getGenerationLineageContext,
         googleSearch,
         imageModel,
@@ -338,6 +369,8 @@ export function useQueuedBatchWorkflow({
         structuredOutputMode,
         temperature,
         thinkingLevel,
+        workspaceSessionSourceHistoryId,
+        workspaceSessionSourceLineageAction,
     ]);
 
     const mapRemoteQueuedJobToLocal = useCallback(
@@ -643,13 +676,14 @@ export function useQueuedBatchWorkflow({
             objectImageInputs = [],
             characterImageInputs = [],
             generationMode = 'Editor Edit',
+            sourceOverride,
         }: EditorQueuedBatchJobSubmission) => {
             if (!editorPrompt.trim() || !editingInput) {
                 showNotification(t('errorNoPrompt'), 'error');
                 return;
             }
 
-            const lineageContext = getGenerationLineageContext({ mode: generationMode, editingInput });
+            const lineageContext = getGenerationLineageContext({ mode: generationMode, editingInput, sourceOverride });
             await submitQueuedBatchDraft({
                 finalPrompt: editorPrompt,
                 editingInput,

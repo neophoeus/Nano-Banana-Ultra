@@ -1,30 +1,48 @@
 # Changelog
 
+## v3.5.1 - 2026-04-13
+
+- Release title: Nano Banana Ultra 3.5.1 - Editor Continuation Realignment, Visible Text Guidance & Smarter Outpaint Continuity
+- Release summary:
+    - editor and staged-image continuation alignment:
+        - editor generate, editor queue batch, and stage-based follow-up edits now resolve lineage from the active working source, preventing unintended revival of stale continuation context from elsewhere in the workspace
+        - upload-only and otherwise unlinked staged images now begin as fresh root-like edits rather than inheriting hidden prior lineage
+        - reopening or continuing from older selected turns now preserves branch intent consistently across both live and restored workspace flows
+
+    - editor prompt ownership and visible-text workflow:
+        - removed the duplicate centered editor prompt card so hidden editor instructions now remain in the existing shared-controls prompt sheet, while visible wording intended for the final image can be placed directly on the canvas
+        - doodle-and-text edits now preserve drawn canvas wording as literal visible-output guidance, while non-doodle editor modes remain prompt-only without additional prompt chrome layered over the canvas
+        - the doodle text tool now explains the baked-label workflow through a reusable modal that can be reopened on every explicit activation, replacing the earlier one-time and doodle-entry guidance pattern
+
+    - outpaint intent analysis and framing continuity:
+        - outpaint now evaluates live frame, zoom, and blank-side geometry to distinguish detail-only reframe, crop-preserving extension, directional side extension, and balanced extension cases
+        - crop-preserving outpaint now retains the current zoomed framing and extends only into genuine blank sides instead of falling back to a generic extend-the-scene instruction
+
 ## v3.5.0 - 2026-04-12
 
 - Release title: Nano Banana Ultra 3.5.0 - Selection-First Lineage, Stateful Continue CTA & Versions Flow Simplification
-- Release prep summary:
-    - selection-first history and continuation workflow:
-        - selecting a successful history turn now immediately defines the next working source, so the workflow no longer depends on a separate passive open-versus-continue split
-        - selecting the latest turn on a branch now behaves as continuation from that branch, while selecting an older turn now starts a new branch automatically
-        - restore and import-review flows now follow the same source-selection rules as the live workspace instead of using a separate route model
+- Release summary:
+    - selection-first source and continuation workflow:
+        - selecting a successful history turn now immediately defines the next working source, removing the previous dependence on a separate passive open-versus-continue split
+        - selecting the latest turn on a branch now behaves as continuation from that branch, while selecting an older turn now initiates a new branch automatically
+        - restore and import-review flows now follow the same source-selection rules as the live workspace instead of maintaining a separate route model
 
-    - composer and stage workflow simplification:
-        - replaced the old `Generate` plus visible `Follow-up Edit` pairing with one stateful primary action: no image staged keeps fresh generate as the main action, while a staged image promotes `Continue with this image` as the main action and keeps fresh generate as the smaller secondary fallback
-        - simplified the stage surface by removing the extra continue/branch controls and the older divergence signal, so continuation intent is owned by source selection instead of duplicated in multiple places
+    - composer and stage action consolidation:
+        - replaced the prior `Generate` plus visible `Follow-up Edit` pairing with a single stateful primary action: when no image is staged, fresh generate remains primary; when a staged image is present, `Continue with this image` becomes the primary action and fresh generate remains as the smaller secondary fallback
+        - simplified the stage surface by removing duplicate continue/branch controls and the older divergence signal, so continuation intent is now owned by source selection rather than repeated across multiple controls
 
-    - Versions redesign for the new mental model:
-        - updated the Versions view so lineage cards now show state directly through badges such as `Viewing` and `Continue with this image` instead of relying on separate owner-route action buttons
-        - simplified the active-branch area so branch switching stays selection-first and branch rename remains available without keeping the older open/continue action row
+    - Versions surface alignment under the selection-first model:
+        - updated the Versions view so lineage cards now communicate state directly through badges such as `Viewing` and `Continue with this image` instead of relying on separate owner-route action buttons
+        - simplified the active-branch area so branch switching remains selection-first and branch rename stays available without retaining the earlier open/continue action row
         - kept the selected turn, current stage source, and branch state visually aligned across Versions, stage, and restore flows
 
-    - user-facing wording updates:
-        - updated English and Traditional Chinese labels to match the simplified workflow, including the stage-source wording, continue-with-image wording, grounding-result wording, and the active/viewing badge wording
+    - user-facing wording follow-through:
+        - updated English and Traditional Chinese labels to match the simplified workflow, including stage-source wording, continue-with-image wording, grounding-result wording, and active/viewing badge wording
 
 ## v3.4.5 - 2026-04-12
 
 - Release title: Nano Banana Ultra 3.4.5 - Immediate UI Locale Switching & Startup Translation Preload
-- Release prep summary:
+- Release summary:
     - UI language timing repair across bootstrap and manual switching:
         - preloaded the preferred locale before the first app render so non-English startup no longer mounts against the temporary English dictionary and waits for a later interaction before repainting translated chrome
         - changed runtime language switching so the app persists the new preference immediately but only commits `currentLang` after the target dictionary finishes loading, preventing the earlier state where the UI claimed to be on another locale while still reading fallback English strings
@@ -33,7 +51,7 @@
 ## v3.4.4 - 2026-04-11
 
 - Release title: Nano Banana Ultra 3.4.4 - Modal Floating Top Layer for Advanced Settings & Detail Surfaces
-- Release prep summary:
+- Release summary:
     - modal-scoped custom floating top-layer infrastructure:
         - added a modal-scoped floating host inside `WorkspaceModalFrame` instead of loosening modal overflow rules, so shared modal flows can render custom floating UI above scrollable modal content without changing the existing rounded-shell, max-height, or internal scroll contracts
         - introduced a shared `ModalFloatingLayerContext` plus the new `useAnchoredFloatingPlacement(...)` primitive to centralize anchored fixed-position placement, viewport clamping, auto-flip behavior, and future modal-floating reuse instead of leaving each surface on local absolute positioning
@@ -56,7 +74,7 @@
 ## v3.4.3 - 2026-04-11
 
 - Release title: Nano Banana Ultra 3.4.3 - Image to Prompt Quick Tool, Prompt Locale Locking & Scaffolded Surprise Me
-- Release prep summary:
+- Release summary:
     - composer quick-tool expansion and prompt-action state polish:
         - added `Image to Prompt` as a true composer quick tool with localized labels, hidden file-picker wiring, and active helper spinner state so uploaded reference images can replace the composer prompt directly instead of routing through a separate surface
         - removed the old placeholder quick-tool slot, kept `Surprise Me` and `Auto Rewrite` as peers, and propagated the current language code instead of a display-label alias through prompt-helper requests so rewrite, random, and image-to-prompt all submit the intended backend locale
@@ -80,7 +98,7 @@
 ## v3.4.2 - 2026-04-10
 
 - Release title: Nano Banana Ultra 3.4.2 - Composer Reflow, Instruction / Conversation UX & Smart Overlay Placement
-- Release prep summary:
+- Release summary:
     - composer shell reflow and action ownership regroup:
         - rebuilt the composer around a clearer `top settings row -> Image Tools + prompt -> Next send + Generate -> queue row` structure instead of the older mixed three-column surface, while keeping the style strip visible and preserving mobile stacking
         - kept the prompt helper area inside the prompt card, preserved the visible placeholder quick-tool slot, and made `Follow-up Edit` a permanent peer action beside `Generate` instead of hiding it whenever no stage image is active
@@ -105,7 +123,7 @@
 ## v3.4.1 - 2026-04-09
 
 - Release title: Nano Banana Ultra 3.4.1 - Prompt Helper Removal, History Rail Regroup & Stage Shell Alignment
-- Release prep summary:
+- Release summary:
     - removed composer-side prompt helper persistence and template/history routes end-to-end by deleting `usePromptHistory`, removing the `Templates` / `History` launcher buttons and picker routes, stripping the related backend prompt-history endpoints, and aligning the surviving shared-controls wording across the maintained locales to the smaller `Inspiration, rewrite` contract
     - corrected viewer prompt reuse so `Apply Prompt` now prefers the currently viewed history item's prompt or loaded metadata prompt instead of blindly replaying stale composer/view state when the inspected image changes
     - split `Image Tools` into clearer action ownership with dedicated `Upload Image To Repaint`, `Repaint Current Image`, and `Draw Reference Sketch` entries, wired a direct upload-to-repaint path from the shared side-tool surface, and added an App-level regression that keeps `Repaint Current Image` disabled after clearing the stage while the upload path remains available
@@ -116,7 +134,7 @@
 ## v3.4.0 - 2026-04-09
 
 - Release title: Nano Banana Ultra 3.4.0 - Support Surface Closeout & Sticky Send Intent
-- Release prep summary:
+- Release summary:
     - finalized the shared support surface around `Progress`, `Response`, and `Sources`; earlier internal `Thoughts` / `Output` / `Evidence` phrasing now resolves to those three user-facing surfaces inside one support detail shell with in-surface tab switching
     - `Progress` now uses the intended middle-version contract: a trimmed top summary, a compact workflow summary block, a latest accumulated-thought snapshot card, and a chronological thought stream; the older workflow timeline list and Progress-owned current-stage-source / continuity cards remain removed
     - `Response` now uses one compact preview line even for structured output while preserving the existing response-rail body, `Sources` keeps labeled source/support count chips plus only distinct provenance metadata rows, and the standalone legacy Thoughts detail component remains absent from the live app
@@ -129,7 +147,7 @@
 ## v3.3.1 - 2026-04-08
 
 - Release title: Nano Banana Ul44tra 3.3.1 - Sidecar Metadata Fidelity, Viewer Expansion & Temperature UX
-- Release prep summary:
+- Release summary:
     - Per-image sidecar metadata contract, save-path enrichment, and thumbnail filename alignment:
         - added a shared `ImageSidecarMetadata` / `SavedImageActualOutput` contract plus sidecar builder and normalizer helpers so interactive generation, queued-batch imports, and plugin save/load flows persist the same richer per-image JSON payload instead of loosely shaped metadata objects
         - expanded output sidecars to record prompt, model, style, aspect ratio, requested size, output format, structured-output mode, temperature, thinking level, thought visibility, grounding flags and mode, execution mode, batch metadata, and actual output dimensions
@@ -179,7 +197,7 @@
 ## v3.2.7 - 2026-04-06
 
 - Release title: Nano Banana Ultra 3.2.7 - Queued Batch Recovery, Retry & Cleanup
-- Release prep summary:
+- Release summary:
     - Queued batch import extraction hardening:
         - broadened queued-batch result extraction so the importer now accepts wrapped batch responses, snake_case payload fields such as `inline_data` / `thought_signature`, later-candidate image parts, and wrapped grounding metadata instead of assuming one strict happy-path shape
         - refined queued-batch import diagnostics so backend results now distinguish malformed responses, prompt-level policy block reasons, missing candidates, missing parts, explicit per-entry batch errors, and safety-style finish reasons, while the workspace import flow preserves partial-success imports, logs skipped failed entries, and persists the first concrete import failure summary back onto the queued job instead of only showing a generic no-image notice
@@ -201,7 +219,7 @@
 ## v3.2.6 - 2026-04-04
 
 - Release title: Nano Banana Ultra 3.2.6 - Composer Shell Refinement & Restore Hardening
-- Release prep summary:
+- Release summary:
     - Prompt helper rail follow-up:
         - refined the four prompt helper buttons inside the composer prompt card so desktop now uses compact equal-width icon-and-label rows while mobile keeps the icon-above-label stack, with normalized letter spacing, refreshed helper glyphs, and clearer dark-theme icon-chip contrast
         - restored the helper buttons to the white surface family, shortened the prompt-history surface label from `Saved Prompts` / prompt-history equivalents to `History` across the maintained locales, and removed the trailing `✦` from `AI Enhance`
@@ -233,7 +251,7 @@
 ## v3.2.5 - 2026-04-04
 
 - Release title: Nano Banana Ultra 3.2.5 - Queued Batch Truthfulness & Submit Feedback Closeout
-- Release prep summary:
+- Release summary:
     - Queued batch truthfulness hardening:
         - threaded `hasInlinedResponses` into local queued-job state, added explicit local `submissionPending` plus import-diagnostic tracking, and centralized the queue truth predicates in `utils/queuedBatchJobs.ts` so import-ready no longer means `JOB_STATE_SUCCEEDED` alone
         - updated composer queue status, the queued-batch detail panel, workspace insights, and workflow detail surfaces so counts and actions now reflect real importability, while succeeded jobs without inline payload no longer appear ready to import
@@ -247,7 +265,7 @@
 ## v3.2.4 - 2026-04-04
 
 - Release title: Nano Banana Ultra 3.2.4 - Quantity Persistence Closeout & Session D Handoff
-- Release prep summary:
+- Release summary:
     - Quantity persistence stale-state fix closeout:
         - confirmed the Session C root cause in `ImageEditor.resetTools(...)`, where editor-local reset replayed stale `initialBatchSize` back into committed composer state via `onBatchSizeChange(initialBatchSize)` and could silently overwrite a later committed Quantity such as `3`
         - kept the runtime fix narrow by removing that stale editor reset batch-size writeback instead of adding broad defensive clamping or widening settings-session ownership changes
@@ -258,7 +276,7 @@
 ## v3.2.3 - 2026-04-04
 
 - Release title: Nano Banana Ultra 3.2.3 - Composer / Viewer Surface Clarity & Image Tools Polish
-- Release prep summary:
+- Release summary:
     - Composer / viewer / style-label cleanup:
         - added a conditional composer style status strip between `Generation Settings` and `Follow-up Source` that only renders when a real style is active, making shared style state visible without surfacing the `None` case as fake status
         - added an explicit viewer `Apply Prompt` CTA that routes through an App-owned prompt-replace helper so applying a viewed prompt only replaces composer prompt text and preserves the Session A continuation/source contract
@@ -272,7 +290,7 @@
 ## v3.2.2 - 2026-04-04
 
 - Release title: Nano Banana Ultra 3.2.2 - Chain Cleanup & Restore Contract Alignment
-- Release prep summary:
+- Release summary:
     - Chain cleanup and explicit continuation-source contract:
         - stopped passive history open/reopen from promoting workspace session source, mutating conversation route, or rewriting composer state, so `Reopen` now stays in stage/view-only territory while `Continue`, `Promote Variant`, and `Branch` remain the only explicit route-changing actions
         - added `workspaceSession.sourceLineageAction` as explicit continuation intent, threaded it through session promotion, lineage selectors, imported-workspace review, provenance continuation, and branch continuation helpers, and stopped pending branch intent from being projected back onto the old branch continuation map
@@ -286,7 +304,7 @@
 ## v3.2.1 - 2026-04-03
 
 - Release title: Nano Banana Ultra 3.2.1 - Shared Controls, Retouch Locking & Advanced Settings Draft Flow
-- Release prep summary:
+- Release summary:
     - Shared controls, editor-local prompt/reference state, prompt draft/apply, and retouch/editor-entry hardening:
         - rebuilt the floating `Shared` surface controls into an always-visible compact settings card instead of an open/close disclosure, moved it to the left-side workspace edge, collapsed the surface summary into compact chips, limited SketchPad to first-layer `Model` and `Ratio` actions, and added bottom-offset reporting so the editor retouch toolbar can dock beneath the shared controls without overlap
         - moved editor prompt and reference ownership further into editor-local transient state so editor object/character references start empty from snapshot-backed editor sessions, clear correctly on editor exit, and stay isolated from the main composer while shared model and generation settings continue to follow the active workspace surface
@@ -306,7 +324,7 @@
 ## v3.2.0 - 2026-04-02
 
 - Release title: Nano Banana Ultra 3.2.0 - Shared Settings, Image Tools & Queue Workflow Refinement
-- Release prep summary:
+- Release summary:
     - Image Tools secondary-card regrouping, reference-hint cleanup, and i18n follow-through:
         - removed the `Actions` eyebrow from the left `Image Tools` surface, regrouped the panel into nested secondary cards so editor and SketchPad actions share the upper card while object and character references share the lower card, and kept the existing side-tool action selectors stable while adding explicit inner-card test ids for the new structure
         - removed the `Rec. < x` recommendation text from the shared `ImageUploader` header so the hint disappears from both the main `Image Tools` panel and the shared-controls references sheet, while preserving the live count display plus the existing `safeLimit` thumbnail highlighting behavior
@@ -336,7 +354,7 @@
 ## v3.1.8 - 2026-04-01
 
 - Release title: Nano Banana Ultra 3.1.8 - Restore Notice Removal & Startup Preference Persistence
-- Release prep summary:
+- Release summary:
     - removed the blocking `WorkspaceRestoreNotice` flow from the real product runtime so startup restore, imported-workspace replace, and shared-backup migration now restore directly into the recovered workspace state instead of requiring a second decision modal
     - replaced the old restore-modal contract with lightweight toast feedback, updated snapshot application semantics from `showRestoreNotice` toward `announceRestoreToast`, and kept restore continuity intact for history source routing and official-conversation follow-up requests
     - preserved last-used startup preferences by restoring theme and language immediately on launch, persisting user language changes into local storage, and extracting shared theme persistence helpers so launch-time UI state comes back before restore feedback is announced
@@ -345,7 +363,7 @@
 ## v3.1.7 - 2026-04-01
 
 - Release title: Nano Banana Ultra 3.1.7 - Shell Density, Theme Stability & Composer Cleanup
-- Release prep summary:
+- Release summary:
     - tightened the main workspace shell into a denser contract by moving the top launcher strip, history canvas support flow, and bottom composer row onto the shared tighter spacing baseline, keeping the launcher cards at a 40px desktop height and bringing the composer row back to the same full-width alignment as the rest of the layout
     - reduced unnecessary UI churn by suppressing whole-document transitions during theme flips, narrowing several broad `transition-all` surfaces across stage, history, and filmstrip flows, and removing the redundant history branch-summary rebuild so shell interactions stay lighter under real workspace load
     - upgraded visual readability across the stage and language surfaces by switching stage top-right chips and overflow actions to higher-contrast solid treatments, improving dark-theme signal contrast, and moving the language selector off the frosted overlay shell onto a clearer solid panel contract
@@ -354,7 +372,7 @@
 ## v3.1.6 - 2026-04-01
 
 - Release title: Nano Banana Ultra 3.1.6 - Compact Thumbnail & Stage Context Completion
-- Release prep summary:
+- Release summary:
     - completed the compact-thumbnail and stage-context slice by turning `Recent Turns` and embedded `Gallery` history cards into scan-and-switch tokens, removing prompt preview from the main workspace surfaces, and keeping prompt detail viewer-owned instead of letting thumbnails or the stage act like mini detail cards
     - added the selected-item dock beside the history area so history-turn metadata and history-turn actions now live in dedicated `Selected Item Summary Strip` and `Selected Item Action Bar` surfaces rather than staying embedded in thumbnail overlays, while restoring branch-rename applicability so `Rename Branch` only appears when a real rename target exists
     - upgraded the main stage top-right into a compact current-stage context and quick-action cluster, preserved source and branch context during active generation, and finished the responsive overflow contract so both the selected-item dock and the stage cluster now follow explicit wide / medium / compact visibility priorities instead of relying on scroll-only or breakpoint-only fallbacks
@@ -363,7 +381,7 @@
 ## v3.1.5 - 2026-03-31
 
 - Release title: Nano Banana Ultra 3.1.5 - Shell Polish & Queue Modal Cleanup
-- Release prep summary:
+- Release summary:
     - tightened the top workspace launcher strip into a denser summary-first row, clarified the `Current Work` / `Response` / `Source Trail` ownership model, split their active-signal logic, renamed the English `Answer` surface to `Response`, and reduced the remaining shell gutters so the workspace reads as one tighter product shell
     - reorganized the right-side workspace support flow by moving `Recent Turns` above `Versions`, restyling and compacting the `Versions` summary actions, promoting `Gallery` out of the composer and then embedding the gallery surface directly into the support rail instead of keeping it behind the old modal launcher
     - simplified workflow detail ownership by compacting the reused context rail inside the detail modal and removing repeated workflow summary and latest-thought blocks, while merging returned thoughts into the main chronological workflow event stream
@@ -373,7 +391,7 @@
 ## v3.1.4 - 2026-03-31
 
 - Release title: Nano Banana Ultra 3.1.4 - Shell, Restore & Queue Batch Hardening
-- Release prep summary:
+- Release summary:
     - reorganized the top workspace shell around summary-first ownership: `Current Work` is now a single-line live-status card with a thought-aware indicator, while `Answer`, `Source Trail`, and `Versions` open dedicated detail modals instead of carrying their full content inline
     - moved heavyweight workflow, provenance, and version detail out of the compact summaries, including keeping `Workspace Snapshot` import/export controls inside the `Versions` detail modal and preserving full current-stage source routing, lineage context, and the full thoughts stack inside the workflow detail view
     - tightened overflow and mobile-fit behavior across the restored shell surfaces, generated-image overlays, structured-output menus, tooltip panels, and shared scroll containers so the compact shell stays readable without viewport-breaking UI states
@@ -383,7 +401,7 @@
 ## v3.1.3 - 2026-03-30
 
 - Release title: Nano Banana Ultra 3.1.3 - Restore & Payload Hardening
-- Release prep summary:
+- Release summary:
     - reduced long-session slowdown by avoiding retained inline base64 for saved stage and viewer images when a saved file is available, so the main workspace no longer needs to keep full image data URLs in long-lived UI state after auto-save succeeds
     - redacted inline image payloads from viewer, provenance, and structured-output text surfaces so raw `data:image/...;base64,...` blobs no longer spill into the right-side inspection panels or other text-driven UI paths
     - aligned restore notice gating with the same restorable-content detection used by snapshot migration and import flows, so restored prompts, workflow logs, queued jobs, and other non-empty workspace states no longer silently skip the restore notice just because they lack visible viewer images or staged assets
@@ -392,7 +410,7 @@
 ## v3.1.2 - 2026-03-30
 
 - Release title: Nano Banana Ultra 3.1.2 - Versions & Viewer Refinement
-- Release prep summary:
+- Release summary:
     - moved `Export Workspace` and `Import Workspace` out of the composer and into the history-owned `Versions` surface, adding a titled `Workspace Snapshot` strip and restoring a clearer multi-layer shell around active-branch and lineage sections
     - simplified the single-image viewer by removing redundant header copy, moving the red close action fully outside the modal shell, and keeping the dialog labeled through accessibility metadata rather than visible chrome
     - made the viewer sidebar independently scrollable, introduced the reusable `nbu-scrollbar-subtle` scrollbar utility, aligned legacy thin-scroll surfaces to the same understated treatment, updated localized snapshot-strip copy, and removed the banana emoji from the document title so browser chrome now reads `Nano Banana Ultra`
@@ -400,7 +418,7 @@
 ## v3.1.1 - 2026-03-30
 
 - Release title: Nano Banana Ultra 3.1.1 - Workspace Layout Refinement
-- Release prep summary:
+- Release summary:
     - this patch release is primarily a layout and density refinement pass on top of the 3.1 product-facing workspace baseline rather than a new workflow or feature release
     - tightened and aligned the main workspace surfaces so `Recent Turns`, `Versions`, side tools, stage wrappers, answer placeholders, and composer sections now share the same compact visual contract
     - applied the same layout standard to modal, picker-sheet, import, restore, viewer, rename, advanced-settings, confirm, and loading overlays so the whole workspace reads as one consistent shell family
@@ -408,7 +426,7 @@
 ## v3.1.0 - 2026-03-30
 
 - Release title: Nano Banana Ultra 3.1.0 - Product-Facing Workspace Baseline
-- Release prep summary:
+- Release summary:
     - completed the shift away from engineering-oriented shell framing and locked the product-facing workspace contract: a health-only header, `Current Work` for live process and thoughts, `Answer` for result delivery, evidence-first `Sources & Citations`, and history-owned versions
     - closed the remaining post-Phase-F restore regressions by fixing the `Queue Batch Job` tooltip accessible-name collision and restoring the live provenance surfaces that workspace restore flows still depend on, including attribution overview rows, status strips, uncited-source cards, reuse previews, and compare summaries
     - consolidated maintained user guidance into `README.md` and removed the separate `USER_MANUAL.zh-TW.md` so 3.1 product docs live in one place instead of splitting between the product README and a secondary manual
@@ -416,7 +434,7 @@
 ## v3.0.5 - 2026-03-29
 
 - Release title: Nano Banana Ultra 3.0.5 - Panel Simplification & Restore Regression Update
-- Release prep summary:
+- Release summary:
     - removed redundant helper copy across panel surfaces and moved high-value guidance into reusable info-tooltips instead of keeping long inline instructions visible by default
     - flattened disclosure shells in workspace insights, provenance, viewer, and import review surfaces where collapsed and expanded states were effectively showing the same information
     - moved `Queue Batch Job` mode guidance beside the action as an info icon, simplified duplicated thoughts presentation into a single readable block, and made tooltip panels easier to read with fully opaque backgrounds
@@ -424,7 +442,7 @@
 ## v3.0.4 - 2026-03-29
 
 - Release title: Nano Banana Ultra 3.0.4 - Square Stage Layout Update
-- Release prep summary:
+- Release summary:
     - locked the main generated-image stage to a square frame so portrait outputs no longer stretch the workspace and force extra scrolling
     - applied the same square-stage layout contract to the empty, loading, and error states so the focus surface keeps a stable footprint throughout the workflow
 
@@ -439,7 +457,7 @@
 ## v3.0.2 - 2026-03-26
 
 - Release title: Nano Banana Ultra 3.0.2 - i18n Chunking & Restore Fixture Hardening
-- Release prep summary:
+- Release summary:
     - removed the Vite chunk-size warning by taking lineage fallback labels out of the translation runtime graph and splitting locale payloads into dedicated i18n chunks
     - switched runtime localization to lazy-load non-English dictionaries on demand while keeping English eager, reducing the default bundle cost without changing translation call sites
     - moved restore and import snapshot fixtures out of `output/` into `e2e/fixtures/restore` so restore and import paths no longer depend on runtime artifact directories
@@ -448,7 +466,7 @@
 ## v3.0.1 - 2026-03-26
 
 - Release title: Nano Banana Ultra 3.0.1 - Workspace Shell Clarity Update
-- Release prep summary:
+- Release summary:
     - completed the post-3.0.0 workspace shell refinement plan across Sessions A-I without reopening the underlying continuity, restore, provenance, or picker-state architecture
     - moved visible ownership of `Model`, `Ratio`, `Size`, and `Qty` into the composer so setup now starts where prompt writing and generation actions already live
     - added a composer-owned `Reference Tray` strip directly under the helper row so reference state stays near the prompt instead of being split across header and side surfaces
