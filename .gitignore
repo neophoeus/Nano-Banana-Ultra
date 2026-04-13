@@ -21,8 +21,6 @@ docs/
 tests/
 e2e/
 playwright.config.ts
-run_install.bat
-run_start_dev.bat
 .prettierignore
 prettier.config.mjs
 .env*.local
