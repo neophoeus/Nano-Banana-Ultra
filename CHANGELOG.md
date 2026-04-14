@@ -7,6 +7,7 @@
     - unified composer generate bar and embedded Enter control:
         - rebuilt the composer bottom action area into one full-width generate surface instead of the earlier split layout, so the primary generate controls now read as one continuous action bar across the composer width
         - moved the Enter behavior control into the far right of that same generate surface and restyled it as a vertical two-state toggle, aligning it more closely with the existing send-intent toggle language while keeping the interaction dedicated to keyboard behavior
+        - tightened the selected Enter toggle geometry so the active top or bottom state now follows the outer control corners instead of reading as a smaller inset pill
 
     - Enter now follows the visible primary generate action:
         - pressing Enter in the composer now always routes through the same primary CTA logic shown on screen instead of bypassing it, so keyboard submit stays aligned with the current action state

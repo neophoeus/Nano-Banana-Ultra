@@ -1227,24 +1227,26 @@ function ComposerSettingsPanel({
                             aria-label={enterBehaviorToggleAriaLabel}
                             aria-pressed={enterToSubmit}
                             onClick={onToggleEnterToSubmit}
-                            className="group relative grid min-h-[64px] w-full min-w-0 grid-rows-2 gap-1 rounded-[28px] border border-slate-300/90 bg-slate-200/95 p-1 text-left shadow-inner shadow-slate-300/70 transition-colors hover:border-slate-400/80 focus:outline-none focus:ring-2 focus:ring-amber-300 dark:border-slate-800 dark:bg-slate-950 dark:shadow-black/30"
+                            className="group relative grid min-h-[64px] w-full min-w-0 grid-rows-2 gap-1 overflow-hidden rounded-[28px] border border-slate-300/90 bg-slate-200/95 p-px text-left shadow-inner shadow-slate-300/70 transition-colors hover:border-slate-400/80 focus:outline-none focus:ring-2 focus:ring-amber-300 dark:border-slate-800 dark:bg-slate-950 dark:shadow-black/30"
                         >
                             <span
                                 data-testid="composer-enter-behavior-thumb"
                                 data-active-mode={enterToSubmit ? 'send' : 'newline'}
                                 aria-hidden="true"
-                                className={`pointer-events-none absolute left-1 right-1 rounded-[24px] bg-amber-500 transition-all duration-200 ease-out dark:bg-amber-300 ${
+                                className={`pointer-events-none absolute left-px right-px bg-amber-500 transition-all duration-200 ease-out dark:bg-amber-300 ${
                                     enterToSubmit
-                                        ? 'top-1 bottom-[calc(50%+0.125rem)] shadow-[0_10px_24px_rgba(245,158,11,0.18)] dark:shadow-none'
-                                        : 'top-[calc(50%+0.125rem)] bottom-1 shadow-[0_10px_24px_rgba(245,158,11,0.18)] dark:shadow-none'
+                                        ? 'top-px bottom-[calc(50%+0.125rem)] rounded-t-[27px] rounded-b-[4px] shadow-[0_10px_24px_rgba(245,158,11,0.18)] dark:shadow-none'
+                                        : 'top-[calc(50%+0.125rem)] bottom-px rounded-t-[4px] rounded-b-[27px] shadow-[0_10px_24px_rgba(245,158,11,0.18)] dark:shadow-none'
                                 }`}
                             />
                             <span
                                 data-testid="composer-enter-behavior-send-option"
                                 data-selected={enterToSubmit ? 'true' : 'false'}
                                 aria-hidden="true"
-                                className={`relative z-10 flex min-w-0 items-center justify-center rounded-[24px] px-3 py-2 text-center text-[11px] font-semibold leading-tight transition-colors ${
-                                    enterToSubmit ? 'text-white dark:text-slate-950' : 'text-slate-600 dark:text-slate-500'
+                                className={`relative z-10 flex min-w-0 items-center justify-center rounded-t-[27px] rounded-b-[4px] px-3 py-2 text-center text-[11px] font-semibold leading-tight transition-colors ${
+                                    enterToSubmit
+                                        ? 'text-white dark:text-slate-950'
+                                        : 'text-slate-600 dark:text-slate-500'
                                 }`}
                             >
                                 <span className="truncate">{enterBehaviorSendLabel}</span>
@@ -1253,8 +1255,10 @@ function ComposerSettingsPanel({
                                 data-testid="composer-enter-behavior-newline-option"
                                 data-selected={enterToSubmit ? 'false' : 'true'}
                                 aria-hidden="true"
-                                className={`relative z-10 flex min-w-0 items-center justify-center rounded-[24px] px-3 py-2 text-center text-[11px] font-semibold leading-tight transition-colors ${
-                                    enterToSubmit ? 'text-slate-600 dark:text-slate-500' : 'text-white dark:text-slate-950'
+                                className={`relative z-10 flex min-w-0 items-center justify-center rounded-t-[4px] rounded-b-[27px] px-3 py-2 text-center text-[11px] font-semibold leading-tight transition-colors ${
+                                    enterToSubmit
+                                        ? 'text-slate-600 dark:text-slate-500'
+                                        : 'text-white dark:text-slate-950'
                                 }`}
                             >
                                 <span className="truncate">{enterBehaviorNewlineLabel}</span>
