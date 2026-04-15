@@ -7,7 +7,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Dependencies and build output
+# Generated dependencies and runtime/build artifacts
 node_modules/
 dist/
 dist-ssr/
@@ -16,13 +16,15 @@ test-results/
 playwright-report/
 coverage/
 
-# Local workspace and non-product content
+# Local-only development assets excluded from the product repo
 docs/
 tests/
 e2e/
 playwright.config.ts
 .prettierignore
 prettier.config.mjs
+
+# Local secrets and generated internal reports
 .env*.local
 e2e-global-log-focus.txt
 INTERNAL_SMOKE_REPORT_*.md

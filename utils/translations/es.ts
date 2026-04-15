@@ -108,6 +108,24 @@ export const es = {
     statusScanning: 'Escaneando...',
     statusInitializing: 'Calentando motores...',
     statusFailed: 'Falló',
+    generationFailureSummaryUnknown: 'La solicitud fallo antes de poder identificar una causa fiable.',
+    generationFailureSummaryPolicy: 'El prompt fue bloqueado por la politica antes de iniciar la generacion.',
+    generationFailureSummarySafety: 'La salida de imagen fue bloqueada por los filtros de seguridad.',
+    generationFailureSummaryTextOnly: 'El modelo respondio solo con texto y sin imagen.',
+    generationFailureSummaryEmpty:
+        'La respuesta del modelo no incluyo suficiente informacion para identificar una causa fiable.',
+    generationFailureSummaryNoImage: 'La solicitud termino, pero el modelo no devolvio datos de imagen.',
+    generationFailureDetailRetry: 'Prueba ajustar el prompt o reintentar mas tarde.',
+    generationFailureDetailPromptBlockReason: 'Motivo del bloqueo por politica: {0}.',
+    generationFailureDetailSafetyCategories: 'Categorias de seguridad: {0}.',
+    generationFailureDetailTextOnly: 'Se devolvio contenido de texto, pero no se emitieron bytes de imagen.',
+    generationFailureDetailThoughtsOnly:
+        'Solo se devolvieron resumenes de pensamiento, pero no se emitieron bytes de imagen.',
+    generationFailureDetailMissingCandidates: 'El modelo no devolvio candidates en la respuesta.',
+    generationFailureDetailMissingParts: 'El modelo devolvio un candidate, pero no contenia content parts.',
+    generationFailureDetailPossibleBatchSafetySuppression:
+        'Otro resultado de este lote fue bloqueado de forma explicita por los filtros de seguridad de imagen. Este intento tambien podria haber sido suprimido por la misma razon, pero la respuesta no aporta senales suficientes para confirmarlo.',
+    generationFailureDetailFinishReason: 'Motivo de finalizacion del modelo: {0}.',
     editorTitle: 'Editor Ultra',
     editorDiscard: '¿Descartar cambios?',
     editorDiscardMsg: '¿Seguro? Las obras maestras no guardadas se perderán.',
@@ -476,9 +494,6 @@ export const es = {
     composerAdvancedGenerationSectionTitle: 'Controles de generacion',
     composerAdvancedGenerationSectionDesc:
         'Mantiene salida, temperatura y comportamiento de pensamiento juntos para que los cambios de modelo sigan siendo legibles.',
-    composerAdvancedStructuredOutput: 'Salida estructurada',
-    composerAdvancedStructuredOutputDesc:
-        'Devuelve el canal de texto como JSON validado por esquema para que la revision y la automatizacion posteriores puedan apoyarse en campos estables.',
     composerDefaultTemp: 'Temperatura predeterminada {0}',
     composerAdvancedReturnThoughtsDesc:
         'Los modelos de imagen Gemini 3 compatibles ahora solicitan siempre resumenes visibles de pensamiento para que la procedencia y el razonamiento sigan disponibles en el espacio de trabajo.',
@@ -502,8 +517,6 @@ export const es = {
         'Nano Banana Pro + Google Search: las solicitudes de 2K y 4K mantuvieron el tamano pedido.',
     composerGroundingImageSearchUpgradeNotice:
         'El grounding con busqueda de imagenes cambia la salida automaticamente a Images & text para poder devolver metadatos de atribucion.',
-    composerStructuredOutputUpgradeNotice:
-        'La salida estructurada ahora cambia la salida a Imágenes y texto para que el JSON pueda devolverse junto con la imagen.',
     composerActionPanelTitle: 'Crear',
     composerActionPanelDesc:
         'Generar sigue siendo lo principal. Las acciones de seguimiento y del espacio de trabajo se mantienen cerca, pero mas discretas.',
@@ -514,124 +527,6 @@ export const es = {
         'Por encima de 1.0 aumenta la variacion y la sorpresa, pero puede reducir la consistencia y la fidelidad al prompt.',
     composerAdvancedTemperatureGuideLower:
         'Por debajo de 1.0 hace los resultados mas estables y literales, pero normalmente menos exploratorios.',
-    composerAdvancedStructuredOutputGuideOff:
-        'Elige Desactivado cuando solo quieras la respuesta normal en texto y la imagen resultante.',
-    composerAdvancedStructuredOutputGuideSceneBrief:
-        'Usa Resumen de escena cuando quieras un resumen breve de producción sobre sujeto, estilo, paleta y composición.',
-    composerAdvancedStructuredOutputGuidePromptKit:
-        'Usa Kit de prompt cuando quieras extraer ingredientes reutilizables para la siguiente iteración.',
-    composerAdvancedStructuredOutputGuideQualityCheck:
-        'Usa Control de calidad cuando quieras ver fortalezas, problemas y prioridades de revisión de forma explícita.',
-    composerAdvancedStructuredOutputGuideShotPlan:
-        'Usa Plan de toma cuando quieras traducir el resultado a notas de encuadre, colocación, focos e iluminación.',
-    composerAdvancedStructuredOutputGuideDeliveryBrief:
-        'Usa Brief de entrega cuando la imagen esté casi aprobada y necesites notas de entrega, protección y exportación.',
-    composerAdvancedStructuredOutputGuideRevisionBrief:
-        'Usa Brief de revisión cuando la imagen promete, pero todavía necesita un plan claro de edición con reglas de conservación, cambios objetivo y un prompt final de revisión.',
-    composerAdvancedStructuredOutputGuideVariationCompare:
-        'Usa Comparar variaciones cuando estés eligiendo entre direcciones cercanas y necesites diferencias, compensaciones y la siguiente prueba.',
-    composerAdvancedStructuredOutputGuideBestForLabel: 'Mejor para',
-    composerAdvancedStructuredOutputGuideAvoidWhenLabel: 'Evitar cuando',
-    composerAdvancedStructuredOutputGuideBestForSceneBrief: 'Leer rápido sujeto, estilo y composición.',
-    composerAdvancedStructuredOutputGuideAvoidWhenSceneBrief: 'Necesitas prioridades de revisión o detalle de entrega.',
-    composerAdvancedStructuredOutputGuideBestForPromptKit:
-        'Reunir ingredientes reutilizables para la siguiente iteración.',
-    composerAdvancedStructuredOutputGuideAvoidWhenPromptKit:
-        'Necesitas veredicto, señal de aprobación o guía de exportación.',
-    composerAdvancedStructuredOutputGuideBestForQualityCheck:
-        'Ver con claridad fortalezas, problemas y prioridades antes de editar.',
-    composerAdvancedStructuredOutputGuideAvoidWhenQualityCheck:
-        'Buscas más bien ingredientes de prompt en vez de crítica.',
-    composerAdvancedStructuredOutputGuideBestForShotPlan: 'Notas de ejecución para encuadre, colocación e iluminación.',
-    composerAdvancedStructuredOutputGuideAvoidWhenShotPlan:
-        'Necesitas una guía enfocada en aprobación, entrega o exportación.',
-    composerAdvancedStructuredOutputGuideBestForDeliveryBrief:
-        'Revisión final, notas de entrega y planificación de exportación.',
-    composerAdvancedStructuredOutputGuideAvoidWhenDeliveryBrief:
-        'Todavía estás explorando direcciones creativas tempranas.',
-    composerAdvancedStructuredOutputGuideBestForRevisionBrief:
-        'Convertir la crítica en una pasada de edición concreta sin perder el núcleo aprobado.',
-    composerAdvancedStructuredOutputGuideAvoidWhenRevisionBrief:
-        'Solo necesitas una revisión de alto nivel y aún no quieres definir movimientos de edición.',
-    composerAdvancedStructuredOutputGuideBestForVariationCompare:
-        'Elegir entre opciones cercanas y preparar la siguiente prueba.',
-    composerAdvancedStructuredOutputGuideAvoidWhenVariationCompare:
-        'Solo estás revisando una opción y no necesitas comparación.',
-    composerAdvancedStructuredOutputGuideFieldsLabel: 'Incluye',
-    composerAdvancedStructuredOutputGuideExampleLabel: 'Estructura de ejemplo',
-    structuredOutputModeOff: 'Desactivado',
-    structuredOutputModeSceneBrief: 'Resumen de escena',
-    structuredOutputModePromptKit: 'Kit de prompt',
-    structuredOutputModeQualityCheck: 'Control de calidad',
-    structuredOutputModeShotPlan: 'Plan de toma',
-    structuredOutputModeDeliveryBrief: 'Brief de entrega',
-    structuredOutputModeRevisionBrief: 'Brief de revisión',
-    structuredOutputModeVariationCompare: 'Comparar variaciones',
-    structuredOutputActionsLabel: 'Acciones',
-    structuredOutputActionsCopyGroup: 'Copiar',
-    structuredOutputActionsExportGroup: 'Exportar',
-    structuredOutputCopyJson: 'Copiar JSON',
-    structuredOutputCopyText: 'Copiar texto',
-    structuredOutputExportJson: 'Exportar JSON',
-    structuredOutputExportText: 'Exportar texto',
-    structuredOutputExportMarkdown: 'Exportar Markdown',
-    structuredOutputReplacePromptNotice:
-        'El prompt del compositor se reemplazo con el texto estructurado seleccionado.',
-    structuredOutputAppendPromptNotice: 'El prompt del compositor se amplio con el texto estructurado seleccionado.',
-    structuredOutputPromptReady: 'Siguiente prompt',
-    structuredOutputPromptReadyHint:
-        'Los campos listos para prompt de abajo pueden reemplazar el prompt del compositor en la siguiente pasada.',
-    structuredOutputPromptReadyHintPromptKit:
-        'Usa las pistas reutilizables de abajo cuando quieras construir a mano el siguiente prompt.',
-    structuredOutputPromptReadyHintRevisionBrief:
-        'Usa el prompt final de revision de abajo como el punto de partida mas limpio para la siguiente pasada de edicion.',
-    structuredOutputPromptReadyHintVariationCompare:
-        'Usa el movimiento recomendado o un prompt de prueba de abajo para impulsar rapidamente la siguiente pasada de comparacion.',
-    structuredOutputPromptDraft: 'Borrador de prompt',
-    structuredOutputPromptAppended: 'Prompt anadido',
-    structuredOutputPromptReplaced: 'Prompt reemplazado',
-    structuredOutputCopied: 'Copiado',
-    structuredOutputFieldSummary: 'Resumen',
-    structuredOutputFieldSceneType: 'Tipo de escena',
-    structuredOutputFieldPrimarySubjects: 'Sujetos principales',
-    structuredOutputFieldVisualStyle: 'Estilo visual',
-    structuredOutputFieldColorPalette: 'Paleta de color',
-    structuredOutputFieldCompositionNotes: 'Notas de composición',
-    structuredOutputFieldIntentSummary: 'Resumen de intención',
-    structuredOutputFieldSubjectCues: 'Pistas de sujeto',
-    structuredOutputFieldStyleCues: 'Pistas de estilo',
-    structuredOutputFieldLightingCues: 'Pistas de iluminación',
-    structuredOutputFieldCompositionCues: 'Pistas de composición',
-    structuredOutputFieldNegativeCues: 'Pistas a evitar',
-    structuredOutputFieldOverallAssessment: 'Evaluación general',
-    structuredOutputFieldStrengths: 'Fortalezas',
-    structuredOutputFieldIssues: 'Problemas',
-    structuredOutputFieldRevisionPriorities: 'Prioridades de revisión',
-    structuredOutputFieldDeliveryNotes: 'Notas de entrega',
-    structuredOutputFieldShotIntent: 'Intención de la toma',
-    structuredOutputFieldCameraFraming: 'Encuadre de cámara',
-    structuredOutputFieldSubjectPlacement: 'Ubicación del sujeto',
-    structuredOutputFieldFocalElements: 'Elementos focales',
-    structuredOutputFieldLightingPlan: 'Plan de iluminación',
-    structuredOutputFieldContinuityNotes: 'Notas de continuidad',
-    structuredOutputFieldDeliverySummary: 'Resumen de entrega',
-    structuredOutputFieldApprovedElements: 'Elementos aprobados',
-    structuredOutputFieldMustProtect: 'Elementos a proteger',
-    structuredOutputFieldFinalAdjustments: 'Ajustes finales',
-    structuredOutputFieldHandoffNotes: 'Notas de traspaso',
-    structuredOutputFieldExportTargets: 'Destinos de exportación',
-    structuredOutputFieldRevisionGoal: 'Objetivo de revisión',
-    structuredOutputFieldMustKeep: 'Debe mantenerse',
-    structuredOutputFieldEditTargets: 'Cambios objetivo',
-    structuredOutputFieldChangeSequence: 'Secuencia de cambios',
-    structuredOutputFieldRiskChecks: 'Comprobaciones de riesgo',
-    structuredOutputFieldFinalPrompt: 'Prompt final de revisión',
-    structuredOutputFieldComparisonSummary: 'Resumen de comparación',
-    structuredOutputFieldStrongestOption: 'Opción más fuerte',
-    structuredOutputFieldKeyDifferences: 'Diferencias clave',
-    structuredOutputFieldTradeoffs: 'Compensaciones',
-    structuredOutputFieldRecommendedNextMove: 'Siguiente paso recomendado',
-    structuredOutputFieldTestPrompts: 'Prompts de prueba',
     surfaceSharedControlsBadge: 'Compartido',
     surfaceSharedControlsSettingsTitle: 'Ajustes',
     surfaceSharedControlsOpen: 'Abrir controles compartidos',
@@ -966,11 +861,6 @@ export const es = {
     workspaceInsightsLatestResultText: 'Texto del ultimo resultado',
     workspaceInsightsLatestResultTextEmpty:
         'Cuando Imagenes y texto este activo, el resumen del escenario aparecera aqui y tambien en el visor.',
-    workspaceViewerStructuredOutput: 'Salida estructurada',
-    workspaceResponseRailStructuredOutputHint:
-        'Aqui se mantiene una vista compacta; abre el visor para ver el diseno completo de la salida estructurada.',
-    workspaceViewerStructuredOutputHint:
-        'Aqui se expande la misma salida estructurada de la barra superior en un diseno completo de inspeccion.',
     workspaceInsightsLatestThoughts: 'Ultimos pensamientos',
     workspaceInsightsAllThoughts: 'Todos los pensamientos',
     workspaceInsightsProvenance: 'Detalles de origen',

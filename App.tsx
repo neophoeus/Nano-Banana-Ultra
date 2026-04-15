@@ -48,6 +48,7 @@ import {
     resolvePreferredLanguage,
 } from './utils/translations';
 import { ASPECT_RATIOS, IMAGE_MODELS, MODEL_CAPABILITIES, OUTPUT_FORMATS, THINKING_LEVELS } from './constants';
+import { buildStageErrorState } from './utils/generationFailure';
 import {
     clearSharedWorkspaceSnapshot,
     EMPTY_WORKSPACE_COMPOSER_STATE,
@@ -100,7 +101,6 @@ import { useWorkspaceGenerationContext } from './hooks/useWorkspaceGenerationCon
 import { useWorkspaceShellUtilities } from './hooks/useWorkspaceShellUtilities';
 import { useWorkspaceTransientUiState } from './hooks/useWorkspaceTransientUiState';
 import { useLegacyWorkspaceSnapshotMigration } from './hooks/useLegacyWorkspaceSnapshotMigration';
-import { normalizeStructuredOutputMode } from './utils/structuredOutputs';
 import { resolveCurrentStageSelectionFirstSourceOverride } from './utils/generationSourceOverride';
 import { buildSavedImageLoadUrl, loadImageMetadata } from './utils/imageSaveUtils';
 import {
@@ -131,7 +131,6 @@ const areWorkspaceSettingsDraftsEqual = (left: WorkspaceSettingsDraft, right: Wo
     left.imageSize === right.imageSize &&
     left.batchSize === right.batchSize &&
     left.outputFormat === right.outputFormat &&
-    left.structuredOutputMode === right.structuredOutputMode &&
     left.temperature === right.temperature &&
     left.thinkingLevel === right.thinkingLevel &&
     left.groundingMode === right.groundingMode;
@@ -266,8 +265,6 @@ const App: React.FC = () => {
         setBatchSize,
         outputFormat,
         setOutputFormat,
-        structuredOutputMode,
-        setStructuredOutputMode,
         temperature,
         setTemperature,
         thinkingLevel,
@@ -311,7 +308,6 @@ const App: React.FC = () => {
     const {
         selectedResultText,
         selectedThoughts,
-        selectedStructuredData,
         selectedGrounding,
         selectedMetadata,
         setSelectedMetadata,
@@ -494,7 +490,7 @@ const App: React.FC = () => {
             setSelectedImageIndex(0);
             setSelectedHistoryId(item.id);
             applySelectedResultArtifacts(null);
-            setError(item.error || t('statusFailed'));
+            setError(buildStageErrorState(t, item.failure, item.error || t('statusFailed'), item.failureContext));
             clearAssetRoles(['stage-source']);
         },
         [
@@ -715,9 +711,6 @@ const App: React.FC = () => {
                       : nextCapability.supportedSizes.includes('1K')
                         ? '1K'
                         : nextCapability.supportedSizes[0];
-            const nextStructuredOutputMode = nextCapability.supportsStructuredOutputs
-                ? normalizeStructuredOutputMode(draft.structuredOutputMode)
-                : 'off';
             const nextThinkingLevel = nextCapability.thinkingLevels.includes(draft.thinkingLevel)
                 ? draft.thinkingLevel
                 : nextCapability.thinkingLevels.includes('minimal')
@@ -730,7 +723,7 @@ const App: React.FC = () => {
                 ? draft.outputFormat
                 : nextCapability.outputFormats[0];
 
-            if (nextStructuredOutputMode !== 'off' || getGroundingFlagsFromMode(nextGroundingMode).imageSearch) {
+            if (getGroundingFlagsFromMode(nextGroundingMode).imageSearch) {
                 nextOutputFormat = 'images-and-text';
             }
 
@@ -740,7 +733,6 @@ const App: React.FC = () => {
                 aspectRatio: nextAspectRatio,
                 imageSize: nextImageSize,
                 outputFormat: nextOutputFormat,
-                structuredOutputMode: nextStructuredOutputMode,
                 temperature: Math.max(0, Math.min(2, draft.temperature)),
                 thinkingLevel: nextThinkingLevel,
                 groundingMode: nextGroundingMode,
@@ -756,7 +748,6 @@ const App: React.FC = () => {
                 imageSize,
                 batchSize,
                 outputFormat,
-                structuredOutputMode,
                 temperature,
                 thinkingLevel,
                 groundingMode,
@@ -768,7 +759,6 @@ const App: React.FC = () => {
             imageSize,
             batchSize,
             outputFormat,
-            structuredOutputMode,
             temperature,
             thinkingLevel,
             groundingMode,
@@ -862,7 +852,6 @@ const App: React.FC = () => {
         }
         setBatchSize(nextDraft.batchSize);
         setOutputFormat(nextDraft.outputFormat);
-        setStructuredOutputMode(nextDraft.structuredOutputMode);
         setTemperature(nextDraft.temperature);
         setThinkingLevel(nextDraft.thinkingLevel);
         setGroundingMode(nextDraft.groundingMode);
@@ -881,7 +870,6 @@ const App: React.FC = () => {
         setImageSize,
         setIsAdvancedSettingsOpen,
         setOutputFormat,
-        setStructuredOutputMode,
         setTemperature,
         setThinkingLevel,
         settingsSessionDraft,
@@ -921,23 +909,6 @@ const App: React.FC = () => {
             });
         },
         [updateSettingsSessionDraft],
-    );
-    const handleSettingsSessionStructuredOutputModeChange = useCallback(
-        (nextMode: WorkspaceSettingsDraft['structuredOutputMode']) => {
-            const normalizedMode = normalizeStructuredOutputMode(nextMode);
-            const shouldUpgrade = normalizedMode !== 'off' && settingsSessionView.outputFormat !== 'images-and-text';
-
-            updateSettingsSessionDraft((previous) => ({
-                ...previous,
-                structuredOutputMode: normalizedMode,
-                outputFormat: normalizedMode !== 'off' ? 'images-and-text' : previous.outputFormat,
-            }));
-
-            if (shouldUpgrade) {
-                showNotification(t('composerStructuredOutputUpgradeNotice'), 'info');
-            }
-        },
-        [settingsSessionView.outputFormat, showNotification, t, updateSettingsSessionDraft],
     );
     const handleSettingsSessionGroundingModeChange = useCallback(
         (nextMode: WorkspaceSettingsDraft['groundingMode']) => {
@@ -996,19 +967,8 @@ const App: React.FC = () => {
         imageModel,
         setAspectRatio,
         setImageModel,
-        showNotification,
         t,
     ]);
-    useEffect(() => {
-        setSettingsSessionDraft((previous) => {
-            if (!previous) {
-                return previous;
-            }
-
-            const normalizedDraft = normalizeSettingsSessionDraft(previous);
-            return areWorkspaceSettingsDraftsEqual(previous, normalizedDraft) ? previous : normalizedDraft;
-        });
-    }, [normalizeSettingsSessionDraft]);
     const lineageBranchLabelConfig = useMemo(
         () => ({
             main: t('historyBranchMain'),
@@ -1121,7 +1081,6 @@ const App: React.FC = () => {
         batchSize,
         aspectRatio,
         outputFormat,
-        structuredOutputMode,
         temperature,
         thinkingLevel,
         includeThoughts,
@@ -1193,7 +1152,6 @@ const App: React.FC = () => {
         aspectRatio,
         lockedAspectRatio: activeEditorLockedAspectRatio,
         outputFormat,
-        structuredOutputMode,
         thinkingLevel,
         includeThoughts,
         googleSearch,
@@ -1201,7 +1159,6 @@ const App: React.FC = () => {
         setImageSize,
         setAspectRatio,
         setOutputFormat,
-        setStructuredOutputMode,
         setThinkingLevel,
         setIncludeThoughts,
         setGoogleSearch,
@@ -1292,7 +1249,6 @@ const App: React.FC = () => {
         aspectRatio,
         imageSize,
         outputFormat,
-        structuredOutputMode,
         temperature,
         thinkingLevel,
         includeThoughts,
@@ -1426,7 +1382,6 @@ const App: React.FC = () => {
         imageModel,
         imageStyle,
         outputFormat,
-        structuredOutputMode,
         temperature,
         thinkingLevel,
         includeThoughts,
@@ -1634,7 +1589,6 @@ const App: React.FC = () => {
         imageModel,
         batchSize,
         outputFormat,
-        structuredOutputMode,
         temperature,
         thinkingLevel,
         includeThoughts,
@@ -1678,9 +1632,6 @@ const App: React.FC = () => {
     const {
         effectiveResultText,
         effectiveThoughts,
-        effectiveStructuredData,
-        effectiveStructuredOutputMode,
-        formattedStructuredOutput,
         effectiveMetadata,
         effectiveSessionHints,
         actualOutputDimensions,
@@ -1734,7 +1685,6 @@ const App: React.FC = () => {
     } = useGroundingProvenanceView({
         selectedResultText,
         selectedThoughts,
-        selectedStructuredData,
         selectedGrounding,
         selectedMetadata,
         selectedSessionHints,
@@ -1827,7 +1777,6 @@ const App: React.FC = () => {
             imageSize,
             batchSize,
             outputFormat,
-            structuredOutputMode: effectiveStructuredOutputMode,
             temperature,
             thinkingLevel,
             includeThoughts,
@@ -1898,7 +1847,6 @@ const App: React.FC = () => {
         currentLanguage: currentLang,
         imageStyleLabel: getStyleLabel(imageStyle),
         outputFormat,
-        structuredOutputMode,
         thinkingLevel,
         includeThoughts,
         groundingMode,
@@ -1943,7 +1891,6 @@ const App: React.FC = () => {
         setActivePickerSheet,
         setIsAdvancedSettingsOpen,
         setOutputFormat,
-        setStructuredOutputMode,
         setTemperature,
         setThinkingLevel,
         setGroundingMode,
@@ -1967,7 +1914,6 @@ const App: React.FC = () => {
             ? {
                   ...composerSettingsPanelProps,
                   outputFormat: settingsSessionView.outputFormat,
-                  structuredOutputMode: settingsSessionView.structuredOutputMode,
                   thinkingLevel: settingsSessionView.thinkingLevel,
                   groundingMode: settingsSessionView.groundingMode,
                   imageModel: settingsSessionView.imageModel,
@@ -1979,7 +1925,6 @@ const App: React.FC = () => {
                           ...previous,
                           outputFormat: value,
                       })),
-                  onStructuredOutputModeChange: handleSettingsSessionStructuredOutputModeChange,
                   onTemperatureChange: (value) =>
                       updateSettingsSessionDraft((previous) => ({
                           ...previous,
@@ -2076,12 +2021,6 @@ const App: React.FC = () => {
         },
         [focusComposerPromptTextarea, setPrompt, showNotification, t],
     );
-    const handleReplacePromptFromStructuredOutput = useCallback(
-        (value: string) => {
-            replaceComposerPromptText(value, 'structuredOutputReplacePromptNotice');
-        },
-        [replaceComposerPromptText],
-    );
     const handleApplyPromptFromViewer = useCallback(
         (value: string) => {
             replaceComposerPromptText(value, 'workspaceViewerPromptAppliedNotice', {
@@ -2091,20 +2030,6 @@ const App: React.FC = () => {
         },
         [replaceComposerPromptText],
     );
-    const handleAppendPromptFromStructuredOutput = useCallback(
-        (value: string) => {
-            const normalizedValue = value.trim();
-            if (!normalizedValue) {
-                return;
-            }
-
-            const nextPrompt = prompt.trim() ? `${prompt.trim()}\n\n${normalizedValue}` : normalizedValue;
-            setPrompt(nextPrompt);
-            showNotification(t('structuredOutputAppendPromptNotice'), 'info');
-            focusComposerPromptTextarea();
-        },
-        [focusComposerPromptTextarea, prompt, setPrompt, showNotification, t],
-    );
     const getOutputFormatSummaryLabel = useCallback(
         (value: string) => OUTPUT_FORMATS.find((option) => option.value === value)?.label ?? value,
         [],
@@ -2112,7 +2037,7 @@ const App: React.FC = () => {
     const getThinkingLevelSummaryLabel = useCallback(
         (value: string) =>
             THINKING_LEVELS.find((option) => option.value === value)?.label ??
-            (value === 'disabled' ? t('structuredOutputModeOff') : value),
+            (value === 'disabled' ? 'Disabled' : value),
         [t],
     );
     const getThoughtVisibilitySummaryLabel = useCallback(
@@ -2320,8 +2245,8 @@ const App: React.FC = () => {
     );
     const currentStageIsCurrentSource = Boolean(
         generatedImageUrls.length > 0 &&
-            (!currentStageHasLinkedHistoryTurn ||
-                (currentStageSourceHistoryId && currentStageSourceHistoryId === currentSourceHistoryId)),
+        (!currentStageHasLinkedHistoryTurn ||
+            (currentStageSourceHistoryId && currentStageSourceHistoryId === currentSourceHistoryId)),
     );
     const currentStageOriginLabel = currentStageAsset
         ? getStageOriginLabel(currentStageAsset.origin)
@@ -2394,9 +2319,6 @@ const App: React.FC = () => {
         metadataItems: viewerMetadataItems,
         metadataStateMessage: viewerMetadataStateMessage,
         effectiveResultText,
-        structuredData: effectiveStructuredData,
-        structuredOutputMode: effectiveStructuredOutputMode,
-        formattedStructuredOutput,
         effectiveThoughts,
         thoughtStateMessage,
         provenancePanel: viewerProvenancePanel,
@@ -2404,8 +2326,6 @@ const App: React.FC = () => {
         formatSessionHintKey,
         formatSessionHintValue,
         onApplyPrompt: handleApplyPromptFromViewer,
-        onReplacePrompt: handleReplacePromptFromStructuredOutput,
-        onAppendPrompt: handleAppendPromptFromStructuredOutput,
     });
     const handleCloseWorkspacePickerSheet = useCallback(() => {
         if (activePickerSheet === 'settings') {
@@ -2514,14 +2434,10 @@ const App: React.FC = () => {
     const supportDetailTabButtonClassName =
         'rounded-full border px-3 py-1.5 text-[11px] font-semibold transition-colors';
     const responseTextPlaceholder =
-        effectiveStructuredOutputMode !== 'off'
-            ? t('workspaceViewerStructuredOutput')
-            : viewSettings.outputFormat === 'images-and-text'
-              ? t('workspacePanelResultTextReady')
-              : t('workspacePanelResultTextReserved');
-    const hasResponseInfo = Boolean(
-        effectiveResultText?.trim() || (effectiveStructuredData && Object.keys(effectiveStructuredData).length > 0),
-    );
+        viewSettings.outputFormat === 'images-and-text'
+            ? t('workspacePanelResultTextReady')
+            : t('workspacePanelResultTextReserved');
+    const hasResponseInfo = Boolean(effectiveResultText?.trim());
     const hasSourceTrailInfo = Boolean(
         groundingQueries.length > 0 ||
         selectedSources.length > 0 ||
@@ -2812,12 +2728,7 @@ const App: React.FC = () => {
                             <WorkspaceOutputDetailPanel
                                 currentLanguage={currentLang}
                                 resultText={effectiveResultText}
-                                structuredData={effectiveStructuredData}
-                                structuredOutputMode={effectiveStructuredOutputMode}
-                                formattedStructuredOutput={formattedStructuredOutput}
                                 resultPlaceholder={responseTextPlaceholder}
-                                onReplacePrompt={handleReplacePromptFromStructuredOutput}
-                                onAppendPrompt={handleAppendPromptFromStructuredOutput}
                             />
                         </WorkspaceSupportDetailSurface>
                     );

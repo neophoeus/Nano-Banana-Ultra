@@ -1,10 +1,4 @@
-import {
-    AspectRatio,
-    ImageSize,
-    OutputFormat,
-    StructuredOutputMode,
-    ThinkingLevel,
-} from './types';
+import { AspectRatio, ImageSize, OutputFormat, ThinkingLevel } from './types';
 import { IMAGE_MODELS, MODEL_CAPABILITIES, type ModelCapability } from './utils/modelCapabilities';
 export { STYLE_CATEGORIES, STYLES_BY_CATEGORY } from './utils/styleRegistry';
 
@@ -33,17 +27,6 @@ export const IMAGE_SIZES: ImageSize[] = ['512', '1K', '2K', '4K'];
 export const OUTPUT_FORMATS: Array<{ value: OutputFormat; label: string }> = [
     { value: 'images-and-text', label: 'Images & text' },
     { value: 'images-only', label: 'Images only' },
-];
-
-export const STRUCTURED_OUTPUT_MODES: Array<{ value: StructuredOutputMode; label: string }> = [
-    { value: 'off', label: 'Off' },
-    { value: 'scene-brief', label: 'Scene brief' },
-    { value: 'prompt-kit', label: 'Prompt kit' },
-    { value: 'quality-check', label: 'Quality check' },
-    { value: 'shot-plan', label: 'Shot plan' },
-    { value: 'delivery-brief', label: 'Delivery brief' },
-    { value: 'revision-brief', label: 'Revision brief' },
-    { value: 'variation-compare', label: 'Variation compare' },
 ];
 
 export const THINKING_LEVELS: Array<{ value: ThinkingLevel; label: string }> = [

@@ -1,7 +1,6 @@
 import { Dispatch, SetStateAction, useEffect } from 'react';
 import { ModelCapability } from '../constants';
-import { AspectRatio, ImageSize, OutputFormat, StructuredOutputMode, ThinkingLevel } from '../types';
-import { hasStructuredOutputMode, normalizeStructuredOutputMode } from '../utils/structuredOutputs';
+import { AspectRatio, ImageSize, OutputFormat, ThinkingLevel } from '../types';
 
 type UseWorkspaceCapabilityConstraintsArgs = {
     capability: ModelCapability;
@@ -9,7 +8,6 @@ type UseWorkspaceCapabilityConstraintsArgs = {
     aspectRatio: AspectRatio;
     lockedAspectRatio?: AspectRatio | null;
     outputFormat: OutputFormat;
-    structuredOutputMode: StructuredOutputMode;
     thinkingLevel: ThinkingLevel;
     includeThoughts: boolean;
     googleSearch: boolean;
@@ -17,7 +15,6 @@ type UseWorkspaceCapabilityConstraintsArgs = {
     setImageSize: Dispatch<SetStateAction<ImageSize>>;
     setAspectRatio: Dispatch<SetStateAction<AspectRatio>>;
     setOutputFormat: Dispatch<SetStateAction<OutputFormat>>;
-    setStructuredOutputMode: Dispatch<SetStateAction<StructuredOutputMode>>;
     setThinkingLevel: Dispatch<SetStateAction<ThinkingLevel>>;
     setIncludeThoughts: Dispatch<SetStateAction<boolean>>;
     setGoogleSearch: Dispatch<SetStateAction<boolean>>;
@@ -34,7 +31,6 @@ export function useWorkspaceCapabilityConstraints({
     aspectRatio,
     lockedAspectRatio = null,
     outputFormat,
-    structuredOutputMode,
     thinkingLevel,
     includeThoughts,
     googleSearch,
@@ -42,7 +38,6 @@ export function useWorkspaceCapabilityConstraints({
     setImageSize,
     setAspectRatio,
     setOutputFormat,
-    setStructuredOutputMode,
     setThinkingLevel,
     setIncludeThoughts,
     setGoogleSearch,
@@ -67,18 +62,6 @@ export function useWorkspaceCapabilityConstraints({
 
         if (!capability.outputFormats.includes(outputFormat)) {
             setOutputFormat(capability.outputFormats[0]);
-        }
-
-        if (!capability.supportsStructuredOutputs && hasStructuredOutputMode(structuredOutputMode)) {
-            setStructuredOutputMode('off');
-        }
-
-        if (
-            capability.supportsStructuredOutputs &&
-            hasStructuredOutputMode(structuredOutputMode) &&
-            outputFormat !== 'images-and-text'
-        ) {
-            setOutputFormat('images-and-text');
         }
 
         if (!capability.thinkingLevels.includes(thinkingLevel)) {
@@ -133,7 +116,6 @@ export function useWorkspaceCapabilityConstraints({
         includeThoughts,
         lockedAspectRatio,
         outputFormat,
-        structuredOutputMode,
         setAspectRatio,
         setCharacterImages,
         setGoogleSearch,
@@ -142,7 +124,6 @@ export function useWorkspaceCapabilityConstraints({
         setIncludeThoughts,
         setObjectImages,
         setOutputFormat,
-        setStructuredOutputMode,
         setThinkingLevel,
         showNotification,
         t,

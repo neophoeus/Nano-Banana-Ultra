@@ -12,6 +12,7 @@ import {
     GeneratedImage,
     PendingProvenanceContext,
     QueuedBatchJob,
+    StageErrorState,
     StageAsset,
     WorkspaceComposerState,
     WorkspaceSessionState,
@@ -59,7 +60,7 @@ type UseWorkspaceSnapshotActionsArgs = {
     setBatchProgress: Dispatch<SetStateAction<{ completed: number; total: number }>>;
     setPendingProvenanceContext: Dispatch<SetStateAction<PendingProvenanceContext | null>>;
     setIsGenerating: Dispatch<SetStateAction<boolean>>;
-    setError: Dispatch<SetStateAction<string | null>>;
+    setError: Dispatch<SetStateAction<StageErrorState | null>>;
     setLogs: Dispatch<SetStateAction<string[]>>;
     setIsEditing: Dispatch<SetStateAction<boolean>>;
     setEditingImageSource: Dispatch<SetStateAction<string | null>>;

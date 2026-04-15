@@ -1,7 +1,6 @@
-import type { AspectRatio, ImageModel, ImageSize, StructuredOutputMode } from '../../types';
+import type { AspectRatio, ImageModel, ImageSize } from '../../types';
 import { buildGroundingToolConfig, deriveGroundingMode } from '../../utils/groundingMode';
 import { MODEL_CAPABILITIES } from '../../utils/modelCapabilities';
-import { getStructuredOutputDefinition, normalizeStructuredOutputMode } from '../../utils/structuredOutputs';
 import { PERMISSIVE_SAFETY_SETTINGS } from './promptHelpers';
 
 type ImageGenerateBodyLike = {
@@ -9,7 +8,6 @@ type ImageGenerateBodyLike = {
     aspectRatio?: string;
     imageSize?: string;
     outputFormat?: 'images-only' | 'images-and-text';
-    structuredOutputMode?: StructuredOutputMode;
     temperature?: number;
     thinkingLevel?: 'disabled' | 'minimal' | 'high';
     includeThoughts?: boolean;
@@ -24,7 +22,6 @@ export function validateCapabilityRequest(model: string, body: ImageGenerateBody
     }
 
     const requestedFormat = body.outputFormat || 'images-only';
-    const structuredOutputMode = normalizeStructuredOutputMode(body.structuredOutputMode);
     if (!capability.outputFormats.includes(requestedFormat)) {
         return `${model} does not support output format ${requestedFormat}.`;
     }
@@ -35,14 +32,6 @@ export function validateCapabilityRequest(model: string, body: ImageGenerateBody
 
     if (body.imageSize && !capability.supportedSizes.includes(body.imageSize as ImageSize)) {
         return `${model} does not support image size ${body.imageSize}.`;
-    }
-
-    if (structuredOutputMode !== 'off' && !capability.supportsStructuredOutputs) {
-        return `${model} does not support structured outputs.`;
-    }
-
-    if (structuredOutputMode !== 'off' && requestedFormat !== 'images-and-text') {
-        return 'Structured outputs require output format images-and-text.';
     }
 
     const requestedThinking =
@@ -85,13 +74,8 @@ export function buildImageRequestConfig(
     }
 
     const requiresTextForGroundingMetadata = Boolean(body.imageSearch);
-    const structuredOutputDefinition = getStructuredOutputDefinition(
-        normalizeStructuredOutputMode(body.structuredOutputMode),
-    );
     const resolvedResponseModalities =
-        body.outputFormat === 'images-and-text' || requiresTextForGroundingMetadata || structuredOutputDefinition
-            ? ['IMAGE', 'TEXT']
-            : ['IMAGE'];
+        body.outputFormat === 'images-and-text' || requiresTextForGroundingMetadata ? ['IMAGE', 'TEXT'] : ['IMAGE'];
 
     const requestConfig: Record<string, unknown> = {
         responseModalities: resolvedResponseModalities,
@@ -99,11 +83,6 @@ export function buildImageRequestConfig(
         temperature: typeof body.temperature === 'number' ? body.temperature : undefined,
         safetySettings: PERMISSIVE_SAFETY_SETTINGS,
     };
-
-    if (structuredOutputDefinition) {
-        requestConfig.responseMimeType = structuredOutputDefinition.responseMimeType;
-        requestConfig.responseJsonSchema = structuredOutputDefinition.responseJsonSchema;
-    }
 
     const capability = MODEL_CAPABILITIES[model as ImageModel];
     const effectiveThinkingLevel =

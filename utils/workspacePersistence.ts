@@ -12,7 +12,6 @@ import {
     WorkspaceSessionState,
     WorkspaceViewState,
 } from '../types';
-import { DEFAULT_STRUCTURED_OUTPUT_MODE, normalizeStructuredOutputMode } from './structuredOutputs';
 import {
     EMPTY_WORKSPACE_CONVERSATION_STATE,
     getNormalizedConversationTurnIds,
@@ -65,7 +64,6 @@ export const EMPTY_WORKSPACE_COMPOSER_STATE: WorkspaceComposerState = {
     imageModel: 'gemini-3.1-flash-image-preview',
     batchSize: 1,
     outputFormat: 'images-only',
-    structuredOutputMode: DEFAULT_STRUCTURED_OUTPUT_MODE,
     temperature: 1,
     thinkingLevel: 'minimal',
     includeThoughts: true,
@@ -647,7 +645,6 @@ const sanitizeWorkspaceComposerState = (value: unknown): WorkspaceComposerState 
             typeof value.temperature === 'number' && Number.isFinite(value.temperature)
                 ? value.temperature
                 : EMPTY_WORKSPACE_COMPOSER_STATE.temperature,
-        structuredOutputMode: normalizeStructuredOutputMode(value.structuredOutputMode),
         includeThoughts: Boolean(value.includeThoughts),
         googleSearch: Boolean(value.googleSearch),
         imageSearch: Boolean(value.imageSearch),

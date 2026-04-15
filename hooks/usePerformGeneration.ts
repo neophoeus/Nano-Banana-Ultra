@@ -4,6 +4,8 @@ import {
     BatchPreviewTile,
     ConversationRequestContext,
     ExecutionMode,
+    GenerationFailureDisplayContext,
+    StageErrorState,
     GenerationLineageContext,
     ImageReceivedResult,
     ImageSize,
@@ -11,10 +13,10 @@ import {
     ImageModel,
     GeneratedImage as GeneratedImageType,
     OutputFormat,
-    StructuredOutputMode,
     ThinkingLevel,
 } from '../types';
-import { generateImageWithGemini, checkApiKey, promptForApiKey } from '../services/geminiService';
+import { GenerationResult, generateImageWithGemini, checkApiKey, promptForApiKey } from '../services/geminiService';
+import { buildStageErrorState, getGenerationFailure } from '../utils/generationFailure';
 import {
     buildSavedImageLoadUrl,
     extractSavedFilename,
@@ -54,6 +56,23 @@ function sortBatchHistoryItemsByVisualOrder(items: GeneratedImageType[]): Genera
     });
 }
 
+function buildFailureDisplayContext(
+    result: GenerationResult,
+    batchHasSiblingSafetyBlockedFailure: boolean,
+): GenerationFailureDisplayContext | undefined {
+    if (
+        result.status === 'failed' &&
+        result.failure?.code === 'empty-response' &&
+        batchHasSiblingSafetyBlockedFailure
+    ) {
+        return {
+            hasSiblingSafetyBlockedFailure: true,
+        };
+    }
+
+    return undefined;
+}
+
 type GenerationSourceOverride = {
     sourceHistoryId: string | null;
     sourceLineageAction?: 'continue' | 'branch' | null;
@@ -65,7 +84,7 @@ interface UsePerformGenerationProps {
     setApiKeyReady: (val: boolean) => void;
     handleApiKeyConnect: () => Promise<boolean>;
     setIsGenerating: (val: boolean) => void;
-    setError: (val: string | null) => void;
+    setError: (val: StageErrorState | null) => void;
     setGeneratedImageUrls: (val: React.SetStateAction<string[]>) => void;
     setSelectedImageIndex: (val: number) => void;
     setLogs: (val: React.SetStateAction<string[]>) => void;
@@ -76,7 +95,6 @@ interface UsePerformGenerationProps {
     batchSize: number;
     aspectRatio: AspectRatio;
     outputFormat: OutputFormat;
-    structuredOutputMode: StructuredOutputMode;
     temperature: number;
     thinkingLevel: ThinkingLevel;
     includeThoughts: boolean;
@@ -125,7 +143,6 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
         batchSize,
         aspectRatio,
         outputFormat,
-        structuredOutputMode,
         temperature,
         thinkingLevel,
         includeThoughts,
@@ -249,7 +266,6 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                 batchSize: currentBatchSize,
                 model: targetModel,
                 outputFormat,
-                structuredOutputMode,
                 temperature,
                 thinkingLevel,
                 includeThoughts,
@@ -270,7 +286,6 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                         aspectRatio: effectiveAspectRatio || '1:1',
                         requestedImageSize: currentImageSize,
                         outputFormat,
-                        structuredOutputMode,
                         temperature,
                         thinkingLevel,
                         includeThoughts,
@@ -312,7 +327,7 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                 };
 
                 const handleLogCallback = (msg: string) => addLog(msg);
-                const handleResultCallback = (result: import('../services/geminiService').GenerationResult) => {
+                const handleResultCallback = (result: GenerationResult) => {
                     if (result.status === 'failed') {
                         onBatchPreviewTileUpdate?.({
                             sessionId: batchSessionId,
@@ -337,7 +352,6 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                         characterImageInputs: finalCharacterInputs,
                         model: targetModel,
                         outputFormat,
-                        structuredOutputMode,
                         temperature,
                         thinkingLevel,
                         includeThoughts,
@@ -354,12 +368,16 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                     handleResultCallback,
                 );
 
+                const batchHasSiblingSafetyBlockedFailure = results.some(
+                    (result) => result.status === 'failed' && result.failure?.code === 'safety-blocked',
+                );
                 const newHistoryItems: GeneratedImageType[] = [];
                 for (const [resultIndex, res] of results.entries()) {
                     const batchResultIndex =
                         typeof res.slotIndex === 'number' && Number.isFinite(res.slotIndex)
                             ? res.slotIndex
                             : resultIndex;
+                    const failureContext = buildFailureDisplayContext(res, batchHasSiblingSafetyBlockedFailure);
                     let thumbnailUrl = '';
                     let thumbnailSavedFilename: string | undefined;
                     let thumbnailInline: boolean | undefined;
@@ -371,7 +389,6 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                         aspectRatio: effectiveAspectRatio || '1:1',
                         requestedImageSize: currentImageSize,
                         outputFormat,
-                        structuredOutputMode,
                         temperature,
                         thinkingLevel,
                         includeThoughts,
@@ -407,10 +424,11 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                         status: res.status,
                         openedAt: res.status === 'success' ? null : undefined,
                         error: res.error,
+                        failure: res.failure,
+                        failureContext,
                         savedFilename: res.savedFilename,
                         text: res.text,
                         thoughts: res.thoughts,
-                        structuredData: res.structuredData,
                         metadata: {
                             ...sidecarMetadata,
                             ...(res.metadata || {}),
@@ -446,7 +464,14 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                 const failCount = results.filter((r) => r.status === 'failed').length;
 
                 if (successCount === 0 && failCount > 0) {
-                    setError(results[0].error || t('errorAllFailed'));
+                    setError(
+                        buildStageErrorState(
+                            t,
+                            results[0].failure,
+                            results[0].error || t('errorAllFailed'),
+                            buildFailureDisplayContext(results[0], batchHasSiblingSafetyBlockedFailure),
+                        ),
+                    );
                 }
 
                 addLog(
@@ -458,11 +483,15 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
 
                 if (errorMessage === 'API_KEY_INVALID' || errorMessage.includes('API key')) {
                     addLog(t('logFatalError').replace('{0}', errorMessage));
-                    setError(t('errorApiKey'));
+                    setError({
+                        summary: t('errorApiKey'),
+                        detail: null,
+                        failure: null,
+                    });
                     setApiKeyReady(false);
                     await promptForApiKey();
                 } else {
-                    setError(errorMessage);
+                    setError(buildStageErrorState(t, getGenerationFailure(err), errorMessage));
                     showNotification(t('statusFailed'), 'error');
                 }
             } finally {
@@ -507,7 +536,6 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
             setLogs,
             setSelectedImageIndex,
             showNotification,
-            structuredOutputMode,
             t,
             temperature,
             thinkingLevel,

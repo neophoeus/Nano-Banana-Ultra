@@ -16,7 +16,6 @@ import {
     QueuedBatchJobStats,
     QueuedBatchJobState,
     StageAsset,
-    StructuredOutputMode,
 } from '../types';
 import { extractSavedFilename, persistHistoryThumbnail, saveImageToLocal } from '../utils/imageSaveUtils';
 import { buildImageSidecarMetadata } from '../utils/imageSidecarMetadata';
@@ -117,7 +116,6 @@ type RemoteQueuedJobSeed = Pick<
     | 'imageSize'
     | 'style'
     | 'outputFormat'
-    | 'structuredOutputMode'
     | 'temperature'
     | 'thinkingLevel'
     | 'includeThoughts'
@@ -165,7 +163,6 @@ type UseQueuedBatchWorkflowArgs = {
     aspectRatio: QueuedBatchJob['aspectRatio'];
     imageSize: QueuedBatchJob['imageSize'];
     outputFormat: QueuedBatchJob['outputFormat'];
-    structuredOutputMode: StructuredOutputMode;
     temperature: number;
     thinkingLevel: QueuedBatchJob['thinkingLevel'];
     includeThoughts: boolean;
@@ -203,7 +200,6 @@ type QueuedBatchJobGenerationDraft = {
     style: QueuedBatchJob['style'];
     model: ImageModel;
     outputFormat: QueuedBatchJob['outputFormat'];
-    structuredOutputMode: StructuredOutputMode;
     temperature: number;
     thinkingLevel: QueuedBatchJob['thinkingLevel'];
     includeThoughts: boolean;
@@ -257,7 +253,6 @@ export function useQueuedBatchWorkflow({
     aspectRatio,
     imageSize,
     outputFormat,
-    structuredOutputMode,
     temperature,
     thinkingLevel,
     includeThoughts,
@@ -308,23 +303,23 @@ export function useQueuedBatchWorkflow({
             ? prompt
             : editingInput
               ? 'High resolution, seamless integration with surrounding context, maintain consistent lighting and texture.'
-                            : buildStyleTransferPrompt(imageStyle);
+              : buildStyleTransferPrompt(imageStyle);
         const generationMode = currentStageAsset?.url
             ? 'Follow-up Edit'
             : objectImages.length > 0 || characterImages.length > 0
               ? 'Image to Image/Mixing'
               : 'Text to Image';
-            const sourceOverride = editingInput
-                ? resolveCurrentStageSelectionFirstSourceOverride({
+        const sourceOverride = editingInput
+            ? resolveCurrentStageSelectionFirstSourceOverride({
                   sourceHistoryId: currentStageAsset?.sourceHistoryId ?? null,
                   currentStageLineageAction: currentStageAsset?.lineageAction,
                   history,
                   branchOriginIdByTurnId,
                   workspaceSessionSourceHistoryId,
                   workspaceSessionSourceLineageAction,
-                  })
-                : undefined;
-            const lineageContext = getGenerationLineageContext({ mode: generationMode, editingInput, sourceOverride });
+              })
+            : undefined;
+        const lineageContext = getGenerationLineageContext({ mode: generationMode, editingInput, sourceOverride });
 
         return {
             finalPrompt,
@@ -339,7 +334,6 @@ export function useQueuedBatchWorkflow({
             style: imageStyle,
             model: imageModel,
             outputFormat,
-            structuredOutputMode,
             temperature,
             thinkingLevel,
             includeThoughts,
@@ -367,7 +361,6 @@ export function useQueuedBatchWorkflow({
         objectImages,
         outputFormat,
         prompt,
-        structuredOutputMode,
         temperature,
         thinkingLevel,
         workspaceSessionSourceHistoryId,
@@ -404,7 +397,6 @@ export function useQueuedBatchWorkflow({
                 imageSize: seed.imageSize,
                 style: seed.style,
                 outputFormat: seed.outputFormat,
-                structuredOutputMode: seed.structuredOutputMode,
                 temperature: seed.temperature,
                 thinkingLevel: seed.thinkingLevel,
                 includeThoughts: seed.includeThoughts,
@@ -447,7 +439,6 @@ export function useQueuedBatchWorkflow({
                     imageSize: existingJob.imageSize,
                     style: existingJob.style,
                     outputFormat: existingJob.outputFormat,
-                    structuredOutputMode: existingJob.structuredOutputMode,
                     temperature: existingJob.temperature,
                     thinkingLevel: existingJob.thinkingLevel,
                     includeThoughts: existingJob.includeThoughts,
@@ -477,10 +468,6 @@ export function useQueuedBatchWorkflow({
             const recoveredMetadata = (firstRecoveredHistoryItem?.metadata || {}) as Record<string, unknown>;
             const recoveredOutputFormat =
                 recoveredMetadata.outputFormat === 'images-and-text' ? 'images-and-text' : 'images-only';
-            const recoveredStructuredOutputMode =
-                typeof recoveredMetadata.structuredOutputMode === 'string'
-                    ? (recoveredMetadata.structuredOutputMode as StructuredOutputMode)
-                    : 'off';
             const recoveredThinkingLevel =
                 recoveredMetadata.thinkingLevel === 'disabled' ||
                 recoveredMetadata.thinkingLevel === 'minimal' ||
@@ -497,7 +484,6 @@ export function useQueuedBatchWorkflow({
                 imageSize: firstRecoveredHistoryItem?.size || '1K',
                 style: firstRecoveredHistoryItem?.style || 'None',
                 outputFormat: recoveredOutputFormat,
-                structuredOutputMode: recoveredStructuredOutputMode,
                 temperature:
                     typeof recoveredMetadata.temperature === 'number' && Number.isFinite(recoveredMetadata.temperature)
                         ? recoveredMetadata.temperature
@@ -552,7 +538,6 @@ export function useQueuedBatchWorkflow({
                 imageSize: draft.imageSize,
                 style: draft.style,
                 outputFormat: draft.outputFormat,
-                structuredOutputMode: draft.structuredOutputMode,
                 temperature: draft.temperature,
                 thinkingLevel: draft.thinkingLevel,
                 includeThoughts: draft.includeThoughts,
@@ -585,7 +570,6 @@ export function useQueuedBatchWorkflow({
                 imageSize: draft.imageSize,
                 style: draft.style,
                 outputFormat: draft.outputFormat,
-                structuredOutputMode: draft.structuredOutputMode,
                 temperature: draft.temperature,
                 thinkingLevel: draft.thinkingLevel,
                 includeThoughts: draft.includeThoughts,
@@ -623,7 +607,6 @@ export function useQueuedBatchWorkflow({
                     objectImageInputs: draft.finalObjectInputs,
                     characterImageInputs: draft.finalCharacterInputs,
                     outputFormat: draft.outputFormat,
-                    structuredOutputMode: draft.structuredOutputMode,
                     temperature: draft.temperature,
                     thinkingLevel: draft.thinkingLevel,
                     includeThoughts: draft.includeThoughts,
@@ -698,7 +681,6 @@ export function useQueuedBatchWorkflow({
                 style: 'None',
                 model: imageModel,
                 outputFormat,
-                structuredOutputMode,
                 temperature,
                 thinkingLevel,
                 includeThoughts,
@@ -716,7 +698,6 @@ export function useQueuedBatchWorkflow({
             includeThoughts,
             outputFormat,
             showNotification,
-            structuredOutputMode,
             submitQueuedBatchDraft,
             t,
             temperature,
@@ -989,7 +970,6 @@ export function useQueuedBatchWorkflow({
                             aspectRatio: job.aspectRatio,
                             requestedImageSize: job.imageSize,
                             outputFormat: job.outputFormat,
-                            structuredOutputMode: job.structuredOutputMode || 'off',
                             temperature: job.temperature,
                             thinkingLevel: job.thinkingLevel,
                             includeThoughts: job.includeThoughts,
@@ -1040,7 +1020,6 @@ export function useQueuedBatchWorkflow({
                             status: 'success',
                             text: result.text,
                             thoughts: result.thoughts,
-                            structuredData: result.structuredData,
                             metadata: sidecarMetadata,
                             grounding: result.grounding,
                             sessionHints: sanitizeSessionHintsForStorage(result.sessionHints || null) || null,

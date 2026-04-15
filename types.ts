@@ -101,15 +101,6 @@ export type ImageStyle =
 export type ImageModel = 'gemini-3.1-flash-image-preview' | 'gemini-3-pro-image-preview' | 'gemini-2.5-flash-image';
 export type OutputFormat = 'images-only' | 'images-and-text';
 export type ThinkingLevel = 'disabled' | 'minimal' | 'high';
-export type StructuredOutputMode =
-    | 'off'
-    | 'scene-brief'
-    | 'prompt-kit'
-    | 'quality-check'
-    | 'shot-plan'
-    | 'delivery-brief'
-    | 'revision-brief'
-    | 'variation-compare';
 export type GroundingMode = 'off' | 'google-search' | 'image-search' | 'google-search-plus-image-search';
 export type StickySendIntent = 'independent' | 'memory';
 export type WorkspaceSettingsDraft = {
@@ -118,7 +109,6 @@ export type WorkspaceSettingsDraft = {
     imageSize: ImageSize;
     batchSize: number;
     outputFormat: OutputFormat;
-    structuredOutputMode: StructuredOutputMode;
     temperature: number;
     thinkingLevel: ThinkingLevel;
     groundingMode: GroundingMode;
@@ -127,6 +117,35 @@ export type ExecutionMode = 'single-turn' | 'interactive-batch-variants' | 'chat
 export type StageAssetRole = 'object' | 'character' | 'stage-source';
 export type StageAssetOrigin = 'upload' | 'sketch' | 'generated' | 'history' | 'editor';
 export type TurnLineageAction = 'root' | 'continue' | 'branch' | 'editor-follow-up' | 'reopen';
+export type GenerationFailureCode =
+    | 'policy-blocked'
+    | 'safety-blocked'
+    | 'text-only'
+    | 'no-image-data'
+    | 'empty-response'
+    | 'unknown';
+export type GenerationFailureExtractionIssue = 'missing-candidates' | 'missing-parts' | 'no-image-data';
+
+export interface GenerationFailureInfo {
+    code: GenerationFailureCode;
+    message: string;
+    promptBlockReason?: string | null;
+    finishReason?: string | null;
+    blockedSafetyCategories?: string[];
+    extractionIssue?: GenerationFailureExtractionIssue | null;
+    returnedTextContent?: boolean;
+    returnedThoughtContent?: boolean;
+}
+
+export interface GenerationFailureDisplayContext {
+    hasSiblingSafetyBlockedFailure?: boolean;
+}
+
+export interface StageErrorState {
+    summary: string;
+    detail?: string | null;
+    failure?: GenerationFailureInfo | null;
+}
 export type BranchNameOverrides = Record<string, string>;
 export type BranchContinuationSourceByOriginId = Record<string, string>;
 
@@ -144,6 +163,7 @@ export interface ConversationTurnReference {
     text: string | null;
     thoughts: string | null;
     thoughtSignature: string | null;
+}
 
 export type BatchPreviewTileStatus = 'pending' | 'ready' | 'failed';
 
@@ -161,7 +181,6 @@ export interface BatchPreviewSession {
     didUserInspectExistingImage: boolean;
     tiles: BatchPreviewTile[];
 }
-}
 
 export interface ConversationRequestContext {
     conversationId: string;
@@ -178,7 +197,6 @@ export interface BranchConversationRecord {
     startedAt: number;
     updatedAt: number | null;
 }
-    openedAt?: number | null;
 
 export interface WorkspaceConversationState {
     byBranchOriginId: Record<string, BranchConversationRecord>;
@@ -214,12 +232,6 @@ export interface QueuedBatchJob {
     imageSize: ImageSize;
     style: ImageStyle;
     outputFormat: OutputFormat;
-
-export interface ImageReceivedResult {
-    displayUrl: string;
-    savedFilename?: string;
-}
-    structuredOutputMode?: StructuredOutputMode;
     temperature: number;
     thinkingLevel: ThinkingLevel;
     includeThoughts: boolean;
@@ -244,6 +256,11 @@ export interface ImageReceivedResult {
     sourceHistoryId?: string | null;
     lineageAction?: TurnLineageAction;
     lineageDepth?: number;
+}
+
+export interface ImageReceivedResult {
+    displayUrl: string;
+    savedFilename?: string;
 }
 
 export interface StageAsset {
@@ -287,7 +304,6 @@ export interface GenerationSettings {
     model: ImageModel;
     batchSize: number;
     outputFormat: OutputFormat;
-    structuredOutputMode?: StructuredOutputMode;
     temperature: number;
     thinkingLevel: ThinkingLevel;
     includeThoughts: boolean;
@@ -309,7 +325,6 @@ export interface ImageSidecarMetadata {
     requestedImageSize: ImageSize | string;
     size: ImageSize | string;
     outputFormat: OutputFormat | string;
-    structuredOutputMode: StructuredOutputMode;
     temperature: number;
     thinkingLevel: ThinkingLevel | string;
     includeThoughts: boolean;
@@ -334,10 +349,10 @@ export interface GenerateResponse {
     imageUrl?: string;
     text?: string;
     thoughts?: string;
-    structuredData?: Record<string, unknown>;
     metadata?: Record<string, unknown>;
     grounding?: GroundingMetadata;
     sessionHints?: Record<string, unknown>;
+    failure?: GenerationFailureInfo;
     conversation?: {
         used: boolean;
         conversationId?: string;
@@ -351,7 +366,6 @@ export interface GenerateResponse {
 export interface ResultArtifacts {
     text: string | null;
     thoughts: string | null;
-    structuredData?: Record<string, unknown> | null;
     grounding: GroundingMetadata | null;
     metadata: Record<string, unknown> | null;
     sessionHints: Record<string, unknown> | null;
@@ -387,7 +401,6 @@ export interface WorkspaceComposerState {
     imageModel: ImageModel;
     batchSize: number;
     outputFormat: OutputFormat;
-    structuredOutputMode?: StructuredOutputMode;
     temperature: number;
     thinkingLevel: ThinkingLevel;
     includeThoughts: boolean;
@@ -440,9 +453,10 @@ export interface GeneratedImage {
     variantGroupId?: string | null;
     status?: 'success' | 'failed';
     error?: string;
+    failure?: GenerationFailureInfo;
+    failureContext?: GenerationFailureDisplayContext;
     text?: string;
     thoughts?: string;
-    structuredData?: Record<string, unknown>;
     metadata?: Record<string, unknown>;
     grounding?: GroundingMetadata;
     sessionHints?: Record<string, unknown>;
@@ -520,7 +534,6 @@ export interface GenerateOptions {
     objectImageInputs?: string[];
     characterImageInputs?: string[];
     outputFormat?: OutputFormat;
-    structuredOutputMode?: StructuredOutputMode;
     temperature?: number;
     thinkingLevel?: ThinkingLevel;
     includeThoughts?: boolean;

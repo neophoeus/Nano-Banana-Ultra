@@ -1,40 +1,25 @@
 import React from 'react';
 import { useResponsivePanelState } from '../hooks/useResponsivePanelState';
-import StructuredOutputActions from './StructuredOutputActions';
-import StructuredOutputDisplay from './StructuredOutputDisplay';
-import { StructuredOutputMode } from '../types';
 import { getTranslation, Language } from '../utils/translations';
 
 type WorkspaceResponseRailProps = {
     currentLanguage: Language;
     resultText: string | null;
-    structuredData: Record<string, unknown> | null;
-    structuredOutputMode: StructuredOutputMode | null;
-    formattedStructuredOutput: string | null;
     resultPlaceholder: string;
-    onReplacePrompt?: (value: string) => void;
-    onAppendPrompt?: (value: string) => void;
     presentation?: 'collapsible-card' | 'detail-panel';
 };
 
 function WorkspaceResponseRail({
     currentLanguage,
     resultText,
-    structuredData,
-    structuredOutputMode,
-    formattedStructuredOutput,
     resultPlaceholder,
-    onReplacePrompt,
-    onAppendPrompt,
     presentation = 'collapsible-card',
 }: WorkspaceResponseRailProps) {
     const t = (key: string) => getTranslation(currentLanguage, key);
     const { isDesktop, isOpen, setIsOpen } = useResponsivePanelState();
     const isDetailPanel = presentation === 'detail-panel';
-    const hasAnswerContent = Boolean(formattedStructuredOutput || resultText?.trim());
-    const resultTitle = formattedStructuredOutput
-        ? t('workspaceViewerStructuredOutput')
-        : t('workspaceViewerResultText');
+    const hasAnswerContent = Boolean(resultText?.trim());
+    const resultTitle = t('workspaceViewerResultText');
     const statusDotClassName = hasAnswerContent
         ? 'bg-emerald-500 dark:bg-emerald-300'
         : 'bg-slate-300 dark:bg-slate-600';
@@ -78,17 +63,6 @@ function WorkspaceResponseRail({
                         <h2 className="mt-1 text-[15px] font-black text-slate-900 dark:text-slate-100">
                             {resultTitle}
                         </h2>
-                        {formattedStructuredOutput && (
-                            <div className="mt-2.5">
-                                <StructuredOutputActions
-                                    currentLanguage={currentLanguage}
-                                    structuredData={structuredData}
-                                    structuredOutputMode={structuredOutputMode}
-                                    formattedStructuredOutput={formattedStructuredOutput}
-                                    fallbackText={resultText || resultPlaceholder}
-                                />
-                            </div>
-                        )}
                     </div>
                     <span
                         className={
@@ -108,16 +82,7 @@ function WorkspaceResponseRail({
                             : 'nbu-soft-well nbu-scrollbar-subtle mt-3 min-h-[116px] flex-1 overflow-y-auto px-3 py-3 text-sm leading-6 text-slate-700 dark:text-slate-300'
                     }
                 >
-                    <StructuredOutputDisplay
-                        currentLanguage={currentLanguage}
-                        structuredData={structuredData}
-                        structuredOutputMode={structuredOutputMode}
-                        formattedStructuredOutput={formattedStructuredOutput}
-                        fallbackText={resultText || resultPlaceholder}
-                        variant="compact"
-                        onReplacePrompt={onReplacePrompt}
-                        onAppendPrompt={onAppendPrompt}
-                    />
+                    <div className="whitespace-pre-wrap break-words">{resultText?.trim() || resultPlaceholder}</div>
                 </div>
             </div>
         </div>

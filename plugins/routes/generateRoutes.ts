@@ -1,7 +1,11 @@
 import { GoogleGenAI } from '@google/genai';
-import type { ConversationRequestContext, StructuredOutputMode } from '../../types';
+import type { ConversationRequestContext } from '../../types';
+import {
+    getGenerationFailureHttpStatus,
+    isSafetyBlockedFinishReason,
+    resolveGenerationFailureInfo,
+} from '../../utils/generationFailure';
 import { VALID_IMAGE_MODELS, VALID_IMAGE_SIZES } from '../../utils/modelCapabilities';
-import { normalizeStructuredOutputMode, parseStructuredOutputText } from '../../utils/structuredOutputs';
 import { logApiError, readJsonBody, sendClassifiedApiError, sendJson } from '../utils/apiHelpers';
 import { buildConversationHistory } from '../utils/conversationHistory';
 import { extractGroundingDetails } from '../utils/groundingExtraction';
@@ -19,7 +23,6 @@ type ImageGenerateBody = {
     objectImageInputs?: string[];
     characterImageInputs?: string[];
     outputFormat?: 'images-only' | 'images-and-text';
-    structuredOutputMode?: StructuredOutputMode;
     temperature?: number;
     thinkingLevel?: 'disabled' | 'minimal' | 'high';
     includeThoughts?: boolean;
@@ -33,7 +36,6 @@ type GeneratedResponsePayload = {
     imageUrl?: string;
     text?: string;
     thoughts?: string;
-    structuredData?: Record<string, unknown>;
     metadata?: Record<string, unknown>;
     grounding?: {
         enabled: boolean;
@@ -333,7 +335,6 @@ export function registerGenerateRoutes(server: any, { getAIClient, resolvedDir }
                 return;
             }
 
-            const parts = buildGenerateParts(body, resolvedDir);
             const {
                 requestConfig,
                 resolvedResponseModalities,
@@ -341,7 +342,7 @@ export function registerGenerateRoutes(server: any, { getAIClient, resolvedDir }
                 effectiveThinkingLevel,
                 shouldIncludeThoughts,
             } = buildImageRequestConfig(model, body);
-            const structuredOutputMode = normalizeStructuredOutputMode(body.structuredOutputMode);
+            const parts = buildGenerateParts(body, resolvedDir);
 
             const conversationHistory = buildConversationHistory(body.conversationContext, resolvedDir);
             const useOfficialConversation =
@@ -364,24 +365,25 @@ export function registerGenerateRoutes(server: any, { getAIClient, resolvedDir }
 
             const blockReason = response.promptFeedback?.blockReason as string | undefined;
             if (blockReason && blockReason !== 'BLOCK_REASON_UNSPECIFIED' && blockReason !== 'NONE') {
+                const failure = resolveGenerationFailureInfo({ promptBlockReason: blockReason });
                 logApiError('/api/images/generate', new Error('Prompt rejected by policy'), { blockReason, model });
-                sendJson(res, 400, { error: `Prompt rejected by policy: ${blockReason}. Please modify your prompt.` });
+                sendJson(res, getGenerationFailureHttpStatus(failure), {
+                    error: failure.message,
+                    failure,
+                });
                 return;
             }
 
             const extracted = extractGeneratedContent(response);
             if (extracted.imageUrl) {
-                const structuredData = parseStructuredOutputText(structuredOutputMode, extracted.text);
                 const groundingDetails = extractGroundingDetails(response);
                 const payload: GeneratedResponsePayload = {
                     imageUrl: extracted.imageUrl,
                     text: extracted.text,
                     thoughts: extracted.thoughts,
-                    structuredData,
                     metadata: {
                         model,
                         outputFormat: body.outputFormat || 'images-only',
-                        structuredOutputMode,
                         temperature: typeof body.temperature === 'number' ? body.temperature : 1,
                         thinkingLevel: effectiveThinkingLevel,
                         includeThoughts: shouldIncludeThoughts,
@@ -409,7 +411,6 @@ export function registerGenerateRoutes(server: any, { getAIClient, resolvedDir }
                         googleSearchRequested: Boolean(body.googleSearch),
                         imageSearchRequested: Boolean(body.imageSearch),
                         outputFormatRequested: body.outputFormat || 'images-only',
-                        structuredOutputMode,
                         responseModalitiesActual: resolvedResponseModalities.join('+'),
                         thinkingLevelRequested: effectiveThinkingLevel,
                         includeThoughtsRequested: shouldIncludeThoughts,
@@ -423,8 +424,6 @@ export function registerGenerateRoutes(server: any, { getAIClient, resolvedDir }
                         groundingMode,
                         groundingMetadataReturned: Boolean(response.candidates?.[0]?.groundingMetadata),
                         textReturned: Boolean(extracted.text),
-                        structuredOutputRequested: structuredOutputMode !== 'off',
-                        structuredOutputReturned: Boolean(structuredData),
                         thoughtsReturned: Boolean(extracted.thoughts),
                         thoughtSignatureReturned: extracted.thoughtSignaturePresent,
                         thoughtSignature: extracted.thoughtSignature,
@@ -447,30 +446,50 @@ export function registerGenerateRoutes(server: any, { getAIClient, resolvedDir }
                 return;
             }
 
-            if (extracted.finishReason === 'SAFETY') {
-                const blockedCategories = (extracted.safetyRatings ?? [])
-                    .filter(
-                        (rating: any) =>
-                            rating.probability === 'HIGH' || rating.probability === 'MEDIUM' || rating.blocked,
-                    )
-                    .map((rating: any) =>
-                        String(rating.category ?? 'UNKNOWN')
-                            .replace('HARM_CATEGORY_', '')
-                            .replace(/_/g, ' ')
-                            .toLowerCase(),
-                    );
-                const reason = blockedCategories.length > 0 ? blockedCategories.join(', ') : 'Unknown Safety Filter';
+            const failure = resolveGenerationFailureInfo({
+                text: extracted.text,
+                thoughts: extracted.thoughts,
+                promptBlockReason: extracted.promptBlockReason,
+                finishReason: extracted.finishReason,
+                safetyRatings: extracted.safetyRatings,
+                extractionIssue: extracted.extractionIssue,
+            });
+
+            if (failure.code === 'safety-blocked') {
+                const blockedCategories = (failure.blockedSafetyCategories ?? [])
+                    .filter((category) => typeof category === 'string' && category.trim().length > 0)
+                    .map((category) => category.trim());
+                const reason =
+                    blockedCategories.length > 0
+                        ? blockedCategories.join(', ')
+                        : isSafetyBlockedFinishReason(failure.finishReason)
+                          ? failure.finishReason || 'Unknown Safety Filter'
+                          : 'Unknown Safety Filter';
                 const specificKeywords = await identifyBlockKeywords(ai, String(body.prompt || ''), reason);
                 logApiError('/api/images/generate', new Error('Output blocked by safety filter'), { reason, model });
-                sendJson(res, 400, { error: `Blocked by filter: ${reason} ${specificKeywords}`.trim() });
+                sendJson(res, getGenerationFailureHttpStatus(failure), {
+                    error: `${failure.message} ${specificKeywords}`.trim(),
+                    failure,
+                });
                 return;
             }
 
             logApiError('/api/images/generate', new Error('Model returned no image data'), {
                 model,
                 finishReason: extracted.finishReason || 'UNKNOWN',
+                responseModalitiesActual: resolvedResponseModalities,
+                candidateCount: extracted.candidateCount ?? 0,
+                partCount: extracted.partCount ?? 0,
+                imagePartCount: extracted.imagePartCount ?? 0,
+                textReturned: Boolean(extracted.text),
+                textLength: extracted.text?.length ?? 0,
+                thoughtsReturned: Boolean(extracted.thoughts),
+                extractionIssue: extracted.extractionIssue || null,
             });
-            sendJson(res, 502, { error: 'Model returned no image data.' });
+            sendJson(res, getGenerationFailureHttpStatus(failure), {
+                error: failure.message,
+                failure,
+            });
         } catch (error: any) {
             sendClassifiedApiError(res, '/api/images/generate', error, 'Image generation failed', {
                 defaultStatus: 502,

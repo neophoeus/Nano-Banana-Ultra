@@ -1,7 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import type { StructuredOutputMode } from '../../types';
-import { appendStructuredOutputInstruction, normalizeStructuredOutputMode } from '../../utils/structuredOutputs';
 
 const LOAD_IMAGE_ENDPOINT = '/api/load-image';
 const RAW_BASE64_PATTERN = /^[A-Za-z0-9+/=]+$/u;
@@ -22,7 +20,6 @@ type GenerateImageBodyLike = {
     editingInput?: string;
     objectImageInputs?: string[];
     characterImageInputs?: string[];
-    structuredOutputMode?: StructuredOutputMode;
 };
 
 export function inferMimeTypeFromReference(reference?: ReferenceImage | null): string {
@@ -161,15 +158,13 @@ export function buildGenerateParts(
 ): Array<{ text?: string; inlineData?: { data: string; mimeType: string } }> {
     const { objectImageInputs, characterImageInputs } = normalizeReferenceImages(body);
     const parts: Array<{ text?: string; inlineData?: { data: string; mimeType: string } }> = [];
+    const prompt = String(body.prompt || 'A creative image.');
 
     pushImagesToParts(parts, body.editingInput ? [body.editingInput] : [], 'Edit', resolvedDir);
     pushImagesToParts(parts, objectImageInputs, 'Obj', resolvedDir);
     pushImagesToParts(parts, characterImageInputs, 'Char', resolvedDir);
     parts.push({
-        text: appendStructuredOutputInstruction(
-            String(body.prompt || 'A creative image.'),
-            normalizeStructuredOutputMode(body.structuredOutputMode),
-        ),
+        text: prompt,
     });
 
     return parts;

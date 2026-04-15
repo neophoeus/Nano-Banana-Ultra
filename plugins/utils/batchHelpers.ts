@@ -1,4 +1,4 @@
-import { normalizeStructuredOutputMode, parseStructuredOutputText } from '../../utils/structuredOutputs';
+import { getBlockedSafetyCategories, resolveGenerationFailureInfo } from '../../utils/generationFailure';
 import { extractGroundingDetails, type GroundingSource, type GroundingSupport } from './groundingExtraction';
 
 export type BatchJobResponsePayload = {
@@ -39,7 +39,6 @@ export type BatchImportResultPayload = {
     imageUrl?: string;
     text?: string;
     thoughts?: string;
-    structuredData?: Record<string, unknown>;
     grounding?: BatchImportResultGrounding;
     sessionHints?: Record<string, unknown>;
     error?: string;
@@ -155,44 +154,6 @@ function readBatchJobErrorMessage(error: any): string | undefined {
     return undefined;
 }
 
-function getBlockedSafetyCategories(safetyRatings: unknown): string[] {
-    if (!Array.isArray(safetyRatings)) {
-        return [];
-    }
-
-    return safetyRatings
-        .filter(
-            (rating: any) =>
-                rating &&
-                typeof rating === 'object' &&
-                (rating.probability === 'HIGH' || rating.probability === 'MEDIUM' || rating.blocked === true),
-        )
-        .map((rating: any) =>
-            String(rating.category ?? 'UNKNOWN')
-                .replace('HARM_CATEGORY_', '')
-                .replace(/_/g, ' ')
-                .toLowerCase(),
-        )
-        .filter((category, index, categories) => category.length > 0 && categories.indexOf(category) === index);
-}
-
-function hasReturnedTextContent(extracted: ExtractedGeneratedContent): boolean {
-    return [extracted.text, extracted.thoughts].some(
-        (value) => typeof value === 'string' && value.trim().length > 0,
-    );
-}
-
-function resolveBatchStructuredOutputMode(entry: any) {
-    return normalizeStructuredOutputMode(
-        entry?.request?.requestBody?.structuredOutputMode ||
-            entry?.request?.requestBody?.structured_output_mode ||
-            entry?.request?.request_body?.structuredOutputMode ||
-            entry?.request?.request_body?.structured_output_mode ||
-            entry?.request?.structuredOutputMode ||
-            entry?.request?.structured_output_mode,
-    );
-}
-
 function resolveGroundingMetadataReturned(response: any, groundingDetails: ReturnType<typeof extractGroundingDetails>) {
     const candidate = response?.candidates?.[0] ?? response?.response?.candidates?.[0];
     return (
@@ -203,49 +164,6 @@ function resolveGroundingMetadataReturned(response: any, groundingDetails: Retur
         groundingDetails.supports.length > 0 ||
         groundingDetails.searchEntryPointAvailable
     );
-}
-
-function resolveBatchExtractionFailureMessage(entry: any, extracted: ExtractedGeneratedContent): string {
-    const explicitEntryError =
-        readBatchJobErrorMessage(entry?.error) || readBatchJobErrorMessage(entry?.response?.error);
-    const blockedSafetyCategories = getBlockedSafetyCategories(extracted.safetyRatings);
-    const returnedTextContent = hasReturnedTextContent(extracted);
-
-    if (explicitEntryError) {
-        return explicitEntryError;
-    }
-
-    if (typeof extracted.promptBlockReason === 'string' && extracted.promptBlockReason.length > 0) {
-        return `Prompt was rejected by policy (block reason: ${extracted.promptBlockReason}).`;
-    }
-    if (blockedSafetyCategories.length > 0) {
-        return `Model output was blocked by safety filters (${blockedSafetyCategories.join(', ')}).`;
-    }
-    if (returnedTextContent) {
-        return 'Model returned text-only content instead of image data.';
-    }
-    if (extracted.finishReason === 'NO_IMAGE') {
-        return 'Model finished without producing an image (finish reason: NO_IMAGE).';
-    }
-    if (extracted.finishReason === 'SAFETY' || extracted.finishReason === 'BLOCKED') {
-        return 'Model output was blocked by safety filters.';
-    }
-    if (extracted.extractionIssue === 'missing-candidates') {
-        return 'Model returned a response without candidates.';
-    }
-    if (extracted.extractionIssue === 'missing-parts') {
-        return 'Model returned a candidate without content parts.';
-    }
-    if (
-        typeof extracted.finishReason === 'string' &&
-        extracted.finishReason.length > 0 &&
-        extracted.finishReason !== 'STOP' &&
-        extracted.finishReason !== 'FINISH_REASON_UNSPECIFIED'
-    ) {
-        return `Model returned no image data (finish reason: ${extracted.finishReason}).`;
-    }
-
-    return 'Model returned no image data.';
 }
 
 export function extractBatchImportResults(
@@ -261,22 +179,27 @@ export function extractBatchImportResults(
     return responses.map((entry: any, index: number) => {
         if (entry?.response) {
             const extracted = extractGeneratedContent(entry.response);
-            const structuredOutputMode = resolveBatchStructuredOutputMode(entry);
-            const structuredData = parseStructuredOutputText(structuredOutputMode, extracted.text);
             const groundingDetails = extractGroundingDetails(entry.response);
             const blockedSafetyCategories = getBlockedSafetyCategories(extracted.safetyRatings);
-            const extractionFailureMessage = extracted.imageUrl
-                ? undefined
-                : resolveBatchExtractionFailureMessage(entry, extracted);
             const entryErrorMessage =
                 readBatchJobErrorMessage(entry?.error) || readBatchJobErrorMessage(entry?.response?.error);
+            const failure = extracted.imageUrl
+                ? null
+                : resolveGenerationFailureInfo({
+                      explicitError: entryErrorMessage,
+                      text: extracted.text,
+                      thoughts: extracted.thoughts,
+                      promptBlockReason: extracted.promptBlockReason,
+                      finishReason: extracted.finishReason,
+                      safetyRatings: extracted.safetyRatings,
+                      extractionIssue: extracted.extractionIssue,
+                  });
             return {
                 index,
                 status: extracted.imageUrl ? 'success' : 'failed',
                 imageUrl: extracted.imageUrl,
                 text: extracted.text,
                 thoughts: extracted.thoughts,
-                structuredData,
                 grounding: {
                     enabled:
                         groundingDetails.sources.length > 0 ||
@@ -312,14 +235,12 @@ export function extractBatchImportResults(
                     actualImageDimensions: extracted.imageDimensions
                         ? `${extracted.imageDimensions.width}x${extracted.imageDimensions.height}`
                         : undefined,
-                    structuredOutputMode,
-                    structuredOutputReturned: Boolean(structuredData),
                     sourcesReturned: groundingDetails.sources.length,
                     webQueriesReturned: groundingDetails.webQueries.length,
                     imageQueriesReturned: groundingDetails.imageQueries.length,
                     groundingSupportsReturned: groundingDetails.supports.length,
                 },
-                error: extractionFailureMessage,
+                error: failure?.message,
             };
         }
 

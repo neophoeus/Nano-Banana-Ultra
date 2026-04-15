@@ -4,10 +4,8 @@ import Button from './Button';
 import InfoTooltip from './InfoTooltip';
 import { useAnchoredFloatingPlacement } from '../hooks/useAnchoredFloatingPlacement';
 import { useResponsivePanelState } from '../hooks/useResponsivePanelState';
-import { MODEL_CAPABILITIES, OUTPUT_FORMATS, STRUCTURED_OUTPUT_MODES, THINKING_LEVELS } from '../constants';
+import { MODEL_CAPABILITIES, OUTPUT_FORMATS, THINKING_LEVELS } from '../constants';
 import { getGroundingModeLabel } from '../utils/groundingMode';
-import { STRUCTURED_OUTPUT_FIELD_LABEL_KEYS } from '../utils/structuredOutputPresentation';
-import { getStructuredOutputDefinition } from '../utils/structuredOutputs';
 import { getTranslation, Language } from '../utils/translations';
 import { useWorkspaceFloatingLayer } from './WorkspaceFloatingLayerContext';
 import {
@@ -20,7 +18,6 @@ import {
     QueuedBatchJob,
     StageAsset,
     StickySendIntent,
-    StructuredOutputMode,
     ThinkingLevel,
     TurnLineageAction,
 } from '../types';
@@ -50,7 +47,6 @@ export type ComposerSettingsPanelProps = {
     maxObjects: number;
     maxCharacters: number;
     outputFormat: OutputFormat;
-    structuredOutputMode: StructuredOutputMode;
     thinkingLevel: ThinkingLevel;
     includeThoughts: boolean;
     groundingMode: GroundingMode;
@@ -88,7 +84,6 @@ export type ComposerSettingsPanelProps = {
     onOpenBatchPicker?: () => void;
     onToggleAdvancedSettings: () => void;
     onOutputFormatChange: (value: OutputFormat) => void;
-    onStructuredOutputModeChange: (value: StructuredOutputMode) => void;
     onTemperatureChange: (value: number) => void;
     onThinkingLevelChange: (value: ThinkingLevel) => void;
     onGroundingModeChange: (value: GroundingMode) => void;
@@ -159,61 +154,6 @@ const renderInfoIcon = () => (
 
 const SEND_INTENT_INFO_AUTO_CLOSE_MS = 3200;
 
-const STRUCTURED_OUTPUT_GUIDE_FIELD_KEYS: Record<StructuredOutputMode, string[]> = {
-    off: [],
-    'scene-brief': ['summary', 'primarySubjects', 'compositionNotes'],
-    'prompt-kit': ['intentSummary', 'subjectCues', 'negativeCues'],
-    'quality-check': ['overallAssessment', 'issues', 'revisionPriorities'],
-    'shot-plan': ['shotIntent', 'cameraFraming', 'lightingPlan'],
-    'delivery-brief': ['deliverySummary', 'mustProtect', 'exportTargets'],
-    'revision-brief': ['revisionGoal', 'editTargets', 'riskChecks'],
-    'variation-compare': ['comparisonSummary', 'tradeoffs', 'testPrompts'],
-};
-
-const STRUCTURED_OUTPUT_GUIDE_EXAMPLE_VALUES: Record<StructuredOutputMode, Record<string, string | string[]>> = {
-    off: {},
-    'scene-brief': {
-        summary: 'Moody rooftop portrait with a restrained teal-orange palette.',
-        primarySubjects: ['solo runner', 'wind-tossed coat'],
-        compositionNotes: 'Keep the subject off-center with skyline depth behind the shoulder.',
-    },
-    'prompt-kit': {
-        intentSummary: 'Push the scene toward premium editorial drama without losing realism.',
-        subjectCues: ['tailored black coat', 'direct eye contact'],
-        negativeCues: ['cartoon shading', 'overblown lens flare'],
-    },
-    'quality-check': {
-        overallAssessment: 'Strong silhouette and mood, but the face contrast is still slightly heavy.',
-        issues: ['eye socket shadows feel too dense', 'background highlights compete with the subject'],
-        revisionPriorities: ['soften facial contrast first', 'quiet the brightest skyline accents second'],
-    },
-    'shot-plan': {
-        shotIntent: 'Sell a composed hero frame with quiet tension and clean subject separation.',
-        cameraFraming: 'Medium portrait from chest-up with slight low-angle emphasis.',
-        lightingPlan: ['soft key from camera left', 'subtle rim light on coat edge'],
-    },
-    'delivery-brief': {
-        deliverySummary: 'Ready for stakeholder review after one final cleanup pass.',
-        mustProtect: ['clean coat silhouette', 'muted cinematic palette'],
-        exportTargets: ['review JPG', 'master PNG'],
-    },
-    'revision-brief': {
-        revisionGoal: 'Open up the face, simplify the background, and keep the silhouette premium.',
-        editTargets: ['lift eye-area detail', 'reduce background hotspot clutter'],
-        riskChecks: ['do not flatten the moody contrast', 'avoid making skin texture look over-smoothed'],
-    },
-    'variation-compare': {
-        comparisonSummary: 'Option B keeps the silhouette cleaner while Option A feels more aggressive.',
-        tradeoffs: ['A has stronger energy but noisier lighting', 'B is calmer but less immediately bold'],
-        testPrompts: ['keep Option B pose, add A-level contrast', 'retain B framing and sharpen rim light'],
-    },
-};
-
-const STRUCTURED_OUTPUT_PROMPT_READY_FIELD_KEYS: Partial<Record<StructuredOutputMode, string[]>> = {
-    'revision-brief': ['finalPrompt'],
-    'variation-compare': ['recommendedNextMove', 'testPrompts'],
-};
-
 function ComposerSettingsPanel({
     prompt,
     placeholder,
@@ -234,7 +174,6 @@ function ComposerSettingsPanel({
     maxObjects,
     maxCharacters,
     outputFormat,
-    structuredOutputMode,
     thinkingLevel,
     groundingMode,
     stickySendIntent = 'independent',
@@ -267,7 +206,6 @@ function ComposerSettingsPanel({
     onOpenSettings,
     onToggleAdvancedSettings,
     onOutputFormatChange,
-    onStructuredOutputModeChange,
     onTemperatureChange,
     onThinkingLevelChange,
     onGroundingModeChange,
@@ -344,26 +282,6 @@ function ComposerSettingsPanel({
     const imageToPromptLabel = resolveIntentText('composerPromptToolImageToPrompt', 'Image to Prompt');
     const surpriseMeLabel = resolveIntentText('composerPromptToolSurpriseMe', 'Surprise Me');
     const autoRewriteLabel = resolveIntentText('composerPromptToolAutoRewrite', 'Auto Rewrite');
-    const getStructuredOutputModeLabel = (value: StructuredOutputMode) => {
-        switch (value) {
-            case 'scene-brief':
-                return t('structuredOutputModeSceneBrief');
-            case 'prompt-kit':
-                return t('structuredOutputModePromptKit');
-            case 'quality-check':
-                return t('structuredOutputModeQualityCheck');
-            case 'shot-plan':
-                return t('structuredOutputModeShotPlan');
-            case 'delivery-brief':
-                return t('structuredOutputModeDeliveryBrief');
-            case 'revision-brief':
-                return t('structuredOutputModeRevisionBrief');
-            case 'variation-compare':
-                return t('structuredOutputModeVariationCompare');
-            default:
-                return t('structuredOutputModeOff');
-        }
-    };
     const getOutputFormatSummaryLabel = (value: OutputFormat) =>
         OUTPUT_FORMATS.find((option) => option.value === value)?.label ?? value;
     const getThinkingLevelSummaryLabel = (value: ThinkingLevel) =>
@@ -380,109 +298,6 @@ function ComposerSettingsPanel({
                 return getGroundingModeLabel(value);
         }
     };
-    const getStructuredOutputModeGuide = (value: StructuredOutputMode) => {
-        switch (value) {
-            case 'scene-brief':
-                return t('composerAdvancedStructuredOutputGuideSceneBrief');
-            case 'prompt-kit':
-                return t('composerAdvancedStructuredOutputGuidePromptKit');
-            case 'quality-check':
-                return t('composerAdvancedStructuredOutputGuideQualityCheck');
-            case 'shot-plan':
-                return t('composerAdvancedStructuredOutputGuideShotPlan');
-            case 'delivery-brief':
-                return t('composerAdvancedStructuredOutputGuideDeliveryBrief');
-            case 'revision-brief':
-                return t('composerAdvancedStructuredOutputGuideRevisionBrief');
-            case 'variation-compare':
-                return t('composerAdvancedStructuredOutputGuideVariationCompare');
-            default:
-                return t('composerAdvancedStructuredOutputGuideOff');
-        }
-    };
-    const getStructuredOutputModeGuideBestFor = (value: StructuredOutputMode) => {
-        switch (value) {
-            case 'scene-brief':
-                return t('composerAdvancedStructuredOutputGuideBestForSceneBrief');
-            case 'prompt-kit':
-                return t('composerAdvancedStructuredOutputGuideBestForPromptKit');
-            case 'quality-check':
-                return t('composerAdvancedStructuredOutputGuideBestForQualityCheck');
-            case 'shot-plan':
-                return t('composerAdvancedStructuredOutputGuideBestForShotPlan');
-            case 'delivery-brief':
-                return t('composerAdvancedStructuredOutputGuideBestForDeliveryBrief');
-            case 'revision-brief':
-                return t('composerAdvancedStructuredOutputGuideBestForRevisionBrief');
-            case 'variation-compare':
-                return t('composerAdvancedStructuredOutputGuideBestForVariationCompare');
-            default:
-                return null;
-        }
-    };
-    const getStructuredOutputModeGuideAvoidWhen = (value: StructuredOutputMode) => {
-        switch (value) {
-            case 'scene-brief':
-                return t('composerAdvancedStructuredOutputGuideAvoidWhenSceneBrief');
-            case 'prompt-kit':
-                return t('composerAdvancedStructuredOutputGuideAvoidWhenPromptKit');
-            case 'quality-check':
-                return t('composerAdvancedStructuredOutputGuideAvoidWhenQualityCheck');
-            case 'shot-plan':
-                return t('composerAdvancedStructuredOutputGuideAvoidWhenShotPlan');
-            case 'delivery-brief':
-                return t('composerAdvancedStructuredOutputGuideAvoidWhenDeliveryBrief');
-            case 'revision-brief':
-                return t('composerAdvancedStructuredOutputGuideAvoidWhenRevisionBrief');
-            case 'variation-compare':
-                return t('composerAdvancedStructuredOutputGuideAvoidWhenVariationCompare');
-            default:
-                return null;
-        }
-    };
-    const getStructuredOutputModeGuideFields = (value: StructuredOutputMode) =>
-        STRUCTURED_OUTPUT_GUIDE_FIELD_KEYS[value].map(
-            (fieldKey) =>
-                getTranslation(currentLanguage, STRUCTURED_OUTPUT_FIELD_LABEL_KEYS[fieldKey] || '') || fieldKey,
-        );
-    const getStructuredOutputModePromptReadyGuide = (value: StructuredOutputMode) => {
-        switch (value) {
-            case 'revision-brief':
-                return t('structuredOutputPromptReadyHintRevisionBrief');
-            case 'variation-compare':
-                return t('structuredOutputPromptReadyHintVariationCompare');
-            default:
-                return null;
-        }
-    };
-    const getStructuredOutputModePromptReadyFields = (value: StructuredOutputMode) =>
-        (STRUCTURED_OUTPUT_PROMPT_READY_FIELD_KEYS[value] || []).map(
-            (fieldKey) =>
-                getTranslation(currentLanguage, STRUCTURED_OUTPUT_FIELD_LABEL_KEYS[fieldKey] || '') || fieldKey,
-        );
-    const getStructuredOutputModeGuideExampleRows = (value: StructuredOutputMode) => {
-        const definition = getStructuredOutputDefinition(value);
-        const properties =
-            (definition?.responseJsonSchema?.properties as Record<string, { type?: string }> | undefined) || {};
-        const fieldKeys = STRUCTURED_OUTPUT_GUIDE_FIELD_KEYS[value];
-        const exampleValues = STRUCTURED_OUTPUT_GUIDE_EXAMPLE_VALUES[value] || {};
-
-        if (fieldKeys.length === 0) {
-            return [];
-        }
-
-        return [
-            '{',
-            ...fieldKeys.map((fieldKey, index) => {
-                const placeholder = properties[fieldKey]?.type === 'array' ? ['...', '...'] : '...';
-                const exampleValue = exampleValues[fieldKey] ?? placeholder;
-                const trailingComma = index < fieldKeys.length - 1 ? ',' : '';
-
-                return `  "${fieldKey}": ${JSON.stringify(exampleValue)}${trailingComma}`;
-            }),
-            '}',
-        ];
-    };
     const promptToolButtonClassName =
         'nbu-control-button group flex min-h-[42px] w-full min-w-0 items-center justify-center gap-2 overflow-hidden rounded-[18px] border-slate-200/85 bg-white/92 px-3 py-2 text-center text-[11px] font-semibold tracking-normal text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-300/70 hover:bg-white hover:text-amber-700 hover:shadow-md disabled:cursor-not-allowed dark:border-white/10 dark:bg-slate-900/94 dark:text-slate-200 dark:shadow-none dark:hover:border-amber-400/35 dark:hover:bg-slate-900 dark:hover:text-amber-100';
     const promptToolIconClassName =
@@ -496,6 +311,12 @@ function ComposerSettingsPanel({
     const normalizedStyleLabel = imageStyleLabel.trim();
     const displayedStyleLabel = normalizedStyleLabel.length > 0 ? normalizedStyleLabel : t('styleNone');
     const hasActiveStyle = displayedStyleLabel !== t('styleNone');
+    const composerStyleLabelClassName = hasActiveStyle
+        ? 'inline-flex h-6 shrink-0 items-center rounded-full border border-fuchsia-200/90 bg-fuchsia-50 px-2.5 text-[10px] font-black uppercase tracking-[0.16em] text-fuchsia-700 dark:border-fuchsia-500/25 dark:bg-fuchsia-950/25 dark:text-fuchsia-200'
+        : 'inline-flex h-6 shrink-0 items-center rounded-full border border-slate-200/85 bg-slate-100/90 px-2.5 text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 dark:border-slate-700/80 dark:bg-slate-900/85 dark:text-slate-400';
+    const composerStyleValueClassName = hasActiveStyle
+        ? 'inline-flex h-6 min-w-0 flex-1 items-center rounded-full border border-fuchsia-200/80 bg-fuchsia-50/80 px-2 text-[10px] font-semibold leading-none text-fuchsia-700 transition-colors group-hover:border-fuchsia-300/90 group-hover:bg-fuchsia-100/80 dark:border-fuchsia-500/25 dark:bg-fuchsia-950/20 dark:text-fuchsia-100 dark:group-hover:border-fuchsia-400/35 dark:group-hover:bg-fuchsia-950/35'
+        : 'inline-flex h-6 min-w-0 flex-1 items-center rounded-full border border-slate-200/80 bg-slate-100/85 px-2 text-[10px] font-semibold leading-none text-slate-500 transition-colors group-hover:border-slate-300/85 group-hover:bg-slate-100/95 group-hover:text-slate-600 dark:border-slate-700/70 dark:bg-slate-900/80 dark:text-slate-400 dark:group-hover:border-slate-600/80 dark:group-hover:bg-slate-900/95 dark:group-hover:text-slate-300';
     const canUseMemorySendIntent = batchSize === 1;
     const enterBehaviorSendLabel = t('composerEnterSends');
     const enterBehaviorNewlineLabel = t('composerEnterNewline');
@@ -733,15 +554,6 @@ function ComposerSettingsPanel({
                   },
               ]
             : []),
-        ...(capability.supportsStructuredOutputs && structuredOutputMode !== 'off'
-            ? [
-                  {
-                      key: 'structured-output',
-                      value: `${t('composerAdvancedStructuredOutput')}: ${getStructuredOutputModeLabel(structuredOutputMode)}`,
-                      className: '',
-                  },
-              ]
-            : []),
         ...(capability.supportsTemperature
             ? [
                   {
@@ -962,10 +774,8 @@ function ComposerSettingsPanel({
                         onClick={onOpenStyles}
                         className="group flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden text-left"
                     >
-                        <span className="inline-flex h-6 shrink-0 items-center rounded-full border border-fuchsia-200/90 bg-fuchsia-50 px-2.5 text-[10px] font-black uppercase tracking-[0.16em] text-fuchsia-700 dark:border-fuchsia-500/25 dark:bg-fuchsia-950/25 dark:text-fuchsia-200">
-                            {t('workspaceViewerStyle')}
-                        </span>
-                        <span className="inline-flex h-6 min-w-0 flex-1 items-center rounded-full border border-fuchsia-200/80 bg-fuchsia-50/80 px-2 text-[10px] font-semibold leading-none text-fuchsia-700 transition-colors group-hover:border-fuchsia-300/90 group-hover:bg-fuchsia-100/80 dark:border-fuchsia-500/25 dark:bg-fuchsia-950/20 dark:text-fuchsia-100 dark:group-hover:border-fuchsia-400/35 dark:group-hover:bg-fuchsia-950/35">
+                        <span className={composerStyleLabelClassName}>{t('workspaceViewerStyle')}</span>
+                        <span className={composerStyleValueClassName}>
                             <span className="truncate">{displayedStyleLabel}</span>
                         </span>
                     </button>
@@ -1185,7 +995,7 @@ function ComposerSettingsPanel({
                 data-testid="composer-generate-card"
                 className="mt-1.5 min-w-0 nbu-floating-panel rounded-[30px] p-2 text-slate-900 dark:text-white"
             >
-                <div className="grid gap-1.5 md:grid-cols-[minmax(0,1fr)_minmax(0,220px)]">
+                <div className="grid gap-1.5 md:items-center md:grid-cols-[minmax(0,1fr)_minmax(0,208px)]">
                     <div
                         data-testid="composer-generate-actions"
                         className={`grid gap-1.5 ${showSecondaryGenerateButton ? 'sm:grid-cols-[minmax(0,1fr)_minmax(0,180px)]' : 'sm:grid-cols-1'}`}
@@ -1219,7 +1029,10 @@ function ComposerSettingsPanel({
                         ) : null}
                     </div>
 
-                    <div data-testid="composer-enter-behavior-card" className="min-w-0">
+                    <div
+                        data-testid="composer-enter-behavior-card"
+                        className="flex min-w-0 justify-center md:self-center"
+                    >
                         <button
                             type="button"
                             data-testid="composer-enter-behavior-toggle"
@@ -1227,7 +1040,7 @@ function ComposerSettingsPanel({
                             aria-label={enterBehaviorToggleAriaLabel}
                             aria-pressed={enterToSubmit}
                             onClick={onToggleEnterToSubmit}
-                            className="group relative grid min-h-[64px] w-full min-w-0 grid-rows-2 gap-1 overflow-hidden rounded-[28px] border border-slate-300/90 bg-slate-200/95 p-px text-left shadow-inner shadow-slate-300/70 transition-colors hover:border-slate-400/80 focus:outline-none focus:ring-2 focus:ring-amber-300 dark:border-slate-800 dark:bg-slate-950 dark:shadow-black/30"
+                            className="group relative grid min-h-[56px] w-full max-w-[19rem] min-w-0 grid-rows-2 gap-1 overflow-hidden rounded-[24px] border border-slate-300/90 bg-slate-200/95 p-px text-left shadow-inner shadow-slate-300/70 transition-colors hover:border-slate-400/80 focus:outline-none focus:ring-2 focus:ring-amber-300 dark:border-slate-800 dark:bg-slate-950 dark:shadow-black/30 md:max-w-none"
                         >
                             <span
                                 data-testid="composer-enter-behavior-thumb"
@@ -1235,15 +1048,15 @@ function ComposerSettingsPanel({
                                 aria-hidden="true"
                                 className={`pointer-events-none absolute left-px right-px bg-amber-500 transition-all duration-200 ease-out dark:bg-amber-300 ${
                                     enterToSubmit
-                                        ? 'top-px bottom-[calc(50%+0.125rem)] rounded-t-[27px] rounded-b-[4px] shadow-[0_10px_24px_rgba(245,158,11,0.18)] dark:shadow-none'
-                                        : 'top-[calc(50%+0.125rem)] bottom-px rounded-t-[4px] rounded-b-[27px] shadow-[0_10px_24px_rgba(245,158,11,0.18)] dark:shadow-none'
+                                        ? 'top-px bottom-[calc(50%+0.125rem)] rounded-t-[23px] rounded-b-[4px] shadow-[0_10px_24px_rgba(245,158,11,0.18)] dark:shadow-none'
+                                        : 'top-[calc(50%+0.125rem)] bottom-px rounded-t-[4px] rounded-b-[23px] shadow-[0_10px_24px_rgba(245,158,11,0.18)] dark:shadow-none'
                                 }`}
                             />
                             <span
                                 data-testid="composer-enter-behavior-send-option"
                                 data-selected={enterToSubmit ? 'true' : 'false'}
                                 aria-hidden="true"
-                                className={`relative z-10 flex min-w-0 items-center justify-center rounded-t-[27px] rounded-b-[4px] px-3 py-2 text-center text-[11px] font-semibold leading-tight transition-colors ${
+                                className={`relative z-10 flex min-w-0 items-center justify-center rounded-t-[23px] rounded-b-[4px] px-2.5 py-1.5 text-center text-[11px] font-semibold leading-tight transition-colors ${
                                     enterToSubmit
                                         ? 'text-white dark:text-slate-950'
                                         : 'text-slate-600 dark:text-slate-500'
@@ -1255,7 +1068,7 @@ function ComposerSettingsPanel({
                                 data-testid="composer-enter-behavior-newline-option"
                                 data-selected={enterToSubmit ? 'false' : 'true'}
                                 aria-hidden="true"
-                                className={`relative z-10 flex min-w-0 items-center justify-center rounded-t-[4px] rounded-b-[27px] px-3 py-2 text-center text-[11px] font-semibold leading-tight transition-colors ${
+                                className={`relative z-10 flex min-w-0 items-center justify-center rounded-t-[4px] rounded-b-[23px] px-2.5 py-1.5 text-center text-[11px] font-semibold leading-tight transition-colors ${
                                     enterToSubmit
                                         ? 'text-slate-600 dark:text-slate-500'
                                         : 'text-white dark:text-slate-950'

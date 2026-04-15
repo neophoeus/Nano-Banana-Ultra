@@ -1,5 +1,36 @@
 # Changelog
 
+## v3.5.4 - 2026-04-15
+
+- Release title: Nano Banana Ultra 3.5.4 - Interactive Failure Truthfulness, Structured-Output Removal & Explicit Finish-Reason Handling
+- Release summary:
+    - interactive failure truthfulness and localized error rendering:
+        - unified interactive image failure classification around the shared `utils/generationFailure.ts` helper so the live generate route, failed-stage rendering, failed-history reopen flows, and batch-import parity all read from the same canonical failure contract instead of mixing raw strings with local fallback rewrites
+        - expanded `/api/images/generate` failure payloads so the frontend now receives structured failure metadata including failure code, finish reason, prompt-block reason, extraction issue, and blocked safety categories rather than having to infer stage copy from generic error strings alone
+        - changed failed stage and reopened failed history items to render localized summary-plus-detail error states, keeping the canonical failure metadata intact while removing the older reliance on opaque backend English error text as the primary user-facing message
+        - added explicit image-model safety handling for finish reasons such as `IMAGE_SAFETY`, `IMAGE_PROHIBITED_CONTENT`, `BLOCKLIST`, and `PROHIBITED_CONTENT`, so blocked image generations now surface as safety-filter failures instead of falling through to generic no-image or missing-parts messaging
+        - replaced the earlier `server received an incomplete model response` wording with neutral insufficient-signal copy when the provider returns too little evidence to identify a trustworthy cause, while still preserving technical extraction detail such as missing candidates or missing content parts
+        - when one result in the same interactive batch is explicitly safety-blocked and another result remains ambiguous, the ambiguous failed item can now carry a UI-only contextual note that it may have been suppressed for the same reason without rewriting its canonical failure classification
+        - adjusted failure classification so explicit non-neutral finish reasons such as `IMAGE_OTHER` now take precedence over structural extraction fallbacks like `missing-parts`, allowing those cases to surface as truthful `no image data` failures with the returned finish reason instead of being collapsed into the generic insufficient-signal path
+        - preserved extraction diagnostics alongside those finish-reason-driven failures so product surfaces and future debugging can still inspect whether the provider returned missing candidates, missing parts, or other partial response shapes without losing the higher-signal finish reason
+        - separated visible text content from internal thought-summary content inside the shared failure helper, so thought-only no-image responses no longer collapse into the misleading `text-only` failure path
+        - thought-summary-only failures now surface through the broader `no image data` path with explicit detail that only thought summaries were returned, which better matches the live provider payloads observed during structured-output research
+
+    - structured-output verification and shipped runtime removal:
+        - added a real-provider structured-output matrix harness covering `gemini-3-pro-image-preview`, `gemini-2.5-flash-image`, schema transport, and prompt-instruction control paths, so the product no longer relies on docs-only capability assumptions for image-model structured outputs
+        - disabled app-facing structured-output generation on the current image-model paths after live verification showed that `gemini-3-pro-image-preview` falls into `STOP` plus no-image thought-only responses on schema requests and `gemini-2.5-flash-image` rejects schema transport with `JSON mode is not enabled for this model`
+        - treated prompt-instruction transport as research evidence only rather than a shippable fallback, because it was not reliable enough to preserve the product contract of trustworthy structured JSON returned alongside image generation
+        - removed structured-output request transport, schema plumbing, structured-data parsing, viewer and response rendering, advanced-settings controls, and reuse actions from the active product surface instead of keeping a partial legacy compatibility path
+        - preserved the image-to-prompt flow while simplifying results to plain response text and failure metadata, so the workspace no longer advertises or renders structured-output behavior anywhere in the active runtime
+
+    - small UI polish:
+        - the main composer style strip now renders `Style: None` with muted neutral styling instead of the active fuchsia accent, so unset style state appears visually distinct from active style selections
+        - tightened the Enter behavior toggle in the generate card so it uses less space on both desktop and mobile while preserving the same two-state vertical interaction
+
+    - product-repo surface alignment:
+        - clarified in the official README that the formally tracked repo surface is limited to product runtime, UI, and build concerns, while local-only development assets such as `docs/`, `tests/`, `e2e/`, Playwright config, and Prettier config remain outside the published repo contract
+        - removed tracked test, e2e, and formatter scripts from `package.json` and dropped the Vite test block so the shipped repo entry points no longer advertise local-only tooling that is intentionally excluded from the formal product repo surface
+
 ## v3.5.3 - 2026-04-14
 
 - Release title: Nano Banana Ultra 3.5.3 - Unified Generate Bar, Primary Enter Routing & Composer Enter Copy Refresh

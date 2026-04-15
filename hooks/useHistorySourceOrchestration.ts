@@ -18,6 +18,7 @@ import {
     promoteConversationSource,
     resolveConversationSelectionState,
 } from '../utils/conversationState';
+import { buildStageErrorState } from '../utils/generationFailure';
 
 type PendingImportedWorkspaceAction = {
     action: 'open' | 'continue' | 'branch';
@@ -72,7 +73,7 @@ type UseHistorySourceOrchestrationArgs = {
     setGeneratedImageUrls: Dispatch<SetStateAction<string[]>>;
     setSelectedImageIndex: Dispatch<SetStateAction<number>>;
     setSelectedHistoryId: Dispatch<SetStateAction<string | null>>;
-    setError: Dispatch<SetStateAction<string | null>>;
+    setError: Dispatch<SetStateAction<import('../types').StageErrorState | null>>;
     setLogs: Dispatch<SetStateAction<string[]>>;
     setIsGenerating: Dispatch<SetStateAction<boolean>>;
     upsertViewerStageSource: (args: {
@@ -291,14 +292,20 @@ export function useHistorySourceOrchestration({
             }
 
             if (item.status === 'failed') {
+                const stageError = buildStageErrorState(
+                    t,
+                    item.failure,
+                    item.error || t('statusFailed'),
+                    item.failureContext,
+                );
                 selectedHistoryLineageActionRef.current = undefined;
                 setGeneratedImageUrls([]);
                 setSelectedImageIndex(0);
                 applySelectedResultArtifacts(null);
                 setSelectedHistoryId(item.id);
-                setError(item.error || t('statusFailed'));
+                setError(stageError);
                 setLogs([
-                    `[${new Date(item.createdAt).toLocaleTimeString()}] ${encodeWorkflowMessage('historySourceFailedLog', item.error || t('statusFailed'))}`,
+                    `[${new Date(item.createdAt).toLocaleTimeString()}] ${encodeWorkflowMessage('historySourceFailedLog', item.error || stageError.summary)}`,
                 ]);
                 clearAssetRoles(['stage-source']);
                 return;

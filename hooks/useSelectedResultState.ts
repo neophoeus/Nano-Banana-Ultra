@@ -13,8 +13,6 @@ type UseSelectedResultStateReturn = {
     setSelectedResultText: Dispatch<SetStateAction<string | null>>;
     selectedThoughts: string | null;
     setSelectedThoughts: Dispatch<SetStateAction<string | null>>;
-    selectedStructuredData: Record<string, unknown> | null;
-    setSelectedStructuredData: Dispatch<SetStateAction<Record<string, unknown> | null>>;
     selectedGrounding: GroundingMetadata | null;
     setSelectedGrounding: Dispatch<SetStateAction<GroundingMetadata | null>>;
     selectedMetadata: Record<string, unknown> | null;
@@ -28,10 +26,7 @@ type UseSelectedResultStateReturn = {
     focusLinkedGroundingItems: boolean;
     setFocusLinkedGroundingItems: Dispatch<SetStateAction<boolean>>;
     buildResultArtifacts: (
-        item: Pick<
-            GeneratedImage,
-            'text' | 'thoughts' | 'structuredData' | 'grounding' | 'metadata' | 'sessionHints' | 'id'
-        >,
+        item: Pick<GeneratedImage, 'text' | 'thoughts' | 'grounding' | 'metadata' | 'sessionHints' | 'id'>,
     ) => ResultArtifacts;
     applySelectedResultArtifacts: (artifacts: ResultArtifacts | null) => void;
     resetSelectedOutputState: () => void;
@@ -46,9 +41,6 @@ export function useSelectedResultState({
     );
     const [selectedThoughts, setSelectedThoughts] = useState<string | null>(
         () => initialActiveResult?.thoughts || null,
-    );
-    const [selectedStructuredData, setSelectedStructuredData] = useState<Record<string, unknown> | null>(
-        () => initialActiveResult?.structuredData || null,
     );
     const [selectedGrounding, setSelectedGrounding] = useState<GroundingMetadata | null>(
         () => initialActiveResult?.grounding || null,
@@ -67,14 +59,10 @@ export function useSelectedResultState({
 
     const buildResultArtifacts = useCallback(
         (
-            item: Pick<
-                GeneratedImage,
-                'text' | 'thoughts' | 'structuredData' | 'grounding' | 'metadata' | 'sessionHints' | 'id'
-            >,
+            item: Pick<GeneratedImage, 'text' | 'thoughts' | 'grounding' | 'metadata' | 'sessionHints' | 'id'>,
         ): ResultArtifacts => ({
             text: item.text || null,
             thoughts: item.thoughts || null,
-            structuredData: item.structuredData || null,
             grounding: item.grounding || null,
             metadata: item.metadata || null,
             sessionHints: item.sessionHints || null,
@@ -86,7 +74,6 @@ export function useSelectedResultState({
     const applySelectedResultArtifacts = useCallback((artifacts: ResultArtifacts | null) => {
         setSelectedResultText(artifacts?.text || null);
         setSelectedThoughts(artifacts?.thoughts || null);
-        setSelectedStructuredData(artifacts?.structuredData || null);
         setSelectedGrounding(artifacts?.grounding || null);
         setSelectedMetadata(artifacts?.metadata || null);
         setSelectedSessionHints(artifacts?.sessionHints || null);
@@ -97,7 +84,6 @@ export function useSelectedResultState({
     const resetSelectedOutputState = useCallback(() => {
         setSelectedResultText(null);
         setSelectedThoughts(null);
-        setSelectedStructuredData(null);
         setSelectedGrounding(null);
         setSelectedMetadata(null);
         setSelectedSessionHints(null);
@@ -110,8 +96,6 @@ export function useSelectedResultState({
         setSelectedResultText,
         selectedThoughts,
         setSelectedThoughts,
-        selectedStructuredData,
-        setSelectedStructuredData,
         selectedGrounding,
         setSelectedGrounding,
         selectedMetadata,

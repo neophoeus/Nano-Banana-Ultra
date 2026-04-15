@@ -8,13 +8,11 @@ import {
     sanitizeInlineImageDisplayValue,
     sanitizeSensitiveDisplayText,
 } from '../utils/inlineImageDisplay';
-import { formatStructuredOutputDisplay, normalizeStructuredOutputMode } from '../utils/structuredOutputs';
 import { GroundingSelection } from './useSelectedResultState';
 
 type UseGroundingProvenanceViewArgs = {
     selectedResultText: string | null;
     selectedThoughts: string | null;
-    selectedStructuredData: Record<string, unknown> | null;
     selectedGrounding: GroundingMetadata | null;
     selectedMetadata: Record<string, unknown> | null;
     selectedSessionHints: Record<string, unknown> | null;
@@ -63,7 +61,6 @@ const EMPTY_SESSION_HINT_ENTRIES: Array<[string, unknown]> = [];
 export function useGroundingProvenanceView({
     selectedResultText,
     selectedThoughts,
-    selectedStructuredData,
     selectedGrounding,
     selectedMetadata,
     selectedSessionHints,
@@ -105,7 +102,6 @@ export function useGroundingProvenanceView({
     const metadataUnavailableLabel = t('workspaceViewerMetadataUnavailable');
     const effectiveResultText = selectedResultText ?? workspaceSession.activeResult?.text ?? null;
     const effectiveThoughts = selectedThoughts ?? workspaceSession.activeResult?.thoughts ?? null;
-    const effectiveStructuredData = selectedStructuredData ?? workspaceSession.activeResult?.structuredData ?? null;
     const effectiveGrounding =
         selectedGrounding ?? workspaceSession.activeResult?.grounding ?? workspaceSession.continuityGrounding ?? null;
     const effectiveMetadata = selectedMetadataState
@@ -116,10 +112,6 @@ export function useGroundingProvenanceView({
         workspaceSession.activeResult?.sessionHints ??
         workspaceSession.continuitySessionHints ??
         null;
-    const effectiveStructuredOutputMode = normalizeStructuredOutputMode(
-        effectiveMetadata?.structuredOutputMode || viewSettings.structuredOutputMode,
-    );
-    const formattedStructuredOutput = formatStructuredOutputDisplay(effectiveStructuredData, effectiveResultText);
     const resolveMetadataInsightValue = useCallback(
         (metadataValue: unknown, fallbackValue: string) => {
             if (selectedMetadataState === 'loading') {
@@ -238,14 +230,6 @@ export function useGroundingProvenanceView({
                 label: t('groundingProvenanceInsightOutputFormat'),
                 value: resolveMetadataInsightValue(effectiveMetadata?.outputFormat, String(viewSettings.outputFormat)),
             },
-            ...(effectiveStructuredOutputMode !== 'off'
-                ? [
-                      {
-                          label: t('composerAdvancedStructuredOutput'),
-                          value: effectiveStructuredOutputMode,
-                      },
-                  ]
-                : []),
             {
                 label: t('groundingProvenanceInsightTemperature'),
                 value: resolveMetadataInsightValue(effectiveMetadata?.temperature, String(viewSettings.temperature)),
@@ -292,7 +276,6 @@ export function useGroundingProvenanceView({
             effectiveMetadata?.outputFormat,
             effectiveMetadata?.temperature,
             effectiveMetadata?.thinkingLevel,
-            effectiveStructuredOutputMode,
             fallbackRequestedImageSize,
             metadataActualOutputDimensions,
             metadataGroundingLabel,
@@ -677,9 +660,6 @@ export function useGroundingProvenanceView({
     return {
         effectiveResultText,
         effectiveThoughts,
-        effectiveStructuredData,
-        effectiveStructuredOutputMode,
-        formattedStructuredOutput,
         effectiveGrounding,
         effectiveMetadata,
         effectiveSessionHints,

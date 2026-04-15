@@ -3,6 +3,7 @@ import {
     ExecutionMode,
     GeneratedImage as GeneratedImageType,
     GenerationSettings,
+    StageErrorState,
     WorkspacePersistenceSnapshot,
 } from '../types';
 import { buildDisplaySettingsFromComposerState } from '../utils/workspaceSnapshotState';
@@ -13,7 +14,7 @@ interface GenerationState {
     isGenerating: boolean;
     generationMode: string;
     executionMode: ExecutionMode;
-    error: string | null;
+    error: StageErrorState | null;
     logs: string[];
     history: GeneratedImageType[];
     displaySettings: GenerationSettings;
@@ -25,7 +26,7 @@ interface UseImageGenerationReturn extends GenerationState {
     setIsGenerating: Dispatch<SetStateAction<boolean>>;
     setGenerationMode: Dispatch<SetStateAction<string>>;
     setExecutionMode: Dispatch<SetStateAction<ExecutionMode>>;
-    setError: Dispatch<SetStateAction<string | null>>;
+    setError: Dispatch<SetStateAction<StageErrorState | null>>;
     setLogs: Dispatch<SetStateAction<string[]>>;
     setHistory: Dispatch<SetStateAction<GeneratedImageType[]>>;
     setDisplaySettings: Dispatch<SetStateAction<GenerationState['displaySettings']>>;
@@ -51,7 +52,7 @@ export function useImageGeneration(initialSnapshot: WorkspacePersistenceSnapshot
     const [executionMode, setExecutionMode] = useState<ExecutionMode>(
         () => initialSnapshot.composerState.executionMode,
     );
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<StageErrorState | null>(null);
     const [logs, setLogs] = useState<string[]>(() => initialSnapshot.workflowLogs);
     const [history, setHistory] = useState<GeneratedImageType[]>(() => initialSnapshot.history);
     const [displaySettings, setDisplaySettings] = useState<GenerationState['displaySettings']>(() =>

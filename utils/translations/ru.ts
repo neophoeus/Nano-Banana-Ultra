@@ -108,6 +108,23 @@ export const ru = {
     statusScanning: 'Сканирование...',
     statusInitializing: 'Прогрев...',
     statusFailed: 'Ошибка',
+    generationFailureSummaryUnknown: 'Запрос завершился с ошибкой, и надежную причину пока определить не удалось.',
+    generationFailureSummaryPolicy: 'Промпт был заблокирован политикой до начала генерации изображения.',
+    generationFailureSummarySafety: 'Вывод изображения был заблокирован фильтрами безопасности.',
+    generationFailureSummaryTextOnly: 'Модель вернула только текст и не вернула изображение.',
+    generationFailureSummaryEmpty: 'Ответ модели не содержал достаточно данных, чтобы надежно определить причину сбоя.',
+    generationFailureSummaryNoImage: 'Запрос завершился, но модель не вернула данные изображения.',
+    generationFailureDetailRetry: 'Попробуйте изменить промпт или повторить попытку позже.',
+    generationFailureDetailPromptBlockReason: 'Причина блокировки политикой: {0}.',
+    generationFailureDetailSafetyCategories: 'Категории безопасности: {0}.',
+    generationFailureDetailTextOnly: 'Текстовый ответ был получен, но байты изображения не были выданы.',
+    generationFailureDetailThoughtsOnly:
+        'Были возвращены только краткие мысли модели, но байты изображения не были выданы.',
+    generationFailureDetailMissingCandidates: 'Модель не вернула ни одного response candidate.',
+    generationFailureDetailMissingParts: 'Модель вернула candidate, но без content parts.',
+    generationFailureDetailPossibleBatchSafetySuppression:
+        'Другой результат в этом пакете был явно заблокирован фильтрами безопасности изображения. Эта попытка тоже могла быть подавлена по той же причине, но в ответе недостаточно сигнала, чтобы подтвердить это напрямую.',
+    generationFailureDetailFinishReason: 'Причина завершения модели: {0}.',
     editorTitle: 'Ultra Редактор',
     editorDiscard: 'Отменить?',
     editorDiscardMsg: 'Уверены? Несохраненные шедевры исчезнут.',
@@ -475,9 +492,6 @@ export const ru = {
     composerAdvancedGenerationSectionTitle: 'Управление генерацией',
     composerAdvancedGenerationSectionDesc:
         'Держите вывод, температуру и поведение мыслей вместе, чтобы изменения на уровне модели было легче читать.',
-    composerAdvancedStructuredOutput: 'Структурированный вывод',
-    composerAdvancedStructuredOutputDesc:
-        'Возвращает текстовый канал как JSON, проверенный по схеме, чтобы последующая проверка и автоматизация могли опираться на стабильные поля.',
     composerDefaultTemp: 'Температура по умолчанию {0}',
     composerAdvancedReturnThoughtsDesc:
         'Поддерживаемые модели изображений Gemini 3 теперь всегда запрашивают видимые сводки мыслей, чтобы происхождение и рассуждение оставались доступны в рабочем пространстве.',
@@ -501,8 +515,6 @@ export const ru = {
         'Nano Banana Pro + Google Search: запрошенные 2K и 4K сохранили исходный размер.',
     composerGroundingImageSearchUpgradeNotice:
         'Граундинг через поиск изображений теперь автоматически переводит вывод в Images & text, чтобы можно было вернуть метаданные атрибуции.',
-    composerStructuredOutputUpgradeNotice:
-        'Структурированный вывод теперь автоматически переключает результат в режим Изображения и текст, чтобы JSON можно было вернуть вместе с изображением.',
     composerActionPanelTitle: 'Создать',
     composerActionPanelDesc:
         'Генерация остается основным действием. Последующие и рабочие действия остаются рядом, но звучат тише.',
@@ -513,119 +525,6 @@ export const ru = {
         'Выше 1.0 усиливает вариативность и неожиданность, но может снизить согласованность и точность следования промпту.',
     composerAdvancedTemperatureGuideLower:
         'Ниже 1.0 делает результаты стабильнее и буквальнее, но обычно менее исследовательскими.',
-    composerAdvancedStructuredOutputGuideOff:
-        'Выбирайте Выкл., если нужен только обычный текстовый ответ и итоговое изображение.',
-    composerAdvancedStructuredOutputGuideSceneBrief:
-        'Используйте Сводку сцены, когда нужен короткий производственный обзор по объекту, стилю, палитре и композиции.',
-    composerAdvancedStructuredOutputGuidePromptKit:
-        'Используйте Набор промпта, когда хотите вытащить переиспользуемые элементы промпта для следующей итерации.',
-    composerAdvancedStructuredOutputGuideQualityCheck:
-        'Используйте Проверку качества, когда нужно явно увидеть сильные стороны, проблемы и приоритеты правок.',
-    composerAdvancedStructuredOutputGuideShotPlan:
-        'Используйте План кадра, когда хотите перевести результат в заметки по кадрированию, размещению, фокусу и свету.',
-    composerAdvancedStructuredOutputGuideDeliveryBrief:
-        'Используйте Бриф передачи, когда изображение почти утверждено и нужны заметки для передачи, защиты и экспорта.',
-    composerAdvancedStructuredOutputGuideRevisionBrief:
-        'Используйте Бриф правок, когда изображение уже многообещающее, но все еще нужен четкий план редактирования с правилами сохранения, целевыми изменениями и финальным промптом правки.',
-    composerAdvancedStructuredOutputGuideVariationCompare:
-        'Используйте Сравнение вариантов, когда выбираете между близкими направлениями и хотите увидеть различия, компромиссы и следующий тест.',
-    composerAdvancedStructuredOutputGuideBestForLabel: 'Лучше всего для',
-    composerAdvancedStructuredOutputGuideAvoidWhenLabel: 'Не лучший выбор, если',
-    composerAdvancedStructuredOutputGuideBestForSceneBrief: 'Быстро понять объект, стиль и композицию.',
-    composerAdvancedStructuredOutputGuideAvoidWhenSceneBrief: 'Нужны приоритеты правок или детали передачи.',
-    composerAdvancedStructuredOutputGuideBestForPromptKit:
-        'Собрать переиспользуемые элементы промпта для следующей итерации.',
-    composerAdvancedStructuredOutputGuideAvoidWhenPromptKit: 'Нужен вердикт, сигнал одобрения или экспортные указания.',
-    composerAdvancedStructuredOutputGuideBestForQualityCheck:
-        'Ясно увидеть сильные стороны, проблемы и приоритеты перед правкой.',
-    composerAdvancedStructuredOutputGuideAvoidWhenQualityCheck: 'Нужны скорее элементы промпта, чем критика.',
-    composerAdvancedStructuredOutputGuideBestForShotPlan: 'Рабочие заметки по кадрированию, размещению и свету.',
-    composerAdvancedStructuredOutputGuideAvoidWhenShotPlan: 'Нужен акцент на одобрении, передаче или экспорте.',
-    composerAdvancedStructuredOutputGuideBestForDeliveryBrief:
-        'Финальная проверка, заметки для передачи и план экспорта.',
-    composerAdvancedStructuredOutputGuideAvoidWhenDeliveryBrief: 'Вы еще исследуете ранние творческие направления.',
-    composerAdvancedStructuredOutputGuideBestForRevisionBrief:
-        'Превратить критику в конкретный проход правок без потери уже одобренного ядра.',
-    composerAdvancedStructuredOutputGuideAvoidWhenRevisionBrief:
-        'Нужен только обзор верхнего уровня без конкретизации шагов редактирования.',
-    composerAdvancedStructuredOutputGuideBestForVariationCompare:
-        'Выбрать между близкими вариантами и наметить следующий тест.',
-    composerAdvancedStructuredOutputGuideAvoidWhenVariationCompare:
-        'Вы оцениваете только один вариант и сравнение не нужно.',
-    composerAdvancedStructuredOutputGuideFieldsLabel: 'Содержит',
-    composerAdvancedStructuredOutputGuideExampleLabel: 'Пример структуры',
-    structuredOutputModeOff: 'Выкл.',
-    structuredOutputModeSceneBrief: 'Сводка сцены',
-    structuredOutputModePromptKit: 'Набор промпта',
-    structuredOutputModeQualityCheck: 'Проверка качества',
-    structuredOutputModeShotPlan: 'План кадра',
-    structuredOutputModeDeliveryBrief: 'Бриф передачи',
-    structuredOutputModeRevisionBrief: 'Бриф правок',
-    structuredOutputModeVariationCompare: 'Сравнение вариантов',
-    structuredOutputActionsLabel: 'Действия',
-    structuredOutputActionsCopyGroup: 'Копировать',
-    structuredOutputActionsExportGroup: 'Экспорт',
-    structuredOutputCopyJson: 'Копировать JSON',
-    structuredOutputCopyText: 'Копировать текст',
-    structuredOutputExportJson: 'Экспортировать JSON',
-    structuredOutputExportText: 'Экспортировать текст',
-    structuredOutputExportMarkdown: 'Экспортировать Markdown',
-    structuredOutputReplacePromptNotice: 'Промпт компоновщика заменен выбранным структурированным текстом.',
-    structuredOutputAppendPromptNotice: 'Промпт компоновщика дополнен выбранным структурированным текстом.',
-    structuredOutputPromptReady: 'Следующий промпт',
-    structuredOutputPromptReadyHint:
-        'Готовые к промпту поля ниже могут заменить промпт компоновщика для следующего прохода.',
-    structuredOutputPromptReadyHintPromptKit:
-        'Используйте переиспользуемые подсказки ниже, если хотите собрать следующий промпт вручную.',
-    structuredOutputPromptReadyHintRevisionBrief:
-        'Используйте финальный ревизионный промпт ниже как самую чистую отправную точку для следующего прохода редактирования.',
-    structuredOutputPromptReadyHintVariationCompare:
-        'Используйте рекомендуемый следующий ход или тестовый промпт ниже, чтобы быстрее запустить следующий проход сравнения.',
-    structuredOutputPromptDraft: 'Черновик промпта',
-    structuredOutputPromptAppended: 'Промпт добавлен',
-    structuredOutputPromptReplaced: 'Промпт заменен',
-    structuredOutputCopied: 'Скопировано',
-    structuredOutputFieldSummary: 'Сводка',
-    structuredOutputFieldSceneType: 'Тип сцены',
-    structuredOutputFieldPrimarySubjects: 'Основные объекты',
-    structuredOutputFieldVisualStyle: 'Визуальный стиль',
-    structuredOutputFieldColorPalette: 'Цветовая палитра',
-    structuredOutputFieldCompositionNotes: 'Заметки по композиции',
-    structuredOutputFieldIntentSummary: 'Сводка замысла',
-    structuredOutputFieldSubjectCues: 'Подсказки по объектам',
-    structuredOutputFieldStyleCues: 'Подсказки по стилю',
-    structuredOutputFieldLightingCues: 'Подсказки по свету',
-    structuredOutputFieldCompositionCues: 'Подсказки по композиции',
-    structuredOutputFieldNegativeCues: 'Чего избегать',
-    structuredOutputFieldOverallAssessment: 'Общая оценка',
-    structuredOutputFieldStrengths: 'Сильные стороны',
-    structuredOutputFieldIssues: 'Проблемы',
-    structuredOutputFieldRevisionPriorities: 'Приоритеты правок',
-    structuredOutputFieldDeliveryNotes: 'Примечания к передаче',
-    structuredOutputFieldShotIntent: 'Замысел кадра',
-    structuredOutputFieldCameraFraming: 'Кадрирование',
-    structuredOutputFieldSubjectPlacement: 'Расположение объекта',
-    structuredOutputFieldFocalElements: 'Ключевые элементы',
-    structuredOutputFieldLightingPlan: 'План света',
-    structuredOutputFieldContinuityNotes: 'Заметки по continuity',
-    structuredOutputFieldDeliverySummary: 'Сводка передачи',
-    structuredOutputFieldApprovedElements: 'Одобренные элементы',
-    structuredOutputFieldMustProtect: 'Что нужно сохранить',
-    structuredOutputFieldFinalAdjustments: 'Финальные правки',
-    structuredOutputFieldHandoffNotes: 'Заметки для передачи',
-    structuredOutputFieldExportTargets: 'Цели экспорта',
-    structuredOutputFieldRevisionGoal: 'Цель правки',
-    structuredOutputFieldMustKeep: 'Сохранить обязательно',
-    structuredOutputFieldEditTargets: 'Целевые изменения',
-    structuredOutputFieldChangeSequence: 'Последовательность изменений',
-    structuredOutputFieldRiskChecks: 'Проверки риска',
-    structuredOutputFieldFinalPrompt: 'Финальный промпт правки',
-    structuredOutputFieldComparisonSummary: 'Сводка сравнения',
-    structuredOutputFieldStrongestOption: 'Самый сильный вариант',
-    structuredOutputFieldKeyDifferences: 'Ключевые различия',
-    structuredOutputFieldTradeoffs: 'Компромиссы',
-    structuredOutputFieldRecommendedNextMove: 'Рекомендуемый следующий шаг',
-    structuredOutputFieldTestPrompts: 'Тестовые промпты',
     surfaceSharedControlsBadge: 'Общее',
     surfaceSharedControlsSettingsTitle: 'Настройки',
     surfaceSharedControlsOpen: 'Открыть общие элементы управления',
@@ -955,11 +854,6 @@ export const ru = {
     workspaceInsightsLatestResultText: 'Текст последнего результата',
     workspaceInsightsLatestResultTextEmpty:
         'Когда активен режим изображений и текста, сводка по сцене появляется здесь и в просмотрщике.',
-    workspaceViewerStructuredOutput: 'Структурированный вывод',
-    workspaceResponseRailStructuredOutputHint:
-        'Здесь сохраняется компактный быстрый просмотр; полную раскладку структурированного вывода открывайте в просмотрщике.',
-    workspaceViewerStructuredOutputHint:
-        'Здесь тот же структурированный вывод из верхней панели раскрывается в полный режим просмотра.',
     workspaceInsightsLatestThoughts: 'Последние мысли',
     workspaceInsightsAllThoughts: 'Все мысли',
     workspaceInsightsProvenance: 'Сведения об источниках',

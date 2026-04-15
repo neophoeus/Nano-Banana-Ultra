@@ -2,15 +2,7 @@ import { Dispatch, SetStateAction, useMemo } from 'react';
 import BranchRenameDialog from '../components/BranchRenameDialog';
 import SurfaceSharedControls, { SurfaceSharedControlsVariant } from '../components/SurfaceSharedControls';
 import WorkspaceImportReview from '../components/WorkspaceImportReview';
-import {
-    AspectRatio,
-    GroundingMode,
-    ImageModel,
-    ImageSize,
-    OutputFormat,
-    StructuredOutputMode,
-    ThinkingLevel,
-} from '../types';
+import { AspectRatio, GroundingMode, ImageModel, ImageSize, OutputFormat, ThinkingLevel } from '../types';
 import { type ModelCapability } from '../utils/modelCapabilities';
 import { getTranslation, Language } from '../utils/translations';
 
@@ -42,7 +34,6 @@ type UseWorkspaceOverlayAuxiliaryPropsArgs = {
     imageSize: ImageSize;
     batchSize: number;
     outputFormat: OutputFormat;
-    structuredOutputMode: StructuredOutputMode;
     temperature: number;
     thinkingLevel: ThinkingLevel;
     includeThoughts: boolean;
@@ -92,7 +83,6 @@ export function useWorkspaceOverlayAuxiliaryProps({
     imageSize,
     batchSize,
     outputFormat,
-    structuredOutputMode,
     temperature,
     thinkingLevel,
     includeThoughts,
@@ -139,7 +129,6 @@ export function useWorkspaceOverlayAuxiliaryProps({
                       imageSize,
                       batchSize,
                       outputFormat,
-                      structuredOutputMode,
                       temperature,
                       thinkingLevel,
                       includeThoughts,
@@ -229,7 +218,6 @@ export function useWorkspaceOverlayAuxiliaryProps({
             outputFormat,
             settingsVariant,
             setBranchRenameDraft,
-            structuredOutputMode,
             temperature,
             thinkingLevel,
             totalReferenceCount,

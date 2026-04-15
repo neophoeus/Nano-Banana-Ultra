@@ -1,7 +1,7 @@
 import React from 'react';
 import Button from './Button';
 import HexagonHUD from './HexagonHUD';
-import { AspectRatio, ExecutionMode, ImageSize, ImageStyle } from '../types';
+import { AspectRatio, ExecutionMode, ImageSize, ImageStyle, StageErrorState } from '../types';
 import { Language, getTranslation } from '../utils/translations';
 
 export type StageTopRightChipKey = 'current-source' | 'origin' | 'branch' | 'continuation-differs' | 'result-status';
@@ -43,7 +43,7 @@ interface GeneratedImageProps {
     imageUrls: string[];
     isLoading: boolean;
     prompt?: string;
-    error?: string | null;
+    error?: StageErrorState | null;
     settings?: {
         aspectRatio: AspectRatio;
         size: ImageSize;
@@ -388,9 +388,16 @@ const GeneratedImage: React.FC<GeneratedImageProps> = ({
                             </h3>
                             <div className="h-px w-12 bg-red-300 dark:bg-red-500/30 mx-auto mb-4"></div>
 
-                            <p className="text-sm text-red-800/80 dark:text-red-200/60 leading-relaxed bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-lg p-4 font-mono">
-                                {error}
-                            </p>
+                            <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-lg p-4">
+                                <p className="text-sm text-red-900 dark:text-red-100 leading-relaxed font-semibold">
+                                    {error.summary}
+                                </p>
+                                {error.detail ? (
+                                    <p className="mt-2 text-xs text-red-800/80 dark:text-red-200/70 leading-relaxed font-mono">
+                                        {error.detail}
+                                    </p>
+                                ) : null}
+                            </div>
 
                             {onClear && (
                                 <div className="mt-8">

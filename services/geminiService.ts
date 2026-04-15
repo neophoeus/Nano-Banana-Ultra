@@ -1,4 +1,9 @@
 import { GenerateOptions, GenerateResponse, ImageReceivedResult, ImageStyle, QueuedBatchJobStats } from '../types';
+import {
+    attachGenerationFailure,
+    getGenerationFailure,
+    normalizeGenerationFailureInfo,
+} from '../utils/generationFailure';
 import { getStylePromptDescriptor } from '../utils/styleRegistry';
 import { Language } from '../utils/translations';
 
@@ -32,7 +37,18 @@ async function fetchJson<T>(input: RequestInfo | URL, init?: RequestInit): Promi
             payload && typeof payload.error === 'string'
                 ? payload.error
                 : `Request failed with status ${response.status}`;
-        throw new Error(errorMessage);
+        const requestError = new Error(errorMessage) as Error & {
+            status?: number;
+        };
+        requestError.name = 'ApiRequestError';
+        requestError.status = response.status;
+
+        const failure = normalizeGenerationFailureInfo(payload?.failure);
+        if (failure) {
+            throw attachGenerationFailure(requestError, failure);
+        }
+
+        throw requestError;
     }
 
     return payload as T;
@@ -143,7 +159,6 @@ const generateSingleImage = async (
                 objectImageInputs: options.objectImageInputs,
                 characterImageInputs: options.characterImageInputs,
                 outputFormat: options.outputFormat,
-                structuredOutputMode: options.structuredOutputMode,
                 temperature: options.temperature,
                 thinkingLevel: options.thinkingLevel,
                 includeThoughts: options.includeThoughts,
@@ -161,14 +176,15 @@ const generateSingleImage = async (
             throw new Error('ABORTED');
         }
 
+        const failure = getGenerationFailure(error);
+        if (failure) {
+            throw attachGenerationFailure(new Error(failure.message), failure);
+        }
+
         const errorMessage = error.message || 'Unknown error';
 
         if (errorMessage.includes('limit: 0')) {
             throw new Error('API key quota exceeded. This model requires a paid API key or billing enabled.');
-        }
-
-        if (errorMessage === 'Model returned no image data.') {
-            throw new Error('Server returned empty response. Likely a temporary server issue or silent safety block.');
         }
 
         throw new Error(errorMessage);
@@ -181,10 +197,10 @@ export type GenerationResult = {
     url?: string;
     displayUrl?: string;
     error?: string;
+    failure?: GenerateResponse['failure'];
     savedFilename?: string;
     text?: string;
     thoughts?: string;
-    structuredData?: GenerateResponse['structuredData'];
     metadata?: Record<string, unknown>;
     grounding?: GenerateResponse['grounding'];
     sessionHints?: GenerateResponse['sessionHints'];
@@ -211,7 +227,6 @@ export type QueuedBatchImportResult = {
     imageUrl?: string;
     text?: string;
     thoughts?: string;
-    structuredData?: GenerateResponse['structuredData'];
     grounding?: GenerateResponse['grounding'];
     sessionHints?: Record<string, unknown>;
     error?: string;
@@ -235,7 +250,6 @@ export const submitQueuedBatchJob = async (options: SubmitQueuedBatchOptions): P
             objectImageInputs: options.objectImageInputs,
             characterImageInputs: options.characterImageInputs,
             outputFormat: options.outputFormat,
-            structuredOutputMode: options.structuredOutputMode,
             temperature: options.temperature,
             thinkingLevel: options.thinkingLevel,
             includeThoughts: options.includeThoughts,
@@ -417,7 +431,6 @@ export const generateImageWithGemini = async (
                 savedFilename: receivedResult?.savedFilename,
                 text: response.text,
                 thoughts: response.thoughts,
-                structuredData: response.structuredData,
                 metadata: response.metadata,
                 grounding: response.grounding,
                 sessionHints: response.sessionHints,
@@ -440,10 +453,12 @@ export const generateImageWithGemini = async (
                 return abortedResult;
             }
             onLog?.(`Image #${index + 1} Failed: ${e.message}`);
+            const failure = getGenerationFailure(e);
             const failedResult = {
                 slotIndex: index,
                 status: 'failed' as const,
                 error: e.message,
+                failure: failure || undefined,
             };
             onResult?.(failedResult);
             return failedResult;

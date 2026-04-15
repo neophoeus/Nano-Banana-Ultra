@@ -3,16 +3,7 @@ import { WORKSPACE_SURFACE_Z_INDEX } from '../constants/workspaceOverlays';
 import { GenerationSettings } from '../types';
 import { buildWorkflowTimeline, renderWorkflowMessage, workflowMessageIncludes } from '../utils/workflowTimeline';
 
-type PickerSheet =
-    | 'prompt'
-    | 'styles'
-    | 'settings'
-    | 'model'
-    | 'ratio'
-    | 'size'
-    | 'batch'
-    | 'references'
-    | null;
+type PickerSheet = 'prompt' | 'styles' | 'settings' | 'model' | 'ratio' | 'size' | 'batch' | 'references' | null;
 
 type UseWorkspaceShellViewModelArgs = {
     generatedImageCount: number;
@@ -26,7 +17,6 @@ type UseWorkspaceShellViewModelArgs = {
     imageModel: GenerationSettings['model'];
     batchSize: number;
     outputFormat: GenerationSettings['outputFormat'];
-    structuredOutputMode: GenerationSettings['structuredOutputMode'];
     temperature: number;
     thinkingLevel: GenerationSettings['thinkingLevel'];
     includeThoughts: boolean;
@@ -55,7 +45,6 @@ export function useWorkspaceShellViewModel({
     imageModel,
     batchSize,
     outputFormat,
-    structuredOutputMode,
     temperature,
     thinkingLevel,
     includeThoughts,
@@ -83,7 +72,6 @@ export function useWorkspaceShellViewModel({
                       model: imageModel,
                       batchSize,
                       outputFormat,
-                      structuredOutputMode,
                       temperature,
                       thinkingLevel,
                       includeThoughts,
@@ -104,7 +92,6 @@ export function useWorkspaceShellViewModel({
             isGenerating,
             outputFormat,
             prompt,
-            structuredOutputMode,
             temperature,
             thinkingLevel,
         ],

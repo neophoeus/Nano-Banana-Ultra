@@ -14,7 +14,6 @@ type ComposerAdvancedSettingsDialogProps = ComposerSettingsPanelProps & {
 
 type AdvancedSettingsDraft = {
     outputFormat: ComposerSettingsPanelProps['outputFormat'];
-    structuredOutputMode: ComposerSettingsPanelProps['structuredOutputMode'];
     temperature: ComposerSettingsPanelProps['temperature'];
     thinkingLevel: ComposerSettingsPanelProps['thinkingLevel'];
     groundingMode: ComposerSettingsPanelProps['groundingMode'];
@@ -26,7 +25,6 @@ export default function ComposerAdvancedSettingsDialog({
     onApply,
     currentLanguage,
     outputFormat,
-    structuredOutputMode,
     thinkingLevel,
     groundingMode,
     imageModel,
@@ -34,7 +32,6 @@ export default function ComposerAdvancedSettingsDialog({
     availableGroundingModes,
     temperature,
     onOutputFormatChange,
-    onStructuredOutputModeChange,
     onTemperatureChange,
     onThinkingLevelChange,
     onGroundingModeChange,
@@ -43,7 +40,6 @@ export default function ComposerAdvancedSettingsDialog({
     const usesControlledDraft = Boolean(onApply);
     const [localDraft, setLocalDraft] = React.useState<AdvancedSettingsDraft>({
         outputFormat,
-        structuredOutputMode,
         temperature,
         thinkingLevel,
         groundingMode,
@@ -51,7 +47,6 @@ export default function ComposerAdvancedSettingsDialog({
     const draft = usesControlledDraft
         ? {
               outputFormat,
-              structuredOutputMode,
               temperature,
               thinkingLevel,
               groundingMode,
@@ -65,12 +60,11 @@ export default function ComposerAdvancedSettingsDialog({
 
         setLocalDraft({
             outputFormat,
-            structuredOutputMode,
             temperature,
             thinkingLevel,
             groundingMode,
         });
-    }, [groundingMode, isOpen, outputFormat, structuredOutputMode, temperature, thinkingLevel, usesControlledDraft]);
+    }, [groundingMode, isOpen, outputFormat, temperature, thinkingLevel, usesControlledDraft]);
 
     const handleApply = () => {
         if (onApply) {
@@ -80,9 +74,6 @@ export default function ComposerAdvancedSettingsDialog({
 
         if (draft.outputFormat !== outputFormat) {
             onOutputFormatChange(draft.outputFormat);
-        }
-        if (draft.structuredOutputMode !== structuredOutputMode) {
-            onStructuredOutputModeChange(draft.structuredOutputMode);
         }
         if (draft.temperature !== temperature) {
             onTemperatureChange(draft.temperature);
@@ -120,7 +111,6 @@ export default function ComposerAdvancedSettingsDialog({
                     <ComposerAdvancedSettingsContent
                         currentLanguage={currentLanguage}
                         outputFormat={draft.outputFormat}
-                        structuredOutputMode={draft.structuredOutputMode}
                         thinkingLevel={draft.thinkingLevel}
                         groundingMode={draft.groundingMode}
                         imageModel={imageModel}
@@ -133,14 +123,6 @@ export default function ComposerAdvancedSettingsDialog({
                                 : setLocalDraft((previous) => ({
                                       ...previous,
                                       outputFormat: value,
-                                  }))
-                        }
-                        onStructuredOutputModeChange={(value) =>
-                            usesControlledDraft
-                                ? onStructuredOutputModeChange(value)
-                                : setLocalDraft((previous) => ({
-                                      ...previous,
-                                      structuredOutputMode: value,
                                   }))
                         }
                         onTemperatureChange={(value) =>

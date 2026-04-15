@@ -1,5 +1,4 @@
 import React, { useRef } from 'react';
-import { StructuredOutputMode } from '../types';
 import { WORKSPACE_OVERLAY_Z_INDEX } from '../constants/workspaceOverlays';
 import { sanitizeSensitiveDisplayText } from '../utils/inlineImageDisplay';
 import { getTranslation, Language } from '../utils/translations';
@@ -7,9 +6,6 @@ import { useDocumentThemeMode } from '../hooks/useDocumentThemeMode';
 import { useOverlayEscapeDismiss } from '../hooks/useOverlayEscapeDismiss';
 import { useOverlayFocusTrap } from '../hooks/useOverlayFocusTrap';
 import { useOverlayScrollLock } from '../hooks/useOverlayScrollLock';
-import InfoTooltip from './InfoTooltip';
-import StructuredOutputActions from './StructuredOutputActions';
-import StructuredOutputDisplay from './StructuredOutputDisplay';
 
 type SessionHintEntry = [string, unknown];
 
@@ -29,9 +25,6 @@ type WorkspaceViewerOverlayProps = {
     metadataItems?: ViewerMetadataItem[];
     metadataStateMessage?: string | null;
     effectiveResultText: string | null;
-    structuredData: Record<string, unknown> | null;
-    structuredOutputMode: StructuredOutputMode | null;
-    formattedStructuredOutput: string | null;
     effectiveThoughts: string | null;
     thoughtStateMessage: string;
     provenancePanel: React.ReactNode;
@@ -41,8 +34,6 @@ type WorkspaceViewerOverlayProps = {
     onClose: () => void;
     onMoveViewer: (direction: 'prev' | 'next') => void;
     onApplyPrompt?: (value: string) => void;
-    onReplacePrompt?: (value: string) => void;
-    onAppendPrompt?: (value: string) => void;
 };
 
 export default function WorkspaceViewerOverlay({
@@ -55,9 +46,6 @@ export default function WorkspaceViewerOverlay({
     metadataItems = [],
     metadataStateMessage = null,
     effectiveResultText,
-    structuredData,
-    structuredOutputMode,
-    formattedStructuredOutput,
     effectiveThoughts,
     thoughtStateMessage,
     provenancePanel,
@@ -67,8 +55,6 @@ export default function WorkspaceViewerOverlay({
     onClose,
     onMoveViewer,
     onApplyPrompt,
-    onReplacePrompt,
-    onAppendPrompt,
 }: WorkspaceViewerOverlayProps) {
     const dialogRef = useRef<HTMLDivElement>(null);
     const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -100,8 +86,6 @@ export default function WorkspaceViewerOverlay({
             ? `${formatSessionHintKey(sessionHintEntries[0][0])}: ${formatSessionHintValue(sessionHintEntries[0][0], sessionHintEntries[0][1])}`
             : t('workspaceViewerSessionHintsEmpty');
     const renderedMetadataItems = metadataItems.filter((item) => item.value.trim().length > 0);
-    const infoTooltipTone = isDarkTheme ? 'dark' : 'light';
-    const structuredOutputActionsVariant = isDarkTheme ? 'dark' : 'light';
     const viewerSidebarCardClassName =
         'rounded-2xl border border-slate-200/80 bg-white/75 px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] dark:border-slate-800/90 dark:bg-[#11161d] dark:shadow-none';
     const viewerSidebarDashedCardClassName =
@@ -239,45 +223,14 @@ export default function WorkspaceViewerOverlay({
                                     <div className="flex flex-wrap items-start justify-between gap-3">
                                         <div>
                                             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-slate-500 dark:text-white/45">
-                                                <span>
-                                                    {formattedStructuredOutput
-                                                        ? t('workspaceViewerStructuredOutput')
-                                                        : t('workspaceViewerResultText')}
-                                                </span>
-                                                {formattedStructuredOutput && (
-                                                    <InfoTooltip
-                                                        tone={infoTooltipTone}
-                                                        dataTestId="workspace-viewer-structured-output-hint"
-                                                        buttonLabel={t('workspaceViewerStructuredOutputHint')}
-                                                        content={t('workspaceViewerStructuredOutputHint')}
-                                                    />
-                                                )}
+                                                <span>{t('workspaceViewerResultText')}</span>
                                             </div>
                                         </div>
-                                        {formattedStructuredOutput && (
-                                            <StructuredOutputActions
-                                                currentLanguage={currentLanguage}
-                                                structuredData={structuredData}
-                                                structuredOutputMode={structuredOutputMode}
-                                                formattedStructuredOutput={formattedStructuredOutput}
-                                                fallbackText={
-                                                    effectiveResultText || t('workspaceViewerResultTextEmpty')
-                                                }
-                                                variant={structuredOutputActionsVariant}
-                                            />
-                                        )}
                                     </div>
                                     <div className={`mt-2 ${viewerSidebarDashedCardClassName}`}>
-                                        <StructuredOutputDisplay
-                                            currentLanguage={currentLanguage}
-                                            structuredData={structuredData}
-                                            structuredOutputMode={structuredOutputMode}
-                                            formattedStructuredOutput={formattedStructuredOutput}
-                                            fallbackText={effectiveResultText || t('workspaceViewerResultTextEmpty')}
-                                            variant="full"
-                                            onReplacePrompt={onReplacePrompt}
-                                            onAppendPrompt={onAppendPrompt}
-                                        />
+                                        {sanitizeSensitiveDisplayText(
+                                            effectiveResultText || t('workspaceViewerResultTextEmpty'),
+                                        )}
                                     </div>
                                 </div>
 

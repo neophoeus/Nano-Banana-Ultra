@@ -9,13 +9,11 @@ import {
     ImageStyle,
     OutputFormat,
     StickySendIntent,
-    StructuredOutputMode,
     ThinkingLevel,
     WorkspaceComposerState,
 } from '../types';
 import { getGroundingFlagsFromMode } from '../utils/groundingMode';
 import { buildDisplaySettingsFromComposerState } from '../utils/workspaceSnapshotState';
-import { normalizeStructuredOutputMode } from '../utils/structuredOutputs';
 
 type UseComposerStateArgs = {
     initialComposerState: WorkspaceComposerState;
@@ -41,8 +39,6 @@ type UseComposerStateReturn = {
     setBatchSize: Dispatch<SetStateAction<number>>;
     outputFormat: OutputFormat;
     setOutputFormat: Dispatch<SetStateAction<OutputFormat>>;
-    structuredOutputMode: StructuredOutputMode;
-    setStructuredOutputMode: Dispatch<SetStateAction<StructuredOutputMode>>;
     temperature: number;
     setTemperature: Dispatch<SetStateAction<number>>;
     thinkingLevel: ThinkingLevel;
@@ -66,7 +62,6 @@ type UseComposerStateReturn = {
             model?: ImageModel;
             style?: ImageStyle;
             outputFormat?: OutputFormat;
-            structuredOutputMode?: StructuredOutputMode;
             temperature?: number;
             thinkingLevel?: ThinkingLevel;
             includeThoughts?: boolean;
@@ -91,9 +86,6 @@ export function useComposerState({
     const [imageModel, setImageModel] = useState<ImageModel>(initialComposerState.imageModel);
     const [batchSize, setBatchSize] = useState(initialComposerState.batchSize);
     const [outputFormat, setOutputFormat] = useState<OutputFormat>(initialComposerState.outputFormat);
-    const [structuredOutputMode, setStructuredOutputMode] = useState<StructuredOutputMode>(
-        normalizeStructuredOutputMode(initialComposerState.structuredOutputMode),
-    );
     const [temperature, setTemperature] = useState(initialComposerState.temperature);
     const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>(initialComposerState.thinkingLevel);
     const [includeThoughts, setIncludeThoughts] = useState(initialComposerState.includeThoughts);
@@ -112,7 +104,6 @@ export function useComposerState({
             imageModel,
             batchSize,
             outputFormat,
-            structuredOutputMode,
             temperature,
             thinkingLevel,
             includeThoughts,
@@ -136,7 +127,6 @@ export function useComposerState({
             stickySendIntent,
             outputFormat,
             prompt,
-            structuredOutputMode,
             temperature,
             thinkingLevel,
         ],
@@ -160,7 +150,6 @@ export function useComposerState({
             setImageModel(nextComposerState.imageModel);
             setBatchSize(nextComposerState.batchSize);
             setOutputFormat(nextComposerState.outputFormat);
-            setStructuredOutputMode(normalizeStructuredOutputMode(nextComposerState.structuredOutputMode));
             setTemperature(nextComposerState.temperature);
             setThinkingLevel(nextComposerState.thinkingLevel);
             setIncludeThoughts(nextComposerState.includeThoughts);
@@ -187,7 +176,6 @@ export function useComposerState({
                 model?: ImageModel;
                 style?: ImageStyle;
                 outputFormat?: OutputFormat;
-                structuredOutputMode?: StructuredOutputMode;
                 temperature?: number;
                 thinkingLevel?: ThinkingLevel;
                 includeThoughts?: boolean;
@@ -211,9 +199,6 @@ export function useComposerState({
             }
             if (snapshot.outputFormat) {
                 setOutputFormat(snapshot.outputFormat);
-            }
-            if (snapshot.structuredOutputMode) {
-                setStructuredOutputMode(snapshot.structuredOutputMode);
             }
             if (typeof snapshot.temperature === 'number') {
                 setTemperature(snapshot.temperature);
@@ -249,8 +234,6 @@ export function useComposerState({
         setBatchSize,
         outputFormat,
         setOutputFormat,
-        structuredOutputMode,
-        setStructuredOutputMode,
         temperature,
         setTemperature,
         thinkingLevel,

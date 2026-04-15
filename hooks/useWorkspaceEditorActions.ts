@@ -19,7 +19,7 @@ import {
     ImageStyle,
     OutputFormat,
     StageAsset,
-    StructuredOutputMode,
+    StageErrorState,
     ThinkingLevel,
 } from '../types';
 
@@ -33,7 +33,6 @@ export type EditorContextSnapshot = {
     model: ImageModel;
     style: ImageStyle;
     outputFormat: OutputFormat;
-    structuredOutputMode: StructuredOutputMode;
     temperature: number;
     thinkingLevel: ThinkingLevel;
     includeThoughts: boolean;
@@ -66,7 +65,6 @@ type UseWorkspaceEditorActionsArgs = {
     imageModel: ImageModel;
     imageStyle: ImageStyle;
     outputFormat: OutputFormat;
-    structuredOutputMode: StructuredOutputMode;
     temperature: number;
     thinkingLevel: ThinkingLevel;
     includeThoughts: boolean;
@@ -90,7 +88,7 @@ type UseWorkspaceEditorActionsArgs = {
     setAspectRatio: Dispatch<SetStateAction<AspectRatio>>;
     setImageSize: Dispatch<SetStateAction<ImageSize>>;
     setActivePickerSheet: Dispatch<SetStateAction<PickerSheet>>;
-    setError: Dispatch<SetStateAction<string | null>>;
+    setError: Dispatch<SetStateAction<StageErrorState | null>>;
     setIsSketchPadOpen: Dispatch<SetStateAction<boolean>>;
     setShowSketchReplaceConfirm: Dispatch<SetStateAction<boolean>>;
     setEditorMode: Dispatch<SetStateAction<EditorMode>>;
@@ -156,7 +154,6 @@ export function useWorkspaceEditorActions({
     imageModel,
     imageStyle,
     outputFormat,
-    structuredOutputMode,
     temperature,
     thinkingLevel,
     includeThoughts,
@@ -331,7 +328,6 @@ export function useWorkspaceEditorActions({
                 model: imageModel,
                 style: imageStyle,
                 outputFormat,
-                structuredOutputMode,
                 temperature,
                 thinkingLevel,
                 includeThoughts,
@@ -374,7 +370,6 @@ export function useWorkspaceEditorActions({
             setIsEditing,
             setEditorRetouchLockedRatio,
             setImageSize,
-            structuredOutputMode,
             temperature,
             thinkingLevel,
             showNotification,

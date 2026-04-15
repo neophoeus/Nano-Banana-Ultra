@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { type ModelCapability } from '../constants';
-import { GroundingMode, OutputFormat, StructuredOutputMode, ThinkingLevel } from '../types';
+import { GroundingMode, OutputFormat, ThinkingLevel } from '../types';
 import { getGroundingModeLabel } from '../utils/groundingMode';
 import { getTranslation, Language } from '../utils/translations';
 
@@ -34,7 +34,6 @@ type SurfaceSharedControlsProps = {
     maxCharacters: number;
     settingsVariant: SurfaceSharedControlsVariant;
     outputFormat: OutputFormat;
-    structuredOutputMode: StructuredOutputMode;
     temperature: number;
     thinkingLevel: ThinkingLevel;
     includeThoughts: boolean;
@@ -85,7 +84,6 @@ const SurfaceSharedControls: React.FC<SurfaceSharedControlsProps> = ({
     batchSize,
     settingsVariant,
     outputFormat,
-    structuredOutputMode,
     temperature,
     thinkingLevel,
     includeThoughts,
@@ -98,26 +96,6 @@ const SurfaceSharedControls: React.FC<SurfaceSharedControlsProps> = ({
 }) => {
     const t = (key: string) => getTranslation(currentLanguage, key);
     const containerRef = useRef<HTMLDivElement | null>(null);
-    const getStructuredOutputModeLabel = (value: StructuredOutputMode) => {
-        switch (value) {
-            case 'scene-brief':
-                return t('structuredOutputModeSceneBrief');
-            case 'prompt-kit':
-                return t('structuredOutputModePromptKit');
-            case 'quality-check':
-                return t('structuredOutputModeQualityCheck');
-            case 'shot-plan':
-                return t('structuredOutputModeShotPlan');
-            case 'delivery-brief':
-                return t('structuredOutputModeDeliveryBrief');
-            case 'revision-brief':
-                return t('structuredOutputModeRevisionBrief');
-            case 'variation-compare':
-                return t('structuredOutputModeVariationCompare');
-            default:
-                return t('structuredOutputModeOff');
-        }
-    };
     const getOutputFormatLabel = (value: OutputFormat) =>
         value === 'images-and-text' ? 'Images & text' : 'Images only';
     const getThinkingLevelLabel = (value: ThinkingLevel) => {
@@ -127,7 +105,7 @@ const SurfaceSharedControls: React.FC<SurfaceSharedControlsProps> = ({
             case 'high':
                 return 'High';
             default:
-                return t('structuredOutputModeOff');
+                return 'Disabled';
         }
     };
     const getGroundingLabel = (value: GroundingMode) => getGroundingModeLabel(value);
@@ -171,15 +149,6 @@ const SurfaceSharedControls: React.FC<SurfaceSharedControlsProps> = ({
                       id: 'output-format',
                       label: t('groundingProvenanceInsightOutputFormat'),
                       value: getOutputFormatLabel(outputFormat),
-                  },
-              ]
-            : []),
-        ...(capability.supportsStructuredOutputs && structuredOutputMode !== 'off'
-            ? [
-                  {
-                      id: 'structured-output',
-                      label: t('composerAdvancedStructuredOutput'),
-                      value: getStructuredOutputModeLabel(structuredOutputMode),
                   },
               ]
             : []),

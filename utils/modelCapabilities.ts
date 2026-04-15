@@ -9,7 +9,6 @@ export interface ModelCapability {
     supportsTemperature: boolean;
     thinkingLevels: ThinkingLevel[];
     supportsIncludeThoughts: boolean;
-    supportsStructuredOutputs: boolean;
     supportsGoogleSearch: boolean;
     supportsImageSearch: boolean;
 }
@@ -49,7 +48,6 @@ export const MODEL_CAPABILITIES: Record<ImageModel, ModelCapability> = {
         supportsTemperature: true,
         thinkingLevels: ['minimal', 'high'],
         supportsIncludeThoughts: true,
-        supportsStructuredOutputs: false,
         supportsGoogleSearch: true,
         supportsImageSearch: true,
     },
@@ -62,7 +60,6 @@ export const MODEL_CAPABILITIES: Record<ImageModel, ModelCapability> = {
         supportsTemperature: true,
         thinkingLevels: ['disabled'],
         supportsIncludeThoughts: true,
-        supportsStructuredOutputs: true,
         supportsGoogleSearch: true,
         supportsImageSearch: false,
     },
@@ -75,7 +72,6 @@ export const MODEL_CAPABILITIES: Record<ImageModel, ModelCapability> = {
         supportsTemperature: true,
         thinkingLevels: ['disabled'],
         supportsIncludeThoughts: false,
-        supportsStructuredOutputs: true,
         supportsGoogleSearch: false,
         supportsImageSearch: false,
     },

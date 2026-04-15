@@ -2,7 +2,7 @@ import { Dispatch, ReactNode, SetStateAction, useCallback, useMemo } from 'react
 import type GeneratedImageStage from '../components/GeneratedImage';
 import type WorkspaceViewerOverlay from '../components/WorkspaceViewerOverlay';
 import { StageTopRightAction, StageTopRightChip } from '../components/GeneratedImage';
-import { ImageModel, StructuredOutputMode } from '../types';
+import { ImageModel } from '../types';
 import { StageTopRightLayoutBucket, useStageTopRightLayoutBucket } from './useStageTopRightLayoutBucket';
 import { Language, getTranslation } from '../utils/translations';
 
@@ -210,7 +210,7 @@ type UseWorkspaceStageViewerArgs = {
     viewerSelectedHistoryId?: string | null;
     onSelectViewerItem?: (historyId: string) => void;
     prompt: string;
-    error: string | null;
+    error: GeneratedImageStageProps['error'];
     resultStatusSummary: string | null;
     resultStatusTone: 'warning' | 'success' | null;
     settings: {
@@ -240,9 +240,6 @@ type UseWorkspaceStageViewerArgs = {
     metadataItems: WorkspaceViewerOverlayProps['metadataItems'];
     metadataStateMessage: string | null;
     effectiveResultText: string | null;
-    structuredData: Record<string, unknown> | null;
-    structuredOutputMode: StructuredOutputMode | null;
-    formattedStructuredOutput: string | null;
     effectiveThoughts: string | null;
     thoughtStateMessage: string;
     provenancePanel: ReactNode;
@@ -250,8 +247,6 @@ type UseWorkspaceStageViewerArgs = {
     formatSessionHintKey: (key: string) => string;
     formatSessionHintValue: (key: string, value: unknown) => string;
     onApplyPrompt?: (value: string) => void;
-    onReplacePrompt?: (value: string) => void;
-    onAppendPrompt?: (value: string) => void;
 };
 
 export function useWorkspaceStageViewer({
@@ -290,9 +285,6 @@ export function useWorkspaceStageViewer({
     metadataItems,
     metadataStateMessage,
     effectiveResultText,
-    structuredData,
-    structuredOutputMode,
-    formattedStructuredOutput,
     effectiveThoughts,
     thoughtStateMessage,
     provenancePanel,
@@ -300,8 +292,6 @@ export function useWorkspaceStageViewer({
     formatSessionHintKey,
     formatSessionHintValue,
     onApplyPrompt,
-    onReplacePrompt,
-    onAppendPrompt,
 }: UseWorkspaceStageViewerArgs) {
     const stageTopRightLayoutBucket = useStageTopRightLayoutBucket();
     const activeViewerHistoryItem = useMemo(() => {
@@ -422,9 +412,6 @@ export function useWorkspaceStageViewer({
                 metadataItems,
                 metadataStateMessage,
                 effectiveResultText,
-                structuredData,
-                structuredOutputMode,
-                formattedStructuredOutput,
                 effectiveThoughts,
                 thoughtStateMessage,
                 provenancePanel,
@@ -434,8 +421,6 @@ export function useWorkspaceStageViewer({
                 onClose: closeViewer,
                 onMoveViewer: moveViewer,
                 onApplyPrompt,
-                onReplacePrompt,
-                onAppendPrompt,
             }) satisfies WorkspaceViewerOverlayProps,
         [
             activeViewerImage,
@@ -443,9 +428,6 @@ export function useWorkspaceStageViewer({
             closeViewer,
             currentLanguage,
             effectiveResultText,
-            structuredData,
-            structuredOutputMode,
-            formattedStructuredOutput,
             effectiveThoughts,
             formatSessionHintKey,
             formatSessionHintValue,
@@ -453,8 +435,6 @@ export function useWorkspaceStageViewer({
             metadataItems,
             moveViewer,
             onApplyPrompt,
-            onAppendPrompt,
-            onReplacePrompt,
             prompt,
             provenancePanel,
             sessionHintEntries,

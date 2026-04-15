@@ -7,7 +7,6 @@ import {
     ImageSize,
     ImageStyle,
     OutputFormat,
-    StructuredOutputMode,
     ThinkingLevel,
 } from '../types';
 import { deriveGroundingMode } from './groundingMode';
@@ -26,7 +25,6 @@ type BuildImageSidecarMetadataArgs = {
     aspectRatio: AspectRatio;
     requestedImageSize: ImageSize;
     outputFormat: OutputFormat;
-    structuredOutputMode: StructuredOutputMode;
     temperature: number;
     thinkingLevel: ThinkingLevel;
     includeThoughts: boolean;
@@ -49,7 +47,6 @@ export const buildImageSidecarMetadata = ({
     aspectRatio,
     requestedImageSize,
     outputFormat,
-    structuredOutputMode,
     temperature,
     thinkingLevel,
     includeThoughts,
@@ -68,7 +65,6 @@ export const buildImageSidecarMetadata = ({
     requestedImageSize,
     size: requestedImageSize,
     outputFormat,
-    structuredOutputMode,
     temperature,
     thinkingLevel,
     includeThoughts,

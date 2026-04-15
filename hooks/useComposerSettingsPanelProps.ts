@@ -10,7 +10,6 @@ import {
     QueuedBatchJob,
     StageAsset,
     StickySendIntent,
-    StructuredOutputMode,
     ThinkingLevel,
     TurnLineageAction,
     ImageSize,
@@ -42,7 +41,6 @@ type UseComposerSettingsPanelPropsArgs = {
     currentLanguage: Language;
     imageStyleLabel: string;
     outputFormat: OutputFormat;
-    structuredOutputMode: StructuredOutputMode;
     thinkingLevel: ThinkingLevel;
     includeThoughts: boolean;
     groundingMode: GroundingMode;
@@ -87,7 +85,6 @@ type UseComposerSettingsPanelPropsArgs = {
     setActivePickerSheet: Dispatch<SetStateAction<PickerSheet>>;
     setIsAdvancedSettingsOpen: Dispatch<SetStateAction<boolean>>;
     setOutputFormat: (value: OutputFormat) => void;
-    setStructuredOutputMode: (value: StructuredOutputMode) => void;
     setTemperature: (value: number) => void;
     setThinkingLevel: (value: ThinkingLevel) => void;
     setGroundingMode: (value: GroundingMode) => void;
@@ -117,7 +114,6 @@ export function useComposerSettingsPanelProps({
     currentLanguage,
     imageStyleLabel,
     outputFormat,
-    structuredOutputMode,
     thinkingLevel,
     includeThoughts,
     groundingMode,
@@ -162,7 +158,6 @@ export function useComposerSettingsPanelProps({
     setActivePickerSheet,
     setIsAdvancedSettingsOpen,
     setOutputFormat,
-    setStructuredOutputMode,
     setTemperature,
     setThinkingLevel,
     setGroundingMode,
@@ -211,7 +206,6 @@ export function useComposerSettingsPanelProps({
         setActivePickerSheet,
         setIsAdvancedSettingsOpen,
         setOutputFormat,
-        setStructuredOutputMode,
         setTemperature,
         setThinkingLevel,
         setGroundingMode,
@@ -251,7 +245,6 @@ export function useComposerSettingsPanelProps({
             setActivePickerSheet,
             setIsAdvancedSettingsOpen,
             setOutputFormat,
-            setStructuredOutputMode,
             setTemperature,
             setThinkingLevel,
             setGroundingMode,
@@ -287,7 +280,6 @@ export function useComposerSettingsPanelProps({
         setActivePickerSheet,
         setIsAdvancedSettingsOpen,
         setOutputFormat,
-        setStructuredOutputMode,
         setTemperature,
         setThinkingLevel,
         setGroundingMode,
@@ -319,7 +311,6 @@ export function useComposerSettingsPanelProps({
             currentLanguage,
             imageStyleLabel,
             outputFormat,
-            structuredOutputMode,
             thinkingLevel,
             includeThoughts,
             groundingMode,
@@ -366,16 +357,6 @@ export function useComposerSettingsPanelProps({
             onOpenSettings: () => latestHandlersRef.current.openSettings(),
             onToggleAdvancedSettings: () => latestHandlersRef.current.openAdvancedSettings(),
             onOutputFormatChange: (value: OutputFormat) => latestHandlersRef.current.setOutputFormat(value),
-            onStructuredOutputModeChange: (nextMode: StructuredOutputMode) => {
-                latestHandlersRef.current.setStructuredOutputMode(nextMode);
-                if (nextMode !== 'off' && latestHandlersRef.current.outputFormat !== 'images-and-text') {
-                    latestHandlersRef.current.setOutputFormat('images-and-text');
-                    latestHandlersRef.current.showNotification(
-                        latestHandlersRef.current.t('composerStructuredOutputUpgradeNotice'),
-                        'info',
-                    );
-                }
-            },
             onTemperatureChange: (value: number) => latestHandlersRef.current.setTemperature(value),
             onThinkingLevelChange: (value: ThinkingLevel) => latestHandlersRef.current.setThinkingLevel(value),
             onGroundingModeChange: (nextMode: GroundingMode) => {
@@ -414,7 +395,6 @@ export function useComposerSettingsPanelProps({
             currentLanguage,
             imageStyleLabel,
             outputFormat,
-            structuredOutputMode,
             thinkingLevel,
             includeThoughts,
             groundingMode,

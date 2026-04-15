@@ -1,5 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
-import type { ConversationRequestContext, StructuredOutputMode } from '../../types';
+import type { ConversationRequestContext } from '../../types';
 import { VALID_IMAGE_MODELS, VALID_IMAGE_SIZES } from '../../utils/modelCapabilities';
 import { readJsonBody, sendClassifiedApiError, sendJson } from '../utils/apiHelpers';
 import { extractBatchImportResults, serializeBatchJob } from '../utils/batchHelpers';
@@ -16,7 +16,6 @@ type ImageGenerateBody = {
     objectImageInputs?: string[];
     characterImageInputs?: string[];
     outputFormat?: 'images-only' | 'images-and-text';
-    structuredOutputMode?: StructuredOutputMode;
     temperature?: number;
     thinkingLevel?: 'disabled' | 'minimal' | 'high';
     includeThoughts?: boolean;
@@ -113,8 +112,8 @@ export function registerBatchRoutes(server: any, { getAIClient, resolvedDir }: R
                 return;
             }
 
-            const parts = buildGenerateParts(body, resolvedDir);
             const { requestConfig } = buildImageRequestConfig(model, body);
+            const parts = buildGenerateParts(body, resolvedDir);
             const inlineRequests = Array.from({ length: requestCount }, () => ({
                 contents: [{ role: 'user', parts }],
                 config: requestConfig,

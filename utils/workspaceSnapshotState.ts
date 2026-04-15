@@ -10,7 +10,6 @@ import {
 import { EMPTY_WORKSPACE_COMPOSER_STATE, sanitizeWorkspaceSnapshot } from './workspacePersistence';
 import { inferExecutionModeFromHistoryItem } from './executionMode';
 import { normalizeImageStyle } from './styleRegistry';
-import { normalizeStructuredOutputMode } from './structuredOutputs';
 
 export type AppliedWorkspaceSnapshotState = {
     snapshot: WorkspacePersistenceSnapshot;
@@ -28,7 +27,6 @@ export const buildDisplaySettingsFromComposerState = (composerState: WorkspaceCo
     model: composerState.imageModel,
     batchSize: composerState.batchSize,
     outputFormat: composerState.outputFormat,
-    structuredOutputMode: normalizeStructuredOutputMode(composerState.structuredOutputMode),
     temperature: composerState.temperature,
     thinkingLevel: composerState.thinkingLevel,
     includeThoughts: composerState.includeThoughts,
@@ -81,7 +79,6 @@ export const buildWorkspaceComposerStateFromHistoryItem = (item: GeneratedImage)
         imageModel: model,
         batchSize: 1,
         outputFormat: (item.metadata?.outputFormat as OutputFormat) || 'images-only',
-        structuredOutputMode: normalizeStructuredOutputMode(item.metadata?.structuredOutputMode),
         temperature: typeof item.metadata?.temperature === 'number' ? item.metadata.temperature : 1,
         thinkingLevel:
             (item.metadata?.thinkingLevel as ThinkingLevel) ||
