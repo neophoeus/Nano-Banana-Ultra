@@ -2,7 +2,7 @@
 
 ## v3.6.0 - 2026-04-18
 
-- Release title: Nano Banana Ultra 3.6.0 - Independent Batch Space, Truthful Queue Import State & Simplified Queue Entry Surfaces
+- Release title: Nano Banana Ultra 3.6.0 - Independent Batch Space, Truthful Queue Import State & Clearer Queue Action Naming
 - Release summary:
     - independent queued-batch space and persistence:
         - queued batch jobs now live in their own app-level batch space instead of being stored as part of the current workspace snapshot, so switching workspaces, restoring snapshots, and resetting a workspace no longer makes queued jobs appear to belong to one workspace
@@ -16,9 +16,7 @@
         - completed queued jobs remain in the dedicated batch space after import, while workspace-local affordances such as reopening imported results stay scoped to the workspace that actually imported them
         - queued job normalization, polling state, and import-ready logic now reflect the shared batch-space contract consistently across runtime persistence, restore flows, and queued-job utilities
 
-    - queue surface simplification and clearer action naming:
-        - removed the redundant queued-batch launcher from the top header support rail, leaving Progress and Support as the only compact header launchers while preserving the requested desktop width balance through the existing header layout contract
-        - kept the composer right-side status surface as the shared entry point into the queued-batch space, so queue management still stays visible without duplicating the same modal opener in the header
+    - clearer queue action naming:
         - renamed the queue submit action to `Send to Queue` while keeping the status surface titled `Queued Batch Jobs`, making the submit action and the queue-status entry clearly distinct
         - aligned queue helper copy and accessibility labeling with the submit-vs-status split, and propagated the same submit wording to other queue-submit surfaces such as the editor
 
@@ -27,8 +25,8 @@
         - workspace snapshot persistence now writes the empty local workspace state eagerly during reset, preventing stale prompt or history state from surviving into a fresh reload while the shared queued-batch space remains available
 
     - localized queue wording and queue-state UI alignment:
-        - updated maintained locale dictionaries so the new queue submit wording and the simplified queue surface terminology stay consistent outside English
-        - refreshed queue-related component, translation, and restore-flow contracts to match the dedicated batch-space model and the simplified entry-surface naming
+        - updated maintained locale dictionaries so the new queue submit wording and related queue terminology stay consistent outside English
+        - refreshed queue-related component, translation, and restore-flow contracts to match the dedicated batch-space model and the clearer queue action naming
 
 ## v3.5.8 - 2026-04-18
 
