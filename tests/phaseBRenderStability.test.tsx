@@ -443,6 +443,7 @@ describe('Phase B render stability', () => {
         expect(sourceSignal?.innerHTML).not.toContain('animate-pulse');
         expect(sourceSignal?.innerHTML).toContain('bg-slate-200/65');
         expect(topLauncherRow?.getAttribute('class')).toContain('grid-cols-2');
+        expect(topLauncherRow?.getAttribute('class')).toContain('xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]');
         expect(progressButton?.getAttribute('class')).toContain('h-[40px]');
         expect(progressButton?.getAttribute('class')).toContain('hover:-translate-y-0.5');
         expect(sourceButton?.getAttribute('class')).toContain('h-[40px]');

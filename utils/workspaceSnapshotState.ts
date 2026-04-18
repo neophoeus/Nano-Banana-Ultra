@@ -41,7 +41,6 @@ export const hasRestorableWorkspaceContent = (snapshot: WorkspacePersistenceSnap
         normalized.history.length ||
         normalized.stagedAssets.length ||
         normalized.workflowLogs.length ||
-        normalized.queuedJobs.length ||
         normalized.viewState.generatedImageUrls.length ||
         normalized.viewState.selectedHistoryId ||
         normalized.composerState.prompt.trim() ||

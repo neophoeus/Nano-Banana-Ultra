@@ -11,7 +11,6 @@ import {
 import {
     GeneratedImage,
     PendingProvenanceContext,
-    QueuedBatchJob,
     StageErrorState,
     StageAsset,
     WorkspaceComposerState,
@@ -47,7 +46,6 @@ type UseWorkspaceSnapshotActionsArgs = {
     addLog: (message: string) => void;
     setHistory: Dispatch<SetStateAction<GeneratedImage[]>>;
     setStagedAssets: Dispatch<SetStateAction<StageAsset[]>>;
-    setQueuedJobs: Dispatch<SetStateAction<QueuedBatchJob[]>>;
     setWorkspaceSession: Dispatch<SetStateAction<WorkspaceSessionState>>;
     setBranchNameOverrides: Dispatch<SetStateAction<Record<string, string>>>;
     setBranchContinuationSourceByBranchOriginId: Dispatch<SetStateAction<Record<string, string>>>;
@@ -81,7 +79,6 @@ export const useWorkspaceSnapshotActions = ({
     addLog,
     setHistory,
     setStagedAssets,
-    setQueuedJobs,
     setWorkspaceSession,
     setBranchNameOverrides,
     setBranchContinuationSourceByBranchOriginId,
@@ -137,7 +134,6 @@ export const useWorkspaceSnapshotActions = ({
 
             setHistory(snapshot.history);
             setStagedAssets(snapshot.stagedAssets);
-            setQueuedJobs(snapshot.queuedJobs);
             setWorkspaceSession(snapshot.workspaceSession);
             setBranchNameOverrides(snapshot.branchState.nameOverrides);
             setBranchContinuationSourceByBranchOriginId(snapshot.branchState.continuationSourceByBranchOriginId);
@@ -185,7 +181,6 @@ export const useWorkspaceSnapshotActions = ({
             setIsViewerOpen,
             setLogs,
             setPendingProvenanceContext,
-            setQueuedJobs,
             setSelectedHistoryId,
             setSelectedImageIndex,
             setStagedAssets,

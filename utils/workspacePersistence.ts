@@ -446,6 +446,7 @@ const buildPersistableWorkspaceSnapshot = (
                       : asset,
               )
             : stagedAssetsWithLinkedAssets,
+        queuedJobs: [],
         viewState: {
             ...normalized.viewState,
             generatedImageUrls: restoredStageUrl ? [restoredStageUrl] : filteredGeneratedImageUrls,
@@ -549,7 +550,14 @@ const sanitizeQueuedBatchJobImportIssues = (value: unknown): QueuedBatchJobImpor
     }
 
     return value.flatMap((item): QueuedBatchJobImportIssue[] => {
-        if (!(isRecord(item) && typeof item.index === 'number' && Number.isFinite(item.index) && typeof item.error === 'string')) {
+        if (
+            !(
+                isRecord(item) &&
+                typeof item.index === 'number' &&
+                Number.isFinite(item.index) &&
+                typeof item.error === 'string'
+            )
+        ) {
             return [];
         }
 
@@ -559,7 +567,9 @@ const sanitizeQueuedBatchJobImportIssues = (value: unknown): QueuedBatchJobImpor
         }
 
         const finishReason =
-            typeof item.finishReason === 'string' && item.finishReason.trim().length > 0 ? item.finishReason.trim() : null;
+            typeof item.finishReason === 'string' && item.finishReason.trim().length > 0
+                ? item.finishReason.trim()
+                : null;
         const extractionIssue =
             item.extractionIssue === 'missing-candidates' ||
             item.extractionIssue === 'missing-parts' ||
@@ -586,7 +596,7 @@ const sanitizeQueuedBatchJobImportIssues = (value: unknown): QueuedBatchJobImpor
     });
 };
 
-const sanitizeQueuedBatchJobs = (value: unknown): QueuedBatchJob[] => {
+export const sanitizeQueuedBatchJobs = (value: unknown): QueuedBatchJob[] => {
     if (!Array.isArray(value)) {
         return [];
     }
@@ -633,15 +643,16 @@ const sanitizeQueuedBatchJobs = (value: unknown): QueuedBatchJob[] => {
                   ? true
                   : importDiagnostic === 'no-payload'
                     ? false
-                    : item.state === 'JOB_STATE_SUCCEEDED' && item.importedAt == null
+                                        : item.state === 'JOB_STATE_SUCCEEDED'
                       ? true
-                      : item.importedAt != null
-                        ? true
-                        : undefined;
+                                            : undefined;
+                const { importedAt: _importedAt, ...queuedJobWithoutImportedAt } = item as QueuedBatchJob & {
+                        importedAt?: unknown;
+                };
 
         return [
             {
-                ...(item as QueuedBatchJob),
+                                ...queuedJobWithoutImportedAt,
                 style: normalizeImageStyle(item.style),
                 ...(importDiagnostic ? { importDiagnostic } : {}),
                 ...(hasExplicitImportIssues ? { importIssues: importIssues.length > 0 ? importIssues : null } : {}),
@@ -982,7 +993,6 @@ export const saveSharedWorkspaceSnapshot = async (
         normalized.history.length ||
         normalized.stagedAssets.length ||
         normalized.workflowLogs.length ||
-        normalized.queuedJobs.length ||
         normalized.viewState.generatedImageUrls.length ||
         normalized.viewState.selectedHistoryId ||
         normalized.composerState.prompt.trim() ||
@@ -1135,11 +1145,7 @@ export const mergeWorkspaceSnapshots = (
         ...base,
         history: [...remappedIncoming.history, ...base.history].sort((left, right) => right.createdAt - left.createdAt),
         workflowLogs: base.workflowLogs,
-        queuedJobs: [...base.queuedJobs, ...incoming.queuedJobs].filter(
-            (job, index, all) =>
-                all.findIndex((candidate) => candidate.localId === job.localId || candidate.name === job.name) ===
-                index,
-        ),
+        queuedJobs: [],
         workspaceSession: mergedWorkspaceSession,
         branchState: {
             nameOverrides: mergedBranchNameOverrides,

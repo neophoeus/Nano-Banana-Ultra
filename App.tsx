@@ -54,7 +54,9 @@ import {
     EMPTY_WORKSPACE_SNAPSHOT,
     EMPTY_WORKSPACE_SESSION,
     loadWorkspaceSnapshot,
+    saveWorkspaceSnapshot,
 } from './utils/workspacePersistence';
+import { loadQueuedBatchSpaceSnapshot } from './utils/queuedBatchSpacePersistence';
 import { hasRestorableWorkspaceContent } from './utils/workspaceSnapshotState';
 import {
     deriveGroundingMode,
@@ -93,6 +95,7 @@ import { useWorkspaceAppLifecycle } from './hooks/useWorkspaceAppLifecycle';
 import { useWorkspaceSessionState } from './hooks/useWorkspaceSessionState';
 import { useWorkspaceEditorActions } from './hooks/useWorkspaceEditorActions';
 import { useWorkspaceResetActions } from './hooks/useWorkspaceResetActions';
+import { useQueuedBatchSpacePersistence } from './hooks/useQueuedBatchSpacePersistence';
 import { useWorkspaceSnapshotPersistence } from './hooks/useWorkspaceSnapshotPersistence';
 import { useWorkspaceSnapshotActions } from './hooks/useWorkspaceSnapshotActions';
 import { useWorkspaceSurfaceState } from './hooks/useWorkspaceSurfaceState';
@@ -208,6 +211,11 @@ const TopLauncherSignal = ({ active, dataTestId }: { active: boolean; dataTestId
 
 const App: React.FC = () => {
     const [initialWorkspaceSnapshot] = useState(() => loadWorkspaceSnapshot());
+    const [initialQueuedBatchSpaceSnapshot] = useState(() =>
+        loadQueuedBatchSpaceSnapshot({
+            legacyQueuedJobs: initialWorkspaceSnapshot.queuedJobs,
+        }),
+    );
     const initialActiveResult = initialWorkspaceSnapshot.workspaceSession.activeResult;
     const initialComposerState = initialWorkspaceSnapshot.composerState || EMPTY_WORKSPACE_COMPOSER_STATE;
     const [apiKeyReady, setApiKeyReady] = useState(false);
@@ -224,8 +232,9 @@ const App: React.FC = () => {
     const [settingsSessionDraft, setSettingsSessionDraft] = useState<WorkspaceSettingsDraft | null>(null);
     const [settingsSessionReturnToGeneration, setSettingsSessionReturnToGeneration] = useState(false);
     const [activeWorkspaceDetailModal, setActiveWorkspaceDetailModal] = useState<
-        'progress' | 'sources' | 'versions' | 'queued-jobs' | null
+        'progress' | 'sources' | 'versions' | null
     >(null);
+    const [isQueuedBatchSpaceOpen, setIsQueuedBatchSpaceOpen] = useState(false);
     const [editingImageSource, setEditingImageSource] = useState<string | null>(null);
     const [batchProgress, setBatchProgress] = useState({ completed: 0, total: 0 });
     const [activeBatchPreviewSession, setActiveBatchPreviewSession] = useState<BatchPreviewSession | null>(null);
@@ -773,7 +782,9 @@ const App: React.FC = () => {
                 };
             }
             const partKey = buildResultPartIdentityKey(event.part);
-            const alreadyIncluded = nextSlot.resultParts.some((candidate) => buildResultPartIdentityKey(candidate) === partKey);
+            const alreadyIncluded = nextSlot.resultParts.some(
+                (candidate) => buildResultPartIdentityKey(candidate) === partKey,
+            );
 
             if (alreadyIncluded) {
                 return nextSession;
@@ -1370,13 +1381,11 @@ const App: React.FC = () => {
     const {
         queuedJobs,
         setQueuedJobs,
-        isRecoveringRecentQueuedJobs,
         handleQueueBatchJob,
         handleQueueBatchJobFromEditor,
         handlePollQueuedJob,
         handlePollAllQueuedJobs,
         handleCancelQueuedJob,
-        handleRecoverRecentQueuedJobs,
         handleImportQueuedJob,
         handleImportAllQueuedJobs,
         handleOpenImportedQueuedJob,
@@ -1386,7 +1395,7 @@ const App: React.FC = () => {
         handleClearImportedQueuedJobs,
         handleRemoveQueuedJob,
     } = useQueuedBatchWorkflow({
-        initialQueuedJobs: initialWorkspaceSnapshot.queuedJobs || [],
+        initialQueuedJobs: initialQueuedBatchSpaceSnapshot.queuedJobs,
         history,
         apiKeyReady,
         setApiKeyReady,
@@ -1417,6 +1426,7 @@ const App: React.FC = () => {
         historySelectRef: queuedBatchHistorySelectRef,
         t,
     });
+    useQueuedBatchSpacePersistence({ queuedJobs, setQueuedJobs });
     const {
         queueBatchModeSummary,
         queueBatchConversationNotice,
@@ -1436,7 +1446,6 @@ const App: React.FC = () => {
         history,
         stagedAssets,
         workflowLogs: logs,
-        queuedJobs,
         workspaceSession,
         branchNameOverrides,
         branchContinuationSourceByBranchOriginId,
@@ -1466,7 +1475,6 @@ const App: React.FC = () => {
         addLog,
         setHistory,
         setStagedAssets,
-        setQueuedJobs,
         setWorkspaceSession,
         setBranchNameOverrides,
         setBranchContinuationSourceByBranchOriginId,
@@ -1489,6 +1497,7 @@ const App: React.FC = () => {
         setBranchRenameDraft,
     });
     const applyEmptyWorkspaceSnapshot = useCallback(() => {
+        saveWorkspaceSnapshot(EMPTY_WORKSPACE_SNAPSHOT);
         applyWorkspaceSnapshot(EMPTY_WORKSPACE_SNAPSHOT);
     }, [applyWorkspaceSnapshot]);
 
@@ -1960,8 +1969,10 @@ const App: React.FC = () => {
         });
     const handleCloseWorkspaceDetailModal = useCallback(() => {
         setActiveWorkspaceDetailModal(null);
+        setIsQueuedBatchSpaceOpen(false);
     }, []);
     const handleOpenProgressDetails = useCallback(() => {
+        setIsQueuedBatchSpaceOpen(false);
         setActiveWorkspaceDetailModal('progress');
     }, []);
     const [workspaceFloatingHostElement, setWorkspaceFloatingHostElement] = useState<HTMLDivElement | null>(null);
@@ -1973,13 +1984,16 @@ const App: React.FC = () => {
         [floatingControlsZIndex, workspaceFloatingHostElement],
     );
     const handleOpenSourcesDetails = useCallback(() => {
+        setIsQueuedBatchSpaceOpen(false);
         setActiveWorkspaceDetailModal('sources');
     }, []);
     const handleOpenVersionsDetails = useCallback(() => {
+        setIsQueuedBatchSpaceOpen(false);
         setActiveWorkspaceDetailModal('versions');
     }, []);
     const handleOpenQueuedBatchJobs = useCallback(() => {
-        setActiveWorkspaceDetailModal('queued-jobs');
+        setActiveWorkspaceDetailModal(null);
+        setIsQueuedBatchSpaceOpen(true);
     }, []);
     const handleClearStyle = useCallback(() => {
         setImageStyle('None');
@@ -2656,7 +2670,9 @@ const App: React.FC = () => {
                     id: `live-${activeLiveProgressSession.batchSessionId}-${slot.slotIndex}`,
                     shortId: `slot-${String(slot.slotIndex + 1).padStart(2, '0')}`,
                     prompt: prompt || null,
-                    thoughts: buildThoughtSummaryFromParts(slotThoughtParts, t('workspaceViewerThoughts')) || t('workspaceViewerThoughts'),
+                    thoughts:
+                        buildThoughtSummaryFromParts(slotThoughtParts, t('workspaceViewerThoughts')) ||
+                        t('workspaceViewerThoughts'),
                     resultParts: slotThoughtParts,
                     createdAtMs: slot.startedAtMs,
                     createdAtLabel: new Date(slot.startedAtMs).toLocaleTimeString([], {
@@ -2670,7 +2686,10 @@ const App: React.FC = () => {
             })
             .filter((entry): entry is ProgressThoughtEntry => Boolean(entry));
     }, [activeLiveProgressSession, isGenerating, prompt, t]);
-    const liveProgressThoughtsText = useMemo(() => liveProgressThoughtEntries[0]?.thoughts || '', [liveProgressThoughtEntries]);
+    const liveProgressThoughtsText = useMemo(
+        () => liveProgressThoughtEntries[0]?.thoughts || '',
+        [liveProgressThoughtEntries],
+    );
     const effectiveProgressThoughtsText = useMemo(() => {
         const trimmedEffectiveThoughts = effectiveThoughts?.trim();
         if (trimmedEffectiveThoughts) {
@@ -2699,14 +2718,15 @@ const App: React.FC = () => {
                     : currentStageSourceTurn
                       ? [currentStageSourceTurn]
                       : [];
-        const failedThoughtTurns = history.filter(
-            (turn) => turn.status === 'failed' && hasThoughtArtifacts(turn),
-        );
+        const failedThoughtTurns = history.filter((turn) => turn.status === 'failed' && hasThoughtArtifacts(turn));
 
         return [...relevantHistoryTurns, ...failedThoughtTurns]
             .filter(hasThoughtArtifacts)
             .filter((turn, index, turns) => turns.findIndex((candidate) => candidate.id === turn.id) === index)
-            .sort((left, right) => (right.createdAt ?? Number.MIN_SAFE_INTEGER) - (left.createdAt ?? Number.MIN_SAFE_INTEGER));
+            .sort(
+                (left, right) =>
+                    (right.createdAt ?? Number.MIN_SAFE_INTEGER) - (left.createdAt ?? Number.MIN_SAFE_INTEGER),
+            );
     }, [
         activeBranchSummary,
         currentStageBranchSummary,
@@ -2717,10 +2737,10 @@ const App: React.FC = () => {
     ]);
     const hasProgressActivity = Boolean(
         liveProgressThoughtEntries.length > 0 ||
-            selectedProgressEntry ||
-            progressHistoryThoughtTurns.length > 0 ||
-            effectiveProgressThoughtsText ||
-            effectiveThoughtParts.length > 0,
+        selectedProgressEntry ||
+        progressHistoryThoughtTurns.length > 0 ||
+        effectiveProgressThoughtsText ||
+        effectiveThoughtParts.length > 0,
     );
     const hasSourceTrailInfo = Boolean(
         groundingQueries.length > 0 ||
@@ -2765,7 +2785,9 @@ const App: React.FC = () => {
                 id: turn.id,
                 shortId: getShortTurnId(turn.id),
                 prompt: turn.prompt || null,
-                thoughts: turn.thoughts?.trim() || buildThoughtSummaryFromParts(turnThoughtParts, t('workspaceViewerThoughts')),
+                thoughts:
+                    turn.thoughts?.trim() ||
+                    buildThoughtSummaryFromParts(turnThoughtParts, t('workspaceViewerThoughts')),
                 resultParts: turnThoughtParts,
                 createdAtMs: turn.createdAt,
                 createdAtLabel: new Date(turn.createdAt).toLocaleTimeString([], {
@@ -2981,6 +3003,7 @@ const App: React.FC = () => {
                                 isGenerating={isGenerating}
                                 batchProgress={batchProgress}
                                 queuedJobs={queuedJobs}
+                                getImportedQueuedResultCount={getImportedQueuedResultCount}
                                 resultStatusSummary={groundingResolutionStatusSummary}
                                 resultStatusTone={groundingResolutionStatusTone}
                                 thoughtsText={progressThoughtsSummaryText}
@@ -3021,25 +3044,24 @@ const App: React.FC = () => {
             >
                 <WorkspaceVersionsDetailPanel {...versionsDetailPanelProps} showHeader={false} />
             </WorkspaceDetailModal>
-        ) : activeWorkspaceDetailModal === 'queued-jobs' ? (
-            <WorkspaceDetailModal
-                dataTestId="workspace-queued-batch-detail-modal"
+        ) : isQueuedBatchSpaceOpen ? (
+            <WorkspaceSupportDetailSurface
+                dataTestId="workspace-queued-batch-space-modal"
                 title={t('queuedBatchJobsTitle')}
                 closeLabel={t('workspaceViewerClose')}
                 onClose={handleCloseWorkspaceDetailModal}
                 description={t('queuedBatchJobsDesc')}
+                desktopWidthClass="max-w-[980px]"
             >
                 <QueuedBatchJobsPanel
                     currentLanguage={currentLang}
                     queuedJobs={queuedJobs}
                     surface="embedded"
                     queueBatchConversationNotice={queueBatchConversationNotice}
-                    isRecoveringRecentQueuedJobs={isRecoveringRecentQueuedJobs}
                     getLineageActionLabel={getLineageActionLabel}
                     getImportedQueuedResultCount={getImportedQueuedResultCount}
                     getImportedQueuedHistoryItems={getImportedQueuedHistoryItems}
                     activeImportedQueuedHistoryId={currentStageSourceHistoryId}
-                    onRecoverRecentQueuedJobs={handleRecoverRecentQueuedJobs}
                     onImportAllQueuedJobs={handleImportAllQueuedJobs}
                     onPollAllQueuedJobs={handlePollAllQueuedJobs}
                     onPollQueuedJob={handlePollQueuedJob}
@@ -3052,7 +3074,7 @@ const App: React.FC = () => {
                     onClearImportedQueuedJobs={handleClearImportedQueuedJobs}
                     onRemoveQueuedJob={handleRemoveQueuedJob}
                 />
-            </WorkspaceDetailModal>
+            </WorkspaceSupportDetailSurface>
         ) : null;
     const focusSurface = useMemo(
         () => (

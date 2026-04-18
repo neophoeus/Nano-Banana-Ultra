@@ -359,13 +359,13 @@ export const ko = {
     styleLineArt: '라인 아트',
     styleStorybookIllustration: '스토리북 일러스트레이션',
     queueBatchModeEditor:
-        '대기열 배치 작업은 현재 에디터 베이스와 스테이징된 참조를 사용해 편집 기반의 공식 이미지 조건부 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
+        '이 작업은 현재 에디터 입력과 스테이징된 참조를 사용해 편집 기반의 공식 이미지 조건부 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
     queueBatchModeStage:
-        '대기열 배치 작업은 현재 스테이지 이미지와 스테이징된 참조를 사용해 후속 생성용 공식 이미지 조건부 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
+        '이 작업은 현재 스테이지 이미지와 스테이징된 참조를 사용해 후속 생성용 공식 이미지 조건부 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
     queueBatchModeReferences:
-        '대기열 배치 작업은 현재 프롬프트와 참조 트레이를 사용해 공식 참조 기반 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
+        '이 작업은 현재 프롬프트와 참조 트레이를 사용해 공식 참조 기반 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
     queueBatchModePromptOnly:
-        '대기열 배치 작업은 프롬프트만 사용하는 공식 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
+        '이 작업은 프롬프트만 사용하는 공식 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
     queueBatchConversationNotice:
         '대기열 배치 작업은 원본 계보를 유지하지만 공식 다중 턴 대화 기록은 전송하지 않습니다. 대화를 이어가려면 일반 생성 흐름을 사용하세요.',
     queuedBatchJobsTitle: '대기 중인 배치 작업',
@@ -378,17 +378,6 @@ export const ko = {
     queuedBatchJobsImportReadyCount: '가져오기 준비 {0}',
     queuedBatchJobsClosedIssuesCount: '문제와 함께 종료 {0}',
     queuedBatchJobsImportReadyAction: '준비된 결과 가져오기',
-    queuedBatchRecoverRecentAction: '최근 배치 작업 복구',
-    queuedBatchRecoverRecentLoading: '최근 작업 복구 중...',
-    queuedBatchRecoverRecentNotice: '최근 배치 작업 {0}개를 복구했습니다.',
-    queuedBatchRecoverRecentAlreadyTrackedNotice:
-        '최근 원격 배치 작업은 이미 목록에서 추적 중이며 {0}개 항목을 새로고침했습니다.',
-    queuedBatchRecoverRecentNoneNotice: '추가로 복구할 최근 원격 배치 작업을 찾지 못했습니다.',
-    queuedBatchRecoverRecentLog: '배치 목록에서 최근 원격 배치 작업 {0}개를 복구했습니다.',
-    queuedBatchRecoverRecentRefreshedLog: '배치 목록에서 이미 추적 중인 원격 배치 작업 {0}개를 새로고침했습니다.',
-    queuedBatchRecoverRecentFailedLog: '최근 배치 작업 복구 실패: {0}',
-    queuedBatchRecoverRecentMetadataHint:
-        '복구된 원격 작업은 다시 가져올 수 있지만, Gemini batch 목록은 원래 프롬프트나 참조 이미지를 돌려주지 않으므로 이 항목들에는 축약된 로컬 정보만 남습니다.',
     queuedBatchJobsRefreshAll: '모두 새로고침',
     queuedBatchJobsTrackedCount: '추적 중 {0}',
     queuedBatchJobsImportedTag: '가져옴',
@@ -496,7 +485,7 @@ export const ko = {
     composerEnterNewline: 'Enter를 눌러 줄바꿈',
     composerVisibilityVisible: '표시',
     composerVisibilityHidden: '숨김',
-    composerQueueBatchJob: '배치 작업에 추가',
+    composerQueueBatchJob: '대기열로 보내기',
     composerAdvancedTitle: '기능 인지 고급 설정',
     composerAdvancedDesc:
         '지원되지 않는 컨트롤은 숨겨진 상태로 유지되며, 모델이 바뀌면 안전한 기본값으로 자동 재설정됩니다.',

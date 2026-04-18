@@ -367,13 +367,13 @@ export const es = {
     styleLineArt: 'Arte Lineal',
     styleStorybookIllustration: 'Ilustración de Cuento',
     queueBatchModeEditor:
-        'El trabajo por lotes en cola enviara un lote oficial condicionado por imagen basado en el editor usando la base actual del editor y las referencias preparadas. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
+        'Esto enviara un lote oficial condicionado por imagen basado en el editor usando la entrada actual del editor y las referencias preparadas. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
     queueBatchModeStage:
-        'El trabajo por lotes en cola enviara un lote oficial condicionado por imagen de seguimiento usando la imagen actual del escenario y las referencias preparadas. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
+        'Esto enviara un lote oficial condicionado por imagen de seguimiento usando la imagen actual del escenario y las referencias preparadas. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
     queueBatchModeReferences:
-        'El trabajo por lotes en cola enviara un lote oficial guiado por referencias usando el prompt actual y la bandeja de referencias. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
+        'Esto enviara un lote oficial guiado por referencias usando el prompt actual y la bandeja de referencias. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
     queueBatchModePromptOnly:
-        'El trabajo por lotes en cola enviara un lote oficial basado solo en el prompt. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
+        'Esto enviara un lote oficial basado solo en el prompt. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
     queueBatchConversationNotice:
         'Los trabajos por lotes en cola conservan el linaje de origen, pero no envian el historial oficial de conversacion de varios turnos. Para continuar un chat, usa la generacion normal.',
     queuedBatchJobsTitle: 'Trabajos por lotes en cola',
@@ -386,18 +386,6 @@ export const es = {
     queuedBatchJobsImportReadyCount: '{0} listos para importar',
     queuedBatchJobsClosedIssuesCount: '{0} cerrados con problemas',
     queuedBatchJobsImportReadyAction: 'Importar listos',
-    queuedBatchRecoverRecentAction: 'Recuperar trabajos por lotes recientes',
-    queuedBatchRecoverRecentLoading: 'Recuperando trabajos recientes...',
-    queuedBatchRecoverRecentNotice: 'Se recuperaron {0} trabajos por lotes recientes.',
-    queuedBatchRecoverRecentAlreadyTrackedNotice:
-        'Los trabajos por lotes remotos recientes ya estan siendo seguidos. Se actualizaron {0} entradas.',
-    queuedBatchRecoverRecentNoneNotice: 'No se encontraron trabajos por lotes remotos recientes adicionales.',
-    queuedBatchRecoverRecentLog: 'Se recuperaron {0} trabajos por lotes remotos recientes desde la lista de lotes.',
-    queuedBatchRecoverRecentRefreshedLog:
-        'Se actualizaron {0} trabajos por lotes remotos ya seguidos desde la lista de lotes.',
-    queuedBatchRecoverRecentFailedLog: 'Error al recuperar trabajos por lotes recientes: {0}',
-    queuedBatchRecoverRecentMetadataHint:
-        'Los trabajos remotos recuperados se pueden importar de nuevo, pero la lista de batch de Gemini no devuelve el prompt original ni las imagenes de referencia, asi que estas entradas usan solo detalles locales simplificados.',
     queuedBatchJobsRefreshAll: 'Actualizar todo',
     queuedBatchJobsTrackedCount: '{0} seguidos',
     queuedBatchJobsImportedTag: 'Importado',
@@ -510,7 +498,7 @@ export const es = {
     composerEnterNewline: 'Pulsa Enter para nueva linea',
     composerVisibilityVisible: 'Se muestra',
     composerVisibilityHidden: 'Oculto',
-    composerQueueBatchJob: 'Poner en cola como trabajo por lotes',
+    composerQueueBatchJob: 'Enviar a la cola',
     composerAdvancedTitle: 'Ajustes avanzados segun capacidad',
     composerAdvancedDesc:
         'Los controles no compatibles se mantienen ocultos y se restablecen automaticamente cuando cambia el modelo.',

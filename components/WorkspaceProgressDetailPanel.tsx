@@ -118,6 +118,7 @@ type WorkspaceProgressDetailPanelProps = {
         total: number;
     };
     queuedJobs?: QueuedBatchJob[];
+    getImportedQueuedResultCount?: (job: QueuedBatchJob) => number;
     resultStatusSummary?: string | null;
     resultStatusTone?: 'warning' | 'success' | null;
     thoughtsText?: string | null;
@@ -131,6 +132,7 @@ function WorkspaceProgressDetailPanel({
     isGenerating = false,
     batchProgress = { completed: 0, total: 0 },
     queuedJobs = [],
+    getImportedQueuedResultCount = () => 0,
     resultStatusSummary = null,
     resultStatusTone = null,
     thoughtsText,
@@ -138,7 +140,9 @@ function WorkspaceProgressDetailPanel({
 }: WorkspaceProgressDetailPanelProps) {
     const t = (key: string) => getTranslation(currentLanguage, key);
     const activeQueueCount = queuedJobs.filter(isQueuedBatchJobActive).length;
-    const importReadyQueueCount = queuedJobs.filter(isQueuedBatchJobAutoImportReady).length;
+    const importReadyQueueCount = queuedJobs.filter(
+        (job) => isQueuedBatchJobAutoImportReady(job) && getImportedQueuedResultCount(job) === 0,
+    ).length;
     const issueQueueCount = queuedJobs.filter(isQueuedBatchJobClosedIssue).length;
     const workflowStatusLabel = latestWorkflowEntry
         ? t(getWorkflowEntryLabelKey(latestWorkflowEntry))

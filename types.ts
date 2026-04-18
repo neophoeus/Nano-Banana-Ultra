@@ -258,7 +258,6 @@ export interface QueuedBatchJob {
     startedAt: number | null;
     completedAt: number | null;
     lastPolledAt: number | null;
-    importedAt: number | null;
     hasInlinedResponses?: boolean;
     submissionPending?: boolean;
     importDiagnostic?: QueuedBatchJobImportDiagnostic | null;

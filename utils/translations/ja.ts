@@ -360,13 +360,13 @@ export const ja = {
     styleLineArt: 'ラインアート',
     styleStorybookIllustration: '絵本イラスト',
     queueBatchModeEditor:
-        'キュー投入バッチジョブは、現在のエディターベースとステージ済み参照を使って、編集ベースの公式画像条件付きバッチを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
+        'これは、現在のエディター入力とステージ済み参照を使って、編集ベースの公式画像条件付きバッチを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
     queueBatchModeStage:
-        'キュー投入バッチジョブは、現在のステージ画像とステージ済み参照を使って、後続生成向けの公式画像条件付きバッチを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
+        'これは、現在のステージ画像とステージ済み参照を使って、後続生成向けの公式画像条件付きバッチを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
     queueBatchModeReferences:
-        'キュー投入バッチジョブは、現在のプロンプトと参照トレイを使って、参照駆動の公式バッチを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
+        'これは、現在のプロンプトと参照トレイを使って、参照駆動の公式バッチを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
     queueBatchModePromptOnly:
-        'キュー投入バッチジョブは、プロンプトのみの公式バッチジョブを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
+        'これは、プロンプトのみの公式バッチジョブを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
     queueBatchConversationNotice:
         'キュー投入バッチジョブはソースの系統を保持しますが、公式の複数ターン会話履歴は送信しません。会話を継続する場合は通常の生成を使ってください。',
     queuedBatchJobsTitle: 'キュー済みバッチジョブ',
@@ -379,17 +379,6 @@ export const ja = {
     queuedBatchJobsImportReadyCount: 'インポート可能 {0}',
     queuedBatchJobsClosedIssuesCount: '問題あり終了 {0}',
     queuedBatchJobsImportReadyAction: '準備済みをインポート',
-    queuedBatchRecoverRecentAction: '最近のバッチジョブを復旧',
-    queuedBatchRecoverRecentLoading: '最近のジョブを復旧中...',
-    queuedBatchRecoverRecentNotice: '最近のバッチジョブを {0} 件復旧しました。',
-    queuedBatchRecoverRecentAlreadyTrackedNotice:
-        '最近のリモートバッチジョブはすでに一覧で追跡中です。{0} 件を更新しました。',
-    queuedBatchRecoverRecentNoneNotice: '追加で復旧できる最近のリモートバッチジョブは見つかりませんでした。',
-    queuedBatchRecoverRecentLog: 'バッチ一覧から最近のリモートバッチジョブを {0} 件復旧しました。',
-    queuedBatchRecoverRecentRefreshedLog: 'バッチ一覧から追跡中のリモートバッチジョブ {0} 件を更新しました。',
-    queuedBatchRecoverRecentFailedLog: '最近のバッチジョブの復旧に失敗しました: {0}',
-    queuedBatchRecoverRecentMetadataHint:
-        '復旧したリモートジョブは再インポートできますが、Gemini の batch 一覧は元の prompt や参照画像を返さないため、これらの項目には簡略化されたローカル情報のみが入ります。',
     queuedBatchJobsRefreshAll: 'すべて更新',
     queuedBatchJobsTrackedCount: '追跡中 {0}',
     queuedBatchJobsImportedTag: 'インポート済み',
@@ -498,7 +487,7 @@ export const ja = {
     composerEnterNewline: 'Enterキーで改行',
     composerVisibilityVisible: '表示',
     composerVisibilityHidden: '非表示',
-    composerQueueBatchJob: 'バッチジョブに追加',
+    composerQueueBatchJob: 'キューに送信',
     composerAdvancedTitle: '機能対応の詳細設定',
     composerAdvancedDesc: '未対応のコントロールは非表示のままとなり、モデル変更時に安全な初期値へ自動で戻ります。',
     composerAdvancedGenerationSectionTitle: '生成コントロール',

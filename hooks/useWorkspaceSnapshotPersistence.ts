@@ -3,7 +3,6 @@ import {
     BranchContinuationSourceByOriginId,
     BranchNameOverrides,
     GeneratedImage,
-    QueuedBatchJob,
     StageAsset,
     WorkspaceComposerState,
     WorkspaceConversationState,
@@ -14,13 +13,11 @@ import {
     saveSharedWorkspaceSnapshot,
     saveWorkspaceSnapshot,
 } from '../utils/workspacePersistence';
-import { shouldPersistQueuedBatchJob } from '../utils/queuedBatchJobs';
 
 type UseWorkspaceSnapshotPersistenceArgs = {
     history: GeneratedImage[];
     stagedAssets: StageAsset[];
     workflowLogs: string[];
-    queuedJobs: QueuedBatchJob[];
     workspaceSession: WorkspaceSessionState;
     branchNameOverrides: BranchNameOverrides;
     branchContinuationSourceByBranchOriginId: BranchContinuationSourceByOriginId;
@@ -35,7 +32,6 @@ export function useWorkspaceSnapshotPersistence({
     history,
     stagedAssets,
     workflowLogs,
-    queuedJobs,
     workspaceSession,
     branchNameOverrides,
     branchContinuationSourceByBranchOriginId,
@@ -51,7 +47,7 @@ export function useWorkspaceSnapshotPersistence({
                 history,
                 stagedAssets,
                 workflowLogs,
-                queuedJobs: queuedJobs.filter(shouldPersistQueuedBatchJob),
+                queuedJobs: [],
                 workspaceSession,
                 branchState: {
                     nameOverrides: branchNameOverrides,
@@ -72,7 +68,6 @@ export function useWorkspaceSnapshotPersistence({
             conversationState,
             generatedImageUrls,
             history,
-            queuedJobs,
             selectedHistoryId,
             selectedImageIndex,
             stagedAssets,

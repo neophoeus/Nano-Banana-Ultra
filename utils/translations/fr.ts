@@ -367,13 +367,13 @@ export const fr = {
     styleLineArt: 'Line Art',
     styleStorybookIllustration: 'Illustration de Conte',
     queueBatchModeEditor:
-        "Le lot en file d'attente enverra un lot officiel conditionne par image base sur l'editeur en utilisant la base actuelle de l'editeur et les references preparees. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
+        "Cela enverra un lot officiel conditionne par image base sur l'editeur en utilisant l'entree actuelle de l'editeur et les references preparees. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
     queueBatchModeStage:
-        "Le lot en file d'attente enverra un lot officiel conditionne par image de suivi en utilisant l'image actuelle de la scene et les references preparees. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
+        "Cela enverra un lot officiel conditionne par image de suivi en utilisant l'image actuelle de la scene et les references preparees. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
     queueBatchModeReferences:
-        "Le lot en file d'attente enverra un lot officiel pilote par references avec le prompt actuel et le bac de references. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
+        "Cela enverra un lot officiel pilote par references avec le prompt actuel et le bac de references. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
     queueBatchModePromptOnly:
-        "Le lot en file d'attente enverra un lot officiel base uniquement sur le prompt. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
+        "Cela enverra un lot officiel base uniquement sur le prompt. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
     queueBatchConversationNotice:
         "Les lots en file d'attente conservent la lignee source, mais n'envoient pas l'historique officiel des conversations multi-tours. Pour poursuivre une conversation, utilisez le flux de generation normal.",
     queuedBatchJobsTitle: "Lots en file d'attente",
@@ -386,18 +386,6 @@ export const fr = {
     queuedBatchJobsImportReadyCount: '{0} prets a importer',
     queuedBatchJobsClosedIssuesCount: '{0} termines avec problemes',
     queuedBatchJobsImportReadyAction: 'Importer les prets',
-    queuedBatchRecoverRecentAction: 'Recuperer les taches batch recentes',
-    queuedBatchRecoverRecentLoading: 'Recuperation des taches recentes...',
-    queuedBatchRecoverRecentNotice: '{0} taches batch recentes recuperees.',
-    queuedBatchRecoverRecentAlreadyTrackedNotice:
-        'Les taches batch distantes recentes sont deja suivies. {0} entrees ont ete actualisees.',
-    queuedBatchRecoverRecentNoneNotice: "Aucune tache batch distante recente supplementaire n'a ete trouvee.",
-    queuedBatchRecoverRecentLog: '{0} taches batch distantes recentes recuperees depuis la liste des batchs.',
-    queuedBatchRecoverRecentRefreshedLog:
-        '{0} taches batch distantes deja suivies ont ete actualisees depuis la liste des batchs.',
-    queuedBatchRecoverRecentFailedLog: 'Echec de la recuperation des taches batch recentes : {0}',
-    queuedBatchRecoverRecentMetadataHint:
-        "Les taches distantes recuperees peuvent etre importees a nouveau, mais la liste batch de Gemini ne renvoie ni le prompt d'origine ni les images de reference, donc ces entrees n'utilisent que des details locaux simplifies.",
     queuedBatchJobsRefreshAll: 'Tout actualiser',
     queuedBatchJobsTrackedCount: '{0} suivis',
     queuedBatchJobsImportedTag: 'Importe',
@@ -507,7 +495,7 @@ export const fr = {
     composerEnterNewline: 'Appuyer sur Entree pour passer a la ligne',
     composerVisibilityVisible: 'Affiché',
     composerVisibilityHidden: 'Masque',
-    composerQueueBatchJob: 'Ajouter au lot en file',
+    composerQueueBatchJob: 'Envoyer a la file',
     composerAdvancedTitle: 'Parametres avances sensibles aux capacites',
     composerAdvancedDesc:
         'Les controles non pris en charge restent masques et se reinitialisent automatiquement quand le modele change.',

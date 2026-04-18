@@ -687,7 +687,9 @@ function ComposerSettingsPanel({
         resolvedPromptTextareaRef.current?.focus();
     };
     const runningQueueCount = queuedJobs.filter(isQueuedBatchJobActive).length;
-    const importReadyQueueCount = queuedJobs.filter(isQueuedBatchJobAutoImportReady).length;
+    const importReadyQueueCount = queuedJobs.filter(
+        (job) => isQueuedBatchJobAutoImportReady(job) && getImportedQueuedResultCount(job) === 0,
+    ).length;
     const issueQueueCount = queuedJobs.filter(isQueuedBatchJobClosedIssue).length;
     const trackedQueueCount = queuedJobs.length;
     const settledQueueCount = trackedQueueCount - runningQueueCount;
@@ -1040,7 +1042,7 @@ function ComposerSettingsPanel({
                         <InfoTooltip
                             content={queueBatchModeSummary}
                             buttonLabel={t('composerQueueBatchJob')}
-                            ariaLabel={t('queuedBatchJobsTitle')}
+                            ariaLabel={queueBatchModeSummary}
                             dataTestId="composer-queue-batch-mode-hint"
                             tone="light"
                             align="right"

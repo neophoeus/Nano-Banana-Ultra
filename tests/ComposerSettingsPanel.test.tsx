@@ -195,11 +195,14 @@ describe('ComposerSettingsPanel toolbar layout', () => {
         expect(markup).toContain('composer-queue-batch-mode-hint-trigger');
         expect(markup).toContain('composer-queue-batch-mode-hint');
         expect(markup).toContain('composer-queue-row');
+        expect(markup).toContain('Send to Queue');
         expect(markup).toContain('composer-generate-card');
         expect(markup).toContain('composer-generate-actions');
         expect(markup).toContain('rounded-[30px]');
         expect(markup).toContain('rounded-[28px]');
         expect(markup).toContain('composer-queue-status-button');
+        expect(markup).toContain('aria-label="Queued batch runs as a separate official job workflow."');
+        expect(markup).not.toContain('aria-label="Queued Batch Jobs"');
         expect(markup).toContain('0 tracked');
         expect(markup).toContain('0 active');
         expect(markup).toContain('0 ready to import');
@@ -347,7 +350,6 @@ describe('ComposerSettingsPanel toolbar layout', () => {
                             startedAt: 1710400005000,
                             completedAt: null,
                             lastPolledAt: 1710400010000,
-                            importedAt: null,
                             error: null,
                         },
                     ] as any
@@ -399,7 +401,6 @@ describe('ComposerSettingsPanel toolbar layout', () => {
                             startedAt: null,
                             completedAt: null,
                             lastPolledAt: null,
-                            importedAt: null,
                             submissionPending: true,
                             hasInlinedResponses: false,
                             error: null,
@@ -429,7 +430,6 @@ describe('ComposerSettingsPanel toolbar layout', () => {
                             startedAt: 1710400001000,
                             completedAt: 1710400002000,
                             lastPolledAt: 1710400002000,
-                            importedAt: null,
                             hasInlinedResponses: false,
                             error: null,
                         },
@@ -458,7 +458,6 @@ describe('ComposerSettingsPanel toolbar layout', () => {
                             startedAt: 1710400003000,
                             completedAt: 1710400004000,
                             lastPolledAt: 1710400004000,
-                            importedAt: null,
                             hasInlinedResponses: true,
                             error: null,
                         },

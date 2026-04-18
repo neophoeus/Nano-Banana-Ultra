@@ -1343,7 +1343,7 @@ const zhCnHistoryStageBaseline = {
 const zhTwComposerControlsBaseline = {
     composerEnterSends: '按下 Enter 送出',
     composerEnterNewline: '按下 Enter 換行',
-    composerQueueBatchJob: '排入批次工作',
+    composerQueueBatchJob: '送至佇列',
     composerActionPanelTitle: '建立',
     composerActionPanelDesc: '生成仍是主要動作，後續編修與工作區操作保持靠近，但語氣更收斂。',
     composerAdvancedEyebrow: '深度控制',
@@ -1352,7 +1352,7 @@ const zhTwComposerControlsBaseline = {
 const zhCnComposerControlsBaseline = {
     composerEnterSends: '按下 Enter 发送',
     composerEnterNewline: '按下 Enter 换行',
-    composerQueueBatchJob: '加入批处理队列',
+    composerQueueBatchJob: '发送到队列',
     composerActionPanelTitle: '创建',
     composerActionPanelDesc: '生成仍然是主动作，后续编辑和工作区操作保持靠近，但语气更克制。',
     composerAdvancedEyebrow: '深度控制',
@@ -1443,27 +1443,27 @@ const ruComposerControlChromeBaseline = {
 } as const;
 
 const jaComposerQueueBatchJobBaseline = {
-    composerQueueBatchJob: 'バッチジョブに追加',
+    composerQueueBatchJob: 'キューに送信',
 } as const;
 
 const koComposerQueueBatchJobBaseline = {
-    composerQueueBatchJob: '배치 작업에 추가',
+    composerQueueBatchJob: '대기열로 보내기',
 } as const;
 
 const esComposerQueueBatchJobBaseline = {
-    composerQueueBatchJob: 'Poner en cola como trabajo por lotes',
+    composerQueueBatchJob: 'Enviar a la cola',
 } as const;
 
 const frComposerQueueBatchJobBaseline = {
-    composerQueueBatchJob: 'Ajouter au lot en file',
+    composerQueueBatchJob: 'Envoyer a la file',
 } as const;
 
 const deComposerQueueBatchJobBaseline = {
-    composerQueueBatchJob: 'Als Batch-Job einreihen',
+    composerQueueBatchJob: 'An Warteschlange senden',
 } as const;
 
 const ruComposerQueueBatchJobBaseline = {
-    composerQueueBatchJob: 'Поставить в очередь как пакетное задание',
+    composerQueueBatchJob: 'Отправить в очередь',
 } as const;
 
 const zhTwComposerThoughtTempBaseline = {
@@ -1578,13 +1578,13 @@ const zhCnQueuedBatchDescBaseline = {
 
 const jaQueuedBatchWordingBaseline = {
     queueBatchModeEditor:
-        'キュー投入バッチジョブは、現在のエディターベースとステージ済み参照を使って、編集ベースの公式画像条件付きバッチを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
+        'これは、現在のエディター入力とステージ済み参照を使って、編集ベースの公式画像条件付きバッチを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
     queueBatchModeStage:
-        'キュー投入バッチジョブは、現在のステージ画像とステージ済み参照を使って、後続生成向けの公式画像条件付きバッチを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
+        'これは、現在のステージ画像とステージ済み参照を使って、後続生成向けの公式画像条件付きバッチを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
     queueBatchModeReferences:
-        'キュー投入バッチジョブは、現在のプロンプトと参照トレイを使って、参照駆動の公式バッチを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
+        'これは、現在のプロンプトと参照トレイを使って、参照駆動の公式バッチを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
     queueBatchModePromptOnly:
-        'キュー投入バッチジョブは、プロンプトのみの公式バッチジョブを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
+        'これは、プロンプトのみの公式バッチジョブを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
     queueBatchConversationNotice:
         'キュー投入バッチジョブはソースの系統を保持しますが、公式の複数ターン会話履歴は送信しません。会話を継続する場合は通常の生成を使ってください。',
     queuedBatchJobsWorkflowHint:
@@ -1599,13 +1599,13 @@ const jaQueuedBatchWordingBaseline = {
 
 const koQueuedBatchWordingBaseline = {
     queueBatchModeEditor:
-        '대기열 배치 작업은 현재 에디터 베이스와 스테이징된 참조를 사용해 편집 기반의 공식 이미지 조건부 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
+        '이 작업은 현재 에디터 입력과 스테이징된 참조를 사용해 편집 기반의 공식 이미지 조건부 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
     queueBatchModeStage:
-        '대기열 배치 작업은 현재 스테이지 이미지와 스테이징된 참조를 사용해 후속 생성용 공식 이미지 조건부 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
+        '이 작업은 현재 스테이지 이미지와 스테이징된 참조를 사용해 후속 생성용 공식 이미지 조건부 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
     queueBatchModeReferences:
-        '대기열 배치 작업은 현재 프롬프트와 참조 트레이를 사용해 공식 참조 기반 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
+        '이 작업은 현재 프롬프트와 참조 트레이를 사용해 공식 참조 기반 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
     queueBatchModePromptOnly:
-        '대기열 배치 작업은 프롬프트만 사용하는 공식 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
+        '이 작업은 프롬프트만 사용하는 공식 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
     queueBatchConversationNotice:
         '대기열 배치 작업은 원본 계보를 유지하지만 공식 다중 턴 대화 기록은 전송하지 않습니다. 대화를 이어가려면 일반 생성 흐름을 사용하세요.',
     queuedBatchJobsWorkflowHint:
@@ -1620,13 +1620,13 @@ const koQueuedBatchWordingBaseline = {
 
 const esQueuedBatchWordingBaseline = {
     queueBatchModeEditor:
-        'El trabajo por lotes en cola enviara un lote oficial condicionado por imagen basado en el editor usando la base actual del editor y las referencias preparadas. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
+        'Esto enviara un lote oficial condicionado por imagen basado en el editor usando la entrada actual del editor y las referencias preparadas. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
     queueBatchModeStage:
-        'El trabajo por lotes en cola enviara un lote oficial condicionado por imagen de seguimiento usando la imagen actual del escenario y las referencias preparadas. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
+        'Esto enviara un lote oficial condicionado por imagen de seguimiento usando la imagen actual del escenario y las referencias preparadas. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
     queueBatchModeReferences:
-        'El trabajo por lotes en cola enviara un lote oficial guiado por referencias usando el prompt actual y la bandeja de referencias. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
+        'Esto enviara un lote oficial guiado por referencias usando el prompt actual y la bandeja de referencias. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
     queueBatchModePromptOnly:
-        'El trabajo por lotes en cola enviara un lote oficial basado solo en el prompt. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
+        'Esto enviara un lote oficial basado solo en el prompt. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
     queueBatchConversationNotice:
         'Los trabajos por lotes en cola conservan el linaje de origen, pero no envian el historial oficial de conversacion de varios turnos. Para continuar un chat, usa la generacion normal.',
     queuedBatchJobsWorkflowHint:
@@ -1641,13 +1641,13 @@ const esQueuedBatchWordingBaseline = {
 
 const frQueuedBatchWordingBaseline = {
     queueBatchModeEditor:
-        "Le lot en file d'attente enverra un lot officiel conditionne par image base sur l'editeur en utilisant la base actuelle de l'editeur et les references preparees. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
+        "Cela enverra un lot officiel conditionne par image base sur l'editeur en utilisant l'entree actuelle de l'editeur et les references preparees. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
     queueBatchModeStage:
-        "Le lot en file d'attente enverra un lot officiel conditionne par image de suivi en utilisant l'image actuelle de la scene et les references preparees. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
+        "Cela enverra un lot officiel conditionne par image de suivi en utilisant l'image actuelle de la scene et les references preparees. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
     queueBatchModeReferences:
-        "Le lot en file d'attente enverra un lot officiel pilote par references avec le prompt actuel et le bac de references. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
+        "Cela enverra un lot officiel pilote par references avec le prompt actuel et le bac de references. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
     queueBatchModePromptOnly:
-        "Le lot en file d'attente enverra un lot officiel base uniquement sur le prompt. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
+        "Cela enverra un lot officiel base uniquement sur le prompt. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
     queueBatchConversationNotice:
         "Les lots en file d'attente conservent la lignee source, mais n'envoient pas l'historique officiel des conversations multi-tours. Pour poursuivre une conversation, utilisez le flux de generation normal.",
     queuedBatchJobsWorkflowHint:
@@ -1662,13 +1662,13 @@ const frQueuedBatchWordingBaseline = {
 
 const deQueuedBatchWordingBaseline = {
     queueBatchModeEditor:
-        'Der Batchauftrag in der Warteschlange sendet einen offiziellen bildkonditionierten Batch auf Editor-Basis mit der aktuellen Editor-Basis und den vorbereiteten Referenzen. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
+        'Dies sendet einen offiziellen bildkonditionierten Batch auf Editor-Basis mit der aktuellen Editoreingabe und den vorbereiteten Referenzen. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
     queueBatchModeStage:
-        'Der Batchauftrag in der Warteschlange sendet einen offiziellen bildkonditionierten Folge-Batch mit dem aktuellen Stufenbild und den vorbereiteten Referenzen. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
+        'Dies sendet einen offiziellen bildkonditionierten Folge-Batch mit dem aktuellen Stufenbild und den vorbereiteten Referenzen. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
     queueBatchModeReferences:
-        'Der Batchauftrag in der Warteschlange sendet einen offiziellen referenzgesteuerten Batch mit dem aktuellen Prompt und der Referenzablage. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
+        'Dies sendet einen offiziellen referenzgesteuerten Batch mit dem aktuellen Prompt und der Referenzablage. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
     queueBatchModePromptOnly:
-        'Der Batchauftrag in der Warteschlange sendet einen offiziellen Batchauftrag nur mit Prompt. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
+        'Dies sendet einen offiziellen Batchauftrag nur mit Prompt. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
     queueBatchConversationNotice:
         'Batchauftrage in der Warteschlange behalten die Quellherkunft bei, senden aber keinen offiziellen Multi-Turn-Konversationsverlauf. Fur Chat-Fortsetzung verwenden Sie den normalen Generierungsablauf.',
     queuedBatchJobsWorkflowHint:
@@ -1683,13 +1683,13 @@ const deQueuedBatchWordingBaseline = {
 
 const ruQueuedBatchWordingBaseline = {
     queueBatchModeEditor:
-        'Пакетная задача в очереди отправит официальный пакет с условием по изображению на основе редактора, используя текущую базу редактора и подготовленные референсы. Пакетные задачи в очереди всегда используют вывод только изображений и не запрашивают возврат мыслей.',
+        'Это отправит официальный пакет с условием по изображению на основе редактора, используя текущий ввод редактора и подготовленные референсы. Пакетные задачи в очереди всегда используют вывод только изображений и не запрашивают возврат мыслей.',
     queueBatchModeStage:
-        'Пакетная задача в очереди отправит официальный пакет с условием по изображению для продолжения, используя текущее изображение сцены и подготовленные референсы. Пакетные задачи в очереди всегда используют вывод только изображений и не запрашивают возврат мыслей.',
+        'Это отправит официальный пакет с условием по изображению для продолжения, используя текущее изображение сцены и подготовленные референсы. Пакетные задачи в очереди всегда используют вывод только изображений и не запрашивают возврат мыслей.',
     queueBatchModeReferences:
-        'Пакетная задача в очереди отправит официальный пакет с опорой на референсы, используя текущий промпт и лоток референсов. Пакетные задачи в очереди всегда используют вывод только изображений и не запрашивают возврат мыслей.',
+        'Это отправит официальный пакет с опорой на референсы, используя текущий промпт и лоток референсов. Пакетные задачи в очереди всегда используют вывод только изображений и не запрашивают возврат мыслей.',
     queueBatchModePromptOnly:
-        'Пакетная задача в очереди отправит официальный пакет только по промпту. Пакетные задачи в очереди всегда используют вывод только изображений и не запрашивают возврат мыслей.',
+        'Это отправит официальный пакет только по промпту. Пакетные задачи в очереди всегда используют вывод только изображений и не запрашивают возврат мыслей.',
     queueBatchConversationNotice:
         'Пакетные задачи в очереди сохраняют линию происхождения источника, но не отправляют официальный многходовый контекст диалога. Чтобы продолжить диалог, используйте обычную генерацию.',
     queuedBatchJobsWorkflowHint:

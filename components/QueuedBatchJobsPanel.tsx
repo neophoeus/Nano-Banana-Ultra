@@ -9,7 +9,6 @@ import {
     isQueuedBatchJobClearableIssue,
     isQueuedBatchJobClosedIssue,
     isQueuedBatchJobExtractionFailure,
-    isQueuedBatchJobImported,
     isQueuedBatchJobImportReady,
     isQueuedBatchJobNoPayload,
     isQueuedBatchJobRetryableImport,
@@ -21,12 +20,10 @@ type QueuedBatchJobsPanelProps = {
     queuedJobs: QueuedBatchJob[];
     surface?: 'default' | 'embedded';
     queueBatchConversationNotice: string | null;
-    isRecoveringRecentQueuedJobs?: boolean;
     getLineageActionLabel: (action?: QueuedBatchJob['lineageAction']) => string;
     getImportedQueuedResultCount: (job: QueuedBatchJob) => number;
     getImportedQueuedHistoryItems: (job: QueuedBatchJob) => GeneratedImage[];
     activeImportedQueuedHistoryId: string | null;
-    onRecoverRecentQueuedJobs: () => void;
     onImportAllQueuedJobs: () => void;
     onPollAllQueuedJobs: () => void;
     onPollQueuedJob: (localId: string) => void;
@@ -103,7 +100,11 @@ const getQueuedJobAgeWarning = (job: QueuedBatchJob, t: (key: string) => string,
     };
 };
 
-const buildJobTimeline = (job: QueuedBatchJob, t: (key: string) => string): JobTimelineEvent[] => {
+const buildJobTimeline = (
+    job: QueuedBatchJob,
+    importedHistoryItems: GeneratedImage[],
+    t: (key: string) => string,
+): JobTimelineEvent[] => {
     const events: JobTimelineEvent[] = [
         {
             key: 'submitted',
@@ -141,11 +142,16 @@ const buildJobTimeline = (job: QueuedBatchJob, t: (key: string) => string): JobT
         });
     }
 
-    if (job.importedAt) {
+    const importedTimestamp = importedHistoryItems.reduce(
+        (latestTimestamp, item) => Math.max(latestTimestamp, item.createdAt),
+        0,
+    );
+
+    if (importedTimestamp > 0) {
         events.push({
             key: 'imported',
             label: t('queuedBatchTimelineImported'),
-            timestamp: job.importedAt,
+            timestamp: importedTimestamp,
             toneClassName: 'border-emerald-200 text-emerald-700 dark:border-emerald-500/40 dark:text-emerald-300',
         });
     }
@@ -201,12 +207,10 @@ export default function QueuedBatchJobsPanel({
     queuedJobs,
     surface = 'default',
     queueBatchConversationNotice,
-    isRecoveringRecentQueuedJobs = false,
     getLineageActionLabel,
     getImportedQueuedResultCount,
     getImportedQueuedHistoryItems,
     activeImportedQueuedHistoryId,
-    onRecoverRecentQueuedJobs,
     onImportAllQueuedJobs,
     onPollAllQueuedJobs,
     onPollQueuedJob,
@@ -287,11 +291,14 @@ export default function QueuedBatchJobsPanel({
             </div>
         );
     };
-    const importReadyCount = queuedJobs.filter(isQueuedBatchJobAutoImportReady).length;
+    const hasImportedQueuedResults = (job: QueuedBatchJob) => getImportedQueuedResultCount(job) > 0;
+    const isReadyForCurrentWorkspaceImport = (job: QueuedBatchJob) =>
+        isQueuedBatchJobAutoImportReady(job) && !hasImportedQueuedResults(job);
+    const importReadyCount = queuedJobs.filter(isReadyForCurrentWorkspaceImport).length;
     const runningCount = queuedJobs.filter(isQueuedBatchJobActive).length;
     const failedCount = queuedJobs.filter((job) => isQueuedBatchJobClosedIssue(job)).length;
     const clearableIssueCount = queuedJobs.filter(isQueuedBatchJobClearableIssue).length;
-    const importedCount = queuedJobs.filter(isQueuedBatchJobImported).length;
+    const importedCount = queuedJobs.filter(hasImportedQueuedResults).length;
     const currentTimestamp = Date.now();
 
     const getQueuedJobStateLabel = (job: QueuedBatchJob) => {
@@ -315,19 +322,6 @@ export default function QueuedBatchJobsPanel({
                     <div className="mt-2 text-xs leading-6 text-gray-500 dark:text-gray-400">
                         {t('queuedBatchJobsWorkflowHint')}
                     </div>
-                    <div className="mt-3 text-xs leading-6 text-gray-500 dark:text-gray-400">
-                        {t('queuedBatchRecoverRecentMetadataHint')}
-                    </div>
-                    <button
-                        data-testid="queued-batch-recover-recent-empty"
-                        onClick={onRecoverRecentQueuedJobs}
-                        disabled={isRecoveringRecentQueuedJobs}
-                        className="mt-4 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:bg-amber-500/20"
-                    >
-                        {isRecoveringRecentQueuedJobs
-                            ? t('queuedBatchRecoverRecentLoading')
-                            : t('queuedBatchRecoverRecentAction')}
-                    </button>
                 </div>
             );
         }
@@ -338,19 +332,6 @@ export default function QueuedBatchJobsPanel({
                     {t('queuedBatchJobsTrackedCount').replace('{0}', '0')}
                 </div>
                 <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t('queuedBatchJobsWorkflowHint')}</div>
-                <div className="mt-2 text-xs leading-6 text-gray-500 dark:text-gray-400">
-                    {t('queuedBatchRecoverRecentMetadataHint')}
-                </div>
-                <button
-                    data-testid="queued-batch-recover-recent-empty"
-                    onClick={onRecoverRecentQueuedJobs}
-                    disabled={isRecoveringRecentQueuedJobs}
-                    className="mt-4 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200 dark:hover:bg-amber-500/20"
-                >
-                    {isRecoveringRecentQueuedJobs
-                        ? t('queuedBatchRecoverRecentLoading')
-                        : t('queuedBatchRecoverRecentAction')}
-                </button>
             </div>
         );
     }
@@ -407,16 +388,6 @@ export default function QueuedBatchJobsPanel({
                             {t('queuedBatchJobsMonitorGroup')}
                         </div>
                         <div className="mt-2 flex flex-wrap items-center gap-2">
-                            <button
-                                data-testid="queued-batch-recover-recent"
-                                onClick={onRecoverRecentQueuedJobs}
-                                disabled={isRecoveringRecentQueuedJobs}
-                                className={neutralActionButtonClassName}
-                            >
-                                {isRecoveringRecentQueuedJobs
-                                    ? t('queuedBatchRecoverRecentLoading')
-                                    : t('queuedBatchRecoverRecentAction')}
-                            </button>
                             <button
                                 data-testid="queued-batch-refresh-all"
                                 onClick={onPollAllQueuedJobs}
@@ -482,13 +453,17 @@ export default function QueuedBatchJobsPanel({
                     const isRestoredHistoricalIssue = Boolean(
                         job.restoredFromSnapshot && isQueuedBatchJobClosedIssue(job),
                     );
-                    const canImport = isQueuedBatchJobImportReady(job) && !isQueuedBatchJobExtractionFailure(job);
-                    const canRetryImport = isQueuedBatchJobRetryableImport(job);
+                    const importedHistoryItems = getImportedQueuedHistoryItems(job);
+                    const importedResultCount = importedHistoryItems.length;
+                    const hasImportedResultsInCurrentWorkspace = importedResultCount > 0;
+                    const canImport =
+                        isQueuedBatchJobImportReady(job) &&
+                        !isQueuedBatchJobExtractionFailure(job) &&
+                        !hasImportedResultsInCurrentWorkspace;
+                    const canRetryImport = isQueuedBatchJobRetryableImport(job) && !hasImportedResultsInCurrentWorkspace;
                     const isImportUnavailable = isQueuedBatchJobNoPayload(job);
-                    const canOpenImported = Boolean(job.importedAt);
+                    const canOpenImported = hasImportedResultsInCurrentWorkspace;
                     const canCancel = !job.submissionPending && isQueuedBatchJobActive(job);
-                    const importedResultCount = canOpenImported ? getImportedQueuedResultCount(job) : 0;
-                    const importedHistoryItems = canOpenImported ? getImportedQueuedHistoryItems(job) : [];
                     const importDiagnostic = getQueuedBatchJobImportDiagnostic(job);
                     const importIssues = Array.isArray(job.importIssues)
                         ? job.importIssues.filter((issue) => issue.error.trim().length > 0)
@@ -535,7 +510,7 @@ export default function QueuedBatchJobsPanel({
                             : isQueuedBatchJobClosedIssue(job)
                               ? 'text-rose-700 dark:text-rose-300'
                               : 'text-amber-700 dark:text-amber-300';
-                    const timelineEvents = buildJobTimeline(job, t);
+                                        const timelineEvents = buildJobTimeline(job, importedHistoryItems, t);
                     const batchStatsSummary = formatBatchStatsSummary(job, t);
                     const ageWarning = getQueuedJobAgeWarning(job, t, currentTimestamp);
                     const monitorActions: React.ReactNode[] = [];
@@ -694,7 +669,7 @@ export default function QueuedBatchJobsPanel({
                                                 {ageWarning.label}
                                             </span>
                                         )}
-                                        {job.importedAt && (
+                                        {hasImportedResultsInCurrentWorkspace && (
                                             <span
                                                 data-testid={`queued-batch-job-${job.localId}-imported`}
                                                 className="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"

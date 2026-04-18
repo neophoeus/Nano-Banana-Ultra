@@ -610,6 +610,89 @@ describe('imageSavePlugin official conversation integration', () => {
         expect(afterClearResponse.body.snapshot).toBeNull();
     });
 
+    it('persists and reloads the shared queued batch space backup route', async () => {
+        const { imageSavePlugin } = await import('../plugins/imageSavePlugin');
+        const handlers = new Map<string, MiddlewareHandler>();
+        const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nano-banana-shared-batch-space-'));
+        tempDirs.push(outputDir);
+        const plugin = imageSavePlugin({ outputDir, geminiApiKey: 'test-key' });
+        const configureServer =
+            typeof plugin.configureServer === 'function' ? plugin.configureServer : plugin.configureServer?.handler;
+
+        configureServer?.({
+            middlewares: {
+                use(route: string, handler: MiddlewareHandler) {
+                    handlers.set(route, handler);
+                },
+            },
+        } as any);
+
+        const queuedBatchSpaceHandler = handlers.get('/api/queued-batch-space');
+        expect(queuedBatchSpaceHandler).toBeTruthy();
+
+        const payload = {
+            queuedJobs: [
+                {
+                    localId: 'queued-job-1',
+                    name: 'batches/queued-job-1',
+                    displayName: 'Persisted queued job',
+                    state: 'JOB_STATE_RUNNING',
+                    model: 'gemini-3.1-flash-image-preview',
+                    prompt: 'Persist this batch job',
+                    generationMode: 'Text to Image',
+                    aspectRatio: '1:1',
+                    imageSize: '2K',
+                    style: 'None',
+                    outputFormat: 'images-only',
+                    temperature: 1,
+                    thinkingLevel: 'minimal',
+                    includeThoughts: true,
+                    googleSearch: false,
+                    imageSearch: false,
+                    batchSize: 2,
+                    objectImageCount: 0,
+                    characterImageCount: 0,
+                    createdAt: 100,
+                    updatedAt: 110,
+                    startedAt: 105,
+                    completedAt: null,
+                    lastPolledAt: 109,
+                    hasInlinedResponses: true,
+                    submissionPending: false,
+                    importDiagnostic: null,
+                    importIssues: null,
+                    error: null,
+                    parentHistoryId: null,
+                    rootHistoryId: null,
+                    sourceHistoryId: null,
+                    lineageAction: 'root',
+                    lineageDepth: 0,
+                },
+            ],
+        };
+
+        const postResponse = await invokeJsonRoute(queuedBatchSpaceHandler!, payload);
+        expect(postResponse.status).toBe(200);
+        expect(postResponse.body.success).toBe(true);
+        expect(fs.existsSync(path.join(outputDir, 'queued_batch_space.json'))).toBe(true);
+
+        const getResponse = await invokeGetRoute(queuedBatchSpaceHandler!);
+        expect(getResponse.status).toBe(200);
+        expect(getResponse.body.queuedJobs).toHaveLength(1);
+        expect(getResponse.body.queuedJobs[0]?.displayName).toBe('Persisted queued job');
+
+        const clearResponse = await invokeJsonRoute(queuedBatchSpaceHandler!, {
+            queuedJobs: [],
+        });
+        expect(clearResponse.status).toBe(200);
+        expect(clearResponse.body.cleared).toBe(true);
+        expect(fs.existsSync(path.join(outputDir, 'queued_batch_space.json'))).toBe(false);
+
+        const afterClearResponse = await invokeGetRoute(queuedBatchSpaceHandler!);
+        expect(afterClearResponse.status).toBe(200);
+        expect(afterClearResponse.body.snapshot).toBeNull();
+    });
+
     it('falls back to copy-based workspace snapshot replacement when rename hits EPERM', async () => {
         const { imageSavePlugin } = await import('../plugins/imageSavePlugin');
         const handlers = new Map<string, MiddlewareHandler>();

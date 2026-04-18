@@ -74,7 +74,6 @@ const incomingSnapshot: WorkspacePersistenceSnapshot = {
             startedAt: null,
             completedAt: null,
             lastPolledAt: null,
-            importedAt: null,
             error: null,
         },
     ],
@@ -261,7 +260,7 @@ describe('workspacePersistence', () => {
             importedBranch?.id,
         ]);
         expect(merged.workflowLogs).toEqual(baseSnapshot.workflowLogs);
-        expect(merged.queuedJobs).toEqual(incomingSnapshot.queuedJobs);
+        expect(merged.queuedJobs).toEqual([]);
     });
 
     it('sanitizes and preserves queued jobs in workspace snapshots', () => {
@@ -271,6 +270,36 @@ describe('workspacePersistence', () => {
         });
 
         expect(restored.queuedJobs).toEqual(incomingSnapshot.queuedJobs);
+    });
+
+    it('omits queued jobs from persisted local workspace snapshots', () => {
+        saveWorkspaceSnapshot({
+            ...EMPTY_WORKSPACE_SNAPSHOT,
+            queuedJobs: incomingSnapshot.queuedJobs,
+            composerState: {
+                ...EMPTY_WORKSPACE_SNAPSHOT.composerState,
+                prompt: 'Persist only the workspace prompt',
+            },
+        });
+
+        const rawSnapshot = localStorage.getItem(WORKSPACE_SNAPSHOT_STORAGE_KEY);
+        expect(rawSnapshot).toBeTruthy();
+
+        const persisted = JSON.parse(rawSnapshot || '{}') as WorkspacePersistenceSnapshot;
+        expect(persisted.queuedJobs).toEqual([]);
+        expect(persisted.composerState.prompt).toBe('Persist only the workspace prompt');
+    });
+
+    it('does not upload a shared workspace snapshot when queued jobs are the only content', async () => {
+        const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+        vi.stubGlobal('fetch', fetchMock);
+
+        await saveSharedWorkspaceSnapshot({
+            ...EMPTY_WORKSPACE_SNAPSHOT,
+            queuedJobs: incomingSnapshot.queuedJobs,
+        });
+
+        expect(fetchMock).not.toHaveBeenCalled();
     });
 
     it('migrates legacy succeeded queued jobs so restore keeps them import-ready until repolled', () => {
@@ -302,7 +331,6 @@ describe('workspacePersistence', () => {
                     startedAt: 1710400001000,
                     completedAt: 1710400005000,
                     lastPolledAt: 1710400005000,
-                    importedAt: null,
                     error: null,
                 },
             ],
@@ -313,7 +341,6 @@ describe('workspacePersistence', () => {
             expect.objectContaining({
                 localId: 'legacy-succeeded-job',
                 state: 'JOB_STATE_SUCCEEDED',
-                importedAt: null,
                 hasInlinedResponses: true,
             }),
         );
@@ -349,7 +376,6 @@ describe('workspacePersistence', () => {
                     startedAt: 1710400001000,
                     completedAt: 1710400005000,
                     lastPolledAt: 1710400005000,
-                    importedAt: null,
                     hasInlinedResponses: true,
                     importDiagnostic: 'extraction-failure',
                     importIssues: [

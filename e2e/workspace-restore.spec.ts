@@ -532,7 +532,6 @@ const queuedBatchPanelSnapshot = {
             startedAt: null,
             completedAt: null,
             lastPolledAt: null,
-            importedAt: null,
             error: null,
             sourceHistoryId: 'queued-source-turn',
             lineageAction: 'continue',
@@ -562,7 +561,6 @@ const queuedBatchPanelSnapshot = {
             startedAt: 1710400015000,
             completedAt: 1710400020000,
             lastPolledAt: 1710400030000,
-            importedAt: null,
             hasInlinedResponses: true,
             error: null,
         },
@@ -591,7 +589,6 @@ const queuedBatchPanelSnapshot = {
             startedAt: 1710400045000,
             completedAt: 1710400050000,
             lastPolledAt: 1710400060000,
-            importedAt: 1710400065000,
             error: null,
         },
         {
@@ -619,7 +616,6 @@ const queuedBatchPanelSnapshot = {
             startedAt: 1710400075000,
             completedAt: 1710400080000,
             lastPolledAt: 1710400080000,
-            importedAt: null,
             error: 'Upstream batch failed.',
         },
     ],
@@ -896,8 +892,15 @@ const expectProgressDetailEmptyStateVisible = async (page: Page) => {
     await expect(modal.getByTestId('workspace-progress-detail-selected-panel')).toBeVisible();
 };
 
+const queuedBatchDetailModal = (page: Page) =>
+    page
+        .locator(
+            '[data-testid="workspace-queued-batch-space-modal"], [data-testid="workspace-queued-batch-detail-modal"]',
+        )
+        .first();
+
 const openQueuedBatchDetailModal = async (page: Page) => {
-    const modal = page.getByTestId('workspace-queued-batch-detail-modal');
+    const modal = queuedBatchDetailModal(page);
     if (await isLocatorVisible(modal)) {
         return;
     }
@@ -944,6 +947,18 @@ const closeProgressDetailModal = async (page: Page) => {
     await expect(page.getByTestId('workspace-progress-detail-modal')).toHaveCount(0);
 };
 
+const closeQueuedBatchDetailModal = async (page: Page) => {
+    const modal = queuedBatchDetailModal(page);
+    if (!(await isLocatorVisible(modal))) {
+        return;
+    }
+
+    await modal
+        .getByRole('button', { name: tt('workspaceViewerClose') })
+        .evaluate((button: HTMLButtonElement) => button.click());
+    await expect(queuedBatchDetailModal(page)).toHaveCount(0);
+};
+
 type WorkspaceDetailModalName = 'versions' | 'sources' | 'progress' | 'queued-jobs';
 
 const getVisibleWorkspaceDetailModal = async (page: Page): Promise<WorkspaceDetailModalName | null> => {
@@ -959,7 +974,7 @@ const getVisibleWorkspaceDetailModal = async (page: Page): Promise<WorkspaceDeta
         return 'versions';
     }
 
-    if (await isLocatorVisible(page.getByTestId('workspace-queued-batch-detail-modal'))) {
+    if (await isLocatorVisible(queuedBatchDetailModal(page))) {
         return 'queued-jobs';
     }
 
@@ -1229,14 +1244,14 @@ const readPersistedQueuedJobByName = async (page: Page, targetJobName: string) =
     await expect
         .poll(async () =>
             page.evaluate((expectedJobName) => {
-                const raw = localStorage.getItem('nbu_workspaceSnapshot');
+                const raw = localStorage.getItem('nbu_queuedBatchSpace');
                 if (!raw) {
                     return null;
                 }
 
-                const snapshot = JSON.parse(raw);
-                const queuedJob = Array.isArray(snapshot.queuedJobs)
-                    ? snapshot.queuedJobs.find((item: { name?: string }) => item.name === expectedJobName)
+                const queuedBatchSpace = JSON.parse(raw);
+                const queuedJob = Array.isArray(queuedBatchSpace.queuedJobs)
+                    ? queuedBatchSpace.queuedJobs.find((item: { name?: string }) => item.name === expectedJobName)
                     : null;
 
                 return queuedJob?.name || null;
@@ -1245,14 +1260,14 @@ const readPersistedQueuedJobByName = async (page: Page, targetJobName: string) =
         .not.toBeNull();
 
     return page.evaluate((expectedJobName) => {
-        const raw = localStorage.getItem('nbu_workspaceSnapshot');
+        const raw = localStorage.getItem('nbu_queuedBatchSpace');
         if (!raw) {
             return null;
         }
 
-        const snapshot = JSON.parse(raw);
-        const queuedJob = Array.isArray(snapshot.queuedJobs)
-            ? snapshot.queuedJobs.find((item: { name?: string }) => item.name === expectedJobName) || null
+        const queuedBatchSpace = JSON.parse(raw);
+        const queuedJob = Array.isArray(queuedBatchSpace.queuedJobs)
+            ? queuedBatchSpace.queuedJobs.find((item: { name?: string }) => item.name === expectedJobName) || null
             : null;
 
         if (!queuedJob) {
@@ -1875,7 +1890,11 @@ const readWorkspaceSummaryCount = async (locator: Locator) => {
     return Number(match[0]);
 };
 
-const openFreshWorkspace = async (page: Page) => {
+const openFreshWorkspace = async (
+    page: Page,
+    options?: { sharedQueuedBatchSpaceSnapshot?: Record<string, unknown> | null },
+) => {
+    await installSharedQueuedBatchSpaceFixtureRoute(page, options?.sharedQueuedBatchSpaceSnapshot ?? null);
     await page.goto('/');
     await page.evaluate(() => {
         localStorage.clear();
@@ -2000,7 +2019,45 @@ const installQueuedBatchGetFixtureRoute = async (page: Page, snapshot: Record<st
     });
 };
 
-const openWorkspaceWithSnapshot = async (page: Page, snapshot: Record<string, unknown>) => {
+const installSharedQueuedBatchSpaceFixtureRoute = async (
+    page: Page,
+    initialSnapshot: Record<string, unknown> | null,
+) => {
+    let currentSnapshot = initialSnapshot;
+
+    await page.unroute('**/api/queued-batch-space');
+    await page.route('**/api/queued-batch-space', async (route) => {
+        if (route.request().method() === 'GET') {
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ snapshot: currentSnapshot }),
+            });
+            return;
+        }
+
+        if (route.request().method() === 'POST') {
+            const payload = JSON.parse(route.request().postData() || '{}') as { queuedJobs?: unknown[] };
+            currentSnapshot = Array.isArray(payload.queuedJobs) && payload.queuedJobs.length > 0 ? payload : null;
+
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify(currentSnapshot ? { success: true } : { cleared: true }),
+            });
+            return;
+        }
+
+        await route.fallback();
+    });
+};
+
+const openWorkspaceWithSnapshot = async (
+    page: Page,
+    snapshot: Record<string, unknown>,
+    options?: { sharedQueuedBatchSpaceSnapshot?: Record<string, unknown> | null },
+) => {
+    await installSharedQueuedBatchSpaceFixtureRoute(page, options?.sharedQueuedBatchSpaceSnapshot ?? null);
     await installQueuedBatchGetFixtureRoute(page, snapshot);
     await page.addInitScript((nextSnapshot) => {
         localStorage.clear();
@@ -2011,7 +2068,12 @@ const openWorkspaceWithSnapshot = async (page: Page, snapshot: Record<string, un
     await setWorkspaceLanguage(page, TEST_LANGUAGE);
 };
 
-const openWorkspaceWithSnapshotQuotaFailure = async (page: Page, snapshot: Record<string, unknown>) => {
+const openWorkspaceWithSnapshotQuotaFailure = async (
+    page: Page,
+    snapshot: Record<string, unknown>,
+    options?: { sharedQueuedBatchSpaceSnapshot?: Record<string, unknown> | null },
+) => {
+    await installSharedQueuedBatchSpaceFixtureRoute(page, options?.sharedQueuedBatchSpaceSnapshot ?? null);
     await installQueuedBatchGetFixtureRoute(page, snapshot);
     await page.addInitScript((nextSnapshot) => {
         localStorage.clear();
@@ -3573,9 +3635,9 @@ test.describe('workspace restore flows', () => {
 
         await expect(page.getByText(tt('queuedBatchSubmittedNotice'), { exact: true })).toBeVisible();
         await openQueuedBatchDetailModal(page);
-        await expect(
-            page.getByTestId('workspace-queued-batch-detail-modal').getByTestId('queued-batch-panel'),
-        ).toContainText('File-backed queue job');
+        await expect(queuedBatchDetailModal(page).getByTestId('queued-batch-panel')).toContainText(
+            'File-backed queue job',
+        );
     });
 
     test('editor queue batch submits explicit Editor Edit jobs and returns to the workspace', async ({ page }) => {
@@ -3647,7 +3709,7 @@ test.describe('workspace restore flows', () => {
         await expect(page.getByText(tt('queuedBatchSubmittedNotice'), { exact: true })).toBeVisible();
 
         await openQueuedBatchDetailModal(page);
-        const panel = page.getByTestId('workspace-queued-batch-detail-modal').getByTestId('queued-batch-panel');
+        const panel = queuedBatchDetailModal(page).getByTestId('queued-batch-panel');
         await expect(panel).toContainText('Editor queue job');
         await expect(panel).toContainText('Editor Edit');
     });
@@ -3728,7 +3790,7 @@ test.describe('workspace restore flows', () => {
         );
 
         await openQueuedBatchDetailModal(page);
-        const panel = page.getByTestId('workspace-queued-batch-detail-modal').getByTestId('queued-batch-panel');
+        const panel = queuedBatchDetailModal(page).getByTestId('queued-batch-panel');
         await expect(panel).toContainText('Editor branch queue job');
         await expect(panel).toContainText('Editor Edit');
     });
@@ -3925,11 +3987,13 @@ test.describe('workspace restore flows', () => {
     test('queued batch panel restores localized counts, states, and job actions from the workspace snapshot', async ({
         page,
     }) => {
-        await openWorkspaceWithSnapshot(page, queuedBatchPanelSnapshot);
+        await openWorkspaceWithSnapshot(page, queuedBatchPanelSnapshot, {
+            sharedQueuedBatchSpaceSnapshot: null,
+        });
         await dismissRestoreNoticeIfPresent(page);
         await openQueuedBatchDetailModal(page);
 
-        const queuedBatchModal = page.getByTestId('workspace-queued-batch-detail-modal');
+        const queuedBatchModal = queuedBatchDetailModal(page);
         const panel = queuedBatchModal.getByTestId('queued-batch-panel');
         await expect(panel).toBeVisible();
         await expect(queuedBatchModal).toContainText(tt('queuedBatchJobsTitle'));
@@ -4064,6 +4128,131 @@ test.describe('workspace restore flows', () => {
         );
         await expect(panel.getByTestId('queued-batch-job-job-failed')).toContainText('Upstream batch failed.');
         await expect(panel.getByTestId('queued-batch-job-job-failed')).toContainText(tt('queuedBatchTimelineClosed'));
+    });
+
+    test('reset workspace keeps shared queued batch jobs available after reload', async ({ page }) => {
+        const sharedQueuedJob = {
+            ...queuedBatchPanelSnapshot.queuedJobs[1],
+            localId: 'job-shared-reset',
+            name: 'batches/job-shared-reset',
+            displayName: 'Shared queued batch persists',
+            prompt: 'Keep queued batch jobs outside workspace reset',
+            createdAt: 1710400210000,
+            updatedAt: 1710400230000,
+            startedAt: 1710400215000,
+            completedAt: 1710400220000,
+            lastPolledAt: 1710400230000,
+        };
+
+        await openWorkspaceWithSnapshot(page, buildLayoutAlignmentSnapshot(3), {
+            sharedQueuedBatchSpaceSnapshot: {
+                queuedJobs: [sharedQueuedJob],
+            },
+        });
+        await dismissRestoreNoticeIfPresent(page);
+
+        await expect(visibleFilmstripCard(page)).toBeVisible();
+
+        const persistedQueuedJob = await readPersistedQueuedJobByName(page, sharedQueuedJob.name);
+        expect(persistedQueuedJob).toEqual(
+            expect.objectContaining({
+                name: sharedQueuedJob.name,
+                prompt: sharedQueuedJob.prompt,
+                generationMode: sharedQueuedJob.generationMode,
+            }),
+        );
+
+        await openQueuedBatchDetailModal(page);
+        let panel = queuedBatchDetailModal(page).getByTestId('queued-batch-panel');
+        await expect(panel).toContainText(sharedQueuedJob.displayName);
+        await closeQueuedBatchDetailModal(page);
+
+        await ensureWorkspaceInsightsExpanded(page);
+        await page.getByTestId('workspace-unified-history-clear').click();
+        await expect(page.getByTestId('workspace-unified-history-clear-confirm')).toBeVisible();
+        await page.getByTestId('workspace-unified-history-clear-confirm-action').click();
+        await expect(page.getByTestId('workspace-unified-history-clear-confirm')).toHaveCount(0);
+        await expect(page.locator('[data-testid^="history-card-"]:visible')).toHaveCount(0);
+
+        await expect
+            .poll(() =>
+                page.evaluate(() => {
+                    const raw = localStorage.getItem('nbu_workspaceSnapshot');
+                    if (!raw) {
+                        return null;
+                    }
+
+                    const snapshot = JSON.parse(raw);
+                    return {
+                        historyLength: Array.isArray(snapshot.history) ? snapshot.history.length : 0,
+                        selectedHistoryId: snapshot.viewState?.selectedHistoryId ?? null,
+                        sourceHistoryId: snapshot.workspaceSession?.sourceHistoryId ?? null,
+                        queuedJobsLength: Array.isArray(snapshot.queuedJobs) ? snapshot.queuedJobs.length : 0,
+                        prompt: snapshot.composerState?.prompt ?? null,
+                    };
+                }),
+            )
+            .toEqual({
+                historyLength: 0,
+                selectedHistoryId: null,
+                sourceHistoryId: null,
+                queuedJobsLength: 0,
+                prompt: '',
+            });
+
+        const persistedQueuedJobAfterReset = await readPersistedQueuedJobByName(page, sharedQueuedJob.name);
+        expect(persistedQueuedJobAfterReset).toEqual(
+            expect.objectContaining({
+                name: sharedQueuedJob.name,
+                prompt: sharedQueuedJob.prompt,
+            }),
+        );
+
+        const reloadedPage = await page.context().newPage();
+        await installSharedQueuedBatchSpaceFixtureRoute(reloadedPage, {
+            queuedJobs: [sharedQueuedJob],
+        });
+        await reloadedPage.goto('/');
+        await expect(composer(reloadedPage)).toBeVisible();
+        await dismissRestoreNoticeIfPresent(reloadedPage);
+        await setWorkspaceLanguage(reloadedPage, TEST_LANGUAGE);
+        await ensureWorkspaceInsightsExpanded(reloadedPage);
+        await expect(composer(reloadedPage)).toHaveValue('');
+        await expect(reloadedPage.locator('[data-testid^="history-card-"]')).toHaveCount(0);
+
+        const reloadedWorkspaceSnapshot = await reloadedPage.evaluate(() => {
+            const raw = localStorage.getItem('nbu_workspaceSnapshot');
+            if (!raw) {
+                return null;
+            }
+
+            const snapshot = JSON.parse(raw);
+            return {
+                historyLength: Array.isArray(snapshot.history) ? snapshot.history.length : 0,
+                selectedHistoryId: snapshot.viewState?.selectedHistoryId ?? null,
+                sourceHistoryId: snapshot.workspaceSession?.sourceHistoryId ?? null,
+                queuedJobsLength: Array.isArray(snapshot.queuedJobs) ? snapshot.queuedJobs.length : 0,
+                prompt: snapshot.composerState?.prompt ?? null,
+            };
+        });
+
+        expect(reloadedWorkspaceSnapshot).toEqual({
+            historyLength: 0,
+            selectedHistoryId: null,
+            sourceHistoryId: null,
+            queuedJobsLength: 0,
+            prompt: '',
+        });
+
+        await openQueuedBatchDetailModal(reloadedPage);
+        panel = queuedBatchDetailModal(reloadedPage).getByTestId('queued-batch-panel');
+        await expect(panel).toContainText(sharedQueuedJob.displayName);
+        await expect(panel.getByTestId(`queued-batch-job-${sharedQueuedJob.localId}-state`)).toContainText(
+            tt('queuedBatchStateSucceeded'),
+        );
+        await expect(panel.getByTestId(`queued-batch-job-${sharedQueuedJob.localId}-import`)).toContainText(
+            tt('queuedBatchJobsImport'),
+        );
     });
 
     test('versions detail keeps restore source routing visible through selection badges', async ({ page }) => {

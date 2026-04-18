@@ -1,5 +1,35 @@
 # Changelog
 
+## v3.6.0 - 2026-04-18
+
+- Release title: Nano Banana Ultra 3.6.0 - Independent Batch Space, Truthful Queue Import State & Simplified Queue Entry Surfaces
+- Release summary:
+    - independent queued-batch space and persistence:
+        - queued batch jobs now live in their own app-level batch space instead of being stored as part of the current workspace snapshot, so switching workspaces, restoring snapshots, and resetting a workspace no longer makes queued jobs appear to belong to one workspace
+        - added a dedicated queued-batch persistence contract with its own local storage key and shared backup route, allowing tracked jobs to survive reloads and workspace changes without reintroducing workspace ownership
+        - workspace snapshot save, restore, import, export, and reset flows now treat queued jobs as external shared state rather than as workspace content
+        - legacy workspace snapshots that still carried queued jobs are now normalized into the dedicated batch-space model instead of preserving the older coupled ownership pattern
+
+    - truthful queued-batch import and recovery semantics:
+        - removed the older recent-job recovery model and the extra queue-list backend route, so the product no longer implies that queued jobs can be rediscovered from workspace-local context after the fact
+        - queued-batch import, open-imported-results, and related action truth now derive from imported history in the currently active workspace instead of relying on a cross-workspace imported flag such as `importedAt`
+        - completed queued jobs remain in the dedicated batch space after import, while workspace-local affordances such as reopening imported results stay scoped to the workspace that actually imported them
+        - queued job normalization, polling state, and import-ready logic now reflect the shared batch-space contract consistently across runtime persistence, restore flows, and queued-job utilities
+
+    - queue surface simplification and clearer action naming:
+        - removed the redundant queued-batch launcher from the top header support rail, leaving Progress and Support as the only compact header launchers while preserving the requested desktop width balance through the existing header layout contract
+        - kept the composer right-side status surface as the shared entry point into the queued-batch space, so queue management still stays visible without duplicating the same modal opener in the header
+        - renamed the queue submit action to `Send to Queue` while keeping the status surface titled `Queued Batch Jobs`, making the submit action and the queue-status entry clearly distinct
+        - aligned queue helper copy and accessibility labeling with the submit-vs-status split, and propagated the same submit wording to other queue-submit surfaces such as the editor
+
+    - reset and restore alignment for shared batch space:
+        - reset workspace now clears workspace-local snapshot state immediately while intentionally preserving the shared queued-batch space, so reset no longer implies that batch-space jobs are part of the workspace being cleared
+        - workspace snapshot persistence now writes the empty local workspace state eagerly during reset, preventing stale prompt or history state from surviving into a fresh reload while the shared queued-batch space remains available
+
+    - localized queue wording and queue-state UI alignment:
+        - updated maintained locale dictionaries so the new queue submit wording and the simplified queue surface terminology stay consistent outside English
+        - refreshed queue-related component, translation, and restore-flow contracts to match the dedicated batch-space model and the simplified entry-surface naming
+
 ## v3.5.8 - 2026-04-18
 
 - Release title: Nano Banana Ultra 3.5.8 - Localized Failure Surfaces & Adaptive Compact Composer Layout

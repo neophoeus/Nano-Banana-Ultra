@@ -356,13 +356,13 @@ export const en = {
     styleLineArt: 'Line Art',
     styleStorybookIllustration: 'Storybook Illustration',
     queueBatchModeEditor:
-        'Queue Batch Job will submit an editor-origin image-conditioned batch using the current editor input plus any staged references. Queued batches always use images-only output and do not request returned thoughts.',
+        'This sends an editor-origin image-conditioned batch using the current editor input plus any staged references. Queued batches always use images-only output and do not request returned thoughts.',
     queueBatchModeStage:
-        'Queue Batch Job will submit a staged follow-up image-conditioned batch using the current stage image plus any staged references. Queued batches always use images-only output and do not request returned thoughts.',
+        'This sends a staged follow-up image-conditioned batch using the current stage image plus any staged references. Queued batches always use images-only output and do not request returned thoughts.',
     queueBatchModeReferences:
-        'Queue Batch Job will submit a reference-driven batch using the current prompt and reference tray. Queued batches always use images-only output and do not request returned thoughts.',
+        'This sends a reference-driven batch using the current prompt and reference tray. Queued batches always use images-only output and do not request returned thoughts.',
     queueBatchModePromptOnly:
-        'Queue Batch Job will submit a prompt-only official batch job. Queued batches always use images-only output and do not request returned thoughts.',
+        'This sends a prompt-only official batch job. Queued batches always use images-only output and do not request returned thoughts.',
     queueBatchConversationNotice:
         'Queued batch jobs keep source lineage, but they do not send official multi-turn conversation history. Use Generate for chat continuation.',
     queuedBatchJobsTitle: 'Queued Batch Jobs',
@@ -375,17 +375,6 @@ export const en = {
     queuedBatchJobsImportReadyCount: '{0} ready to import',
     queuedBatchJobsClosedIssuesCount: '{0} closed with issues',
     queuedBatchJobsImportReadyAction: 'Import ready results',
-    queuedBatchRecoverRecentAction: 'Recover recent batch jobs',
-    queuedBatchRecoverRecentLoading: 'Recovering recent jobs...',
-    queuedBatchRecoverRecentNotice: 'Recovered {0} recent batch jobs.',
-    queuedBatchRecoverRecentAlreadyTrackedNotice:
-        'Recent remote batch jobs are already tracked. Refreshed {0} entries.',
-    queuedBatchRecoverRecentNoneNotice: 'No additional recent remote batch jobs were found.',
-    queuedBatchRecoverRecentLog: 'Recovered {0} recent remote batch jobs from the batch list.',
-    queuedBatchRecoverRecentRefreshedLog: 'Refreshed {0} already tracked remote batch jobs from the batch list.',
-    queuedBatchRecoverRecentFailedLog: 'Recover recent batch jobs failed: {0}',
-    queuedBatchRecoverRecentMetadataHint:
-        'Recovered remote jobs can be imported again, but Gemini batch list does not return the original prompt or reference images, so recovered entries use simplified local details.',
     queuedBatchJobsRefreshAll: 'Check all statuses',
     queuedBatchJobsTrackedCount: '{0} tracked',
     queuedBatchJobsImportedTag: 'Imported',
@@ -772,7 +761,7 @@ export const en = {
     composerEnterNewline: 'Press Enter for New Line',
     composerVisibilityVisible: 'Visible',
     composerVisibilityHidden: 'Hidden',
-    composerQueueBatchJob: 'Queue Batch Job',
+    composerQueueBatchJob: 'Send to Queue',
     composerAdvancedTitle: 'Advanced settings',
     composerAdvancedDesc: 'Unsupported controls stay hidden and reset automatically when the model changes.',
     composerAdvancedGenerationSectionTitle: 'Generation controls',

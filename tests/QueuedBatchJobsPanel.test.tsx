@@ -44,7 +44,6 @@ describe('QueuedBatchJobsPanel', () => {
                         startedAt: null,
                         completedAt: null,
                         lastPolledAt: null,
-                        importedAt: null,
                         error: null,
                         sourceHistoryId: 'queued-source-turn',
                         lineageAction: 'continue',
@@ -80,7 +79,6 @@ describe('QueuedBatchJobsPanel', () => {
                         startedAt: 1710400015000,
                         completedAt: 1710400020000,
                         lastPolledAt: 1710400030000,
-                        importedAt: null,
                         hasInlinedResponses: true,
                         error: null,
                     },
@@ -109,7 +107,6 @@ describe('QueuedBatchJobsPanel', () => {
                         startedAt: 1710400045000,
                         completedAt: 1710400050000,
                         lastPolledAt: 1710400060000,
-                        importedAt: 1710400065000,
                         error: null,
                     },
                     {
@@ -138,7 +135,6 @@ describe('QueuedBatchJobsPanel', () => {
                         startedAt: 1710400075000,
                         completedAt: 1710400080000,
                         lastPolledAt: 1710400080000,
-                        importedAt: null,
                         error: 'Upstream batch failed.',
                     },
                 ]}
@@ -181,7 +177,6 @@ describe('QueuedBatchJobsPanel', () => {
                         : []
                 }
                 activeImportedQueuedHistoryId="history-imported-1"
-                onRecoverRecentQueuedJobs={vi.fn()}
                 onImportAllQueuedJobs={vi.fn()}
                 onPollAllQueuedJobs={vi.fn()}
                 onPollQueuedJob={vi.fn()}
@@ -214,8 +209,6 @@ describe('QueuedBatchJobsPanel', () => {
         expect(markup).toContain('queued-batch-panel-results-group');
         expect(markup).toContain('queued-batch-panel-cleanup-group');
         expect(markup).toContain('queued-batch-panel-results-count');
-        expect(markup).toContain('Recover recent batch jobs');
-        expect(markup).toContain('queued-batch-recover-recent');
         expect(markup).toContain('Clear non-importable');
         expect(markup).toContain('Clear imported');
         expect(markup).toContain('Cleanup');
@@ -323,7 +316,6 @@ describe('QueuedBatchJobsPanel', () => {
                         startedAt: 1710400015000,
                         completedAt: 1710400020000,
                         lastPolledAt: 1710400030000,
-                        importedAt: null,
                         hasInlinedResponses: true,
                         error: null,
                     },
@@ -332,7 +324,6 @@ describe('QueuedBatchJobsPanel', () => {
                 getImportedQueuedResultCount={() => 0}
                 getImportedQueuedHistoryItems={() => []}
                 activeImportedQueuedHistoryId={null}
-                onRecoverRecentQueuedJobs={vi.fn()}
                 onImportAllQueuedJobs={vi.fn()}
                 onPollAllQueuedJobs={vi.fn()}
                 onPollQueuedJob={vi.fn()}
@@ -387,7 +378,6 @@ describe('QueuedBatchJobsPanel', () => {
                                 startedAt: null,
                                 completedAt: null,
                                 lastPolledAt: null,
-                                importedAt: null,
                                 error: null,
                             },
                             {
@@ -415,7 +405,6 @@ describe('QueuedBatchJobsPanel', () => {
                                 startedAt: 1710401000000,
                                 completedAt: null,
                                 lastPolledAt: 1710562000000,
-                                importedAt: null,
                                 error: null,
                             },
                         ] as any
@@ -424,7 +413,6 @@ describe('QueuedBatchJobsPanel', () => {
                     getImportedQueuedResultCount={() => 0}
                     getImportedQueuedHistoryItems={() => []}
                     activeImportedQueuedHistoryId={null}
-                    onRecoverRecentQueuedJobs={vi.fn()}
                     onImportAllQueuedJobs={vi.fn()}
                     onPollAllQueuedJobs={vi.fn()}
                     onPollQueuedJob={vi.fn()}
@@ -477,7 +465,6 @@ describe('QueuedBatchJobsPanel', () => {
                         startedAt: 1710400015000,
                         completedAt: 1710400020000,
                         lastPolledAt: 1710400030000,
-                        importedAt: null,
                         hasInlinedResponses: false,
                         importDiagnostic: 'no-payload',
                         error: null,
@@ -487,7 +474,6 @@ describe('QueuedBatchJobsPanel', () => {
                 getImportedQueuedResultCount={() => 0}
                 getImportedQueuedHistoryItems={() => []}
                 activeImportedQueuedHistoryId={null}
-                onRecoverRecentQueuedJobs={vi.fn()}
                 onImportAllQueuedJobs={vi.fn()}
                 onPollAllQueuedJobs={vi.fn()}
                 onPollQueuedJob={vi.fn()}
@@ -539,7 +525,6 @@ describe('QueuedBatchJobsPanel', () => {
                         startedAt: 1710400015000,
                         completedAt: 1710400020000,
                         lastPolledAt: 1710400030000,
-                        importedAt: null,
                         hasInlinedResponses: true,
                         importDiagnostic: 'extraction-failure',
                         error: 'Prompt was rejected by policy (block reason: PROHIBITED_CONTENT).',
@@ -549,7 +534,6 @@ describe('QueuedBatchJobsPanel', () => {
                 getImportedQueuedResultCount={() => 0}
                 getImportedQueuedHistoryItems={() => []}
                 activeImportedQueuedHistoryId={null}
-                onRecoverRecentQueuedJobs={vi.fn()}
                 onImportAllQueuedJobs={vi.fn()}
                 onPollAllQueuedJobs={vi.fn()}
                 onPollQueuedJob={vi.fn()}
@@ -603,7 +587,6 @@ describe('QueuedBatchJobsPanel', () => {
                         startedAt: 1710400015000,
                         completedAt: 1710400020000,
                         lastPolledAt: 1710400030000,
-                        importedAt: null,
                         hasInlinedResponses: true,
                         importDiagnostic: 'extraction-failure',
                         importIssues: [
@@ -623,7 +606,6 @@ describe('QueuedBatchJobsPanel', () => {
                 getImportedQueuedResultCount={() => 0}
                 getImportedQueuedHistoryItems={() => []}
                 activeImportedQueuedHistoryId={null}
-                onRecoverRecentQueuedJobs={vi.fn()}
                 onImportAllQueuedJobs={vi.fn()}
                 onPollAllQueuedJobs={vi.fn()}
                 onPollQueuedJob={vi.fn()}
@@ -681,7 +663,6 @@ describe('QueuedBatchJobsPanel', () => {
                         startedAt: null,
                         completedAt: null,
                         lastPolledAt: null,
-                        importedAt: null,
                         error: null,
                     },
                 ]}
@@ -689,7 +670,6 @@ describe('QueuedBatchJobsPanel', () => {
                 getImportedQueuedResultCount={() => 0}
                 getImportedQueuedHistoryItems={() => []}
                 activeImportedQueuedHistoryId={null}
-                onRecoverRecentQueuedJobs={vi.fn()}
                 onImportAllQueuedJobs={vi.fn()}
                 onPollAllQueuedJobs={vi.fn()}
                 onPollQueuedJob={vi.fn()}
@@ -743,7 +723,6 @@ describe('QueuedBatchJobsPanel', () => {
                             startedAt: null,
                             completedAt: null,
                             lastPolledAt: null,
-                            importedAt: null,
                             error: null,
                         },
                         {
@@ -771,7 +750,6 @@ describe('QueuedBatchJobsPanel', () => {
                             startedAt: 1,
                             completedAt: null,
                             lastPolledAt: null,
-                            importedAt: null,
                             error: null,
                         },
                         {
@@ -799,7 +777,6 @@ describe('QueuedBatchJobsPanel', () => {
                             startedAt: 1,
                             completedAt: 1,
                             lastPolledAt: 1,
-                            importedAt: null,
                             error: null,
                         },
                         {
@@ -827,7 +804,6 @@ describe('QueuedBatchJobsPanel', () => {
                             startedAt: 1,
                             completedAt: 1,
                             lastPolledAt: 1,
-                            importedAt: null,
                             error: null,
                         },
                         {
@@ -855,7 +831,6 @@ describe('QueuedBatchJobsPanel', () => {
                             startedAt: 1,
                             completedAt: 1,
                             lastPolledAt: 1,
-                            importedAt: null,
                             error: null,
                         },
                         {
@@ -883,7 +858,6 @@ describe('QueuedBatchJobsPanel', () => {
                             startedAt: 1,
                             completedAt: 1,
                             lastPolledAt: 1,
-                            importedAt: null,
                             error: null,
                         },
                     ] as any
@@ -892,7 +866,6 @@ describe('QueuedBatchJobsPanel', () => {
                 getImportedQueuedResultCount={() => 0}
                 getImportedQueuedHistoryItems={() => []}
                 activeImportedQueuedHistoryId={null}
-                onRecoverRecentQueuedJobs={vi.fn()}
                 onImportAllQueuedJobs={vi.fn()}
                 onPollAllQueuedJobs={vi.fn()}
                 onPollQueuedJob={vi.fn()}
@@ -950,7 +923,6 @@ describe('QueuedBatchJobsPanel', () => {
                         startedAt: null,
                         completedAt: null,
                         lastPolledAt: null,
-                        importedAt: null,
                         error: null,
                     },
                 ]}
@@ -958,7 +930,6 @@ describe('QueuedBatchJobsPanel', () => {
                 getImportedQueuedResultCount={() => 0}
                 getImportedQueuedHistoryItems={() => []}
                 activeImportedQueuedHistoryId={null}
-                onRecoverRecentQueuedJobs={vi.fn()}
                 onImportAllQueuedJobs={vi.fn()}
                 onPollAllQueuedJobs={vi.fn()}
                 onPollQueuedJob={vi.fn()}
@@ -974,7 +945,7 @@ describe('QueuedBatchJobsPanel', () => {
         expect(markup).toContain('Editor Edit');
     });
 
-    it('shows recover guidance when no queued jobs are currently tracked', () => {
+    it('shows workflow guidance when no queued jobs are currently tracked', () => {
         const markup = renderToStaticMarkup(
             <QueuedBatchJobsPanel
                 currentLanguage="en"
@@ -985,7 +956,6 @@ describe('QueuedBatchJobsPanel', () => {
                 getImportedQueuedResultCount={() => 0}
                 getImportedQueuedHistoryItems={() => []}
                 activeImportedQueuedHistoryId={null}
-                onRecoverRecentQueuedJobs={vi.fn()}
                 onImportAllQueuedJobs={vi.fn()}
                 onPollAllQueuedJobs={vi.fn()}
                 onPollQueuedJob={vi.fn()}
@@ -999,9 +969,8 @@ describe('QueuedBatchJobsPanel', () => {
         );
 
         expect(markup).toContain('queued-batch-panel-empty');
-        expect(markup).toContain('Recover recent batch jobs');
         expect(markup).toContain(
-            'Recovered remote jobs can be imported again, but Gemini batch list does not return the original prompt or reference images, so recovered entries use simplified local details.',
+            'Check status here, import finished results into history when they are ready, then remove the entry when the workflow is done.',
         );
     });
 });

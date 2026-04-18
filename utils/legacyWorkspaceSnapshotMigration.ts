@@ -41,8 +41,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const getSnapshotRecency = (snapshot: WorkspacePersistenceSnapshot): number => {
     const historyRecency = snapshot.history.reduce((latest, item) => Math.max(latest, item.createdAt || 0), 0);
-    const queuedJobRecency = snapshot.queuedJobs.reduce((latest, item) => Math.max(latest, item.updatedAt || 0), 0);
-    return Math.max(historyRecency, queuedJobRecency, snapshot.workspaceSession.updatedAt || 0);
+    return Math.max(historyRecency, snapshot.workspaceSession.updatedAt || 0);
 };
 
 export { hasRestorableWorkspaceContent };
@@ -59,7 +58,6 @@ export const buildWorkspaceSnapshotMigrationFingerprint = (snapshot: WorkspacePe
         historyCount: normalized.history.length,
         stagedAssetCount: normalized.stagedAssets.length,
         workflowLogCount: normalized.workflowLogs.length,
-        queuedJobCount: normalized.queuedJobs.length,
         selectedHistoryId: normalized.viewState.selectedHistoryId,
         generatedImageCount: normalized.viewState.generatedImageUrls.length,
         prompt: normalized.composerState.prompt,
@@ -153,10 +151,6 @@ const compareCandidates = (left: LegacyWorkspaceSnapshotCandidate, right: Legacy
 
     if (leftSnapshot.stagedAssets.length !== rightSnapshot.stagedAssets.length) {
         return rightSnapshot.stagedAssets.length - leftSnapshot.stagedAssets.length;
-    }
-
-    if (leftSnapshot.queuedJobs.length !== rightSnapshot.queuedJobs.length) {
-        return rightSnapshot.queuedJobs.length - leftSnapshot.queuedJobs.length;
     }
 
     return getSnapshotRecency(rightSnapshot) - getSnapshotRecency(leftSnapshot);

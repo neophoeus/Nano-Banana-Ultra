@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { sanitizeQueuedBatchSpaceSnapshot } from '../../utils/queuedBatchSpacePersistence';
 import { sanitizeWorkspaceSnapshot } from '../../utils/workspacePersistence';
 import { logApiError, readJsonBody, sendJson } from '../utils/apiHelpers';
 
@@ -8,144 +9,208 @@ type RegisterWorkspaceRoutesArgs = {
     resolvedDir: string;
 };
 
+type FileBackedSnapshotRouteArgs<T extends Record<string, unknown>> = {
+    route: string;
+    snapshotPath: string;
+    sanitizeSnapshot: (value: unknown) => T;
+    hasContent: (snapshot: T) => boolean;
+    writeErrorMessage: string;
+};
+
 export function registerWorkspaceRoutes(server: any, { geminiApiKey, resolvedDir }: RegisterWorkspaceRoutesArgs): void {
-    const workspaceSnapshotPath = path.join(resolvedDir, 'workspace_snapshot.json');
-    const workspaceSnapshotTempPath = `${workspaceSnapshotPath}.tmp`;
+    const registerFileBackedSnapshotRoute = <T extends Record<string, unknown>>({
+        route,
+        snapshotPath,
+        sanitizeSnapshot,
+        hasContent,
+        writeErrorMessage,
+    }: FileBackedSnapshotRouteArgs<T>) => {
+        const snapshotTempPath = `${snapshotPath}.tmp`;
 
-    const isRetryableWorkspaceSnapshotWriteError = (error: unknown) => {
-        const code = (error as NodeJS.ErrnoException)?.code;
-        return code === 'EBUSY' || code === 'EPERM';
-    };
+        const isRetryableSnapshotWriteError = (error: unknown) => {
+            const code = (error as NodeJS.ErrnoException)?.code;
+            return code === 'EBUSY' || code === 'EPERM';
+        };
 
-    const cleanupWorkspaceSnapshotTempFile = () => {
-        if (fs.existsSync(workspaceSnapshotTempPath)) {
-            fs.unlinkSync(workspaceSnapshotTempPath);
-        }
-    };
+        const cleanupSnapshotTempFile = () => {
+            if (fs.existsSync(snapshotTempPath)) {
+                fs.unlinkSync(snapshotTempPath);
+            }
+        };
 
-    const getLatestWorkspaceSnapshotCandidatePath = () => {
-        const hasPrimarySnapshot = fs.existsSync(workspaceSnapshotPath);
-        const hasTempSnapshot = fs.existsSync(workspaceSnapshotTempPath);
+        const getLatestSnapshotCandidatePath = () => {
+            const hasPrimarySnapshot = fs.existsSync(snapshotPath);
+            const hasTempSnapshot = fs.existsSync(snapshotTempPath);
 
-        if (hasPrimarySnapshot && hasTempSnapshot) {
+            if (hasPrimarySnapshot && hasTempSnapshot) {
+                try {
+                    const primaryStat = fs.statSync(snapshotPath);
+                    const tempStat = fs.statSync(snapshotTempPath);
+                    return tempStat.mtimeMs >= primaryStat.mtimeMs ? snapshotTempPath : snapshotPath;
+                } catch {
+                    return snapshotTempPath;
+                }
+            }
+
+            if (hasPrimarySnapshot) {
+                return snapshotPath;
+            }
+
+            if (hasTempSnapshot) {
+                return snapshotTempPath;
+            }
+
+            return null;
+        };
+
+        const hasUnchangedSnapshotPayload = (payload: string) => {
+            const candidatePath = getLatestSnapshotCandidatePath();
+            if (!candidatePath) {
+                return false;
+            }
+
             try {
-                const primaryStat = fs.statSync(workspaceSnapshotPath);
-                const tempStat = fs.statSync(workspaceSnapshotTempPath);
-                return tempStat.mtimeMs >= primaryStat.mtimeMs ? workspaceSnapshotTempPath : workspaceSnapshotPath;
+                return fs.readFileSync(candidatePath, 'utf-8') === payload;
             } catch {
-                return workspaceSnapshotTempPath;
+                return false;
             }
-        }
+        };
 
-        if (hasPrimarySnapshot) {
-            return workspaceSnapshotPath;
-        }
-
-        if (hasTempSnapshot) {
-            return workspaceSnapshotTempPath;
-        }
-
-        return null;
-    };
-
-    const hasUnchangedWorkspaceSnapshotPayload = (payload: string) => {
-        const candidatePath = getLatestWorkspaceSnapshotCandidatePath();
-        if (!candidatePath) {
-            return false;
-        }
-
-        try {
-            return fs.readFileSync(candidatePath, 'utf-8') === payload;
-        } catch {
-            return false;
-        }
-    };
-
-    const finalizeWorkspaceSnapshotWrite = (payload: string) => {
-        try {
-            fs.renameSync(workspaceSnapshotTempPath, workspaceSnapshotPath);
-            return;
-        } catch (error) {
-            if (!isRetryableWorkspaceSnapshotWriteError(error)) {
-                throw error;
-            }
-        }
-
-        try {
-            fs.copyFileSync(workspaceSnapshotTempPath, workspaceSnapshotPath);
-            cleanupWorkspaceSnapshotTempFile();
-            return;
-        } catch (error) {
-            if (!isRetryableWorkspaceSnapshotWriteError(error)) {
-                throw error;
-            }
-        }
-
-        fs.writeFileSync(workspaceSnapshotPath, payload, 'utf-8');
-        cleanupWorkspaceSnapshotTempFile();
-    };
-
-    const writeWorkspaceSnapshotWithRetry = (snapshot: Record<string, unknown>) => {
-        const payload = JSON.stringify(snapshot, null, 2);
-        let lastError: unknown = null;
-
-        if (hasUnchangedWorkspaceSnapshotPayload(payload)) {
+        const finalizeSnapshotWrite = (payload: string) => {
             try {
-                cleanupWorkspaceSnapshotTempFile();
-            } catch {
-                // Best-effort cleanup of stale temp state.
-            }
-            return;
-        }
-
-        for (let attempt = 0; attempt < 3; attempt += 1) {
-            try {
-                fs.writeFileSync(workspaceSnapshotTempPath, payload, 'utf-8');
-                finalizeWorkspaceSnapshotWrite(payload);
+                fs.renameSync(snapshotTempPath, snapshotPath);
                 return;
             } catch (error) {
-                lastError = error;
-                if (isRetryableWorkspaceSnapshotWriteError(error)) {
-                    if (attempt === 2 && fs.existsSync(workspaceSnapshotTempPath)) {
-                        return;
-                    }
-                } else {
-                    try {
-                        cleanupWorkspaceSnapshotTempFile();
-                    } catch {
-                        // Best-effort temp cleanup before surfacing a non-retryable write failure.
-                    }
-                }
-
-                if (!isRetryableWorkspaceSnapshotWriteError(error) || attempt === 2) {
+                if (!isRetryableSnapshotWriteError(error)) {
                     throw error;
                 }
-
-                Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50 * (attempt + 1));
             }
-        }
 
-        throw lastError instanceof Error ? lastError : new Error('Failed to save workspace snapshot backup.');
-    };
+            try {
+                fs.copyFileSync(snapshotTempPath, snapshotPath);
+                cleanupSnapshotTempFile();
+                return;
+            } catch (error) {
+                if (!isRetryableSnapshotWriteError(error)) {
+                    throw error;
+                }
+            }
 
-    const clearWorkspaceSnapshotFiles = () => {
-        if (fs.existsSync(workspaceSnapshotPath)) {
-            fs.unlinkSync(workspaceSnapshotPath);
-        }
-        if (fs.existsSync(workspaceSnapshotTempPath)) {
-            fs.unlinkSync(workspaceSnapshotTempPath);
-        }
-    };
+            fs.writeFileSync(snapshotPath, payload, 'utf-8');
+            cleanupSnapshotTempFile();
+        };
 
-    const loadWorkspaceSnapshotBackup = () => {
-        const candidatePath = getLatestWorkspaceSnapshotCandidatePath();
+        const writeSnapshotWithRetry = (snapshot: T) => {
+            const payload = JSON.stringify(snapshot, null, 2);
+            let lastError: unknown = null;
 
-        if (!candidatePath) {
-            return null;
-        }
+            if (hasUnchangedSnapshotPayload(payload)) {
+                try {
+                    cleanupSnapshotTempFile();
+                } catch {
+                    // Best-effort cleanup of stale temp state.
+                }
+                return;
+            }
 
-        const data = fs.readFileSync(candidatePath, 'utf-8');
-        return sanitizeWorkspaceSnapshot(JSON.parse(data));
+            for (let attempt = 0; attempt < 3; attempt += 1) {
+                try {
+                    fs.writeFileSync(snapshotTempPath, payload, 'utf-8');
+                    finalizeSnapshotWrite(payload);
+                    return;
+                } catch (error) {
+                    lastError = error;
+                    if (isRetryableSnapshotWriteError(error)) {
+                        if (attempt === 2 && fs.existsSync(snapshotTempPath)) {
+                            return;
+                        }
+                    } else {
+                        try {
+                            cleanupSnapshotTempFile();
+                        } catch {
+                            // Best-effort temp cleanup before surfacing a non-retryable write failure.
+                        }
+                    }
+
+                    if (!isRetryableSnapshotWriteError(error) || attempt === 2) {
+                        throw error;
+                    }
+
+                    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50 * (attempt + 1));
+                }
+            }
+
+            throw lastError instanceof Error ? lastError : new Error(writeErrorMessage);
+        };
+
+        const clearSnapshotFiles = () => {
+            if (fs.existsSync(snapshotPath)) {
+                fs.unlinkSync(snapshotPath);
+            }
+            if (fs.existsSync(snapshotTempPath)) {
+                fs.unlinkSync(snapshotTempPath);
+            }
+        };
+
+        const loadSnapshotBackup = () => {
+            const candidatePath = getLatestSnapshotCandidatePath();
+
+            if (!candidatePath) {
+                return null;
+            }
+
+            const data = fs.readFileSync(candidatePath, 'utf-8');
+            return sanitizeSnapshot(JSON.parse(data));
+        };
+
+        server.use(route, async (req: any, res: any) => {
+            if (req.method === 'GET') {
+                try {
+                    const snapshot = loadSnapshotBackup();
+                    if (!snapshot) {
+                        sendJson(res, 200, { snapshot: null });
+                        return;
+                    }
+
+                    sendJson(res, 200, snapshot);
+                } catch (error: any) {
+                    logApiError(route, error, { method: 'GET' });
+                    try {
+                        clearSnapshotFiles();
+                    } catch {
+                        // Best-effort cleanup of a corrupt or half-written backup file.
+                    }
+                    sendJson(res, 200, { snapshot: null, recoveredFromError: true });
+                }
+                return;
+            }
+
+            if (req.method !== 'POST') {
+                sendJson(res, 405, { error: 'Method not allowed' });
+                return;
+            }
+
+            try {
+                const snapshot = await readJsonBody<Record<string, unknown>>(req);
+                const normalizedSnapshot = sanitizeSnapshot(snapshot);
+
+                if (!hasContent(normalizedSnapshot)) {
+                    clearSnapshotFiles();
+                    sendJson(res, 200, { success: true, path: snapshotPath, cleared: true });
+                    return;
+                }
+
+                writeSnapshotWithRetry(normalizedSnapshot);
+                sendJson(res, 200, { success: true, path: snapshotPath });
+            } catch (error: any) {
+                logApiError(route, error, { method: 'POST' });
+                sendJson(res, 200, {
+                    success: false,
+                    path: snapshotPath,
+                    error: error.message || writeErrorMessage,
+                });
+            }
+        });
     };
 
     server.use('/api/health', (_req: any, res: any) => {
@@ -161,64 +226,30 @@ export function registerWorkspaceRoutes(server: any, { geminiApiKey, resolvedDir
         sendJson(res, 200, { hasApiKey: Boolean(geminiApiKey || process.env.GEMINI_API_KEY) });
     });
 
-    server.use('/api/workspace-snapshot', async (req: any, res: any) => {
-        if (req.method === 'GET') {
-            try {
-                const snapshot = loadWorkspaceSnapshotBackup();
-                if (!snapshot) {
-                    sendJson(res, 200, { snapshot: null });
-                    return;
-                }
-
-                sendJson(res, 200, snapshot);
-            } catch (error: any) {
-                logApiError('/api/workspace-snapshot', error, { method: 'GET' });
-                try {
-                    clearWorkspaceSnapshotFiles();
-                } catch {
-                    // Best-effort cleanup of a corrupt or half-written backup file.
-                }
-                sendJson(res, 200, { snapshot: null, recoveredFromError: true });
-            }
-            return;
-        }
-
-        if (req.method !== 'POST') {
-            sendJson(res, 405, { error: 'Method not allowed' });
-            return;
-        }
-
-        try {
-            const snapshot = await readJsonBody<Record<string, unknown>>(req);
-            const normalizedSnapshot = sanitizeWorkspaceSnapshot(snapshot);
-            const hasRestorableWorkspaceContent = Boolean(
+    registerFileBackedSnapshotRoute({
+        route: '/api/workspace-snapshot',
+        snapshotPath: path.join(resolvedDir, 'workspace_snapshot.json'),
+        sanitizeSnapshot: sanitizeWorkspaceSnapshot,
+        hasContent: (normalizedSnapshot) =>
+            Boolean(
                 normalizedSnapshot.history.length ||
-                normalizedSnapshot.stagedAssets.length ||
-                normalizedSnapshot.workflowLogs.length ||
-                normalizedSnapshot.queuedJobs.length ||
-                normalizedSnapshot.viewState.generatedImageUrls.length ||
-                normalizedSnapshot.viewState.selectedHistoryId ||
-                normalizedSnapshot.composerState.prompt.trim() ||
-                normalizedSnapshot.workspaceSession.activeResult ||
-                normalizedSnapshot.workspaceSession.sourceHistoryId ||
-                normalizedSnapshot.workspaceSession.conversationId,
-            );
+                    normalizedSnapshot.stagedAssets.length ||
+                    normalizedSnapshot.workflowLogs.length ||
+                    normalizedSnapshot.viewState.generatedImageUrls.length ||
+                    normalizedSnapshot.viewState.selectedHistoryId ||
+                    normalizedSnapshot.composerState.prompt.trim() ||
+                    normalizedSnapshot.workspaceSession.activeResult ||
+                    normalizedSnapshot.workspaceSession.sourceHistoryId ||
+                    normalizedSnapshot.workspaceSession.conversationId,
+            ),
+        writeErrorMessage: 'Failed to save workspace snapshot backup.',
+    });
 
-            if (!hasRestorableWorkspaceContent) {
-                clearWorkspaceSnapshotFiles();
-                sendJson(res, 200, { success: true, path: workspaceSnapshotPath, cleared: true });
-                return;
-            }
-
-            writeWorkspaceSnapshotWithRetry(normalizedSnapshot);
-            sendJson(res, 200, { success: true, path: workspaceSnapshotPath });
-        } catch (error: any) {
-            logApiError('/api/workspace-snapshot', error, { method: 'POST' });
-            sendJson(res, 200, {
-                success: false,
-                path: workspaceSnapshotPath,
-                error: error.message || 'Failed to save workspace snapshot backup.',
-            });
-        }
+    registerFileBackedSnapshotRoute({
+        route: '/api/queued-batch-space',
+        snapshotPath: path.join(resolvedDir, 'queued_batch_space.json'),
+        sanitizeSnapshot: sanitizeQueuedBatchSpaceSnapshot,
+        hasContent: (normalizedSnapshot) => normalizedSnapshot.queuedJobs.length > 0,
+        writeErrorMessage: 'Failed to save queued batch space backup.',
     });
 }

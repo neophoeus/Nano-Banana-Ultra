@@ -626,7 +626,6 @@ describe('ComposerSettingsPanel prompt focus wiring', () => {
                                 startedAt: 1710400005000,
                                 completedAt: 1710400010000,
                                 lastPolledAt: 1710400010000,
-                                importedAt: null,
                                 error: null,
                             },
                         ] as any

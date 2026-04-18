@@ -1,10 +1,9 @@
-import { Dispatch, MutableRefObject, SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
+import { Dispatch, MutableRefObject, SetStateAction, useCallback, useEffect, useRef } from 'react';
 import {
     cancelQueuedBatchJob,
     checkApiKey,
     getQueuedBatchJob,
     importQueuedBatchJobResults,
-    listQueuedBatchJobs,
     submitQueuedBatchJob,
 } from '../services/geminiService';
 import {
@@ -26,8 +25,6 @@ import { sanitizeSessionHintsForStorage } from '../utils/inlineImageDisplay';
 import {
     isQueuedBatchJobAutoImportReady,
     isQueuedBatchJobClearableIssue,
-    isQueuedBatchJobImported,
-    isQueuedBatchJobImportReady,
     isQueuedBatchJobRefreshable,
 } from '../utils/queuedBatchJobs';
 import { buildStyleTransferPrompt } from '../utils/styleRegistry';
@@ -42,7 +39,6 @@ const QUEUED_BATCH_JOB_STATES: QueuedBatchJobState[] = [
     'JOB_STATE_EXPIRED',
 ];
 const QUEUED_BATCH_AUTO_REFRESH_INTERVAL_MS = 45_000;
-const RECOVER_RECENT_BATCH_PAGE_SIZE = 50;
 const QUEUED_BATCH_OUTPUT_FORMAT: QueuedBatchJob['outputFormat'] = 'images-only';
 const QUEUED_BATCH_INCLUDE_THOUGHTS = false;
 
@@ -210,7 +206,6 @@ type RemoteQueuedJobSeed = Pick<
     | 'batchSize'
     | 'objectImageCount'
     | 'characterImageCount'
-    | 'importedAt'
     | 'hasInlinedResponses'
     | 'submissionPending'
     | 'importDiagnostic'
@@ -335,13 +330,11 @@ const normalizeQueuedBatchDraft = (draft: QueuedBatchJobGenerationDraft): Queued
 type UseQueuedBatchWorkflowReturn = {
     queuedJobs: QueuedBatchJob[];
     setQueuedJobs: Dispatch<SetStateAction<QueuedBatchJob[]>>;
-    isRecoveringRecentQueuedJobs: boolean;
     handleQueueBatchJob: () => Promise<void>;
     handleQueueBatchJobFromEditor: (submission: EditorQueuedBatchJobSubmission) => Promise<void>;
     handlePollQueuedJob: (localId: string) => Promise<void>;
     handlePollAllQueuedJobs: (options?: { silent?: boolean; reason?: 'manual' | 'auto' }) => Promise<void>;
     handleCancelQueuedJob: (localId: string) => Promise<void>;
-    handleRecoverRecentQueuedJobs: () => Promise<void>;
     handleImportQueuedJob: (localId: string) => Promise<void>;
     handleImportAllQueuedJobs: () => Promise<void>;
     handleOpenImportedQueuedJob: (localId: string) => void;
@@ -384,18 +377,40 @@ export function useQueuedBatchWorkflow({
     historySelectRef,
     t,
 }: UseQueuedBatchWorkflowArgs): UseQueuedBatchWorkflowReturn {
-    const [isRecoveringRecentQueuedJobs, setIsRecoveringRecentQueuedJobs] = useState(false);
     const formatMessage = useCallback(
         (key: string, ...values: Array<string | number>) =>
             values.reduce((message, value, index) => message.replace(`{${index}}`, String(value)), t(key)),
         [t],
     );
 
-    const { queuedJobs, setQueuedJobs, upsertQueuedJob, removeQueuedJob, removeQueuedJobs, markQueuedJobImported } =
-        useQueuedBatchJobs({
-            initialQueuedJobs,
-        });
+    const { queuedJobs, setQueuedJobs, upsertQueuedJob, removeQueuedJob, removeQueuedJobs } = useQueuedBatchJobs({
+        initialQueuedJobs,
+    });
     const queuedJobRefreshInFlightRef = useRef<Set<string>>(new Set());
+
+    const getImportedQueuedHistoryItemsForJob = useCallback(
+        (job: QueuedBatchJob | null | undefined) => {
+            if (!job) {
+                return [];
+            }
+
+            return history
+                .filter((item) => item.executionMode === 'queued-batch-job' && item.variantGroupId === job.name)
+                .sort(sortQueuedBatchImportedHistory);
+        },
+        [history],
+    );
+
+    const hasImportedQueuedResultsInCurrentWorkspace = useCallback(
+        (job: QueuedBatchJob | null | undefined) => getImportedQueuedHistoryItemsForJob(job).length > 0,
+        [getImportedQueuedHistoryItemsForJob],
+    );
+
+    const isQueuedBatchJobReadyForCurrentWorkspaceImport = useCallback(
+        (job: QueuedBatchJob) =>
+            isQueuedBatchJobAutoImportReady(job) && !hasImportedQueuedResultsInCurrentWorkspace(job),
+        [hasImportedQueuedResultsInCurrentWorkspace],
+    );
 
     const buildQueuedBatchDisplayName = useCallback(
         (model: ImageModel) =>
@@ -528,7 +543,6 @@ export function useQueuedBatchWorkflow({
                 startedAt,
                 completedAt,
                 lastPolledAt: null,
-                importedAt: seed.importedAt,
                 hasInlinedResponses,
                 submissionPending: false,
                 importDiagnostic,
@@ -542,95 +556,6 @@ export function useQueuedBatchWorkflow({
             };
         },
         [],
-    );
-
-    const buildRecoveredQueuedJobSeed = useCallback(
-        (remoteJob: RemoteQueuedJob): RemoteQueuedJobSeed => {
-            const existingJob = queuedJobs.find((candidate) => candidate.name === remoteJob.name);
-            if (existingJob) {
-                return {
-                    localId: existingJob.localId,
-                    prompt: existingJob.prompt,
-                    restoredFromSnapshot: existingJob.restoredFromSnapshot,
-                    generationMode: existingJob.generationMode,
-                    aspectRatio: existingJob.aspectRatio,
-                    imageSize: existingJob.imageSize,
-                    style: existingJob.style,
-                    outputFormat: existingJob.outputFormat,
-                    temperature: existingJob.temperature,
-                    thinkingLevel: existingJob.thinkingLevel,
-                    includeThoughts: existingJob.includeThoughts,
-                    googleSearch: existingJob.googleSearch,
-                    imageSearch: existingJob.imageSearch,
-                    batchSize: existingJob.batchSize,
-                    objectImageCount: existingJob.objectImageCount,
-                    characterImageCount: existingJob.characterImageCount,
-                    importedAt: existingJob.importedAt,
-                    hasInlinedResponses: existingJob.hasInlinedResponses,
-                    submissionPending: existingJob.submissionPending,
-                    importDiagnostic: existingJob.importDiagnostic,
-                    importIssues: existingJob.importIssues,
-                    error: existingJob.error,
-                    parentHistoryId: existingJob.parentHistoryId,
-                    rootHistoryId: existingJob.rootHistoryId,
-                    sourceHistoryId: existingJob.sourceHistoryId,
-                    lineageAction: existingJob.lineageAction,
-                    lineageDepth: existingJob.lineageDepth,
-                };
-            }
-
-            const recoveredHistoryItems = history
-                .filter((item) => item.executionMode === 'queued-batch-job' && item.variantGroupId === remoteJob.name)
-                .sort(sortQueuedBatchImportedHistory);
-            const firstRecoveredHistoryItem = recoveredHistoryItems[0];
-            const lastRecoveredHistoryItem = recoveredHistoryItems[recoveredHistoryItems.length - 1];
-            const recoveredMetadata = (firstRecoveredHistoryItem?.metadata || {}) as Record<string, unknown>;
-            const recoveredOutputFormat =
-                recoveredMetadata.outputFormat === 'images-and-text' ? 'images-and-text' : 'images-only';
-            const recoveredThinkingLevel =
-                recoveredMetadata.thinkingLevel === 'disabled' ||
-                recoveredMetadata.thinkingLevel === 'minimal' ||
-                recoveredMetadata.thinkingLevel === 'high'
-                    ? (recoveredMetadata.thinkingLevel as QueuedBatchJob['thinkingLevel'])
-                    : 'minimal';
-
-            return {
-                localId: remoteJob.name,
-                prompt: firstRecoveredHistoryItem?.prompt || remoteJob.displayName || remoteJob.name,
-                restoredFromSnapshot: false,
-                generationMode: firstRecoveredHistoryItem?.mode || 'Recovered Batch Job',
-                aspectRatio: firstRecoveredHistoryItem?.aspectRatio || '1:1',
-                imageSize: firstRecoveredHistoryItem?.size || '1K',
-                style: firstRecoveredHistoryItem?.style || 'None',
-                outputFormat: recoveredOutputFormat,
-                temperature:
-                    typeof recoveredMetadata.temperature === 'number' && Number.isFinite(recoveredMetadata.temperature)
-                        ? recoveredMetadata.temperature
-                        : 1,
-                thinkingLevel: recoveredThinkingLevel,
-                includeThoughts:
-                    typeof recoveredMetadata.includeThoughts === 'boolean'
-                        ? recoveredMetadata.includeThoughts
-                        : Boolean(firstRecoveredHistoryItem?.thoughts),
-                googleSearch: false,
-                imageSearch: false,
-                batchSize: resolveQueuedBatchRequestCount(remoteJob, recoveredHistoryItems.length || 1),
-                objectImageCount: 0,
-                characterImageCount: 0,
-                importedAt: lastRecoveredHistoryItem?.createdAt || null,
-                hasInlinedResponses: remoteJob.hasInlinedResponses,
-                submissionPending: false,
-                importDiagnostic: null,
-                importIssues: null,
-                error: null,
-                parentHistoryId: firstRecoveredHistoryItem?.parentHistoryId || null,
-                rootHistoryId: firstRecoveredHistoryItem?.rootHistoryId || null,
-                sourceHistoryId: firstRecoveredHistoryItem?.sourceHistoryId || null,
-                lineageAction: firstRecoveredHistoryItem?.lineageAction || 'root',
-                lineageDepth: firstRecoveredHistoryItem?.lineageDepth || 0,
-            };
-        },
-        [history, queuedJobs],
     );
 
     const submitQueuedBatchDraft = useCallback(
@@ -668,7 +593,6 @@ export function useQueuedBatchWorkflow({
                 batchSize: queuedDraft.batchSize,
                 objectImageCount: queuedDraft.finalObjectInputs.length,
                 characterImageCount: queuedDraft.finalCharacterInputs.length,
-                importedAt: null,
                 hasInlinedResponses: false,
                 submissionPending: true,
                 importDiagnostic: null,
@@ -707,7 +631,6 @@ export function useQueuedBatchWorkflow({
                 startedAt: null,
                 completedAt: null,
                 lastPolledAt: null,
-                importedAt: null,
                 hasInlinedResponses: false,
                 submissionPending: true,
                 importDiagnostic: null,
@@ -848,9 +771,10 @@ export function useQueuedBatchWorkflow({
                 const nextJob = {
                     ...mapRemoteQueuedJobToLocal(remoteJob, job),
                     lastPolledAt: updatedAt,
-                    importedAt: job.importedAt,
                 };
                 const stateChanged = nextJob.state !== job.state;
+                const isReadyForCurrentWorkspaceImport = isQueuedBatchJobReadyForCurrentWorkspaceImport(nextJob);
+                const hasImportedResultsInCurrentWorkspace = hasImportedQueuedResultsInCurrentWorkspace(nextJob);
 
                 upsertQueuedJob(nextJob);
 
@@ -860,7 +784,9 @@ export function useQueuedBatchWorkflow({
 
                 if (!options?.silent && options?.reason === 'manual') {
                     if (nextJob.state === 'JOB_STATE_SUCCEEDED') {
-                        if (nextJob.hasInlinedResponses === false) {
+                        if (hasImportedResultsInCurrentWorkspace) {
+                            showNotification(formatMessage('queuedBatchPolledLog', job.name, remoteJob.state), 'info');
+                        } else if (nextJob.hasInlinedResponses === false) {
                             showNotification(t('queuedBatchNoPayloadResultsNotice'), 'error');
                         } else if (nextJob.error) {
                             showNotification(
@@ -868,7 +794,7 @@ export function useQueuedBatchWorkflow({
                                     nextJob.error,
                                 'error',
                             );
-                        } else if (isQueuedBatchJobImportReady(nextJob)) {
+                        } else if (isReadyForCurrentWorkspaceImport) {
                             showNotification(formatMessage('queuedBatchReadyToImportNotice', job.displayName), 'info');
                         } else {
                             showNotification(t('queuedBatchNoImportableResultsNotice'), 'error');
@@ -894,7 +820,7 @@ export function useQueuedBatchWorkflow({
                 }
 
                 if (stateChanged && options?.reason === 'auto') {
-                    if (isQueuedBatchJobImportReady(nextJob)) {
+                    if (isReadyForCurrentWorkspaceImport) {
                         showNotification(formatMessage('queuedBatchReadyToImportNotice', job.displayName), 'info');
                     } else if (nextJob.state === 'JOB_STATE_FAILED' || nextJob.state === 'JOB_STATE_EXPIRED') {
                         showNotification(
@@ -976,7 +902,6 @@ export function useQueuedBatchWorkflow({
                 upsertQueuedJob({
                     ...mapRemoteQueuedJobToLocal(remoteJob, job),
                     lastPolledAt: Date.now(),
-                    importedAt: job.importedAt,
                 });
                 addLog(formatMessage('queuedBatchCancelledLog', job.name));
                 showNotification(t('queuedBatchCancelRequestedNotice'), 'info');
@@ -989,95 +914,18 @@ export function useQueuedBatchWorkflow({
         [addLog, formatMessage, mapRemoteQueuedJobToLocal, queuedJobs, showNotification, t, upsertQueuedJob],
     );
 
-    const handleRecoverRecentQueuedJobs = useCallback(async () => {
-        if (isRecoveringRecentQueuedJobs) {
-            return;
-        }
-
-        setIsRecoveringRecentQueuedJobs(true);
-
-        try {
-            const remoteJobs = await listQueuedBatchJobs(RECOVER_RECENT_BATCH_PAGE_SIZE);
-            let recoveredCount = 0;
-            let refreshedCount = 0;
-            const hydratedJobs = await Promise.all(
-                remoteJobs.map(async (remoteJob) => {
-                    const existingJob = queuedJobs.find((candidate) => candidate.name === remoteJob.name);
-                    const shouldHydrate =
-                        !existingJob ||
-                        existingJob.lastPolledAt == null ||
-                        (existingJob.state === 'JOB_STATE_SUCCEEDED' &&
-                            existingJob.importedAt == null &&
-                            existingJob.hasInlinedResponses !== true);
-
-                    if (!shouldHydrate) {
-                        return { remoteJob, existingJob, hydratedJob: null as RemoteQueuedJob | null };
-                    }
-
-                    try {
-                        const hydratedJob = await getQueuedBatchJob(remoteJob.name);
-                        return { remoteJob, existingJob, hydratedJob };
-                    } catch {
-                        return { remoteJob, existingJob, hydratedJob: null as RemoteQueuedJob | null };
-                    }
-                }),
-            );
-
-            hydratedJobs.forEach(({ remoteJob, existingJob, hydratedJob }) => {
-                const sourceJob = hydratedJob || remoteJob;
-                const nextJob = mapRemoteQueuedJobToLocal(sourceJob, buildRecoveredQueuedJobSeed(sourceJob));
-                upsertQueuedJob(
-                    hydratedJob
-                        ? {
-                              ...nextJob,
-                              lastPolledAt: Date.now(),
-                          }
-                        : nextJob,
-                );
-                if (!existingJob) {
-                    recoveredCount += 1;
-                } else if (hydratedJob) {
-                    refreshedCount += 1;
-                }
-            });
-
-            if (recoveredCount > 0) {
-                addLog(formatMessage('queuedBatchRecoverRecentLog', recoveredCount));
-                addLog(t('queuedBatchRecoverRecentMetadataHint'));
-                showNotification(formatMessage('queuedBatchRecoverRecentNotice', recoveredCount), 'info');
-                return;
-            }
-
-            if (refreshedCount > 0) {
-                addLog(formatMessage('queuedBatchRecoverRecentRefreshedLog', refreshedCount));
-                showNotification(formatMessage('queuedBatchRecoverRecentAlreadyTrackedNotice', refreshedCount), 'info');
-                return;
-            }
-
-            showNotification(t('queuedBatchRecoverRecentNoneNotice'), 'info');
-        } catch (error: any) {
-            const message = error?.message || 'Failed to recover recent batch jobs.';
-            addLog(formatMessage('queuedBatchRecoverRecentFailedLog', message));
-            showNotification(message, 'error');
-        } finally {
-            setIsRecoveringRecentQueuedJobs(false);
-        }
-    }, [
-        addLog,
-        buildRecoveredQueuedJobSeed,
-        formatMessage,
-        isRecoveringRecentQueuedJobs,
-        mapRemoteQueuedJobToLocal,
-        queuedJobs,
-        showNotification,
-        t,
-        upsertQueuedJob,
-    ]);
-
     const importQueuedJob = useCallback(
         async (localId: string, options?: { silent?: boolean }) => {
             const job = queuedJobs.find((candidate) => candidate.localId === localId);
             if (!job) {
+                return 0;
+            }
+
+            const existingImportedHistoryItems = getImportedQueuedHistoryItemsForJob(job);
+            if (existingImportedHistoryItems.length > 0) {
+                if (!options?.silent) {
+                    historySelectRef.current?.(existingImportedHistoryItems[0]);
+                }
                 return 0;
             }
 
@@ -1179,7 +1027,6 @@ export function useQueuedBatchWorkflow({
 
                     upsertQueuedJob({
                         ...mapRemoteQueuedJobToLocal(remoteJob, resolvedJobSeed),
-                        importedAt: job.importedAt,
                         lastPolledAt: Date.now(),
                         importDiagnostic,
                         importIssues: importIssues.length > 0 ? importIssues : null,
@@ -1208,10 +1055,8 @@ export function useQueuedBatchWorkflow({
                 }
 
                 setHistory((previous) => [...importedHistoryItems, ...previous]);
-                markQueuedJobImported(localId);
                 upsertQueuedJob({
                     ...mapRemoteQueuedJobToLocal(remoteJob, resolvedJobSeed),
-                    importedAt: Date.now(),
                     lastPolledAt: Date.now(),
                     importDiagnostic: null,
                     importIssues: null,
@@ -1240,9 +1085,9 @@ export function useQueuedBatchWorkflow({
         [
             addLog,
             formatMessage,
+            getImportedQueuedHistoryItemsForJob,
             historySelectRef,
             mapRemoteQueuedJobToLocal,
-            markQueuedJobImported,
             queuedJobs,
             setHistory,
             showNotification,
@@ -1259,7 +1104,7 @@ export function useQueuedBatchWorkflow({
     );
 
     const handleImportAllQueuedJobs = useCallback(async () => {
-        const readyJobs = queuedJobs.filter(isQueuedBatchJobAutoImportReady);
+        const readyJobs = queuedJobs.filter(isQueuedBatchJobReadyForCurrentWorkspaceImport);
         if (readyJobs.length === 0) {
             showNotification(t('queuedBatchImportWaitingNotice'), 'info');
             return;
@@ -1277,20 +1122,22 @@ export function useQueuedBatchWorkflow({
         }
 
         showNotification(t('queuedBatchImportAllNoneNotice'), 'error');
-    }, [addLog, formatMessage, importQueuedJob, queuedJobs, showNotification, t]);
+    }, [
+        addLog,
+        formatMessage,
+        importQueuedJob,
+        isQueuedBatchJobReadyForCurrentWorkspaceImport,
+        queuedJobs,
+        showNotification,
+        t,
+    ]);
 
     const getImportedQueuedHistoryItems = useCallback(
         (localId: string) => {
             const job = queuedJobs.find((candidate) => candidate.localId === localId);
-            if (!job?.importedAt) {
-                return [];
-            }
-
-            return history
-                .filter((item) => item.executionMode === 'queued-batch-job' && item.variantGroupId === job.name)
-                .sort(sortQueuedBatchImportedHistory);
+            return getImportedQueuedHistoryItemsForJob(job);
         },
-        [history, queuedJobs],
+        [getImportedQueuedHistoryItemsForJob, queuedJobs],
     );
 
     const handleOpenImportedQueuedJob = useCallback(
@@ -1344,7 +1191,7 @@ export function useQueuedBatchWorkflow({
     }, [addLog, formatMessage, queuedJobs, removeQueuedJobs, showNotification]);
 
     const handleClearImportedQueuedJobs = useCallback(() => {
-        const importedJobs = queuedJobs.filter(isQueuedBatchJobImported);
+        const importedJobs = queuedJobs.filter(hasImportedQueuedResultsInCurrentWorkspace);
         if (importedJobs.length === 0) {
             return;
         }
@@ -1352,7 +1199,14 @@ export function useQueuedBatchWorkflow({
         removeQueuedJobs(importedJobs.map((job) => job.localId));
         addLog(formatMessage('queuedBatchClearImportedLog', importedJobs.length));
         showNotification(formatMessage('queuedBatchClearImportedNotice', importedJobs.length), 'info');
-    }, [addLog, formatMessage, queuedJobs, removeQueuedJobs, showNotification]);
+    }, [
+        addLog,
+        formatMessage,
+        hasImportedQueuedResultsInCurrentWorkspace,
+        queuedJobs,
+        removeQueuedJobs,
+        showNotification,
+    ]);
 
     const handleRemoveQueuedJob = useCallback(
         (localId: string) => {
@@ -1390,13 +1244,11 @@ export function useQueuedBatchWorkflow({
     return {
         queuedJobs,
         setQueuedJobs,
-        isRecoveringRecentQueuedJobs,
         handleQueueBatchJob,
         handleQueueBatchJobFromEditor,
         handlePollQueuedJob,
         handlePollAllQueuedJobs,
         handleCancelQueuedJob,
-        handleRecoverRecentQueuedJobs,
         handleImportQueuedJob,
         handleImportAllQueuedJobs,
         handleOpenImportedQueuedJob,

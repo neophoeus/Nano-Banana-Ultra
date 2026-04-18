@@ -370,13 +370,13 @@ export const de = {
     styleLineArt: 'Line Art',
     styleStorybookIllustration: 'Bilderbuch Illustration',
     queueBatchModeEditor:
-        'Der Batchauftrag in der Warteschlange sendet einen offiziellen bildkonditionierten Batch auf Editor-Basis mit der aktuellen Editor-Basis und den vorbereiteten Referenzen. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
+        'Dies sendet einen offiziellen bildkonditionierten Batch auf Editor-Basis mit der aktuellen Editoreingabe und den vorbereiteten Referenzen. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
     queueBatchModeStage:
-        'Der Batchauftrag in der Warteschlange sendet einen offiziellen bildkonditionierten Folge-Batch mit dem aktuellen Stufenbild und den vorbereiteten Referenzen. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
+        'Dies sendet einen offiziellen bildkonditionierten Folge-Batch mit dem aktuellen Stufenbild und den vorbereiteten Referenzen. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
     queueBatchModeReferences:
-        'Der Batchauftrag in der Warteschlange sendet einen offiziellen referenzgesteuerten Batch mit dem aktuellen Prompt und der Referenzablage. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
+        'Dies sendet einen offiziellen referenzgesteuerten Batch mit dem aktuellen Prompt und der Referenzablage. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
     queueBatchModePromptOnly:
-        'Der Batchauftrag in der Warteschlange sendet einen offiziellen Batchauftrag nur mit Prompt. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
+        'Dies sendet einen offiziellen Batchauftrag nur mit Prompt. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
     queueBatchConversationNotice:
         'Batchauftrage in der Warteschlange behalten die Quellherkunft bei, senden aber keinen offiziellen Multi-Turn-Konversationsverlauf. Fur Chat-Fortsetzung verwenden Sie den normalen Generierungsablauf.',
     queuedBatchJobsTitle: 'Wartende Batch-Jobs',
@@ -389,17 +389,6 @@ export const de = {
     queuedBatchJobsImportReadyCount: '{0} importbereit',
     queuedBatchJobsClosedIssuesCount: '{0} mit Problemen beendet',
     queuedBatchJobsImportReadyAction: 'Bereite importieren',
-    queuedBatchRecoverRecentAction: 'Aktuelle Batch-Jobs wiederherstellen',
-    queuedBatchRecoverRecentLoading: 'Aktuelle Jobs werden wiederhergestellt...',
-    queuedBatchRecoverRecentNotice: '{0} aktuelle Batch-Jobs wiederhergestellt.',
-    queuedBatchRecoverRecentAlreadyTrackedNotice:
-        'Die aktuellen Remote-Batch-Jobs werden bereits verfolgt. {0} Eintrage wurden aktualisiert.',
-    queuedBatchRecoverRecentNoneNotice: 'Keine weiteren aktuellen Remote-Batch-Jobs gefunden.',
-    queuedBatchRecoverRecentLog: '{0} aktuelle Remote-Batch-Jobs aus der Batch-Liste wiederhergestellt.',
-    queuedBatchRecoverRecentRefreshedLog: '{0} bereits verfolgte Remote-Batch-Jobs aus der Batch-Liste aktualisiert.',
-    queuedBatchRecoverRecentFailedLog: 'Wiederherstellung aktueller Batch-Jobs fehlgeschlagen: {0}',
-    queuedBatchRecoverRecentMetadataHint:
-        'Wiederhergestellte Remote-Jobs konnen erneut importiert werden, aber die Gemini-Batch-Liste liefert weder den ursprunglichen Prompt noch Referenzbilder zuruck, daher enthalten diese Eintrage nur vereinfachte lokale Details.',
     queuedBatchJobsRefreshAll: 'Alle aktualisieren',
     queuedBatchJobsTrackedCount: '{0} verfolgt',
     queuedBatchJobsImportedTag: 'Importiert',
@@ -511,7 +500,7 @@ export const de = {
     composerEnterNewline: 'Fur neue Zeile Enter drucken',
     composerVisibilityVisible: 'Sichtbar',
     composerVisibilityHidden: 'Ausgeblendet',
-    composerQueueBatchJob: 'Als Batch-Job einreihen',
+    composerQueueBatchJob: 'An Warteschlange senden',
     composerAdvancedTitle: 'Faehigkeitsbewusste erweiterte Einstellungen',
     composerAdvancedDesc:
         'Nicht unterstuetzte Steuerelemente bleiben verborgen und werden beim Modellwechsel automatisch auf sichere Standardwerte zurueckgesetzt.',
