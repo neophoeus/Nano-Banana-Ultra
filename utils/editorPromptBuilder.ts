@@ -77,22 +77,6 @@ const formatFrameEdgeList = (sides: BlankSide[], noun: 'side' | 'edge'): string 
     return `${sideLabels.slice(0, -1).join(', ')}, and ${sideLabels[sideLabels.length - 1]}`;
 };
 
-const formatBlankSideList = (blankSides: BlankSide[]): string => {
-    if (blankSides.length === 0) {
-        return 'the blank margins';
-    }
-
-    if (blankSides.length === 1) {
-        return `the blank margin on ${formatFrameEdgeList(blankSides, 'side')}`;
-    }
-
-    if (blankSides.length === 2) {
-        return `the blank margins on ${formatFrameEdgeList(blankSides, 'side')}`;
-    }
-
-    return `the blank margins on ${formatFrameEdgeList(blankSides, 'side')}`;
-};
-
 const buildTransparentRegionInstruction = (blankSides: BlankSide[]): string => {
     if (blankSides.length === 0) {
         return '';

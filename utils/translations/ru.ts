@@ -1,42 +1,6 @@
 export const ru = {
     appTitle: 'Nano Banana Ultra',
-    tplPortrait: 'Портрет',
-    tplLandscape: 'Пейзаж',
-    tplProduct: 'Продукт',
-    tplAnimal: 'Животное',
-    tplFood: 'Еда',
-    tplInterior: 'Интерьер',
-    tplCharacter: 'Персонаж',
-    tplSciFi: 'Фантастика',
-    tplAbstract: 'Абстрактный',
-    tplArchitecture: 'Архитектура',
-    tplUnderwater: 'Подводный',
-    tplPoster: 'Постер',
     clearAll: 'Очистить всё',
-    tplPromptPortrait:
-        'Профессиональный студийный портрет с мягким освещением, малой глубиной резкости и естественной текстурой кожи. Ракурс на уровне глаз, тёплые тона.',
-    tplPromptLandscape:
-        'Захватывающий дух панорамный пейзаж в золотой час с драматичными облаками, насыщенными природными цветами и ощущением глубины и масштаба.',
-    tplPromptProduct:
-        'Стильная съёмка продукта на чистом фоне со студийным освещением, точными бликами и ощущением премиальности.',
-    tplPromptAnimal:
-        'Потрясающая фотография дикой природы, запечатлевшая животное в его естественной среде обитания, с чёткими деталями и красивым эффектом боке на фоне.',
-    tplPromptFood:
-        'Аппетитная фуд-фотография с тёплым верхним освещением, тщательной сервировкой, паром или движением в кадре, и в рустикальном стиле сервировки стола.',
-    tplPromptInterior:
-        'Современный рендеринг интерьера с естественным светом, льющимся из окон, чистыми линиями, тщательно подобранным декором и тёплой атмосферой.',
-    tplPromptCharacter:
-        'Детализированный концепт-арт фэнтезийного персонажа с замысловатым дизайном брони/одежды, динамичной позой и богатым задним фоном.',
-    tplPromptSciFi:
-        'Футуристическая сай-фай сцена с передовыми технологиями, неоновым освещением, объёмным туманом и кинематографичной композицией, намекающей на масштабную историю.',
-    tplPromptAbstract:
-        'Абстрактное произведение искусства со смелыми цветами, динамичными формами, градиентами, и сильным ощущением движения и эмоциональной глубины.',
-    tplPromptArchitecture:
-        'Потрясающая архитектурная фотография с акцентом на геометрические узоры, направляющие линии, драматичную перспективу и игру света и тени.',
-    tplPromptUnderwater:
-        'Завораживающая подводная сцена с яркими коралловыми рифами, тропическими рыбами, лучами света, пробивающимися сквозь воду, и кристально чистой синевой.',
-    tplPromptPoster:
-        'Кинематографичный дизайн постера к фильму с драматичной композицией, смелой типографикой, атмосферным освещением и захватывающим визуальным повествованием.',
     toolPen: 'Ручка',
     toolEraser: 'Ластик',
     toolUndo: 'Отменить',
@@ -51,8 +15,6 @@ export const ru = {
     locked: 'Заблокировано',
     ratioSkyscraper: 'Небоскреб',
     ratioTall: 'Высокий',
-    templates: 'Шаблоны',
-    promptHistory: 'История',
     switchLight: 'Светлая тема',
     switchDark: 'Темная тема',
     shiftEnter: 'Shift+Enter перенос',
@@ -479,13 +441,7 @@ export const ru = {
     workspaceRestoreTitle: 'Рабочее пространство восстановлено',
     workspaceRestoreTurns: '{0} ходов',
     workspaceRestoreActionsTitle: 'Выберите следующий шаг',
-    workspaceTopHeaderModel: 'Модель',
-    workspaceTopHeaderRatio: 'Формат',
-    workspaceTopHeaderSize: 'Размер',
-    workspaceTopHeaderQty: 'Количество',
     workspaceTopHeaderReferenceTray: 'Лоток референсов',
-    workspaceTopHeaderObjectRefs: 'объектных рефов {0}',
-    workspaceTopHeaderCharacterRefs: 'рефов персонажей {0}',
     workspaceTopHeaderSendIntent: 'Отправка',
     workspaceSendIntentIndependent: 'Независимо',
     workspaceSendIntentMemory: 'Память',
@@ -566,7 +522,6 @@ export const ru = {
     stageActionBranchFromHere: 'Ветвить отсюда',
     stageActionClear: 'Очистить',
     stageActionMore: 'Больше действий',
-    stageContextContinuationDiffers: 'Источник продолжения отличается',
     loadingPrepareSketchPad: 'Подготовка SketchPad...',
     loadingPrepareUltraEditor: 'Подготовка Ultra Editor...',
     loadingPrepareProvenancePanel: 'Подготовка панели происхождения...',
@@ -585,10 +540,6 @@ export const ru = {
     workspaceConstraintTrimCharacters: 'Изображения персонажей сокращены до {0} из-за ограничений модели.',
     workspacePickerSharedPrompt: 'Общий промпт',
     workspacePickerSharedPromptPlaceholder: 'Обновите здесь общий промпт компоновщика.',
-    workspacePickerInspiration: 'Вдохновение',
-    workspacePickerNoSavedPrompts: 'Сохраненных промптов пока нет.',
-    workspacePickerRemovePrompt: 'Удалить',
-    workspacePickerClearPromptHistory: 'Очистить историю промптов',
     workspacePickerFullGallery: 'Полная галерея',
     workspacePickerEmptyGallery: 'Сгенерируйте или загрузите изображение, чтобы заполнить галерею.',
     workspacePickerModelSupportImageSearch: 'Поиск изображений с grounding готов',
@@ -599,7 +550,6 @@ export const ru = {
     workspacePickerNoSketchAsset: 'Скетч-ресурс не подготовлен.',
     workspacePickerCharacters: 'Персонажи',
     workspacePickerCharacterHint: 'Референсы персонажей остаются в той же подготовленной модели приема.',
-    workspacePickerPromptHistoryTitle: 'История',
     workspacePickerStageSource: 'Источник сцены',
     workspacePickerHistoryLinked: 'связано с историей',
     workspacePickerStageSourceHint:
@@ -615,8 +565,6 @@ export const ru = {
         'Элементы управления по возможностям автоматически скрываются, если модель их не поддерживает.',
     workspaceSheetTitlePrompt: 'Общий промпт',
     workspaceSheetTitleHistory: 'История',
-    workspaceSheetTitleGallery: 'Галерея',
-    workspaceSheetTitleTemplates: 'Шаблоны',
     workspaceSheetTitleStyles: 'Стили',
     workspaceSheetTitleModel: 'Модель',
     workspaceSheetTitleRatio: 'Формат',
@@ -881,7 +829,6 @@ export const ru = {
     workspaceInsightsLineageEmpty:
         'Когда накопится несколько успешных ходов, их корни и связи между ветками появятся здесь.',
     workspaceInsightsOpenGallery: 'Открыть галерею',
-    workspaceInsightsOpenPromptHistory: 'Открыть историю промптов',
     workspaceInsightsItemsCount: '{0} элементов',
     groundingPanelContinuitySummary: 'Сводка продолжения',
     groundingPanelAttributionOverview: 'Обзор атрибуции',

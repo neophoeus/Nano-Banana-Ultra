@@ -1,4 +1,3 @@
-import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import SelectedItemSummaryStrip from '../components/SelectedItemSummaryStrip';
@@ -130,5 +129,4 @@ describe('SelectedItem surfaces', () => {
         expect(markup).toContain('data-testid="selected-item-summary-chip-mode"');
         expect(markup).toContain('data-testid="selected-item-summary-chip-execution-mode"');
     });
-
 });

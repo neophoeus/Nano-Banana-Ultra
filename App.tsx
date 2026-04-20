@@ -1,42 +1,24 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, Suspense, lazy } from 'react';
 import {
-    AspectRatio,
     BatchPreviewSession,
     BranchNameOverrides,
-    EditorMode,
-    ExecutionMode,
     GeneratedImage as GeneratedImageType,
-    GroundingMode,
-    ImageSize,
-    ImageStyle,
     ImageModel,
-    OutputFormat,
     ResultPart,
-    ThinkingLevel,
-    GroundingMetadata,
-    ProvenanceContinuityMode,
-    StageAsset,
-    ResultArtifacts,
-    SessionContinuitySource,
     ViewerComposerSettingsSnapshot,
-    WorkspaceSettingsDraft,
 } from './types';
 import ComposerAdvancedSettingsDialog from './components/ComposerAdvancedSettingsDialog';
 import ComposerSettingsPanel from './components/ComposerSettingsPanel';
 import PanelLoadingFallback from './components/PanelLoadingFallback';
-import QueuedBatchJobsPanel from './components/QueuedBatchJobsPanel';
 import SurfaceLoadingFallback from './components/SurfaceLoadingFallback';
 import WorkspaceDetailModal from './components/WorkspaceDetailModal';
 import WorkspaceOverlayStack from './components/WorkspaceOverlayStack';
 import WorkspaceSideToolPanel from './components/WorkspaceSideToolPanel';
 import WorkspaceSupportDetailSurface from './components/WorkspaceSupportDetailSurface';
 import WorkspaceBottomFooter from './components/WorkspaceBottomFooter';
-import WorkspaceEvidenceDetailPanel from './components/WorkspaceEvidenceDetailPanel';
 import WorkspaceTopHeader from './components/WorkspaceTopHeader';
 import WorkspaceUnifiedHistoryPanel from './components/WorkspaceUnifiedHistoryPanel';
-import WorkspaceVersionsDetailPanel from './components/WorkspaceVersionsDetailPanel';
 import WorkspaceProgressCard from './components/WorkspaceProgressCard';
-import WorkspaceProgressDetailPanel from './components/WorkspaceProgressDetailPanel';
 import { WorkspaceFloatingLayerContext } from './components/WorkspaceFloatingLayerContext';
 import { resolveStyleLabel } from './utils/styleRegistry';
 import {
@@ -47,40 +29,32 @@ import {
     persistLanguagePreference,
     resolvePreferredLanguage,
 } from './utils/translations';
-import { ASPECT_RATIOS, IMAGE_MODELS, MODEL_CAPABILITIES, OUTPUT_FORMATS, THINKING_LEVELS } from './constants';
+import { IMAGE_MODELS, MODEL_CAPABILITIES } from './constants';
 import { buildStageErrorState } from './utils/generationFailure';
 import {
     clearSharedWorkspaceSnapshot,
     EMPTY_WORKSPACE_COMPOSER_STATE,
     EMPTY_WORKSPACE_SNAPSHOT,
-    EMPTY_WORKSPACE_SESSION,
     loadWorkspaceSnapshot,
     saveWorkspaceSnapshot,
 } from './utils/workspacePersistence';
 import { loadQueuedBatchSpaceSnapshot } from './utils/queuedBatchSpacePersistence';
 import { hasRestorableWorkspaceContent } from './utils/workspaceSnapshotState';
-import {
-    deriveGroundingMode,
-    getAvailableGroundingModes,
-    getGroundingFlagsFromMode,
-    getGroundingModeLabel,
-} from './utils/groundingMode';
-import { inferExecutionModeFromHistoryItem } from './utils/executionMode';
+import { deriveGroundingMode, getAvailableGroundingModes } from './utils/groundingMode';
 import { EMPTY_WORKSPACE_CONVERSATION_STATE } from './utils/conversationState';
 import { useImageGeneration } from './hooks/useImageGeneration';
 import { usePerformGeneration } from './hooks/usePerformGeneration';
 import { GenerationLiveProgressEvent } from './services/geminiService';
-import { LiveProgressStreamTruthSummary } from './utils/liveProgressCapabilities';
 import { usePromptTools } from './hooks/usePromptTools';
 import { useComposerState } from './hooks/useComposerState';
-import { useGroundingProvenanceView } from './hooks/useGroundingProvenanceView';
-import { useGroundingProvenancePanelProps } from './hooks/useGroundingProvenancePanelProps';
 import { useHistoryPresentationHelpers } from './hooks/useHistoryPresentationHelpers';
 import { useHistorySourceOrchestration } from './hooks/useHistorySourceOrchestration';
 import { useImportedWorkspaceReview } from './hooks/useImportedWorkspaceReview';
 import { useDocumentThemeMode } from './hooks/useDocumentThemeMode';
 import { useComposerSettingsPanelProps } from './hooks/useComposerSettingsPanelProps';
-import { useWorkspaceOverlayAuxiliaryProps } from './hooks/useWorkspaceOverlayAuxiliaryProps';
+import { useWorkspaceBranchRenameDialogProps } from './hooks/useWorkspaceBranchRenameDialogProps';
+import { useWorkspaceImportReviewProps } from './hooks/useWorkspaceImportReviewProps';
+import { useWorkspaceSurfaceSharedControlsProps } from './hooks/useWorkspaceSurfaceSharedControlsProps';
 import { useWorkspacePickerSheetProps } from './hooks/useWorkspacePickerSheetProps';
 import { useWorkspaceStageViewer } from './hooks/useWorkspaceStageViewer';
 import { useWorkspaceTopHeaderProps } from './hooks/useWorkspaceTopHeaderProps';
@@ -90,6 +64,8 @@ import { useSelectedResultState } from './hooks/useSelectedResultState';
 import { useWorkspaceAssets } from './hooks/useWorkspaceAssets';
 import { useWorkspaceLineageSelectors } from './hooks/useWorkspaceLineageSelectors';
 import { useWorkspaceShellViewModel } from './hooks/useWorkspaceShellViewModel';
+import { useWorkspaceProgressThoughts } from './hooks/useWorkspaceProgressThoughts';
+import { useWorkspaceViewerProvenanceState } from './hooks/useWorkspaceViewerProvenanceState';
 import { useWorkspaceCapabilityConstraints } from './hooks/useWorkspaceCapabilityConstraints';
 import { useWorkspaceGenerationActions } from './hooks/useWorkspaceGenerationActions';
 import { useWorkspaceAppLifecycle } from './hooks/useWorkspaceAppLifecycle';
@@ -104,85 +80,29 @@ import { useQueuedBatchWorkflow } from './hooks/useQueuedBatchWorkflow';
 import { useQueuedBatchPresentation } from './hooks/useQueuedBatchPresentation';
 import { useWorkspaceGenerationContext } from './hooks/useWorkspaceGenerationContext';
 import { useWorkspaceShellUtilities } from './hooks/useWorkspaceShellUtilities';
+import { useWorkspaceShellOwnerState } from './hooks/useWorkspaceShellOwnerState';
+import { useWorkspaceSettingsSession } from './hooks/useWorkspaceSettingsSession';
 import { useWorkspaceTransientUiState } from './hooks/useWorkspaceTransientUiState';
 import { useLegacyWorkspaceSnapshotMigration } from './hooks/useLegacyWorkspaceSnapshotMigration';
 import { resolveCurrentStageSelectionFirstSourceOverride } from './utils/generationSourceOverride';
 import { buildSavedImageLoadUrl, loadImageMetadata } from './utils/imageSaveUtils';
-import {
-    createImageSidecarMetadataState,
-    getImageSidecarMetadataState,
-    isPersistedImageSidecarMetadata,
-    normalizeImageSidecarMetadata,
-} from './utils/imageSidecarMetadata';
-import { buildViewerComposerSettingsSnapshot } from './utils/viewerComposerSettings';
+import { createImageSidecarMetadataState, normalizeImageSidecarMetadata } from './utils/imageSidecarMetadata';
 
 const ImageEditor = lazy(() => import('./components/ImageEditor'));
 const GeneratedImage = lazy(() => import('./components/GeneratedImage'));
 const WorkspaceHealthPanel = lazy(() => import('./components/WorkspaceHealthPanel'));
 const GroundingProvenancePanel = lazy(() => import('./components/GroundingProvenancePanel'));
+const WorkspaceProgressDetailPanel = lazy(() => import('./components/WorkspaceProgressDetailPanel'));
+const WorkspaceEvidenceDetailPanel = lazy(() => import('./components/WorkspaceEvidenceDetailPanel'));
+const WorkspaceVersionsDetailPanel = lazy(() => import('./components/WorkspaceVersionsDetailPanel'));
+const QueuedBatchJobsPanel = lazy(() => import('./components/QueuedBatchJobsPanel'));
 const SketchPad = lazy(() => import('./components/SketchPad'));
 const getShortTurnId = (historyId?: string | null) => (historyId ? historyId.slice(0, 8) : '--------');
-
-type ProgressThoughtEntry = {
-    id: string;
-    shortId: string;
-    prompt: string | null;
-    thoughts: string;
-    resultParts: ResultPart[];
-    createdAtLabel: string;
-    createdAtMs: number | null;
-    slotIndex?: number;
-    slotLabel?: string;
-    isLive?: boolean;
-    isFailed?: boolean;
-};
-
-type ActiveLiveProgressSlot = {
-    slotIndex: number;
-    sessionId: string;
-    startedAtMs: number;
-    resultParts: ResultPart[];
-    summary: LiveProgressStreamTruthSummary | null;
-};
-
-type ActiveLiveProgressSession = {
-    batchSessionId: string;
-    startedAtMs: number;
-    slots: Record<number, ActiveLiveProgressSlot>;
-};
-
-const isThoughtResultPart = (part: ResultPart) => part.kind === 'thought-text' || part.kind === 'thought-image';
 
 const buildResultPartIdentityKey = (part: ResultPart) =>
     part.kind === 'thought-text' || part.kind === 'output-text'
         ? `${part.kind}:${part.sequence}:${part.text}`
         : `${part.kind}:${part.sequence}:${part.mimeType}:${part.imageUrl}`;
-
-const getThoughtResultParts = (parts?: ResultPart[] | null): ResultPart[] =>
-    (parts || []).filter(isThoughtResultPart).sort((left, right) => left.sequence - right.sequence);
-
-const buildThoughtSummaryFromParts = (parts: ResultPart[], fallbackLabel: string) => {
-    const text = parts
-        .map((part) => (part.kind === 'thought-text' ? part.text.trim() : ''))
-        .filter(Boolean)
-        .join('\n\n');
-
-    if (text) {
-        return text;
-    }
-
-    return parts.some((part) => part.kind === 'thought-image') ? fallbackLabel : '';
-};
-
-const areWorkspaceSettingsDraftsEqual = (left: WorkspaceSettingsDraft, right: WorkspaceSettingsDraft) =>
-    left.imageModel === right.imageModel &&
-    left.aspectRatio === right.aspectRatio &&
-    left.imageSize === right.imageSize &&
-    left.batchSize === right.batchSize &&
-    left.outputFormat === right.outputFormat &&
-    left.temperature === right.temperature &&
-    left.thinkingLevel === right.thinkingLevel &&
-    left.groundingMode === right.groundingMode;
 
 const TopLauncherSignal = ({ active, dataTestId }: { active: boolean; dataTestId: string }) => {
     const activeOuterClassName =
@@ -227,21 +147,32 @@ const App: React.FC = () => {
         const preferredLanguage = resolvePreferredLanguage();
         return isLanguageLoaded(preferredLanguage) ? preferredLanguage : 'en';
     });
-    const [areInitialPreferencesReady, setAreInitialPreferencesReady] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
-    const [editorMode, setEditorMode] = useState<EditorMode>('inpaint');
-    const [editorRetouchLockedRatio, setEditorRetouchLockedRatio] = useState<AspectRatio | null>(null);
-    const [surfaceSharedControlsBottom, setSurfaceSharedControlsBottom] = useState<number | null>(null);
-    const [settingsSessionDraft, setSettingsSessionDraft] = useState<WorkspaceSettingsDraft | null>(null);
-    const [settingsSessionReturnToGeneration, setSettingsSessionReturnToGeneration] = useState(false);
-    const [activeWorkspaceDetailModal, setActiveWorkspaceDetailModal] = useState<
-        'progress' | 'sources' | 'versions' | null
-    >(null);
-    const [isQueuedBatchSpaceOpen, setIsQueuedBatchSpaceOpen] = useState(false);
-    const [editingImageSource, setEditingImageSource] = useState<string | null>(null);
-    const [batchProgress, setBatchProgress] = useState({ completed: 0, total: 0 });
-    const [activeBatchPreviewSession, setActiveBatchPreviewSession] = useState<BatchPreviewSession | null>(null);
-    const [activeLiveProgressSession, setActiveLiveProgressSession] = useState<ActiveLiveProgressSession | null>(null);
+    const {
+        areInitialPreferencesReady,
+        setAreInitialPreferencesReady,
+        isEditing,
+        setIsEditing,
+        editingImageSource,
+        setEditingImageSource,
+        editorMode,
+        setEditorMode,
+        editorRetouchLockedRatio,
+        setEditorRetouchLockedRatio,
+        activeBatchPreviewSession,
+        setActiveBatchPreviewSession,
+        activeLiveProgressSession,
+        setActiveLiveProgressSession,
+        batchProgress,
+        setBatchProgress,
+        activeWorkspaceDetailModal,
+        setActiveWorkspaceDetailModal,
+        isQueuedBatchSpaceOpen,
+        setIsQueuedBatchSpaceOpen,
+        surfaceSharedControlsBottom,
+        setSurfaceSharedControlsBottom,
+        workspaceFloatingHostElement,
+        setWorkspaceFloatingHostElement,
+    } = useWorkspaceShellOwnerState();
     const [branchNameOverrides, setBranchNameOverrides] = useState<BranchNameOverrides>(
         () => initialWorkspaceSnapshot.branchState.nameOverrides,
     );
@@ -303,7 +234,6 @@ const App: React.FC = () => {
         addLog,
         getActiveImageUrl,
         handleClearResults,
-        handleClearHistory,
     } = useImageGeneration(initialWorkspaceSnapshot);
 
     const {
@@ -642,14 +572,13 @@ const App: React.FC = () => {
                 return;
             }
 
-            const mergedMetadata =
-                metadata
-                    ? normalizeImageSidecarMetadata(
-                          currentViewedCompletedHistoryMetadata
-                              ? { ...currentViewedCompletedHistoryMetadata, ...metadata }
-                              : metadata,
-                      )
-                    : null;
+            const mergedMetadata = metadata
+                ? normalizeImageSidecarMetadata(
+                      currentViewedCompletedHistoryMetadata
+                          ? { ...currentViewedCompletedHistoryMetadata, ...metadata }
+                          : metadata,
+                  )
+                : null;
 
             setSelectedMetadata(mergedMetadata || createImageSidecarMetadataState('missing'));
         });
@@ -846,253 +775,45 @@ const App: React.FC = () => {
                 : IMAGE_MODELS,
         [activeEditorLockedAspectRatio],
     );
-
-    const normalizeSettingsSessionDraft = useCallback(
-        (draft: WorkspaceSettingsDraft): WorkspaceSettingsDraft => {
-            let nextImageModel = draft.imageModel;
-
-            if (
-                activeEditorLockedAspectRatio &&
-                !MODEL_CAPABILITIES[nextImageModel].supportedRatios.includes(activeEditorLockedAspectRatio)
-            ) {
-                nextImageModel =
-                    IMAGE_MODELS.find((model) =>
-                        MODEL_CAPABILITIES[model].supportedRatios.includes(activeEditorLockedAspectRatio),
-                    ) || nextImageModel;
-            }
-
-            const nextCapability = MODEL_CAPABILITIES[nextImageModel];
-            const nextAspectRatio = activeEditorLockedAspectRatio
-                ? activeEditorLockedAspectRatio
-                : nextCapability.supportedRatios.includes(draft.aspectRatio)
-                  ? draft.aspectRatio
-                  : nextCapability.supportedRatios.includes('1:1')
-                    ? '1:1'
-                    : nextCapability.supportedRatios[0] || draft.aspectRatio;
-            const nextImageSize =
-                nextCapability.supportedSizes.length === 0
-                    ? draft.imageSize
-                    : nextCapability.supportedSizes.includes(draft.imageSize)
-                      ? draft.imageSize
-                      : nextCapability.supportedSizes.includes('1K')
-                        ? '1K'
-                        : nextCapability.supportedSizes[0];
-            const nextThinkingLevel = nextCapability.thinkingLevels.includes(draft.thinkingLevel)
-                ? draft.thinkingLevel
-                : nextCapability.thinkingLevels.includes('minimal')
-                  ? 'minimal'
-                  : nextCapability.thinkingLevels[0] || 'disabled';
-            const nextGroundingMode = getAvailableGroundingModes(nextCapability).includes(draft.groundingMode)
-                ? draft.groundingMode
-                : 'off';
-            let nextOutputFormat = nextCapability.outputFormats.includes(draft.outputFormat)
-                ? draft.outputFormat
-                : nextCapability.outputFormats[0];
-
-            if (getGroundingFlagsFromMode(nextGroundingMode).imageSearch) {
-                nextOutputFormat = 'images-and-text';
-            }
-
-            return {
-                ...draft,
-                imageModel: nextImageModel,
-                aspectRatio: nextAspectRatio,
-                imageSize: nextImageSize,
-                outputFormat: nextOutputFormat,
-                temperature: Math.max(0, Math.min(2, draft.temperature)),
-                thinkingLevel: nextThinkingLevel,
-                groundingMode: nextGroundingMode,
-            };
-        },
-        [activeEditorLockedAspectRatio],
-    );
-    const buildSettingsSessionDraft = useCallback(
-        () =>
-            normalizeSettingsSessionDraft({
-                imageModel,
-                aspectRatio,
-                imageSize,
-                batchSize,
-                outputFormat,
-                temperature,
-                thinkingLevel,
-                groundingMode,
-            }),
-        [
-            normalizeSettingsSessionDraft,
-            imageModel,
-            aspectRatio,
-            imageSize,
-            batchSize,
-            outputFormat,
-            temperature,
-            thinkingLevel,
-            groundingMode,
-        ],
-    );
-    const updateSettingsSessionDraft = useCallback(
-        (updater: React.SetStateAction<WorkspaceSettingsDraft>) => {
-            setSettingsSessionDraft((previous) => {
-                const baseDraft = previous ?? buildSettingsSessionDraft();
-                const nextDraft =
-                    typeof updater === 'function'
-                        ? (updater as (value: WorkspaceSettingsDraft) => WorkspaceSettingsDraft)(baseDraft)
-                        : updater;
-
-                return normalizeSettingsSessionDraft(nextDraft);
-            });
-        },
-        [buildSettingsSessionDraft, normalizeSettingsSessionDraft],
-    );
-    const clearSettingsSession = useCallback(() => {
-        setSettingsSessionDraft(null);
-        setSettingsSessionReturnToGeneration(false);
-    }, []);
-    const settingsSessionView = useMemo(
-        () => settingsSessionDraft ?? buildSettingsSessionDraft(),
-        [buildSettingsSessionDraft, settingsSessionDraft],
-    );
-    const settingsSessionCapability = useMemo(
-        () => MODEL_CAPABILITIES[settingsSessionView.imageModel],
-        [settingsSessionView.imageModel],
-    );
-    const settingsSessionAvailableGroundingModes = useMemo(
-        () => getAvailableGroundingModes(settingsSessionCapability),
-        [settingsSessionCapability],
-    );
-    const generationSettingsDraft = useMemo(
-        () => ({
-            imageModel: settingsSessionView.imageModel,
-            aspectRatio: settingsSessionView.aspectRatio,
-            imageSize: settingsSessionView.imageSize,
-            batchSize: settingsSessionView.batchSize,
-        }),
-        [
-            settingsSessionView.aspectRatio,
-            settingsSessionView.batchSize,
-            settingsSessionView.imageModel,
-            settingsSessionView.imageSize,
-        ],
-    );
-    const openGenerationSettingsSession = useCallback(() => {
-        setSettingsSessionDraft((previous) => previous ?? buildSettingsSessionDraft());
-        setSettingsSessionReturnToGeneration(false);
-        setIsAdvancedSettingsOpen(false);
-        setActivePickerSheet('settings');
-    }, [buildSettingsSessionDraft, setActivePickerSheet, setIsAdvancedSettingsOpen]);
-    const openAdvancedSettingsSession = useCallback(() => {
-        setSettingsSessionDraft((previous) => previous ?? buildSettingsSessionDraft());
-        setSettingsSessionReturnToGeneration(false);
-        setActivePickerSheet(null);
-        setIsAdvancedSettingsOpen(true);
-    }, [buildSettingsSessionDraft, setActivePickerSheet, setIsAdvancedSettingsOpen]);
-    const openAdvancedSettingsFromGeneration = useCallback(() => {
-        setSettingsSessionDraft((previous) => previous ?? buildSettingsSessionDraft());
-        setSettingsSessionReturnToGeneration(true);
-        setActivePickerSheet(null);
-        setIsAdvancedSettingsOpen(true);
-    }, [buildSettingsSessionDraft, setActivePickerSheet, setIsAdvancedSettingsOpen]);
-    const handleCloseSettingsSheetSession = useCallback(() => {
-        clearSettingsSession();
-        closePickerSheet();
-    }, [clearSettingsSession, closePickerSheet]);
-    const handleCloseAdvancedSettingsSession = useCallback(() => {
-        if (settingsSessionReturnToGeneration) {
-            setIsAdvancedSettingsOpen(false);
-            setSettingsSessionReturnToGeneration(false);
-            setActivePickerSheet('settings');
-            return;
-        }
-
-        setIsAdvancedSettingsOpen(false);
-        clearSettingsSession();
-    }, [clearSettingsSession, setActivePickerSheet, setIsAdvancedSettingsOpen, settingsSessionReturnToGeneration]);
-    const handleApplySettingsSessionDraft = useCallback(() => {
-        const nextDraft = normalizeSettingsSessionDraft(settingsSessionDraft ?? buildSettingsSessionDraft());
-        const nextCapability = MODEL_CAPABILITIES[nextDraft.imageModel];
-
-        setImageModel(nextDraft.imageModel);
-        setAspectRatio(nextDraft.aspectRatio);
-        if (nextCapability.supportedSizes.length > 0) {
-            setImageSize(nextDraft.imageSize);
-        }
-        setBatchSize(nextDraft.batchSize);
-        setOutputFormat(nextDraft.outputFormat);
-        setTemperature(nextDraft.temperature);
-        setThinkingLevel(nextDraft.thinkingLevel);
-        setGroundingMode(nextDraft.groundingMode);
-        setActivePickerSheet(null);
-        setIsAdvancedSettingsOpen(false);
-        clearSettingsSession();
-    }, [
-        buildSettingsSessionDraft,
+    const {
         clearSettingsSession,
-        normalizeSettingsSessionDraft,
+        generationSettingsDraft,
+        handleApplySettingsSessionDraft,
+        handleCloseAdvancedSettingsSession,
+        handleCloseSettingsSheetSession,
+        handleSettingsSessionGroundingModeChange,
+        handleUpdateGenerationSettingsDraft,
+        openAdvancedSettingsFromGeneration,
+        openAdvancedSettingsSession,
+        openGenerationSettingsSession,
+        settingsSessionAvailableGroundingModes,
+        settingsSessionCapability,
+        settingsSessionView,
+        updateSettingsSessionDraft,
+    } = useWorkspaceSettingsSession({
+        activeEditorLockedAspectRatio,
+        imageModel,
+        aspectRatio,
+        imageSize,
+        batchSize,
+        outputFormat,
+        temperature,
+        thinkingLevel,
+        groundingMode,
+        closePickerSheet,
         setActivePickerSheet,
-        setAspectRatio,
-        setBatchSize,
-        setGroundingMode,
-        setImageModel,
-        setImageSize,
         setIsAdvancedSettingsOpen,
+        setImageModel,
+        setAspectRatio,
+        setImageSize,
+        setBatchSize,
         setOutputFormat,
         setTemperature,
         setThinkingLevel,
-        settingsSessionDraft,
-    ]);
-    const handleUpdateGenerationSettingsDraft = useCallback(
-        (
-            updater: React.SetStateAction<
-                Pick<WorkspaceSettingsDraft, 'imageModel' | 'aspectRatio' | 'imageSize' | 'batchSize'>
-            >,
-        ) => {
-            updateSettingsSessionDraft((previous) => {
-                const baseGenerationDraft = {
-                    imageModel: previous.imageModel,
-                    aspectRatio: previous.aspectRatio,
-                    imageSize: previous.imageSize,
-                    batchSize: previous.batchSize,
-                };
-                const nextGenerationDraft =
-                    typeof updater === 'function'
-                        ? (
-                              updater as (
-                                  value: Pick<
-                                      WorkspaceSettingsDraft,
-                                      'imageModel' | 'aspectRatio' | 'imageSize' | 'batchSize'
-                                  >,
-                              ) => Pick<
-                                  WorkspaceSettingsDraft,
-                                  'imageModel' | 'aspectRatio' | 'imageSize' | 'batchSize'
-                              >
-                          )(baseGenerationDraft)
-                        : updater;
-
-                return {
-                    ...previous,
-                    ...nextGenerationDraft,
-                };
-            });
-        },
-        [updateSettingsSessionDraft],
-    );
-    const handleSettingsSessionGroundingModeChange = useCallback(
-        (nextMode: WorkspaceSettingsDraft['groundingMode']) => {
-            const nextFlags = getGroundingFlagsFromMode(nextMode);
-            const shouldUpgrade = nextFlags.imageSearch && settingsSessionView.outputFormat !== 'images-and-text';
-
-            updateSettingsSessionDraft((previous) => ({
-                ...previous,
-                groundingMode: nextMode,
-                outputFormat: nextFlags.imageSearch ? 'images-and-text' : previous.outputFormat,
-            }));
-
-            if (shouldUpgrade) {
-                showNotification(t('composerGroundingImageSearchUpgradeNotice'), 'info');
-            }
-        },
-        [settingsSessionView.outputFormat, showNotification, t, updateSettingsSessionDraft],
-    );
+        setGroundingMode,
+        showNotification,
+        t,
+    });
 
     useEffect(() => {
         if (isEditing) {
@@ -1158,14 +879,11 @@ const App: React.FC = () => {
         autoBranchLabelByOriginId,
         effectiveBranchContinuationSourceByBranchOriginId,
         branchSummaries,
-        branchSummaryByOriginId,
         lineageRootGroups,
         activeBranchSummary,
         currentStageSourceHistoryId,
         currentStageSourceTurn,
         currentStageBranchSummary,
-        conversationSourceTurn,
-        conversationSummary,
         recentBranchSummaries,
         isPromotedContinuationSource,
         getContinueActionLabel,
@@ -1286,11 +1004,7 @@ const App: React.FC = () => {
         apiKeyReady,
         handleApiKeyConnect,
     });
-    const {
-        isEnhancingPrompt: isEnhancingEditorPrompt,
-        handleSmartRewrite: handleEditorSmartRewrite,
-        handleSurpriseMe: handleEditorSurpriseMe,
-    } = usePromptTools({
+    const { isEnhancingPrompt: isEnhancingEditorPrompt } = usePromptTools({
         currentLanguage: currentLang,
         prompt: editorPrompt,
         setPrompt: setEditorPrompt,
@@ -1396,7 +1110,6 @@ const App: React.FC = () => {
         queueBatchConversationNotice,
         getImportedQueuedHistoryItems,
         getImportedQueuedResultCount,
-        getQueuedBatchPositionLabel,
     } = useQueuedBatchPresentation({
         currentStageAsset,
         objectImageCount: objectImages.length,
@@ -1521,7 +1234,6 @@ const App: React.FC = () => {
     }, [applyWorkspaceSnapshot]);
 
     useLegacyWorkspaceSnapshotMigration({
-        t,
         composeCurrentWorkspaceSnapshot,
         applyWorkspaceSnapshot,
         addLog,
@@ -1568,7 +1280,6 @@ const App: React.FC = () => {
         currentStageAsset,
         editorContextSnapshot,
         hasSketch,
-        isEditing,
         uploadInputRef,
         setObjectImages,
         setCharacterImages,
@@ -1588,7 +1299,6 @@ const App: React.FC = () => {
         getActiveImageUrl,
         addWorkspaceAsset,
         removeAssetAtRoleIndex,
-        clearAssetRoles,
         showNotification,
         addLog,
         t,
@@ -1635,8 +1345,7 @@ const App: React.FC = () => {
         setIsAdvancedSettingsOpen,
         setIsSketchPadOpen,
         setShowSketchReplaceConfirm,
-        setSettingsSessionDraft,
-        setSettingsSessionReturnToGeneration,
+        clearSettingsSession,
         setSurfaceSharedControlsBottom,
     });
 
@@ -1678,7 +1387,6 @@ const App: React.FC = () => {
         setSelectedHistoryId,
         setError,
         setLogs,
-        setIsGenerating,
         upsertViewerStageSource,
         addLog,
         showNotification,
@@ -1706,7 +1414,6 @@ const App: React.FC = () => {
     const {
         getLineageActionLabel,
         getStageOriginLabel,
-        getLineageActionDescription,
         handleRenameBranch,
         handleSubmitBranchRename,
         getBranchAccentClassName,
@@ -1732,7 +1439,6 @@ const App: React.FC = () => {
         renderActiveBranchSummaryContent,
     } = useHistoryPresentationHelpers({
         history,
-        branchSummaryByOriginId,
         effectiveBranchContinuationSourceByBranchOriginId,
         getBranchAccentClassName,
         getContinueActionLabel,
@@ -1748,7 +1454,6 @@ const App: React.FC = () => {
 
     const {
         viewSettings,
-        currentStageSourceShortId,
         latestWorkflowEntry,
         activeSheetTitle,
         isSurfaceWorkspaceOpen,
@@ -1810,57 +1515,27 @@ const App: React.FC = () => {
     const {
         effectiveThoughts,
         effectiveResultParts,
-        effectiveMetadata,
         effectiveSessionHints,
-        actualOutputDimensions,
-        actualOutputSizeLabel,
         groundingResolutionStatusSummary,
         groundingResolutionStatusTone,
         sessionUpdatedLabel,
-        sessionContinuitySignals,
         selectedSources,
         selectedSupportBundles,
-        activeSupportBundle,
-        activeSource,
-        activeSourceIndexSet,
-        activeSourceTitleSet,
-        activeBundleIndexSet,
-        sourceCitationCountByIndex,
-        relatedSourcesForSelectedBundle,
-        otherSourcesForSelectedBundle,
-        relatedBundlesForSelectedSource,
-        displayedSources,
-        displayedSupportBundles,
-        activeGroundingAppendPreview,
-        activeGroundingReplacePreview,
-        activeGroundingHasExistingPrompt,
-        activeGroundingCurrentPromptText,
-        activeGroundingAppendCueText,
         groundingQueries,
         searchEntryPointRenderedContent,
-        attributionOverviewRows,
-        uncitedSources,
-        citedSourceIndexSet,
-        citedSourceTitleSet,
-        sourceAttributionStatusMessage,
-        entryPointStatusMessage,
         sessionHintEntries,
         formatSessionHintKey,
         formatSessionHintValue,
-        formatSourceHost,
-        activeGroundingReuseSnippet,
-        activeGroundingReuseLabel,
-        handleAppendGroundingSelectionToPrompt,
-        handleReplacePromptWithGroundingSelection,
         thoughtStateMessage,
         groundingStateMessage,
         groundingSupportMessage,
         provenanceContinuityMessage,
-        sessionSourceTurn,
-        provenanceSourceTurn,
         provenanceSummaryRows,
-        provenanceSelectionMessage,
-    } = useGroundingProvenanceView({
+        groundingProvenancePanelProps,
+        viewerMetadataItems,
+        viewerMetadataStateMessage,
+        viewerSettingsSnapshot,
+    } = useWorkspaceViewerProvenanceState({
         selectedResultText,
         selectedThoughts,
         selectedResultParts,
@@ -1878,53 +1553,14 @@ const App: React.FC = () => {
         showNotification,
         addLog,
         t,
-    });
-    const groundingProvenancePanelProps = useGroundingProvenancePanelProps({
         currentLanguage: currentLang,
-        provenanceSummaryRows,
-        attributionOverviewRows,
-        provenanceSourceTurn,
-        currentStageSourceHistoryId,
-        getShortTurnId,
         renderHistoryTurnActionRow,
-        provenanceContinuityMessage,
-        provenanceSelectionMessage,
-        activeGroundingSelection,
         setActiveGroundingSelection,
-        focusLinkedGroundingItems,
         setFocusLinkedGroundingItems,
-        totalSourceCount: selectedSources.length,
-        totalSupportBundleCount: selectedSupportBundles.length,
-        displayedSources,
-        displayedSupportBundles,
-        uncitedSources,
-        citedSourceIndexSet,
-        citedSourceTitleSet,
-        sourceAttributionStatusMessage,
-        entryPointStatusMessage,
-        activeSource,
-        activeSupportBundle,
-        activeSourceIndexSet,
-        activeSourceTitleSet,
-        activeBundleIndexSet,
-        sourceCitationCountByIndex,
-        relatedSourcesForSelectedBundle,
-        otherSourcesForSelectedBundle,
-        relatedBundlesForSelectedSource,
-        activeGroundingReuseSnippet,
-        activeGroundingReuseLabel,
-        activeGroundingAppendPreview,
-        activeGroundingReplacePreview,
-        activeGroundingHasExistingPrompt,
-        activeGroundingCurrentPromptText,
-        activeGroundingAppendCueText,
-        formatSourceHost,
-        handleAppendGroundingSelectionToPrompt,
-        handleReplacePromptWithGroundingSelection,
-        groundingStateMessage,
-        groundingSupportMessage,
-        groundingQueries,
-        searchEntryPointRenderedContent,
+        currentViewedCompletedHistoryItem,
+        currentViewedCompletedHistoryMetadata,
+        getStyleLabel,
+        getModelLabel,
     });
     const handleOpenSurfacePickerSheet = useCallback(
         (sheet: Parameters<typeof openSurfacePickerSheet>[0]) => {
@@ -1941,52 +1577,54 @@ const App: React.FC = () => {
         },
         [openGenerationSettingsSession, openSurfacePickerSheet],
     );
-    const { surfaceSharedControlsProps, importReviewProps, branchRenameDialogProps } =
-        useWorkspaceOverlayAuxiliaryProps({
-            isSurfaceWorkspaceOpen,
-            isAdvancedSettingsOpen,
-            activePickerSheet,
-            settingsVariant: isSketchPadOpen ? 'sketch' : 'full',
-            totalReferenceCount,
-            hasSurfacePrompt: Boolean((isEditing ? editorPrompt : prompt).trim()),
-            imageModel,
-            capability,
-            availableGroundingModes,
-            aspectRatio,
-            imageSize,
-            batchSize,
-            outputFormat,
-            temperature,
-            thinkingLevel,
-            includeThoughts,
-            groundingMode,
-            objectImageCount: surfaceObjectImages.length,
-            characterImageCount: surfaceCharacterImages.length,
-            maxObjects: capability.maxObjects,
-            maxCharacters: capability.maxCharacters,
-            floatingControlsZIndex,
-            onSurfaceSharedControlsBottomChange: setSurfaceSharedControlsBottom,
-            currentLanguage: currentLang,
-            openSurfacePickerSheet: handleOpenSurfacePickerSheet,
-            openAdvancedSettings: openAdvancedSettingsSession,
-            getModelLabel,
-            workspaceImportReview,
-            importedBranchSummaries,
-            importedLatestTurn,
-            importedLatestSuccessfulTurn,
-            isImportedPromotedContinuationSource,
-            getImportedContinueActionLabel,
-            handleCloseWorkspaceImportReview,
-            handleMergeImportedWorkspaceSnapshot,
-            handleApplyImportedWorkspaceSnapshot,
-            importReviewBranchActions,
-            branchRenameDialog,
-            getShortTurnId,
-            branchRenameDraft,
-            setBranchRenameDraft,
-            closeBranchRenameDialog,
-            handleSubmitBranchRename,
-        });
+    const surfaceSharedControlsProps = useWorkspaceSurfaceSharedControlsProps({
+        isSurfaceWorkspaceOpen,
+        isAdvancedSettingsOpen,
+        activePickerSheet,
+        settingsVariant: isSketchPadOpen ? 'sketch' : 'full',
+        totalReferenceCount,
+        hasSurfacePrompt: Boolean((isEditing ? editorPrompt : prompt).trim()),
+        imageModel,
+        capability,
+        availableGroundingModes,
+        aspectRatio,
+        imageSize,
+        batchSize,
+        outputFormat,
+        temperature,
+        thinkingLevel,
+        groundingMode,
+        objectImageCount: surfaceObjectImages.length,
+        characterImageCount: surfaceCharacterImages.length,
+        floatingControlsZIndex,
+        onSurfaceSharedControlsBottomChange: setSurfaceSharedControlsBottom,
+        currentLanguage: currentLang,
+        openSurfacePickerSheet: handleOpenSurfacePickerSheet,
+        openAdvancedSettings: openAdvancedSettingsSession,
+        getModelLabel,
+    });
+    const importReviewProps = useWorkspaceImportReviewProps({
+        currentLanguage: currentLang,
+        workspaceImportReview,
+        importedBranchSummaries,
+        importedLatestTurn,
+        importedLatestSuccessfulTurn,
+        isImportedPromotedContinuationSource,
+        getImportedContinueActionLabel,
+        handleCloseWorkspaceImportReview,
+        handleMergeImportedWorkspaceSnapshot,
+        handleApplyImportedWorkspaceSnapshot,
+        importReviewBranchActions,
+    });
+    const branchRenameDialogProps = useWorkspaceBranchRenameDialogProps({
+        currentLanguage: currentLang,
+        branchRenameDialog,
+        getShortTurnId,
+        branchRenameDraft,
+        setBranchRenameDraft,
+        closeBranchRenameDialog,
+        handleSubmitBranchRename,
+    });
     const handleCloseWorkspaceDetailModal = useCallback(() => {
         setActiveWorkspaceDetailModal(null);
         setIsQueuedBatchSpaceOpen(false);
@@ -1995,7 +1633,6 @@ const App: React.FC = () => {
         setIsQueuedBatchSpaceOpen(false);
         setActiveWorkspaceDetailModal('progress');
     }, []);
-    const [workspaceFloatingHostElement, setWorkspaceFloatingHostElement] = useState<HTMLDivElement | null>(null);
     const workspaceFloatingLayerValue = useMemo(
         () => ({
             floatingZIndex: floatingControlsZIndex + 1,
@@ -2029,7 +1666,6 @@ const App: React.FC = () => {
         imageStyleLabel: getStyleLabel(imageStyle),
         outputFormat,
         thinkingLevel,
-        includeThoughts,
         groundingMode,
         stickySendIntent,
         imageModel,
@@ -2042,20 +1678,12 @@ const App: React.FC = () => {
         temperature,
         isAdvancedSettingsOpen,
         generateLabel: t('generate'),
-        hasSizePicker: capability.supportedSizes.length > 0,
-        totalReferenceCount,
-        objectCount: objectImages.length,
-        characterCount: characterImages.length,
-        maxObjects: capability.maxObjects,
-        maxCharacters: capability.maxCharacters,
         queuedJobs,
         isQueueBatchDisabled,
         queueBatchDisabledReason,
         queueBatchModeSummary,
         queueBatchConversationNotice,
         getImportedQueuedResultCount,
-        getImportedQueuedHistoryItems,
-        activeImportedQueuedHistoryId: currentStageSourceHistoryId,
         promptTextareaRef: composerPromptTextareaRef,
         setPrompt,
         setStickySendIntent,
@@ -2072,30 +1700,14 @@ const App: React.FC = () => {
         openSettings: openGenerationSettingsSession,
         openAdvancedSettings: openAdvancedSettingsSession,
         setActivePickerSheet,
-        setIsAdvancedSettingsOpen,
-        setOutputFormat,
-        setTemperature,
-        setThinkingLevel,
-        setGroundingMode,
-        getGroundingFlagsFromMode,
-        showNotification,
         t,
-        handleImportAllQueuedJobs,
-        handlePollAllQueuedJobs,
-        handlePollQueuedJob,
-        handleCancelQueuedJob,
-        handleImportQueuedJob,
-        handleOpenImportedQueuedJob,
-        handleOpenLatestImportedQueuedJob,
-        handleOpenImportedQueuedHistoryItem,
-        handleRemoveQueuedJob,
         getStageOriginLabel,
         getLineageActionLabel,
     });
     const advancedSettingsDialogProps: React.ComponentProps<typeof ComposerAdvancedSettingsDialog> | null =
         isAdvancedSettingsOpen
             ? {
-                  ...composerSettingsPanelProps,
+                  currentLanguage: currentLang,
                   outputFormat: settingsSessionView.outputFormat,
                   thinkingLevel: settingsSessionView.thinkingLevel,
                   groundingMode: settingsSessionView.groundingMode,
@@ -2224,207 +1836,6 @@ const App: React.FC = () => {
         },
         [applyViewerComposerSettingsSnapshot, focusComposerPromptTextarea, showNotification, t],
     );
-    const getOutputFormatSummaryLabel = useCallback(
-        (value: string) => OUTPUT_FORMATS.find((option) => option.value === value)?.label ?? value,
-        [],
-    );
-    const getThinkingLevelSummaryLabel = useCallback(
-        (value: string) =>
-            THINKING_LEVELS.find((option) => option.value === value)?.label ??
-            (value === 'disabled' ? 'Disabled' : value),
-        [t],
-    );
-    const getThoughtVisibilitySummaryLabel = useCallback(
-        (value: boolean) => t(value ? 'composerVisibilityVisible' : 'composerVisibilityHidden'),
-        [t],
-    );
-    const getMetadataGroundingModeLabel = useCallback((metadata: Record<string, unknown> | null | undefined) => {
-        if (typeof metadata?.groundingMode === 'string') {
-            switch (metadata.groundingMode) {
-                case 'off':
-                case 'google-search':
-                case 'image-search':
-                case 'google-search-plus-image-search':
-                    return getGroundingModeLabel(metadata.groundingMode as GroundingMode);
-                default:
-                    return metadata.groundingMode;
-            }
-        }
-
-        if (typeof metadata?.googleSearch === 'boolean' || typeof metadata?.imageSearch === 'boolean') {
-            return getGroundingModeLabel(
-                deriveGroundingMode(Boolean(metadata?.googleSearch), Boolean(metadata?.imageSearch)),
-            );
-        }
-
-        return null;
-    }, []);
-    const viewerMetadataSidecarState = getImageSidecarMetadataState(selectedMetadata);
-    const viewerHasPersistedSidecarMetadata = isPersistedImageSidecarMetadata(selectedMetadata);
-    const viewerSettingsMetadata = useMemo(() => {
-        if (!currentViewedCompletedHistoryMetadata && !viewerHasPersistedSidecarMetadata) {
-            return null;
-        }
-
-        return normalizeImageSidecarMetadata({
-            ...(currentViewedCompletedHistoryMetadata || {}),
-            ...(viewerHasPersistedSidecarMetadata ? (selectedMetadata as Record<string, unknown>) : {}),
-        });
-    }, [currentViewedCompletedHistoryMetadata, selectedMetadata, viewerHasPersistedSidecarMetadata]);
-    const viewerSettingsSnapshot = useMemo(
-        () => buildViewerComposerSettingsSnapshot(currentViewedCompletedHistoryItem, viewerSettingsMetadata),
-        [currentViewedCompletedHistoryItem, viewerSettingsMetadata],
-    );
-    const viewerMetadataStatus = useMemo(() => {
-        if (!currentViewedCompletedHistoryItem) {
-            return 'ready' as const;
-        }
-
-        if (viewerMetadataSidecarState) {
-            return viewerMetadataSidecarState;
-        }
-
-        if (viewerHasPersistedSidecarMetadata) {
-            return 'ready' as const;
-        }
-
-        return currentViewedCompletedHistoryItem.savedFilename ? ('loading' as const) : ('missing' as const);
-    }, [currentViewedCompletedHistoryItem, viewerHasPersistedSidecarMetadata, viewerMetadataSidecarState]);
-    const viewerMetadataLoadingLabel = t('workspaceViewerMetadataLoading');
-    const viewerMetadataUnavailableLabel = t('workspaceViewerMetadataUnavailable');
-    const viewerMetadataStateMessage =
-        viewerMetadataStatus === 'loading'
-            ? viewerMetadataLoadingLabel
-            : viewerMetadataStatus === 'missing'
-              ? viewerMetadataUnavailableLabel
-              : null;
-    const resolveViewerMetadataValue = useCallback(
-        (sidecarValue: string | null, fallbackValue: string) => {
-            if (viewerMetadataStatus === 'loading') {
-                return viewerMetadataLoadingLabel;
-            }
-
-            if (viewerMetadataStatus === 'missing') {
-                return viewerMetadataUnavailableLabel;
-            }
-
-            if (viewerHasPersistedSidecarMetadata) {
-                return sidecarValue || viewerMetadataUnavailableLabel;
-            }
-
-            return sidecarValue || fallbackValue;
-        },
-        [
-            viewerHasPersistedSidecarMetadata,
-            viewerMetadataLoadingLabel,
-            viewerMetadataStatus,
-            viewerMetadataUnavailableLabel,
-        ],
-    );
-    const viewerMetadataAspectRatio = resolveViewerMetadataValue(
-        typeof selectedMetadata?.aspectRatio === 'string' ? selectedMetadata.aspectRatio : null,
-        viewSettings.aspectRatio,
-    );
-    const viewerMetadataModel =
-        viewerSettingsMetadata?.model === 'gemini-3.1-flash-image-preview' ||
-        viewerSettingsMetadata?.model === 'gemini-3-pro-image-preview' ||
-        viewerSettingsMetadata?.model === 'gemini-2.5-flash-image'
-            ? viewerSettingsMetadata.model
-            : currentViewedCompletedHistoryItem?.model || viewSettings.model;
-    const viewerMetadataModelSupportsSizeControl = MODEL_CAPABILITIES[viewerMetadataModel].supportedSizes.length > 0;
-    const viewerMetadataSize = resolveViewerMetadataValue(
-        typeof viewerSettingsMetadata?.size === 'string'
-            ? viewerSettingsMetadata.size
-            : viewerMetadataModelSupportsSizeControl && typeof viewerSettingsMetadata?.requestedImageSize === 'string'
-              ? viewerSettingsMetadata.requestedImageSize
-              : null,
-        viewerMetadataModelSupportsSizeControl ? viewSettings.size : viewerMetadataUnavailableLabel,
-    );
-    const viewerMetadataStyleLabel = resolveViewerMetadataValue(
-        typeof selectedMetadata?.style === 'string' ? getStyleLabel(selectedMetadata.style as ImageStyle) : null,
-        getStyleLabel(viewSettings.style),
-    );
-    const viewerMetadataModelLabel = resolveViewerMetadataValue(
-        selectedMetadata?.model === 'gemini-3.1-flash-image-preview' ||
-            selectedMetadata?.model === 'gemini-3-pro-image-preview' ||
-            selectedMetadata?.model === 'gemini-2.5-flash-image'
-            ? getModelLabel(selectedMetadata.model as ImageModel)
-            : typeof selectedMetadata?.model === 'string'
-              ? selectedMetadata.model
-              : null,
-        getModelLabel(viewSettings.model),
-    );
-    const viewerMetadataTemperature = resolveViewerMetadataValue(
-        typeof selectedMetadata?.temperature === 'number' ? selectedMetadata.temperature.toFixed(1) : null,
-        viewSettings.temperature.toFixed(1),
-    );
-    const viewerMetadataOutputFormat = resolveViewerMetadataValue(
-        typeof selectedMetadata?.outputFormat === 'string'
-            ? getOutputFormatSummaryLabel(selectedMetadata.outputFormat)
-            : null,
-        getOutputFormatSummaryLabel(viewSettings.outputFormat),
-    );
-    const viewerMetadataThinkingLevel = resolveViewerMetadataValue(
-        typeof selectedMetadata?.thinkingLevel === 'string'
-            ? getThinkingLevelSummaryLabel(selectedMetadata.thinkingLevel)
-            : null,
-        getThinkingLevelSummaryLabel(viewSettings.thinkingLevel),
-    );
-    const viewerMetadataGrounding = resolveViewerMetadataValue(
-        getMetadataGroundingModeLabel(selectedMetadata),
-        getGroundingModeLabel(deriveGroundingMode(viewSettings.googleSearch, viewSettings.imageSearch)),
-    );
-    const viewerMetadataReturnThoughts = resolveViewerMetadataValue(
-        typeof selectedMetadata?.includeThoughts === 'boolean'
-            ? getThoughtVisibilitySummaryLabel(selectedMetadata.includeThoughts)
-            : null,
-        getThoughtVisibilitySummaryLabel(viewSettings.includeThoughts),
-    );
-    const viewerMetadataItems = useMemo(
-        () => [
-            { key: 'ratio', label: t('workspaceViewerRatio'), value: viewerMetadataAspectRatio },
-            { key: 'size', label: t('workspaceViewerSize'), value: viewerMetadataSize },
-            { key: 'style', label: t('workspaceViewerStyle'), value: viewerMetadataStyleLabel },
-            { key: 'model', label: t('workspaceViewerModel'), value: viewerMetadataModelLabel },
-            {
-                key: 'temperature',
-                label: t('groundingProvenanceInsightTemperature'),
-                value: viewerMetadataTemperature,
-            },
-            {
-                key: 'output-format',
-                label: t('groundingProvenanceInsightOutputFormat'),
-                value: viewerMetadataOutputFormat,
-            },
-            {
-                key: 'thinking-level',
-                label: t('groundingProvenanceInsightThinkingLevel'),
-                value: viewerMetadataThinkingLevel,
-            },
-            {
-                key: 'grounding',
-                label: t('groundingProvenanceInsightGrounding'),
-                value: viewerMetadataGrounding,
-            },
-            {
-                key: 'return-thoughts',
-                label: t('groundingProvenanceInsightReturnThoughts'),
-                value: viewerMetadataReturnThoughts,
-            },
-        ],
-        [
-            t,
-            viewerMetadataAspectRatio,
-            viewerMetadataGrounding,
-            viewerMetadataModelLabel,
-            viewerMetadataOutputFormat,
-            viewerMetadataReturnThoughts,
-            viewerMetadataSize,
-            viewerMetadataStyleLabel,
-            viewerMetadataTemperature,
-            viewerMetadataThinkingLevel,
-        ],
-    );
     const stageViewerSettings = useMemo(
         () => ({
             aspectRatio: viewSettings.aspectRatio,
@@ -2442,32 +1853,11 @@ const App: React.FC = () => {
         currentStageSourceTurn.id === currentStageLinkedHistoryId,
     );
     const currentStageLinkedBranchSummary = currentStageHasLinkedHistoryTurn ? currentStageBranchSummary : null;
-    const currentStageContinuationSourceHistoryId = currentStageLinkedBranchSummary
-        ? effectiveBranchContinuationSourceByBranchOriginId[currentStageLinkedBranchSummary.branchOriginId] || null
-        : null;
-    const currentStageIsPendingBranchSource = Boolean(
-        currentStageHasLinkedHistoryTurn &&
-        currentStageSourceTurn &&
-        workspaceSession.sourceLineageAction === 'branch' &&
-        workspaceSession.sourceHistoryId === currentStageSourceTurn.id,
-    );
-    const currentStageContinuationDiffers = Boolean(
-        currentStageHasLinkedHistoryTurn &&
-        currentStageSourceTurn &&
-        !currentStageIsPendingBranchSource &&
-        currentStageContinuationSourceHistoryId &&
-        currentStageContinuationSourceHistoryId !== currentStageSourceTurn.id,
-    );
     const currentStageIsCurrentSource = Boolean(
         generatedImageUrls.length > 0 &&
         (!currentStageHasLinkedHistoryTurn ||
             (currentStageSourceHistoryId && currentStageSourceHistoryId === currentSourceHistoryId)),
     );
-    const currentStageOriginLabel = currentStageAsset
-        ? getStageOriginLabel(currentStageAsset.origin)
-        : generatedImageUrls.length > 0
-          ? getStageOriginLabel('generated')
-          : null;
     const viewerProvenancePanel = useMemo(
         () => (
             <Suspense
@@ -2500,10 +1890,9 @@ const App: React.FC = () => {
         },
         [getHistoryTurnById, handleHistorySelect],
     );
-    const { activeViewerImage, workspaceViewerOverlayProps, generatedImageStageProps } = useWorkspaceStageViewer({
+    const { workspaceViewerOverlayProps, generatedImageStageProps } = useWorkspaceStageViewer({
         generatedImageUrls,
         selectedImageIndex,
-        setSelectedImageIndex,
         isViewerOpen,
         setIsViewerOpen,
         isGenerating,
@@ -2520,17 +1909,14 @@ const App: React.FC = () => {
         executionMode,
         onGenerate: handleGenerate,
         onEdit: handleOpenEditor,
-        onUpload: handleOpenEditor,
         onClear: handleClearCurrentStage,
         onAddToObjectReference: handleAddToObjectReference,
         onAddToCharacterReference: capability.maxCharacters > 0 ? handleAddToCharacterReference : undefined,
         currentLanguage: currentLang,
         currentLog: logs.length > 0 ? logs[logs.length - 1] : '',
-        currentStageOriginLabel,
         currentStageBranchLabel: currentStageLinkedBranchSummary?.branchLabel || null,
         currentStageHasLinkedHistoryTurn,
         currentStageIsCurrentSource,
-        currentStageContinuationDiffers,
         metadataItems: viewerMetadataItems,
         metadataStateMessage: viewerMetadataStateMessage,
         effectiveThoughts,
@@ -2558,29 +1944,10 @@ const App: React.FC = () => {
         pickerSheetZIndex,
         prompt: isEditing ? editorPrompt : prompt,
         setPrompt: isEditing ? setEditorPrompt : setPrompt,
-        handleSurpriseMe: isEditing ? handleEditorSurpriseMe : handleComposerSurpriseMe,
-        handleSmartRewrite: isEditing ? handleEditorSmartRewrite : handleComposerSmartRewrite,
         isEnhancingPrompt: isEditing ? isEnhancingEditorPrompt : isEnhancingComposerPrompt,
         closePickerSheet: handleCloseWorkspacePickerSheet,
-        openPromptSheet: () => setActivePickerSheet('prompt'),
-        openStylesSheet: () => {
-            if (!isEditing) {
-                setActivePickerSheet('styles');
-            }
-        },
-        openReferencesSheet: () => setActivePickerSheet('references'),
         openAdvancedSettings: openAdvancedSettingsFromGeneration,
-        history,
-        handleHistorySelect,
-        handleContinueFromHistoryTurn,
-        handleBranchFromHistoryTurn,
-        handleRenameBranch,
-        isPromotedContinuationSource,
-        getContinueActionLabel,
-        branchNameOverrides,
-        selectedHistoryId,
         currentLanguage: currentLang,
-        handleClearGalleryHistory,
         t,
         imageStyle,
         setImageStyle,
@@ -2650,163 +2017,31 @@ const App: React.FC = () => {
         'whitespace-nowrap text-[9px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 sm:text-[10px]';
     const supportDetailTabButtonClassName =
         'rounded-full border px-3 py-1.5 text-[11px] font-semibold transition-colors';
-    const effectiveThoughtParts = useMemo(() => getThoughtResultParts(effectiveResultParts), [effectiveResultParts]);
-    const selectedProgressHistoryItem = useMemo(
-        () => (selectedHistoryId ? getHistoryTurnById(selectedHistoryId) : null),
-        [getHistoryTurnById, selectedHistoryId],
-    );
-    const selectedProgressThoughtParts = useMemo(() => {
-        const selectedThoughtParts = getThoughtResultParts(selectedResultParts);
-
-        if (selectedThoughtParts.length > 0) {
-            return selectedThoughtParts;
-        }
-
-        return getThoughtResultParts(selectedProgressHistoryItem?.resultParts);
-    }, [selectedProgressHistoryItem, selectedResultParts]);
-    const selectedProgressThoughtsText = useMemo(() => {
-        const trimmedSelectedThoughts = selectedThoughts?.trim();
-        if (trimmedSelectedThoughts) {
-            return trimmedSelectedThoughts;
-        }
-
-        const trimmedHistoryThoughts = selectedProgressHistoryItem?.thoughts?.trim();
-        if (trimmedHistoryThoughts) {
-            return trimmedHistoryThoughts;
-        }
-
-        return buildThoughtSummaryFromParts(selectedProgressThoughtParts, t('workspaceViewerThoughts'));
-    }, [selectedProgressHistoryItem, selectedProgressThoughtParts, selectedThoughts, t]);
-    const selectedProgressEntry = useMemo<ProgressThoughtEntry | null>(() => {
-        if (!selectedProgressHistoryItem) {
-            return null;
-        }
-
-        if (!selectedProgressThoughtsText && selectedProgressThoughtParts.length === 0) {
-            return null;
-        }
-
-        const createdAtMs = selectedProgressHistoryItem.createdAt ?? workspaceSession.updatedAt ?? null;
-
-        return {
-            id: selectedProgressHistoryItem.id,
-            shortId: getShortTurnId(selectedProgressHistoryItem.id),
-            prompt: selectedProgressHistoryItem.prompt || null,
-            thoughts: selectedProgressThoughtsText,
-            resultParts: selectedProgressThoughtParts,
-            createdAtMs,
-            createdAtLabel:
-                createdAtMs != null
-                    ? new Date(createdAtMs).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                      })
-                    : sessionUpdatedLabel,
-            isFailed: selectedProgressHistoryItem.status === 'failed',
-        } satisfies ProgressThoughtEntry;
-    }, [
-        selectedProgressHistoryItem,
-        selectedProgressThoughtParts,
-        selectedProgressThoughtsText,
-        sessionUpdatedLabel,
-        workspaceSession.updatedAt,
-    ]);
-    const liveProgressThoughtEntries = useMemo<ProgressThoughtEntry[]>(() => {
-        if (!isGenerating || !activeLiveProgressSession) {
-            return [];
-        }
-
-        return Object.values(activeLiveProgressSession.slots)
-            .map((slot) => {
-                const slotThoughtParts = getThoughtResultParts(slot.resultParts);
-                if (slotThoughtParts.length === 0) {
-                    return null;
-                }
-
-                return {
-                    id: `live-${activeLiveProgressSession.batchSessionId}-${slot.slotIndex}`,
-                    shortId: `slot-${String(slot.slotIndex + 1).padStart(2, '0')}`,
-                    prompt: prompt || null,
-                    thoughts:
-                        buildThoughtSummaryFromParts(slotThoughtParts, t('workspaceViewerThoughts')) ||
-                        t('workspaceViewerThoughts'),
-                    resultParts: slotThoughtParts,
-                    createdAtMs: slot.startedAtMs,
-                    createdAtLabel: new Date(slot.startedAtMs).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                    }),
-                    slotIndex: slot.slotIndex,
-                    slotLabel: `#${slot.slotIndex + 1}`,
-                    isLive: true,
-                } satisfies ProgressThoughtEntry;
-            })
-            .filter((entry): entry is ProgressThoughtEntry => Boolean(entry));
-    }, [activeLiveProgressSession, isGenerating, prompt, t]);
-    const liveProgressThoughtsText = useMemo(
-        () => liveProgressThoughtEntries[0]?.thoughts || '',
-        [liveProgressThoughtEntries],
-    );
-    const effectiveProgressThoughtsText = useMemo(() => {
-        const trimmedEffectiveThoughts = effectiveThoughts?.trim();
-        if (trimmedEffectiveThoughts) {
-            return trimmedEffectiveThoughts;
-        }
-
-        return buildThoughtSummaryFromParts(effectiveThoughtParts, t('workspaceViewerThoughts'));
-    }, [effectiveThoughtParts, effectiveThoughts, t]);
-    const progressThoughtsSummaryText = useMemo(
-        () => liveProgressThoughtsText || selectedProgressThoughtsText || effectiveProgressThoughtsText,
-        [effectiveProgressThoughtsText, liveProgressThoughtsText, selectedProgressThoughtsText],
-    );
-    const progressHistoryThoughtTurns = useMemo<GeneratedImageType[]>(() => {
-        const hasThoughtArtifacts = (turn: GeneratedImageType) =>
-            Boolean(turn.thoughts?.trim()) || getThoughtResultParts(turn.resultParts).length > 0;
-
-        const relevantHistoryTurns =
-            workspaceSession.conversationTurnIds.length > 0
-                ? workspaceSession.conversationTurnIds
-                      .map((historyId) => getHistoryTurnById(historyId))
-                      .filter((item): item is NonNullable<typeof item> => Boolean(item))
-                : currentStageBranchSummary?.turns && currentStageBranchSummary.turns.length > 0
-                  ? currentStageBranchSummary.turns
-                  : activeBranchSummary?.turns && activeBranchSummary.turns.length > 0
-                    ? activeBranchSummary.turns
-                    : currentStageSourceTurn
-                      ? [currentStageSourceTurn]
-                      : [];
-        const failedThoughtTurns = history.filter((turn) => turn.status === 'failed' && hasThoughtArtifacts(turn));
-
-        return [...relevantHistoryTurns, ...failedThoughtTurns]
-            .filter(hasThoughtArtifacts)
-            .filter((turn, index, turns) => turns.findIndex((candidate) => candidate.id === turn.id) === index)
-            .sort(
-                (left, right) =>
-                    (right.createdAt ?? Number.MIN_SAFE_INTEGER) - (left.createdAt ?? Number.MIN_SAFE_INTEGER),
-            );
-    }, [
-        activeBranchSummary,
-        currentStageBranchSummary,
-        currentStageSourceTurn,
-        getHistoryTurnById,
-        history,
-        workspaceSession.conversationTurnIds,
-    ]);
-    const hasProgressActivity = Boolean(
-        liveProgressThoughtEntries.length > 0 ||
-        selectedProgressEntry ||
-        progressHistoryThoughtTurns.length > 0 ||
-        effectiveProgressThoughtsText ||
-        effectiveThoughtParts.length > 0,
-    );
-    const hasSourceTrailInfo = Boolean(
-        groundingQueries.length > 0 ||
-        selectedSources.length > 0 ||
-        selectedSupportBundles.length > 0 ||
-        Boolean(searchEntryPointRenderedContent?.trim()) ||
-        effectiveSessionHints?.groundingMetadataReturned ||
-        effectiveSessionHints?.groundingSupportsReturned,
-    );
+    const { progressThoughtEntries, progressThoughtsSummaryText, hasProgressActivity, hasSourceTrailInfo } =
+        useWorkspaceProgressThoughts({
+            selectedHistoryId,
+            getHistoryTurnById,
+            selectedResultParts,
+            selectedThoughts,
+            effectiveResultParts,
+            effectiveThoughts,
+            workspaceSession,
+            sessionUpdatedLabel,
+            isGenerating,
+            activeLiveProgressSession,
+            prompt,
+            history,
+            currentStageBranchSummary,
+            activeBranchSummary,
+            currentStageSourceTurn,
+            getShortTurnId,
+            groundingQueries,
+            selectedSourcesCount: selectedSources.length,
+            selectedSupportBundlesCount: selectedSupportBundles.length,
+            searchEntryPointRenderedContent,
+            effectiveSessionHints,
+            t,
+        });
     const supportRail = (
         <>
             <WorkspaceProgressCard
@@ -2834,83 +2069,6 @@ const App: React.FC = () => {
         onLanguageChange: handleLanguageChange,
         supportRail,
     });
-    const progressThoughtEntries = useMemo<ProgressThoughtEntry[]>(() => {
-        const mapTurnToThoughtEntry = (turn: GeneratedImageType): ProgressThoughtEntry => {
-            const turnThoughtParts = getThoughtResultParts(turn.resultParts);
-
-            return {
-                id: turn.id,
-                shortId: getShortTurnId(turn.id),
-                prompt: turn.prompt || null,
-                thoughts:
-                    turn.thoughts?.trim() ||
-                    buildThoughtSummaryFromParts(turnThoughtParts, t('workspaceViewerThoughts')),
-                resultParts: turnThoughtParts,
-                createdAtMs: turn.createdAt,
-                createdAtLabel: new Date(turn.createdAt).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                }),
-                isFailed: turn.status === 'failed',
-            };
-        };
-        const dedupeEntriesById = (entries: ProgressThoughtEntry[]) =>
-            entries.filter(
-                (entry, index, allEntries) => allEntries.findIndex((candidate) => candidate.id === entry.id) === index,
-            );
-        const mergeWithLiveEntries = (entries: ProgressThoughtEntry[]) => {
-            const archivedEntries = dedupeEntriesById(entries);
-
-            if (liveProgressThoughtEntries.length === 0) {
-                return archivedEntries;
-            }
-
-            const liveEntryIds = new Set(liveProgressThoughtEntries.map((entry) => entry.id));
-            return [...liveProgressThoughtEntries, ...archivedEntries.filter((entry) => !liveEntryIds.has(entry.id))];
-        };
-
-        const archivedThoughtEntries = dedupeEntriesById([
-            ...(selectedProgressEntry ? [selectedProgressEntry] : []),
-            ...progressHistoryThoughtTurns.map(mapTurnToThoughtEntry),
-        ]).sort((left, right) => {
-            const leftMs = left.createdAtMs ?? Number.MIN_SAFE_INTEGER;
-            const rightMs = right.createdAtMs ?? Number.MIN_SAFE_INTEGER;
-
-            return rightMs - leftMs;
-        });
-
-        if (archivedThoughtEntries.length > 0) {
-            return mergeWithLiveEntries(archivedThoughtEntries);
-        }
-
-        if (!effectiveProgressThoughtsText && effectiveThoughtParts.length === 0) {
-            return mergeWithLiveEntries([]);
-        }
-
-        return mergeWithLiveEntries([
-            {
-                id: currentStageSourceTurn?.id || workspaceSession.sourceHistoryId || 'active-session',
-                shortId: getShortTurnId(currentStageSourceTurn?.id || workspaceSession.sourceHistoryId),
-                prompt: prompt || null,
-                thoughts: effectiveProgressThoughtsText,
-                resultParts: effectiveThoughtParts,
-                createdAtMs: workspaceSession.updatedAt || null,
-                createdAtLabel: sessionUpdatedLabel,
-            },
-        ]);
-    }, [
-        currentStageSourceTurn,
-        effectiveProgressThoughtsText,
-        effectiveThoughtParts,
-        liveProgressThoughtEntries,
-        prompt,
-        progressHistoryThoughtTurns,
-        selectedProgressEntry,
-        sessionUpdatedLabel,
-        t,
-        workspaceSession.sourceHistoryId,
-        workspaceSession.updatedAt,
-    ]);
     const canRepaintCurrentImage = Boolean(getActiveImageUrl());
     const sideToolPanel = useMemo(
         () => (
@@ -3053,19 +2211,28 @@ const App: React.FC = () => {
                             headerExtra={supportDetailHeaderExtra}
                             desktopWidthClass="max-w-[1120px]"
                         >
-                            <WorkspaceProgressDetailPanel
-                                currentLanguage={currentLang}
-                                thoughtEntries={progressThoughtEntries}
-                                latestWorkflowEntry={latestWorkflowEntry}
-                                isGenerating={isGenerating}
-                                batchProgress={batchProgress}
-                                queuedJobs={queuedJobs}
-                                getImportedQueuedResultCount={getImportedQueuedResultCount}
-                                resultStatusSummary={groundingResolutionStatusSummary}
-                                resultStatusTone={groundingResolutionStatusTone}
-                                thoughtsText={progressThoughtsSummaryText}
-                                thoughtsPlaceholder={thoughtStateMessage}
-                            />
+                            <Suspense
+                                fallback={
+                                    <PanelLoadingFallback
+                                        label={t('workspaceSupportProgress')}
+                                        className="nbu-dashed-panel min-h-[220px] rounded-[20px] px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
+                                    />
+                                }
+                            >
+                                <WorkspaceProgressDetailPanel
+                                    currentLanguage={currentLang}
+                                    thoughtEntries={progressThoughtEntries}
+                                    latestWorkflowEntry={latestWorkflowEntry}
+                                    isGenerating={isGenerating}
+                                    batchProgress={batchProgress}
+                                    queuedJobs={queuedJobs}
+                                    getImportedQueuedResultCount={getImportedQueuedResultCount}
+                                    resultStatusSummary={groundingResolutionStatusSummary}
+                                    resultStatusTone={groundingResolutionStatusTone}
+                                    thoughtsText={progressThoughtsSummaryText}
+                                    thoughtsPlaceholder={thoughtStateMessage}
+                                />
+                            </Suspense>
                         </WorkspaceSupportDetailSurface>
                     );
                 }
@@ -3078,17 +2245,26 @@ const App: React.FC = () => {
                         onClose={handleCloseWorkspaceDetailModal}
                         headerExtra={supportDetailHeaderExtra}
                     >
-                        <WorkspaceEvidenceDetailPanel
-                            currentLanguage={currentLang}
-                            provenanceSummaryRows={provenanceSummaryRows}
-                            provenanceContinuityMessage={provenanceContinuityMessage}
-                            groundingStateMessage={groundingStateMessage}
-                            groundingSupportMessage={groundingSupportMessage}
-                            totalSourceCount={selectedSources.length}
-                            totalSupportBundleCount={selectedSupportBundles.length}
+                        <Suspense
+                            fallback={
+                                <PanelLoadingFallback
+                                    label={t('workspaceSupportSources')}
+                                    className="nbu-dashed-panel min-h-[220px] rounded-[20px] px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
+                                />
+                            }
                         >
-                            {contextProvenanceDetailPanel}
-                        </WorkspaceEvidenceDetailPanel>
+                            <WorkspaceEvidenceDetailPanel
+                                currentLanguage={currentLang}
+                                provenanceSummaryRows={provenanceSummaryRows}
+                                provenanceContinuityMessage={provenanceContinuityMessage}
+                                groundingStateMessage={groundingStateMessage}
+                                groundingSupportMessage={groundingSupportMessage}
+                                totalSourceCount={selectedSources.length}
+                                totalSupportBundleCount={selectedSupportBundles.length}
+                            >
+                                {contextProvenanceDetailPanel}
+                            </WorkspaceEvidenceDetailPanel>
+                        </Suspense>
                     </WorkspaceSupportDetailSurface>
                 );
             })()
@@ -3099,7 +2275,16 @@ const App: React.FC = () => {
                 closeLabel={t('workspaceViewerClose')}
                 onClose={handleCloseWorkspaceDetailModal}
             >
-                <WorkspaceVersionsDetailPanel {...versionsDetailPanelProps} showHeader={false} />
+                <Suspense
+                    fallback={
+                        <PanelLoadingFallback
+                            label={t('workspaceInsightsVersions')}
+                            className="nbu-dashed-panel min-h-[220px] rounded-[20px] px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
+                        />
+                    }
+                >
+                    <WorkspaceVersionsDetailPanel {...versionsDetailPanelProps} showHeader={false} />
+                </Suspense>
             </WorkspaceDetailModal>
         ) : isQueuedBatchSpaceOpen ? (
             <WorkspaceSupportDetailSurface
@@ -3110,27 +2295,36 @@ const App: React.FC = () => {
                 description={t('queuedBatchJobsDesc')}
                 desktopWidthClass="max-w-[980px]"
             >
-                <QueuedBatchJobsPanel
-                    currentLanguage={currentLang}
-                    queuedJobs={queuedJobs}
-                    surface="embedded"
-                    queueBatchConversationNotice={queueBatchConversationNotice}
-                    getLineageActionLabel={getLineageActionLabel}
-                    getImportedQueuedResultCount={getImportedQueuedResultCount}
-                    getImportedQueuedHistoryItems={getImportedQueuedHistoryItems}
-                    activeImportedQueuedHistoryId={currentStageSourceHistoryId}
-                    onImportAllQueuedJobs={handleImportAllQueuedJobs}
-                    onPollAllQueuedJobs={handlePollAllQueuedJobs}
-                    onPollQueuedJob={handlePollQueuedJob}
-                    onCancelQueuedJob={handleCancelQueuedJob}
-                    onImportQueuedJob={handleImportQueuedJob}
-                    onOpenImportedQueuedJob={handleOpenImportedQueuedJob}
-                    onOpenLatestImportedQueuedJob={handleOpenLatestImportedQueuedJob}
-                    onOpenImportedQueuedHistoryItem={handleOpenImportedQueuedHistoryItem}
-                    onClearIssueQueuedJobs={handleClearIssueQueuedJobs}
-                    onClearImportedQueuedJobs={handleClearImportedQueuedJobs}
-                    onRemoveQueuedJob={handleRemoveQueuedJob}
-                />
+                <Suspense
+                    fallback={
+                        <PanelLoadingFallback
+                            label={t('queuedBatchJobsTitle')}
+                            className="nbu-dashed-panel min-h-[220px] rounded-[20px] px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
+                        />
+                    }
+                >
+                    <QueuedBatchJobsPanel
+                        currentLanguage={currentLang}
+                        queuedJobs={queuedJobs}
+                        surface="embedded"
+                        queueBatchConversationNotice={queueBatchConversationNotice}
+                        getLineageActionLabel={getLineageActionLabel}
+                        getImportedQueuedResultCount={getImportedQueuedResultCount}
+                        getImportedQueuedHistoryItems={getImportedQueuedHistoryItems}
+                        activeImportedQueuedHistoryId={currentStageSourceHistoryId}
+                        onImportAllQueuedJobs={handleImportAllQueuedJobs}
+                        onPollAllQueuedJobs={handlePollAllQueuedJobs}
+                        onPollQueuedJob={handlePollQueuedJob}
+                        onCancelQueuedJob={handleCancelQueuedJob}
+                        onImportQueuedJob={handleImportQueuedJob}
+                        onOpenImportedQueuedJob={handleOpenImportedQueuedJob}
+                        onOpenLatestImportedQueuedJob={handleOpenLatestImportedQueuedJob}
+                        onOpenImportedQueuedHistoryItem={handleOpenImportedQueuedHistoryItem}
+                        onClearIssueQueuedJobs={handleClearIssueQueuedJobs}
+                        onClearImportedQueuedJobs={handleClearImportedQueuedJobs}
+                        onRemoveQueuedJob={handleRemoveQueuedJob}
+                    />
+                </Suspense>
             </WorkspaceSupportDetailSurface>
         ) : null;
     const focusSurface = useMemo(
@@ -3237,11 +2431,9 @@ const App: React.FC = () => {
                                     onCancel={closeEditor}
                                     isGenerating={isGenerating}
                                     currentLanguage={currentLang}
-                                    currentLog={logs.length > 0 ? logs[logs.length - 1] : ''}
                                     error={error?.message || null}
                                     onErrorClear={() => setError(null)}
                                     imageModel={imageModel}
-                                    onModelChange={setImageModel}
                                     leftDockTopOffset={
                                         surfaceSharedControlsBottom === null ? null : surfaceSharedControlsBottom + 12
                                     }

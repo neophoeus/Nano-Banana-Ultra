@@ -134,7 +134,7 @@ describe('useHistorySourceOrchestration', () => {
 
         const TestComponent = () => {
             handle = useHistorySourceOrchestration({
-            history: historyState,
+                history: historyState,
                 generatedImageUrls: [],
                 selectedImageIndex: 0,
                 selectedHistoryId: null,
@@ -183,7 +183,6 @@ describe('useHistorySourceOrchestration', () => {
                 setSelectedHistoryId,
                 setError,
                 setLogs,
-                setIsGenerating: vi.fn(),
                 upsertViewerStageSource,
                 addLog: vi.fn(),
                 showNotification: vi.fn(),
@@ -463,8 +462,14 @@ describe('useHistorySourceOrchestration', () => {
                 extractionIssue: 'no-image-data',
             },
         });
-        const { handle, applySelectedResultArtifacts, setSelectedHistoryId, setError, setLogs, upsertViewerStageSource } =
-            renderHook(failedTurn);
+        const {
+            handle,
+            applySelectedResultArtifacts,
+            setSelectedHistoryId,
+            setError,
+            setLogs,
+            upsertViewerStageSource,
+        } = renderHook(failedTurn);
 
         flushSync(() => {
             handle.handleHistorySelect(failedTurn);
@@ -489,9 +494,7 @@ describe('useHistorySourceOrchestration', () => {
                 summary: expect.any(String),
             }),
         );
-        expect(setLogs).toHaveBeenCalledWith([
-            expect.stringContaining('historySourceFailedLog'),
-        ]);
+        expect(setLogs).toHaveBeenCalledWith([expect.stringContaining('historySourceFailedLog')]);
         expect(upsertViewerStageSource).not.toHaveBeenCalled();
     });
 });

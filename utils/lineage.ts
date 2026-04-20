@@ -12,6 +12,11 @@ type LineageLabelConfig = {
     branchNumber?: string;
 };
 
+type BuildBranchSummariesOptions = {
+    historyIsSuccessfulChronological?: boolean;
+    presentation?: LineagePresentation;
+};
+
 export type BranchSummary = {
     branchOriginId: string;
     rootId: string;
@@ -34,6 +39,9 @@ const DEFAULT_LINEAGE_LABELS: Required<LineageLabelConfig> = {
 
 const getDefaultLineageLabels = (): Required<LineageLabelConfig> => DEFAULT_LINEAGE_LABELS;
 
+const getSuccessfulTurnsChronological = (history: GeneratedImage[]) =>
+    history.filter((turn) => turn.status === 'success').sort((left, right) => left.createdAt - right.createdAt);
+
 const formatAutoBranchLabel = (branchIndex: number, labels?: LineageLabelConfig): string => {
     const defaultLabels = getDefaultLineageLabels();
     const mainLabel = labels?.main || defaultLabels.main;
@@ -51,9 +59,7 @@ export const buildLineagePresentation = (
     branchNameOverrides: BranchNameOverrides = {},
     labels?: LineageLabelConfig,
 ): LineagePresentation => {
-    const successfulTurns = history
-        .filter((turn) => turn.status === 'success')
-        .sort((left, right) => left.createdAt - right.createdAt);
+    const successfulTurns = getSuccessfulTurnsChronological(history);
     const byId = new Map(successfulTurns.map((turn) => [turn.id, turn]));
     const branchOriginIdByTurnId: Record<string, string> = {};
 
@@ -105,15 +111,13 @@ export const buildBranchSummaries = (
     history: GeneratedImage[],
     branchNameOverrides: BranchNameOverrides = {},
     labels?: LineageLabelConfig,
+    options: BuildBranchSummariesOptions = {},
 ): BranchSummary[] => {
-    const successfulTurns = history
-        .filter((turn) => turn.status === 'success')
-        .sort((left, right) => left.createdAt - right.createdAt);
-    const { branchLabelByOriginId, branchOriginIdByTurnId, autoBranchLabelByOriginId } = buildLineagePresentation(
-        successfulTurns,
-        branchNameOverrides,
-        labels,
-    );
+    const successfulTurns = options.historyIsSuccessfulChronological
+        ? history
+        : getSuccessfulTurnsChronological(history);
+    const { branchLabelByOriginId, branchOriginIdByTurnId, autoBranchLabelByOriginId } =
+        options.presentation || buildLineagePresentation(successfulTurns, branchNameOverrides, labels);
     const grouped = new Map<string, GeneratedImage[]>();
 
     successfulTurns.forEach((turn) => {

@@ -3,6 +3,7 @@
 import React, { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { PickerSheet } from '../components/WorkspacePickerSheet';
 import { type StageErrorState } from '../types';
 
 const {
@@ -122,7 +123,6 @@ describe('useWorkspaceEditorActions', () => {
             currentStageAsset: undefined,
             editorContextSnapshot: buildEditorContextSnapshot(),
             hasSketch: false,
-            isEditing: true,
             uploadInputRef: { current: null },
             setObjectImages: createStateSetter<string[]>(),
             setCharacterImages: createStateSetter<string[]>(),
@@ -132,19 +132,7 @@ describe('useWorkspaceEditorActions', () => {
             setEditorPrompt: createStateSetter<string>(),
             setAspectRatio: createStateSetter<'1:1' | '16:9' | '9:16' | '4:3' | '3:4' | '3:2' | '2:3' | '21:9'>(),
             setImageSize: createStateSetter<'1K' | '2K' | '4K'>(),
-            setActivePickerSheet: createStateSetter<
-                | 'prompt'
-                | 'history'
-                | 'templates'
-                | 'styles'
-                | 'settings'
-                | 'model'
-                | 'ratio'
-                | 'size'
-                | 'batch'
-                | 'references'
-                | null
-            >(),
+            setActivePickerSheet: createStateSetter<PickerSheet>(),
             setError: createStateSetter<StageErrorState | null>(),
             setIsSketchPadOpen: createStateSetter<boolean>(),
             setShowSketchReplaceConfirm: createStateSetter<boolean>(),
@@ -156,7 +144,6 @@ describe('useWorkspaceEditorActions', () => {
             getActiveImageUrl: vi.fn(() => ''),
             addWorkspaceAsset: vi.fn(),
             removeAssetAtRoleIndex: vi.fn(),
-            clearAssetRoles: vi.fn(),
             showNotification: vi.fn(),
             addLog: vi.fn(),
             t: (key: string) => key,

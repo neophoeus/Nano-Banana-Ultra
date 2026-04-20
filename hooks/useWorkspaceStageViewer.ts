@@ -23,17 +23,13 @@ type BuildStageTopRightModelArgs = {
     currentStageIsCurrentSource: boolean;
     isGenerating: boolean;
     layoutBucket: StageTopRightLayoutBucket;
-    currentStageOriginLabel: string | null;
     currentStageBranchLabel: string | null;
-    continuationDiffers: boolean;
     hasMeaningfulResultStatus: boolean;
     resultStatusTone: 'warning' | 'success' | null;
-    onContinueFromStageSource?: () => void;
     onEdit?: () => void;
     onOpenViewer?: () => void;
     onAddToObjectReference?: () => void;
     onAddToCharacterReference?: () => void;
-    onBranchFromStageSource?: () => void;
     onClear?: () => void;
     t: (key: string) => string;
 };
@@ -74,17 +70,13 @@ export function buildStageTopRightModel({
     currentStageIsCurrentSource,
     isGenerating,
     layoutBucket,
-    currentStageOriginLabel,
     currentStageBranchLabel,
-    continuationDiffers,
     hasMeaningfulResultStatus,
     resultStatusTone,
-    onContinueFromStageSource,
     onEdit,
     onOpenViewer,
     onAddToObjectReference,
     onAddToCharacterReference,
-    onBranchFromStageSource,
     onClear,
     t,
 }: BuildStageTopRightModelArgs): StageTopRightViewModel | null {
@@ -201,7 +193,6 @@ export function buildStageTopRightModel({
 type UseWorkspaceStageViewerArgs = {
     generatedImageUrls: string[];
     selectedImageIndex: number;
-    setSelectedImageIndex: Dispatch<SetStateAction<number>>;
     isViewerOpen: boolean;
     setIsViewerOpen: Dispatch<SetStateAction<boolean>>;
     isGenerating: boolean;
@@ -224,19 +215,14 @@ type UseWorkspaceStageViewerArgs = {
     executionMode: GeneratedImageStageProps['executionMode'];
     onGenerate: () => void;
     onEdit: () => void;
-    onUpload: () => void;
     onClear: () => void;
     onAddToObjectReference: () => void;
     onAddToCharacterReference?: () => void;
-    onContinueFromStageSource?: () => void;
-    onBranchFromStageSource?: () => void;
     currentLanguage: Language;
     currentLog: string;
-    currentStageOriginLabel: string | null;
     currentStageBranchLabel: string | null;
     currentStageHasLinkedHistoryTurn: boolean;
     currentStageIsCurrentSource: boolean;
-    currentStageContinuationDiffers: boolean;
     metadataItems: WorkspaceViewerOverlayProps['metadataItems'];
     metadataStateMessage: string | null;
     effectiveThoughts: string | null;
@@ -254,7 +240,6 @@ type UseWorkspaceStageViewerArgs = {
 export function useWorkspaceStageViewer({
     generatedImageUrls,
     selectedImageIndex,
-    setSelectedImageIndex,
     isViewerOpen,
     setIsViewerOpen,
     isGenerating,
@@ -271,19 +256,14 @@ export function useWorkspaceStageViewer({
     executionMode,
     onGenerate,
     onEdit,
-    onUpload,
     onClear,
     onAddToObjectReference,
     onAddToCharacterReference,
-    onContinueFromStageSource,
-    onBranchFromStageSource,
     currentLanguage,
     currentLog,
-    currentStageOriginLabel,
     currentStageBranchLabel,
     currentStageHasLinkedHistoryTurn,
     currentStageIsCurrentSource,
-    currentStageContinuationDiffers,
     metadataItems,
     metadataStateMessage,
     effectiveThoughts,
@@ -314,16 +294,6 @@ export function useWorkspaceStageViewer({
         [activeViewerHistoryItem, generatedImageUrls, selectedImageIndex],
     );
 
-    const handleSelectGeneratedImage = useCallback(
-        (url: string) => {
-            const index = generatedImageUrls.findIndex((imageUrl) => imageUrl === url);
-            if (index >= 0) {
-                setSelectedImageIndex(index);
-            }
-        },
-        [generatedImageUrls, setSelectedImageIndex],
-    );
-
     const openViewer = useCallback(() => {
         if (activeViewerImage) {
             setIsViewerOpen(true);
@@ -343,19 +313,15 @@ export function useWorkspaceStageViewer({
                 currentStageIsCurrentSource,
                 isGenerating: showStageGeneratingState,
                 layoutBucket: stageTopRightLayoutBucket,
-                currentStageOriginLabel,
                 currentStageBranchLabel,
-                continuationDiffers: currentStageContinuationDiffers,
                 hasMeaningfulResultStatus: Boolean(
                     resultStatusSummary?.trim() && (resultStatusTone === 'warning' || resultStatusTone === 'success'),
                 ),
                 resultStatusTone,
-                onContinueFromStageSource,
                 onEdit,
                 onOpenViewer: openViewer,
                 onAddToObjectReference,
                 onAddToCharacterReference,
-                onBranchFromStageSource,
                 onClear,
                 t: (key) => getTranslation(currentLanguage, key),
             }),
@@ -363,16 +329,12 @@ export function useWorkspaceStageViewer({
             activeViewerImage,
             currentLanguage,
             currentStageBranchLabel,
-            currentStageContinuationDiffers,
             currentStageHasLinkedHistoryTurn,
             currentStageIsCurrentSource,
-            currentStageOriginLabel,
             showStageGeneratingState,
             onAddToCharacterReference,
             onAddToObjectReference,
-            onBranchFromStageSource,
             onClear,
-            onContinueFromStageSource,
             onEdit,
             openViewer,
             resultStatusSummary,
@@ -465,8 +427,6 @@ export function useWorkspaceStageViewer({
                 generationMode,
                 executionMode,
                 onGenerate,
-                onUpload,
-                onSelectImage: handleSelectGeneratedImage,
                 selectedImageUrl: generatedImageUrls[selectedImageIndex],
                 currentLanguage,
                 currentLog: showStageGeneratingState ? currentLog : '',
@@ -480,12 +440,9 @@ export function useWorkspaceStageViewer({
             executionMode,
             generatedImageUrls,
             generationMode,
-            handleSelectGeneratedImage,
             showStageGeneratingState,
             onGenerate,
-            onUpload,
             openViewer,
-            prompt,
             selectedImageIndex,
             settings.aspectRatio,
             settings.batchSize,

@@ -3,7 +3,6 @@ import { WorkspaceImportReviewState } from '../hooks/useWorkspaceSnapshotActions
 import { WORKSPACE_OVERLAY_Z_INDEX } from '../constants/workspaceOverlays';
 import { BranchSummary } from '../utils/lineage';
 import { GeneratedImage } from '../types';
-import { getExecutionModeLabel } from '../utils/executionMode';
 import { getTranslation, Language } from '../utils/translations';
 import InfoTooltip from './InfoTooltip';
 import ThemeToggle from './ThemeToggle';

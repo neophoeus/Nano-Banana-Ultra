@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import React, { act } from 'react';
+import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useQueuedBatchWorkflow } from '../hooks/useQueuedBatchWorkflow';
@@ -193,8 +193,7 @@ describe('useQueuedBatchWorkflow', () => {
                             queuedBatchClearImportedLog: 'Cleared {0} imported queued batch jobs from the local queue.',
                             generationFailureSummaryUnknown:
                                 'The request failed before a trustworthy reason could be identified.',
-                            generationFailureSummaryPolicy:
-                                'The prompt was blocked before image generation started.',
+                            generationFailureSummaryPolicy: 'The prompt was blocked before image generation started.',
                             generationFailureSummarySafety: 'The image output was blocked by safety filters.',
                             generationFailureSummaryTextOnly: 'The model responded with text only and no image.',
                             generationFailureSummaryEmpty:
@@ -215,10 +214,8 @@ describe('useQueuedBatchWorkflow', () => {
                             generationFailureDetailPossibleBatchSafetySuppression:
                                 'Another result in this batch was explicitly blocked by image safety filters. This attempt may have been suppressed for the same reason, but the response did not provide enough signal to confirm it.',
                             generationFailureDetailFinishReason: 'Model finish reason: {0}.',
-                            generationFailureValuePromptBlockReasonBlocklist:
-                                'blocked by restricted-term rules',
-                            generationFailureValuePromptBlockReasonProhibitedContent:
-                                'blocked for prohibited content',
+                            generationFailureValuePromptBlockReasonBlocklist: 'blocked by restricted-term rules',
+                            generationFailureValuePromptBlockReasonProhibitedContent: 'blocked for prohibited content',
                             generationFailureValuePromptBlockReasonSafety: 'blocked by policy safety rules',
                             generationFailureValuePromptBlockReasonUnspecified: 'blocked by policy rules',
                             generationFailureValuePromptBlockReasonOther: 'blocked by policy rules',
@@ -230,8 +227,7 @@ describe('useQueuedBatchWorkflow', () => {
                             generationFailureValueFinishReasonImageProhibitedContent:
                                 'blocked for prohibited image content',
                             generationFailureValueFinishReasonBlocklist: 'blocked by blocklist rules',
-                            generationFailureValueFinishReasonProhibitedContent:
-                                'blocked for prohibited content',
+                            generationFailureValueFinishReasonProhibitedContent: 'blocked for prohibited content',
                             generationFailureValueFinishReasonImageOther: 'completed without image output',
                             generationFailureValueFinishReasonSafety: 'blocked by safety filters',
                             generationFailureValueFinishReasonBlocked: 'blocked by model policy',
@@ -1494,7 +1490,8 @@ describe('useQueuedBatchWorkflow', () => {
             }),
         );
         expect(notifications).toContainEqual({
-            message: 'The prompt was blocked before image generation started. Policy block reason: blocked for prohibited content.',
+            message:
+                'The prompt was blocked before image generation started. Policy block reason: blocked for prohibited content.',
             type: 'error',
         });
     });

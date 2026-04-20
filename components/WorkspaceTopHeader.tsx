@@ -30,19 +30,20 @@ function WorkspaceTopHeader({
     supportRail,
 }: WorkspaceTopHeaderProps) {
     const supportRailItems = React.Children.toArray(supportRail).flatMap((child) => {
-        if (React.isValidElement(child) && child.type === React.Fragment) {
-            return React.Children.toArray(child.props.children);
+        if (React.isValidElement<{ children?: React.ReactNode }>(child) && child.type === React.Fragment) {
+            const fragmentChildren = child.props.children;
+            return React.Children.toArray(fragmentChildren);
         }
 
         return [child];
     });
     const supportRailItemCount = supportRailItems.length;
     const supportRailColumnClassName =
-                supportRailItemCount <= 1
-                        ? 'grid-cols-1'
-                        : supportRailItemCount === 2
-                            ? 'grid-cols-2 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]'
-                            : 'grid-cols-3';
+        supportRailItemCount <= 1
+            ? 'grid-cols-1'
+            : supportRailItemCount === 2
+              ? 'grid-cols-2 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]'
+              : 'grid-cols-3';
 
     return (
         <header data-testid="workspace-top-header" className="pointer-events-none fixed inset-x-0 top-0 z-30 shrink-0">

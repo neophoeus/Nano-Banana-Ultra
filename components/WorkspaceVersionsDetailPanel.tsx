@@ -1,5 +1,5 @@
 import React from 'react';
-import { GeneratedImage, TurnLineageAction } from '../types';
+import { GeneratedImage } from '../types';
 import { BranchSummary } from '../utils/lineage';
 import { getTranslation, Language } from '../utils/translations';
 
@@ -76,7 +76,6 @@ function WorkspaceVersionsDetailPanel({
     getBranchAccentClassName,
     renderHistoryTurnSnapshotContent,
     renderHistoryTurnBadges,
-    renderHistoryTurnActionRow,
     renderActiveBranchSummaryContent,
     showHeader = true,
 }: WorkspaceVersionsDetailPanelProps) {

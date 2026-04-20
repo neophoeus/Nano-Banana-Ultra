@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import React, { act } from 'react';
+import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -278,14 +278,18 @@ describe('WorkspaceProgressDetailPanel', () => {
 
         expect(container.querySelector('[data-testid="workspace-progress-detail-selected-failed"]')).toBeTruthy();
         expect(
-            (container.querySelector(
-                '[data-testid="workspace-progress-detail-part-text-failed-s-0"]',
-            ) as HTMLElement | null)?.textContent,
+            (
+                container.querySelector(
+                    '[data-testid="workspace-progress-detail-part-text-failed-s-0"]',
+                ) as HTMLElement | null
+            )?.textContent,
         ).toContain('Failed turn thought text survives selection.');
         expect(
-            (container.querySelector(
-                '[data-testid="workspace-progress-detail-part-image-failed-s-1"] img',
-            ) as HTMLImageElement | null)?.getAttribute('src'),
+            (
+                container.querySelector(
+                    '[data-testid="workspace-progress-detail-part-image-failed-s-1"] img',
+                ) as HTMLImageElement | null
+            )?.getAttribute('src'),
         ).toBe('/api/load-image?filename=failed-thought.png');
     });
 });

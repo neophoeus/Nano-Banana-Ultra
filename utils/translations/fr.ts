@@ -1,42 +1,6 @@
 export const fr = {
     appTitle: 'Nano Banana Ultra',
-    tplPortrait: 'Portrait',
-    tplLandscape: 'Paysage',
-    tplProduct: 'Produit',
-    tplAnimal: 'Animal',
-    tplFood: 'Nourriture',
-    tplInterior: 'Intérieur',
-    tplCharacter: 'Personnage',
-    tplSciFi: 'Science-Fiction',
-    tplAbstract: 'Abstrait',
-    tplArchitecture: 'Architecture',
-    tplUnderwater: 'Sous-marin',
-    tplPoster: 'Affiche',
     clearAll: 'Tout effacer',
-    tplPromptPortrait:
-        'Un portrait en studio professionnel avec un éclairage doux, une faible profondeur de champ et une texture de peau naturelle. Perspective à hauteur des yeux, tons chauds.',
-    tplPromptLandscape:
-        "Un paysage panoramique à couper le souffle à l'heure dorée avec des nuages dramatiques, des couleurs naturelles riches et une notion de profondeur et d'échelle.",
-    tplPromptProduct:
-        'Une photographie de produit élégante sur un fond épuré avec un éclairage de studio, des reflets précis et une sensation haut de gamme.',
-    tplPromptAnimal:
-        'Une photographie animalière stupéfiante capturant un animal dans son habitat naturel, avec des détails nets et un magnifique arrière-plan avec effet bokeh.',
-    tplPromptFood:
-        'Une photographie culinaire appétissante avec un éclairage chaud en plongée, un dressage soigné, de la vapeur ou du mouvement capturé, et une décoration de table rustique.',
-    tplPromptInterior:
-        "Un rendu de design d'intérieur moderne avec une lumière naturelle passant par les fenêtres, des lignes épurées, une décoration soignée et une atmosphère chaleureuse.",
-    tplPromptCharacter:
-        "Un concept art détaillé de personnage fantastique avec un design complexe d'armure/vêtement, une pose dynamique et un environnement de fond riche.",
-    tplPromptSciFi:
-        'Une scène de science-fiction futuriste avec une technologie avancée, un éclairage au néon, un brouillard volumétrique et une composition cinématographique suggérant une narration plus vaste.',
-    tplPromptAbstract:
-        "Une œuvre d'art abstraite avec des couleurs audacieuses, des formes dynamiques, des dégradés fluides, et une forte sensation de mouvement et de profondeur émotionnelle.",
-    tplPromptArchitecture:
-        "Une photographie architecturale remarquable qui met en valeur les motifs géométriques, les lignes de fuite, une perspective dramatique et des jeux d'ombre et de lumière.",
-    tplPromptUnderwater:
-        "Une scène sous-marine hypnotique avec des récifs coralliens vibrants, des poissons tropicaux, des rayons de lumière pénétrant l'eau, et une clarté bleu cristal.",
-    tplPromptPoster:
-        "Une conception d'affiche de film cinématographique avec une composition dramatique, une zone de typographie audacieuse, un éclairage atmosphérique et une narration visuelle captivante.",
     toolPen: 'Stylo',
     toolEraser: 'Gomme',
     toolUndo: 'Annuler',
@@ -51,8 +15,6 @@ export const fr = {
     locked: 'Verrouillé',
     ratioSkyscraper: 'Gratte-ciel',
     ratioTall: 'Grand',
-    templates: 'Modèles',
-    promptHistory: 'Historique',
     switchLight: 'Mode Clair',
     switchDark: 'Mode Sombre',
     shiftEnter: 'Maj+Entrée à la ligne',
@@ -376,7 +338,7 @@ export const fr = {
     queueBatchConversationNotice:
         "Les lots en file d'attente conservent la lignee source, mais n'envoient pas l'historique officiel des conversations multi-tours. Pour poursuivre une conversation, utilisez le flux de generation normal.",
     queueBatchMemoryContinuationDisabledReason:
-        "Les travaux en file ne peuvent pas poursuivre une conversation officielle memory. Demarrez une nouvelle conversation ou passez a Independent send.",
+        'Les travaux en file ne peuvent pas poursuivre une conversation officielle memory. Demarrez une nouvelle conversation ou passez a Independent send.',
     queueBatchEditDisabledReason:
         "Les lots en file d'attente ne prennent actuellement pas en charge les retouches de suivi ou de l'editeur. Utilisez d'abord le flux de generation normal.",
     queuedBatchJobsTitle: "Lots en file d'attente",
@@ -478,13 +440,7 @@ export const fr = {
     workspaceRestoreTitle: 'Espace de travail restaure',
     workspaceRestoreTurns: '{0} tours',
     workspaceRestoreActionsTitle: 'Choisir la suite',
-    workspaceTopHeaderModel: 'Modele',
-    workspaceTopHeaderRatio: 'Format',
-    workspaceTopHeaderSize: 'Taille',
-    workspaceTopHeaderQty: 'Quantite',
     workspaceTopHeaderReferenceTray: 'Plateau de references',
-    workspaceTopHeaderObjectRefs: "refs d'objet {0}",
-    workspaceTopHeaderCharacterRefs: 'refs de personnage {0}',
     workspaceTopHeaderSendIntent: 'Envoi',
     workspaceSendIntentIndependent: 'Independant',
     workspaceSendIntentMemory: 'Memoire',
@@ -564,7 +520,6 @@ export const fr = {
     stageActionBranchFromHere: 'Bifurquer depuis ici',
     stageActionClear: 'Effacer',
     stageActionMore: 'Plus d actions',
-    stageContextContinuationDiffers: 'La source de continuation differe',
     loadingPrepareSketchPad: 'Preparation de SketchPad...',
     loadingPrepareUltraEditor: 'Preparation de Ultra Editor...',
     loadingPrepareProvenancePanel: 'Preparation du panneau d origine...',
@@ -584,10 +539,6 @@ export const fr = {
         'Les images de personnages ont ete reduites a {0} a cause des contraintes du modele.',
     workspacePickerSharedPrompt: 'Prompt partage',
     workspacePickerSharedPromptPlaceholder: 'Mettez a jour ici le prompt partage du compositeur.',
-    workspacePickerInspiration: 'Inspiration',
-    workspacePickerNoSavedPrompts: "Aucun prompt enregistre pour l'instant.",
-    workspacePickerRemovePrompt: 'Supprimer',
-    workspacePickerClearPromptHistory: "Effacer l'historique des prompts",
     workspacePickerFullGallery: 'Galerie complete',
     workspacePickerEmptyGallery: 'Generez ou chargez une image pour remplir la galerie.',
     workspacePickerModelSupportImageSearch: "Recherche d'images ancree prete",
@@ -598,7 +549,6 @@ export const fr = {
     workspacePickerNoSketchAsset: "Aucune ressource de croquis n'est preparee.",
     workspacePickerCharacters: 'Personnages',
     workspacePickerCharacterHint: "Les references de personnage restent dans le meme modele d'ingestion prepare.",
-    workspacePickerPromptHistoryTitle: 'Historique',
     workspacePickerStageSource: 'Source de la scene',
     workspacePickerHistoryLinked: "lie a l'historique",
     workspacePickerStageSourceHint:
@@ -614,8 +564,6 @@ export const fr = {
         'Les controles adaptes aux capacites restent caches quand le modele ne les prend pas en charge.',
     workspaceSheetTitlePrompt: 'Prompt partage',
     workspaceSheetTitleHistory: 'Historique',
-    workspaceSheetTitleGallery: 'Galerie',
-    workspaceSheetTitleTemplates: 'Modeles',
     workspaceSheetTitleStyles: 'Styles',
     workspaceSheetTitleModel: 'Modele',
     workspaceSheetTitleRatio: 'Format',
@@ -888,7 +836,6 @@ export const fr = {
     workspaceInsightsLineageEmpty:
         'Quand plusieurs tours reussis s accumulent, leur racine et leurs relations de branche apparaitront ici.',
     workspaceInsightsOpenGallery: 'Ouvrir la galerie',
-    workspaceInsightsOpenPromptHistory: 'Ouvrir l historique des prompts',
     workspaceInsightsItemsCount: '{0} elements',
     groundingPanelContinuitySummary: 'Resume de continuite',
     groundingPanelAttributionOverview: "Resume d'attribution",

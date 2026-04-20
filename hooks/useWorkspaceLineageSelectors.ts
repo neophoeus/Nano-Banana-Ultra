@@ -64,43 +64,74 @@ export const deriveLineageCollection = ({
     continueActionLabels,
 }: DeriveLineageCollectionArgs) => {
     const successfulHistory = history.filter((item) => item.status === 'success');
-    const lineageRoots = successfulHistory
+    const successfulHistoryChronological = [...successfulHistory].sort(
+        (left, right) => left.createdAt - right.createdAt,
+    );
+    const lineageRoots = successfulHistoryChronological
         .filter((item) => (item.rootHistoryId || item.id) === item.id || !item.parentHistoryId)
-        .sort((left, right) => left.createdAt - right.createdAt)
         .slice(-3);
     const { branchLabelByTurnId, branchLabelByOriginId, branchOriginIdByTurnId, autoBranchLabelByOriginId } =
-        buildLineagePresentation(successfulHistory, branchNameOverrides, branchLabelConfig);
+        buildLineagePresentation(successfulHistoryChronological, branchNameOverrides, branchLabelConfig);
     const effectiveBranchContinuationSourceByBranchOriginId = getEffectiveBranchContinuationSourceByBranchOriginId(
         branchContinuationSourceByBranchOriginId,
         branchOriginIdByTurnId,
         workspaceSessionSourceHistoryId,
         workspaceSessionSourceLineageAction,
     );
-    const branchSummaries = buildBranchSummaries(successfulHistory, branchNameOverrides, branchLabelConfig);
+    const branchSummaries = buildBranchSummaries(
+        successfulHistoryChronological,
+        branchNameOverrides,
+        branchLabelConfig,
+        {
+            historyIsSuccessfulChronological: true,
+            presentation: {
+                branchLabelByTurnId,
+                branchLabelByOriginId,
+                branchOriginIdByTurnId,
+                autoBranchLabelByOriginId,
+            },
+        },
+    );
     const branchSummaryByOriginId = Object.fromEntries(
         branchSummaries.map((branch) => [branch.branchOriginId, branch] as const),
     ) as Record<string, BranchSummary | undefined>;
+    const rootBranchesByOriginId = new Map<string, Map<string, GeneratedImage[]>>();
+
+    successfulHistoryChronological.forEach((item) => {
+        const rootId = item.rootHistoryId || item.id;
+        const branchOriginId = branchOriginIdByTurnId[item.id] || item.id;
+        let branchesByOriginId = rootBranchesByOriginId.get(rootId);
+
+        if (!branchesByOriginId) {
+            branchesByOriginId = new Map<string, GeneratedImage[]>();
+            rootBranchesByOriginId.set(rootId, branchesByOriginId);
+        }
+
+        const branchTurns = branchesByOriginId.get(branchOriginId);
+
+        if (branchTurns) {
+            branchTurns.push(item);
+            return;
+        }
+
+        branchesByOriginId.set(branchOriginId, [item]);
+    });
+
     const lineageRootGroups: LineageRootGroup[] = lineageRoots.map((root) => {
         const rootId = root.rootHistoryId || root.id;
-        const rootTurns = successfulHistory
-            .filter((item) => (item.rootHistoryId || item.id) === rootId)
-            .sort((left, right) => left.createdAt - right.createdAt);
-        const branchGroups = Array.from(
-            new Set(rootTurns.map((item) => branchOriginIdByTurnId[item.id] || item.id)),
-        ).map((branchOriginId) => {
-            const branchTurns = rootTurns.filter(
-                (item) => (branchOriginIdByTurnId[item.id] || item.id) === branchOriginId,
-            );
-            return {
-                branchOriginId,
-                branchLabel:
-                    branchLabelByOriginId[branchOriginId] ||
-                    branchLabelByTurnId[branchTurns[0]?.id || branchOriginId] ||
-                    autoBranchLabelByOriginId[branchOriginId] ||
+        const branchGroups = Array.from(rootBranchesByOriginId.get(rootId)?.entries() || []).map(
+            ([branchOriginId, branchTurns]) => {
+                return {
                     branchOriginId,
-                turns: branchTurns,
-            };
-        });
+                    branchLabel:
+                        branchLabelByOriginId[branchOriginId] ||
+                        branchLabelByTurnId[branchTurns[0]?.id || branchOriginId] ||
+                        autoBranchLabelByOriginId[branchOriginId] ||
+                        branchOriginId,
+                    turns: branchTurns,
+                };
+            },
+        );
 
         return {
             root,
@@ -172,7 +203,7 @@ export function useWorkspaceLineageSelectors({
                 : collection.branchOriginIdByTurnId[activeBranchHistoryId] || activeBranchHistoryId
             : null;
         const activeBranchSummary = activeBranchOriginId
-            ? collection.branchSummaries.find((branch) => branch.branchOriginId === activeBranchOriginId) || null
+            ? collection.branchSummaryByOriginId[activeBranchOriginId] || null
             : collection.branchSummaries[0] || null;
         const exactCurrentStageSourceHistoryId = currentStageAssetSourceHistoryId || null;
         const selectedItemHistoryId = selectedHistoryId || exactCurrentStageSourceHistoryId || null;

@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useEffect, useRef } from 'react';
 import { checkApiKey } from '../services/geminiService';
 import { ASPECT_RATIOS } from '../constants';
-import { AspectRatio, WorkspaceComposerState } from '../types';
+import { AspectRatio } from '../types';
 import {
     ensureLanguageLoaded,
     isLanguageLoaded,

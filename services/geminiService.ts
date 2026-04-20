@@ -1,11 +1,4 @@
-import {
-    GenerateOptions,
-    GenerateResponse,
-    ImageReceivedResult,
-    ImageStyle,
-    QueuedBatchJobStats,
-    ResultPart,
-} from '../types';
+import { GenerateOptions, GenerateResponse, ImageReceivedResult, QueuedBatchJobStats, ResultPart } from '../types';
 import {
     attachGenerationFailure,
     getGenerationFailure,

@@ -1,4 +1,3 @@
-import React from 'react';
 import { getTranslation, Language } from '../utils/translations';
 
 type WorkspaceInsightsHeaderSummaryProps = {

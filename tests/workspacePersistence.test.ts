@@ -962,7 +962,7 @@ describe('workspacePersistence', () => {
                 throw new DOMException('Quota exceeded', 'QuotaExceededError');
             }
 
-            return originalSetItem.call(this, key, value);
+            return originalSetItem.call(localStorage, key, value);
         });
 
         expect(() => saveWorkspaceSnapshot(snapshot)).not.toThrow();

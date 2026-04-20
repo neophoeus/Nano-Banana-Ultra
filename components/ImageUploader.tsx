@@ -218,7 +218,6 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
 
             return {
                 displayImage: getReferencePreviewDataUrl(image) ?? null,
-                image,
                 index,
                 key: occurrence === 1 ? image : `${image}::${occurrence}`,
             };
@@ -259,68 +258,86 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
         [images, limitWarningMsg, maxImages, onImagesChange, onWarning, t],
     );
 
-    const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            void processFiles(Array.from(e.target.files));
-        }
-        if (fileInputRef.current) fileInputRef.current.value = '';
-    }, [processFiles]);
+    const handleFileChange = useCallback(
+        (e: React.ChangeEvent<HTMLInputElement>) => {
+            if (e.target.files) {
+                void processFiles(Array.from(e.target.files));
+            }
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        },
+        [processFiles],
+    );
 
-    const removeImage = useCallback((indexToRemove: number) => {
-        if (onRemove) {
-            onRemove(indexToRemove);
-        } else {
-            onImagesChange(images.filter((_, index) => index !== indexToRemove));
-        }
-    }, [images, onImagesChange, onRemove]);
+    const removeImage = useCallback(
+        (indexToRemove: number) => {
+            if (onRemove) {
+                onRemove(indexToRemove);
+            } else {
+                onImagesChange(images.filter((_, index) => index !== indexToRemove));
+            }
+        },
+        [images, onImagesChange, onRemove],
+    );
 
-    const handleDragOver = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        if (!disabled) setIsDragging(true);
-    }, [disabled]);
+    const handleDragOver = useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault();
+            if (!disabled) setIsDragging(true);
+        },
+        [disabled],
+    );
 
     const handleDragLeave = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         setIsDragging(false);
     }, []);
 
-    const handleDrop = useCallback((e: React.DragEvent) => {
-        e.preventDefault();
-        setIsDragging(false);
-        if (disabled) return;
+    const handleDrop = useCallback(
+        (e: React.DragEvent) => {
+            e.preventDefault();
+            setIsDragging(false);
+            if (disabled) return;
 
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            void processFiles(Array.from(e.dataTransfer.files));
-        }
-    }, [disabled, processFiles]);
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                void processFiles(Array.from(e.dataTransfer.files));
+            }
+        },
+        [disabled, processFiles],
+    );
 
-    const handleItemDragStart = useCallback((e: React.DragEvent, index: number) => {
-        e.stopPropagation();
-        if (disabled) return;
-        setDraggedIndex(index);
-        e.dataTransfer.effectAllowed = 'move';
-    }, [disabled]);
+    const handleItemDragStart = useCallback(
+        (e: React.DragEvent, index: number) => {
+            e.stopPropagation();
+            if (disabled) return;
+            setDraggedIndex(index);
+            e.dataTransfer.effectAllowed = 'move';
+        },
+        [disabled],
+    );
 
     const handleItemDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
     }, []);
 
-    const handleItemDrop = useCallback((e: React.DragEvent, dropIndex: number) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (disabled || draggedIndex === null || draggedIndex === dropIndex) {
+    const handleItemDrop = useCallback(
+        (e: React.DragEvent, dropIndex: number) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (disabled || draggedIndex === null || draggedIndex === dropIndex) {
+                setDraggedIndex(null);
+                return;
+            }
+
+            const newImages = [...images];
+            const [movedItem] = newImages.splice(draggedIndex, 1);
+            newImages.splice(dropIndex, 0, movedItem);
+
+            onImagesChange(newImages);
             setDraggedIndex(null);
-            return;
-        }
-
-        const newImages = [...images];
-        const [movedItem] = newImages.splice(draggedIndex, 1);
-        newImages.splice(dropIndex, 0, movedItem);
-
-        onImagesChange(newImages);
-        setDraggedIndex(null);
-    }, [disabled, draggedIndex, images, onImagesChange]);
+        },
+        [disabled, draggedIndex, images, onImagesChange],
+    );
 
     const handleItemDragEnd = useCallback(() => {
         setDraggedIndex(null);
@@ -356,7 +373,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
             )}
 
             <div className={`grid ${gridClassName} ${images.length > 0 ? 'mb-2' : ''}`}>
-                {imageEntries.map(({ displayImage, image, index, key }) => {
+                {imageEntries.map(({ displayImage, index, key }) => {
                     const isSafe = safeLimit !== undefined && index < safeLimit;
 
                     return (
@@ -369,7 +386,9 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
                             isDenseGrid={isDenseGrid}
                             isSafe={isSafe}
                             isDragged={draggedIndex === index}
-                            displayLabel={prefixTag ? `[${prefixTag}_${index + 1}]` : `${t('uploadRefIndex')} ${index + 1}`}
+                            displayLabel={
+                                prefixTag ? `[${prefixTag}_${index + 1}]` : `${t('uploadRefIndex')} ${index + 1}`
+                            }
                             lazyMountImages={lazyMountImages}
                             onRemove={removeImage}
                             onDragStart={handleItemDragStart}

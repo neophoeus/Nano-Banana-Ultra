@@ -589,7 +589,7 @@ const queuedBatchPanelSnapshot = {
             startedAt: 1710400045000,
             completedAt: 1710400050000,
             lastPolledAt: 1710400060000,
-                    hasImportablePayload: false,
+            hasImportablePayload: false,
         },
         {
             localId: 'job-failed',
@@ -837,11 +837,13 @@ const isLocatorVisible = async (locator: Locator) => (await locator.count()) > 0
 const openVersionsDetailModal = async (page: Page) => {
     const modal = page.getByTestId('workspace-versions-detail-modal');
     if (await isLocatorVisible(modal)) {
+        await expect(page.getByTestId('workspace-versions-detail-panel')).toBeVisible();
         return;
     }
 
     await page.locator('[data-testid="history-versions-open-details"]:visible').first().click({ force: true });
     await expect(page.getByTestId('workspace-versions-detail-modal')).toBeVisible();
+    await expect(page.getByTestId('workspace-versions-detail-panel')).toBeVisible();
 };
 
 const withVersionsDetailModal = async <T>(page: Page, callback: (modal: Locator) => Promise<T>) => {
@@ -1302,7 +1304,6 @@ const openGalleryPanel = async (page: Page) => {
     }
 
     const galleryOpeners = [
-        page.getByRole('button', { name: tt('workspaceSheetTitleGallery') }),
         page.getByRole('button', { name: tt('workspaceInsightsOpenGallery') }),
         page.getByRole('button', { name: /Open Gallery/i }),
     ];
@@ -1484,9 +1485,7 @@ const assertStageSourceSurfaces = async (
 };
 
 const assertFilmstripChromeLocalized = async (page: Page) => {
-    await expect(page.getByTestId('workspace-unified-history-title')).toContainText(
-        tt('workspacePickerPromptHistoryTitle'),
-    );
+    await expect(page.getByTestId('workspace-unified-history-title')).toContainText(tt('workspaceSheetTitleHistory'));
     await expect(page.getByTestId('workspace-unified-history-count')).toContainText(
         localizedTemplatePattern('workspaceInsightsItemsCount'),
     );
@@ -1538,7 +1537,7 @@ const assertComposerChromeLocalized = async (page: Page) => {
     await expect(independentSendButton).toHaveAttribute('data-selected', 'true');
     await expect(memorySendButton).toHaveAttribute('data-selected', 'false');
     await expect(enterBehaviorToggle).toBeVisible();
-    await expect(page.getByRole('button', { name: tt('workspaceViewerNewConversation') })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: tt('workspaceViewerNewConversation'), exact: true })).toHaveCount(0);
     await expect(page.getByRole('button', { name: tt('composerQueueBatchJob') })).toBeVisible();
 
     await sendIntentInfoTrigger.click();
@@ -1712,7 +1711,7 @@ const assertOfficialConversationSummary = async (
             .getByRole('heading', { name: tt('composerPromptLabelMemory') })
             .first(),
     ).toBeVisible();
-    await expect(page.getByRole('button', { name: tt('workspaceViewerNewConversation') })).toBeVisible();
+    await expect(page.getByRole('button', { name: tt('workspaceViewerNewConversation'), exact: true })).toBeVisible();
 
     await withVersionsDetailModal(page, async () => {
         await expect(activeBranchCard(page)).toContainText(options.branchLabel);
@@ -4380,7 +4379,10 @@ test.describe('workspace restore flows', () => {
         const sendIntentInfoCard = page.getByTestId('composer-sticky-send-intent-info-card');
         const independentSendButton = page.getByTestId('composer-sticky-send-intent-independent');
         const memorySendButton = page.getByTestId('composer-sticky-send-intent-memory');
-        const newConversationButton = page.getByRole('button', { name: tt('workspaceViewerNewConversation') });
+        const newConversationButton = page.getByRole('button', {
+            name: tt('workspaceViewerNewConversation'),
+            exact: true,
+        });
 
         await expect(page.getByTestId('workspace-restore-notice')).toHaveCount(0);
         await expect(sendIntentToggle).toHaveAttribute('data-active-intent', 'memory');
@@ -4420,7 +4422,9 @@ test.describe('workspace restore flows', () => {
 
         await expect(sendIntentToggle).toHaveAttribute('data-active-intent', 'independent');
         await expect(sendIntentToggle).toHaveAttribute('data-memory-available', 'false');
-        await expect(page.getByRole('button', { name: tt('workspaceViewerNewConversation') })).toHaveCount(0);
+        await expect(page.getByRole('button', { name: tt('workspaceViewerNewConversation'), exact: true })).toHaveCount(
+            0,
+        );
 
         await sendIntentToggle.click();
 

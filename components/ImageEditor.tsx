@@ -76,11 +76,9 @@ interface ImageEditorProps {
     onCancel: (options?: { discardSharedContext?: boolean }) => void;
     isGenerating: boolean;
     currentLanguage?: Language;
-    currentLog?: string;
     error?: string | null;
     onErrorClear?: () => void;
     imageModel: ImageModel;
-    onModelChange: (model: ImageModel) => void;
     leftDockTopOffset?: number | null;
 }
 
@@ -125,7 +123,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     initialCharacterImages,
     initialRatio,
     initialSize,
-    initialBatchSize,
     prompt,
     onPromptChange,
     objectImages,
@@ -140,7 +137,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     size,
     onSizeChange,
     batchSize,
-    onBatchSizeChange,
     onGenerate,
     onQueueBatch,
     queueBatchDisabledReason = null,
@@ -150,7 +146,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     error,
     onErrorClear,
     imageModel,
-    onModelChange,
     leftDockTopOffset = null,
 }) => {
     const t = (key: string) => getTranslation(currentLanguage, key);
@@ -236,12 +231,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
     // Refs
     const eventSurfaceRef = useRef<HTMLDivElement>(null);
     const overlayCanvasRef = useRef<HTMLCanvasElement>(null); // For Masks and Doodles
-    // --- UI Helpers ---
-    const [toast, setToast] = useState<{ msg: string; type: 'info' | 'error' } | null>(null);
-    const showToast = (msg: string, type: 'info' | 'error' = 'info') => {
-        setToast({ msg, type });
-        setTimeout(() => setToast(null), 3000);
-    };
     const [showExitConfirm, setShowExitConfirm] = useState(false);
     const [showModeSwitchConfirm, setShowModeSwitchConfirm] = useState<{ target: EditMode } | null>(null);
     const [showRetouchSwitchConfirm, setShowRetouchSwitchConfirm] = useState<{ target: RetouchMode } | null>(null);
@@ -796,19 +785,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
             className="fixed inset-0 flex flex-row bg-gray-100 dark:bg-[#050505] animate-[fadeIn_0.2s_ease-out] select-none overflow-hidden text-gray-900 transition-colors duration-300 dark:text-gray-200"
             style={{ zIndex: WORKSPACE_EDITOR_Z_INDEX.root }}
         >
-            {toast && (
-                <div
-                    data-testid="editor-toast"
-                    className="fixed top-8 left-1/2 -translate-x-1/2 pointer-events-none"
-                    style={{ zIndex: WORKSPACE_EDITOR_Z_INDEX.toast }}
-                >
-                    <div
-                        className={`${toast.type === 'error' ? 'bg-red-500/90' : 'bg-amber-500/90'} max-w-[min(92vw,42rem)] rounded-2xl px-4 py-2.5 text-center text-sm font-bold leading-relaxed text-white shadow-2xl backdrop-blur-md`}
-                    >
-                        {toast.msg}
-                    </div>
-                </div>
-            )}
 
             {error && (
                 <div

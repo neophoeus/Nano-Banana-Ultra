@@ -42,7 +42,6 @@ export interface StageTopRightModel {
 interface GeneratedImageProps {
     imageUrls: string[];
     isLoading: boolean;
-    prompt?: string;
     error?: StageErrorState | null;
     settings?: {
         aspectRatio: AspectRatio;
@@ -60,9 +59,7 @@ interface GeneratedImageProps {
     onGenerate: () => void;
     onAddToObjectReference?: () => void;
     onAddToCharacterReference?: () => void;
-    onUpload?: () => void;
     onClear?: () => void;
-    onSelectImage?: (url: string) => void;
     selectedImageUrl?: string;
     currentLanguage?: Language;
     currentLog?: string;
@@ -121,14 +118,11 @@ const resolveStageOverflowChipClassName = (chip: StageTopRightChip) =>
 const GeneratedImage: React.FC<GeneratedImageProps> = ({
     imageUrls,
     isLoading,
-    prompt,
     error,
     settings,
     batchSize,
     generationMode = 'Text to Image',
-    onUpload,
     onClear,
-    onSelectImage,
     selectedImageUrl,
     currentLanguage = 'en' as Language,
     currentLog = '',

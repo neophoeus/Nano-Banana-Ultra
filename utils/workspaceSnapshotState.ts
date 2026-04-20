@@ -1,5 +1,4 @@
 import {
-    ExecutionMode,
     GeneratedImage,
     GenerationSettings,
     OutputFormat,

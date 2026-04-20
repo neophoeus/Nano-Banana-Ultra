@@ -1,57 +1,22 @@
-import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { MODEL_CAPABILITIES } from '../constants';
-import WorkspacePickerSheet from '../components/WorkspacePickerSheet';
-import { GeneratedImage } from '../types';
+import WorkspacePickerSheet, { type PickerSheet } from '../components/WorkspacePickerSheet';
 import { getTranslation } from '../utils/translations';
-
-const buildTurn = (overrides: Partial<GeneratedImage> = {}): GeneratedImage => ({
-    id: 'turn-1',
-    url: 'https://example.com/image.png',
-    prompt: 'Prompt',
-    aspectRatio: '1:1',
-    size: '1K',
-    style: 'None',
-    model: 'gemini-3.1-flash-image-preview',
-    createdAt: 1,
-    status: 'success',
-    ...overrides,
-});
 
 describe('WorkspacePickerSheet', () => {
     it('falls back to the loading shell when a removed prompt-helper route is forced in', () => {
         const t = (key: string) => getTranslation('en', key);
         const markup = renderToStaticMarkup(
             <WorkspacePickerSheet
-                activePickerSheet="history"
+                activePickerSheet={'history' as unknown as PickerSheet}
                 activeSheetTitle="Prompt History"
                 pickerSheetZIndex={120}
                 prompt="Prompt"
                 setPrompt={vi.fn()}
-                handleSurpriseMe={vi.fn()}
-                handleSmartRewrite={vi.fn()}
                 isEnhancingPrompt={false}
                 closePickerSheet={vi.fn()}
-                openPromptSheet={vi.fn()}
-                openTemplatesSheet={vi.fn()}
-                openHistorySheet={vi.fn()}
-                openStylesSheet={vi.fn()}
-                openReferencesSheet={vi.fn()}
-                promptHistory={[]}
-                removePrompt={vi.fn()}
-                clearPromptHistory={vi.fn()}
-                history={[buildTurn({ lineageAction: 'continue' })]}
-                handleHistorySelect={vi.fn()}
-                handleContinueFromHistoryTurn={vi.fn()}
-                handleBranchFromHistoryTurn={vi.fn()}
-                handleRenameBranch={vi.fn()}
-                isPromotedContinuationSource={() => false}
-                getContinueActionLabel={() => 'Continue from turn'}
-                branchNameOverrides={{}}
-                selectedHistoryId={null}
                 currentLanguage="en"
-                handleClearGalleryHistory={vi.fn()}
                 t={t}
                 imageStyle="none"
                 setImageStyle={vi.fn()}
@@ -77,10 +42,7 @@ describe('WorkspacePickerSheet', () => {
         );
 
         expect(markup).toContain('Prompt History');
-    expect(markup).toContain(t('workspacePickerLoading'));
-    expect(markup).not.toContain(t('workspacePickerNoSavedPrompts'));
-        expect(markup).not.toContain(t('workspaceSheetTitleGallery'));
-        expect(markup).not.toContain(t('templates'));
+        expect(markup).toContain(t('workspacePickerLoading'));
         expect(markup).not.toContain(t('workspaceSheetTitleStyles'));
         expect(markup).not.toContain(t('workspaceSheetTitleReferences'));
         expect(markup).not.toContain(t('switchDark'));
@@ -97,29 +59,9 @@ describe('WorkspacePickerSheet', () => {
                     pickerSheetZIndex={120}
                     prompt="Prompt"
                     setPrompt={vi.fn()}
-                    handleSurpriseMe={vi.fn()}
-                    handleSmartRewrite={vi.fn()}
                     isEnhancingPrompt={false}
                     closePickerSheet={vi.fn()}
-                    openPromptSheet={vi.fn()}
-                    openTemplatesSheet={vi.fn()}
-                    openHistorySheet={vi.fn()}
-                    openStylesSheet={vi.fn()}
-                    openReferencesSheet={vi.fn()}
-                    promptHistory={[]}
-                    removePrompt={vi.fn()}
-                    clearPromptHistory={vi.fn()}
-                    history={[]}
-                    handleHistorySelect={vi.fn()}
-                    handleContinueFromHistoryTurn={vi.fn()}
-                    handleBranchFromHistoryTurn={vi.fn()}
-                    handleRenameBranch={vi.fn()}
-                    isPromotedContinuationSource={() => false}
-                    getContinueActionLabel={() => 'Continue from turn'}
-                    branchNameOverrides={{}}
-                    selectedHistoryId={null}
                     currentLanguage="en"
-                    handleClearGalleryHistory={vi.fn()}
                     t={t}
                     imageStyle="none"
                     setImageStyle={vi.fn()}
@@ -160,8 +102,6 @@ describe('WorkspacePickerSheet', () => {
         expect(fullMarkup).toContain(t('composerToolbarAdvancedSettings'));
         expect(fullMarkup).toContain('generation-settings-apply');
         expect(fullMarkup).not.toContain(t('promptLabel'));
-        expect(fullMarkup).not.toContain(t('workspacePickerPromptHistoryTitle'));
-        expect(fullMarkup).not.toContain(t('templates'));
         expect(fullMarkup).not.toContain(t('workspaceSheetTitleStyles'));
         expect(fullMarkup).not.toContain(t('workspaceSheetTitleReferences'));
         expect(fullMarkup).not.toContain(t('generationSettingsModalDesc'));
@@ -189,29 +129,9 @@ describe('WorkspacePickerSheet', () => {
                 pickerSheetZIndex={120}
                 prompt="Prompt"
                 setPrompt={vi.fn()}
-                handleSurpriseMe={vi.fn()}
-                handleSmartRewrite={vi.fn()}
                 isEnhancingPrompt={false}
                 closePickerSheet={vi.fn()}
-                openPromptSheet={vi.fn()}
-                openTemplatesSheet={vi.fn()}
-                openHistorySheet={vi.fn()}
-                openStylesSheet={vi.fn()}
-                openReferencesSheet={vi.fn()}
-                promptHistory={[]}
-                removePrompt={vi.fn()}
-                clearPromptHistory={vi.fn()}
-                history={[]}
-                handleHistorySelect={vi.fn()}
-                handleContinueFromHistoryTurn={vi.fn()}
-                handleBranchFromHistoryTurn={vi.fn()}
-                handleRenameBranch={vi.fn()}
-                isPromotedContinuationSource={() => false}
-                getContinueActionLabel={() => 'Continue from turn'}
-                branchNameOverrides={{}}
-                selectedHistoryId={null}
                 currentLanguage="en"
-                handleClearGalleryHistory={vi.fn()}
                 t={t}
                 imageStyle="none"
                 setImageStyle={vi.fn()}
@@ -255,29 +175,9 @@ describe('WorkspacePickerSheet', () => {
                 pickerSheetZIndex={120}
                 prompt="Prompt"
                 setPrompt={vi.fn()}
-                handleSurpriseMe={vi.fn()}
-                handleSmartRewrite={vi.fn()}
                 isEnhancingPrompt={false}
                 closePickerSheet={vi.fn()}
-                openPromptSheet={vi.fn()}
-                openTemplatesSheet={vi.fn()}
-                openHistorySheet={vi.fn()}
-                openStylesSheet={vi.fn()}
-                openReferencesSheet={vi.fn()}
-                promptHistory={[]}
-                removePrompt={vi.fn()}
-                clearPromptHistory={vi.fn()}
-                history={[]}
-                handleHistorySelect={vi.fn()}
-                handleContinueFromHistoryTurn={vi.fn()}
-                handleBranchFromHistoryTurn={vi.fn()}
-                handleRenameBranch={vi.fn()}
-                isPromotedContinuationSource={() => false}
-                getContinueActionLabel={() => 'Continue from turn'}
-                branchNameOverrides={{}}
-                selectedHistoryId={null}
                 currentLanguage="en"
-                handleClearGalleryHistory={vi.fn()}
                 t={t}
                 imageStyle="none"
                 setImageStyle={vi.fn()}
@@ -310,29 +210,9 @@ describe('WorkspacePickerSheet', () => {
                 pickerSheetZIndex={120}
                 prompt="Prompt"
                 setPrompt={vi.fn()}
-                handleSurpriseMe={vi.fn()}
-                handleSmartRewrite={vi.fn()}
                 isEnhancingPrompt={false}
                 closePickerSheet={vi.fn()}
-                openPromptSheet={vi.fn()}
-                openTemplatesSheet={vi.fn()}
-                openHistorySheet={vi.fn()}
-                openStylesSheet={vi.fn()}
-                openReferencesSheet={vi.fn()}
-                promptHistory={[]}
-                removePrompt={vi.fn()}
-                clearPromptHistory={vi.fn()}
-                history={[]}
-                handleHistorySelect={vi.fn()}
-                handleContinueFromHistoryTurn={vi.fn()}
-                handleBranchFromHistoryTurn={vi.fn()}
-                handleRenameBranch={vi.fn()}
-                isPromotedContinuationSource={() => false}
-                getContinueActionLabel={() => 'Continue from turn'}
-                branchNameOverrides={{}}
-                selectedHistoryId={null}
                 currentLanguage="en"
-                handleClearGalleryHistory={vi.fn()}
                 t={t}
                 imageStyle="none"
                 setImageStyle={vi.fn()}
@@ -361,10 +241,7 @@ describe('WorkspacePickerSheet', () => {
         expect(promptMarkup).toContain('shared-prompt-clear');
         expect(promptMarkup).toContain('shared-prompt-apply');
         expect(promptMarkup).toContain(t('generationSettingsApply'));
-        expect(promptMarkup).not.toContain(t('workspacePickerInspiration'));
         expect(promptMarkup).not.toContain(t('rewrite'));
-        expect(promptMarkup).not.toContain(t('templates'));
-        expect(promptMarkup).not.toContain(t('workspacePickerPromptHistoryTitle'));
         expect(promptMarkup).not.toContain(t('workspaceSheetTitleStyles'));
         expect(stylesMarkup).toBe('');
     });
@@ -378,29 +255,9 @@ describe('WorkspacePickerSheet', () => {
                 pickerSheetZIndex={120}
                 prompt="Prompt"
                 setPrompt={vi.fn()}
-                handleSurpriseMe={vi.fn()}
-                handleSmartRewrite={vi.fn()}
                 isEnhancingPrompt={false}
                 closePickerSheet={vi.fn()}
-                openPromptSheet={vi.fn()}
-                openTemplatesSheet={vi.fn()}
-                openHistorySheet={vi.fn()}
-                openStylesSheet={vi.fn()}
-                openReferencesSheet={vi.fn()}
-                promptHistory={[]}
-                removePrompt={vi.fn()}
-                clearPromptHistory={vi.fn()}
-                history={[]}
-                handleHistorySelect={vi.fn()}
-                handleContinueFromHistoryTurn={vi.fn()}
-                handleBranchFromHistoryTurn={vi.fn()}
-                handleRenameBranch={vi.fn()}
-                isPromotedContinuationSource={() => false}
-                getContinueActionLabel={() => 'Continue from turn'}
-                branchNameOverrides={{}}
-                selectedHistoryId={null}
                 currentLanguage="en"
-                handleClearGalleryHistory={vi.fn()}
                 t={t}
                 imageStyle="none"
                 setImageStyle={vi.fn()}

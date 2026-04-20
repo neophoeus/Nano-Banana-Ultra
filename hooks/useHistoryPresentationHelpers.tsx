@@ -1,5 +1,4 @@
 import { useCallback, useMemo } from 'react';
-import { BranchSummary } from '../utils/lineage';
 import {
     GeneratedImage,
     SelectedItemModel,
@@ -51,7 +50,6 @@ type RenderHistoryTurnBadgesArgs = {
 
 type UseHistoryPresentationHelpersArgs = {
     history: GeneratedImage[];
-    branchSummaryByOriginId: Record<string, BranchSummary | undefined>;
     effectiveBranchContinuationSourceByBranchOriginId: Record<string, string>;
     getBranchAccentClassName: (branchOriginId: string, branchLabel: string) => string;
     getContinueActionLabel: (item: GeneratedImage) => string;
@@ -81,7 +79,6 @@ const compactSelectedItemModelLabelByModel: Record<GeneratedImage['model'], stri
 
 export function useHistoryPresentationHelpers({
     history,
-    branchSummaryByOriginId,
     effectiveBranchContinuationSourceByBranchOriginId,
     getBranchAccentClassName,
     getContinueActionLabel,
@@ -469,12 +466,7 @@ export function useHistoryPresentationHelpers({
                 </div>
             </>
         ),
-        [
-            effectiveBranchContinuationSourceByBranchOriginId,
-            getBranchAccentClassName,
-            getShortTurnId,
-            t,
-        ],
+        [effectiveBranchContinuationSourceByBranchOriginId, getBranchAccentClassName, getShortTurnId, t],
     );
 
     const buildSelectedItemSummaryStripProps = useCallback(

@@ -8,7 +8,6 @@ import {
     ImageSize,
     ImageStyle,
     StageAsset,
-    StickySendIntent,
 } from '../types';
 
 type GenerationSourceOverride = {
@@ -60,10 +59,8 @@ type UseWorkspaceGenerationActionsArgs = {
     t: (key: string) => string;
 };
 
-export const resolveEffectiveSurfaceStyle = (
-    imageStyle: ImageStyle,
-    isSurfaceWorkspaceOpen: boolean,
-): ImageStyle => (isSurfaceWorkspaceOpen ? 'None' : imageStyle);
+export const resolveEffectiveSurfaceStyle = (imageStyle: ImageStyle, isSurfaceWorkspaceOpen: boolean): ImageStyle =>
+    isSurfaceWorkspaceOpen ? 'None' : imageStyle;
 
 export function useWorkspaceGenerationActions({
     abortControllerRef,

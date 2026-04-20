@@ -1,4 +1,3 @@
-import React from 'react';
 import { MODEL_CAPABILITIES, OUTPUT_FORMATS, THINKING_LEVELS } from '../constants';
 import { GroundingMode, ImageModel, OutputFormat, ThinkingLevel } from '../types';
 import { getGroundingModeLabel } from '../utils/groundingMode';
@@ -52,7 +51,6 @@ export default function ComposerAdvancedSettingsContent({
     const cardClassName = 'nbu-soft-well space-y-4 p-4';
     const cardLabelClassName =
         'block text-[10px] font-black uppercase tracking-[0.16em] text-gray-500 dark:text-gray-400';
-    const cardDescriptionClassName = 'text-xs leading-5 text-gray-500 dark:text-gray-400';
     const temperatureTipsContent = (
         <div className="space-y-2">
             <div>{t('composerAdvancedTemperatureGuideHigher')}</div>

@@ -208,9 +208,6 @@ describe('WorkspaceUnifiedHistoryPanel', () => {
 
         const leftPager = container.querySelector('[data-testid="workspace-unified-history-pager-left"]');
         const rightPager = container.querySelector('[data-testid="workspace-unified-history-pager-right"]');
-        const firstPageButton = container.querySelector(
-            '[data-testid="workspace-unified-history-page-first"]',
-        ) as HTMLButtonElement | null;
         const currentPageLabel = container.querySelector(
             '[data-testid="workspace-unified-history-page-label"]',
         ) as HTMLSpanElement | null;

@@ -1,4 +1,3 @@
-import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import './setupTranslations';
@@ -20,15 +19,8 @@ const baseProps = {
     aspectRatio: '1:1' as const,
     imageSize: '2K' as const,
     batchSize: 3,
-    hasSizePicker: true,
-    totalReferenceCount: 2,
-    objectCount: 1,
-    characterCount: 1,
-    maxObjects: 4,
-    maxCharacters: 2,
     outputFormat: 'images-only' as const,
     thinkingLevel: 'high' as const,
-    includeThoughts: true,
     stickySendIntent: 'independent' as const,
     currentStageAsset: null,
     availableGroundingModes: ['off', 'google-search', 'image-search', 'google-search-plus-image-search'] as const,
@@ -41,8 +33,6 @@ const baseProps = {
     queueBatchModeSummary: 'Queued batch runs as a separate official job workflow.',
     queueBatchConversationNotice: 'Official chat continuation stays out of queued batch mode.',
     getImportedQueuedResultCount: () => 0,
-    getImportedQueuedHistoryItems: () => [],
-    activeImportedQueuedHistoryId: null,
     onPromptChange: vi.fn(),
     onStickySendIntentChange: vi.fn(),
     onToggleEnterToSubmit: vi.fn(),
@@ -52,37 +42,31 @@ const baseProps = {
     onCancelGeneration: vi.fn(),
     onStartNewConversation: vi.fn(),
     onFollowUpGenerate: vi.fn(),
-    onOpenEditor: vi.fn(),
     onImageToPrompt: vi.fn(),
     onSurpriseMe: vi.fn(),
     onSmartRewrite: vi.fn(),
-    onOpenPromptHistory: vi.fn(),
-    onOpenTemplates: vi.fn(),
     onOpenStyles: vi.fn(),
     onOpenSettings: vi.fn(),
-    onOpenModelPicker: vi.fn(),
-    onOpenRatioPicker: vi.fn(),
-    onOpenSizePicker: vi.fn(),
-    onOpenBatchPicker: vi.fn(),
-    onOpenReferences: vi.fn(),
     onToggleAdvancedSettings: vi.fn(),
-    onOutputFormatChange: vi.fn(),
-    onTemperatureChange: vi.fn(),
-    onThinkingLevelChange: vi.fn(),
-    onGroundingModeChange: vi.fn(),
-    onImportAllQueuedJobs: vi.fn(),
-    onPollAllQueuedJobs: vi.fn(),
-    onPollQueuedJob: vi.fn(),
-    onCancelQueuedJob: vi.fn(),
-    onImportQueuedJob: vi.fn(),
-    onOpenImportedQueuedJob: vi.fn(),
-    onOpenLatestImportedQueuedJob: vi.fn(),
-    onOpenImportedQueuedHistoryItem: vi.fn(),
-    onRemoveQueuedJob: vi.fn(),
     getStageOriginLabel: () => 'Generated',
     getLineageActionLabel: () => 'Root',
     onClearStyle: vi.fn(),
     imageToolsPanel: <div data-testid="embedded-image-tools">Embedded Image Tools</div>,
+};
+
+const baseAdvancedSettingsDialogProps = {
+    currentLanguage: 'en' as const,
+    outputFormat: 'images-only' as const,
+    thinkingLevel: 'high' as const,
+    groundingMode: 'off' as const,
+    imageModel: 'gemini-3.1-flash-image-preview' as const,
+    capability: MODEL_CAPABILITIES['gemini-3.1-flash-image-preview'],
+    availableGroundingModes: ['off', 'google-search', 'image-search', 'google-search-plus-image-search'] as const,
+    temperature: 1,
+    onOutputFormatChange: vi.fn(),
+    onTemperatureChange: vi.fn(),
+    onThinkingLevelChange: vi.fn(),
+    onGroundingModeChange: vi.fn(),
 };
 
 describe('ComposerSettingsPanel toolbar layout', () => {
@@ -91,7 +75,6 @@ describe('ComposerSettingsPanel toolbar layout', () => {
             <ComposerSettingsPanel
                 {...baseProps}
                 groundingMode="off"
-                imageModel="gemini-3.1-flash-image-preview"
                 capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
             />,
         );
@@ -239,7 +222,6 @@ describe('ComposerSettingsPanel toolbar layout', () => {
                 stickySendIntent="memory"
                 batchSize={1}
                 groundingMode="off"
-                imageModel="gemini-3.1-flash-image-preview"
                 capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
             />,
         );
@@ -273,7 +255,6 @@ describe('ComposerSettingsPanel toolbar layout', () => {
                 isEnhancingPrompt={true}
                 activePromptTool="rewrite"
                 groundingMode="off"
-                imageModel="gemini-3.1-flash-image-preview"
                 capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
             />,
         );
@@ -299,7 +280,6 @@ describe('ComposerSettingsPanel toolbar layout', () => {
                 getStageOriginLabel={() => 'History'}
                 getLineageActionLabel={() => 'Reopen'}
                 groundingMode="off"
-                imageModel="gemini-3.1-flash-image-preview"
                 capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
             />,
         );
@@ -357,7 +337,6 @@ describe('ComposerSettingsPanel toolbar layout', () => {
                     ] as any
                 }
                 groundingMode="off"
-                imageModel="gemini-3.1-flash-image-preview"
                 capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
             />,
         );
@@ -466,7 +445,6 @@ describe('ComposerSettingsPanel toolbar layout', () => {
                     ] as any
                 }
                 groundingMode="off"
-                imageModel="gemini-3.1-flash-image-preview"
                 capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
             />,
         );
@@ -483,7 +461,7 @@ describe('ComposerAdvancedSettingsDialog grounding warning', () => {
     it('shows the image-search resolution warning for 3.1 Flash image grounding', () => {
         const markup = renderToStaticMarkup(
             <ComposerAdvancedSettingsDialog
-                {...baseProps}
+                {...baseAdvancedSettingsDialogProps}
                 isOpen={true}
                 onClose={vi.fn()}
                 groundingMode="google-search-plus-image-search"
@@ -511,7 +489,7 @@ describe('ComposerAdvancedSettingsDialog grounding warning', () => {
     it('does not show the warning for 3 Pro Google Search grounding', () => {
         const markup = renderToStaticMarkup(
             <ComposerAdvancedSettingsDialog
-                {...baseProps}
+                {...baseAdvancedSettingsDialogProps}
                 isOpen={true}
                 onClose={vi.fn()}
                 groundingMode="google-search"
@@ -536,7 +514,7 @@ describe('ComposerAdvancedSettingsDialog grounding warning', () => {
     it('does not render structured-output guidance cards after the feature removal', () => {
         const markup = renderToStaticMarkup(
             <ComposerAdvancedSettingsDialog
-                {...baseProps}
+                {...baseAdvancedSettingsDialogProps}
                 isOpen={true}
                 onClose={vi.fn()}
                 groundingMode="google-search"
@@ -554,11 +532,10 @@ describe('ComposerAdvancedSettingsDialog grounding warning', () => {
     it('localizes shell action labels outside English', () => {
         const markup = renderToStaticMarkup(
             <ComposerAdvancedSettingsDialog
-                {...baseProps}
+                {...baseAdvancedSettingsDialogProps}
                 isOpen={true}
                 onClose={vi.fn()}
                 currentLanguage="ja"
-                isGenerating
                 groundingMode="google-search"
                 imageModel="gemini-3-pro-image-preview"
                 capability={MODEL_CAPABILITIES['gemini-3-pro-image-preview']}

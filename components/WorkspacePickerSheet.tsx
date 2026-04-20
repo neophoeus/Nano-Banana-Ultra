@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { IMAGE_MODELS, MODEL_CAPABILITIES } from '../constants';
 import { Language } from '../utils/translations';
-import { AspectRatio, GeneratedImage, ImageModel, ImageSize, ImageStyle, WorkspaceSettingsDraft } from '../types';
+import { AspectRatio, ImageModel, ImageSize, ImageStyle, WorkspaceSettingsDraft } from '../types';
 import BatchSelector from './BatchSelector';
 import Button from './Button';
-import InfoTooltip from './InfoTooltip';
 import ImageUploader from './ImageUploader';
 import RatioSelector from './RatioSelector';
 import SizeSelector from './SizeSelector';
@@ -32,25 +31,10 @@ type WorkspacePickerSheetProps = {
     pickerSheetZIndex: number;
     prompt: string;
     setPrompt: (value: string) => void;
-    handleSurpriseMe: () => void;
-    handleSmartRewrite: () => void;
     isEnhancingPrompt: boolean;
     closePickerSheet: () => void;
-    openPromptSheet: () => void;
-    openStylesSheet: () => void;
-    openReferencesSheet: () => void;
     openAdvancedSettings?: () => void;
-    history: GeneratedImage[];
-    handleHistorySelect: (item: GeneratedImage) => void;
-    handleContinueFromHistoryTurn: (item: GeneratedImage) => void;
-    handleBranchFromHistoryTurn: (item: GeneratedImage) => void;
-    handleRenameBranch: (item: GeneratedImage) => void;
-    isPromotedContinuationSource: (item: GeneratedImage) => boolean;
-    getContinueActionLabel: (item: GeneratedImage) => string;
-    branchNameOverrides: Record<string, string>;
-    selectedHistoryId: string | null;
     currentLanguage: Language;
-    handleClearGalleryHistory: () => void;
     t: (key: string) => string;
     imageStyle: ImageStyle;
     setImageStyle: (style: ImageStyle) => void;
@@ -116,23 +100,8 @@ export default function WorkspacePickerSheet({
     setPrompt,
     isEnhancingPrompt,
     closePickerSheet,
-    handleSurpriseMe,
-    handleSmartRewrite,
-    openPromptSheet,
-    openStylesSheet,
-    openReferencesSheet,
     openAdvancedSettings = () => {},
-    history,
-    handleHistorySelect,
-    handleContinueFromHistoryTurn,
-    handleBranchFromHistoryTurn,
-    handleRenameBranch,
-    isPromotedContinuationSource,
-    getContinueActionLabel,
-    branchNameOverrides,
-    selectedHistoryId,
     currentLanguage,
-    handleClearGalleryHistory,
     t,
     imageStyle,
     setImageStyle,

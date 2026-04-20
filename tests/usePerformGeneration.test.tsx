@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import React, { act } from 'react';
+import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { usePerformGeneration } from '../hooks/usePerformGeneration';
@@ -410,7 +410,16 @@ describe('usePerformGeneration', () => {
 
     it('forwards live progress events and resets transient state around generation', async () => {
         generateImageWithGeminiMock.mockImplementation(
-            async (_request, _batchSize, onImageReceived, _onLog, _signal, onProgress, _onResult, onLiveProgressEvent) => {
+            async (
+                _request,
+                _batchSize,
+                onImageReceived,
+                _onLog,
+                _signal,
+                onProgress,
+                _onResult,
+                onLiveProgressEvent,
+            ) => {
                 onLiveProgressEvent?.({ type: 'start', sessionId: 'stream-session-1' });
                 onLiveProgressEvent?.({
                     type: 'result-part',
@@ -655,7 +664,7 @@ describe('usePerformGeneration', () => {
             ],
         });
 
-        generateImageWithGeminiMock.mockImplementation(async (request) => [
+        generateImageWithGeminiMock.mockImplementation(async (_request) => [
             {
                 status: 'success',
                 url: 'data:image/png;base64,BBB',

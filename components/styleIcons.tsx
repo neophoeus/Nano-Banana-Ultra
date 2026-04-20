@@ -1,5 +1,3 @@
-import React from 'react';
-
 export const renderStyleIcon = (iconId: string, isSelected: boolean) => {
     const selectedClass = 'w-6 h-6 filter drop-shadow-sm transition-all duration-300';
     const unselectedClass =

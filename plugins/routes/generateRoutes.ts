@@ -6,7 +6,6 @@ import {
     resolveGenerationFailureInfo,
 } from '../../utils/generationFailure';
 import {
-    buildLiveProgressCellId,
     describeLiveProgressIneligibility,
     getLiveProgressCapabilityMatrix,
     LiveProgressArtifactKind,
@@ -349,7 +348,10 @@ const extractResponsePartsFromCandidates = (candidates: NormalizedGeneratedRespo
             if (typeof part.text === 'string' && part.text.trim()) {
                 extractedParts.push({
                     sequence,
-                    kind: part.thought === true || typeof part.thoughtSignature === 'string' ? 'thought-text' : 'output-text',
+                    kind:
+                        part.thought === true || typeof part.thoughtSignature === 'string'
+                            ? 'thought-text'
+                            : 'output-text',
                     text: part.text.trim(),
                     candidateIndex,
                     partIndex,
@@ -403,29 +405,32 @@ const summarizeExtractedResponseParts = (parts: ExtractedResponsePart[]): Extrac
         }
     });
 
-    const selectedImage = outputImageCandidates.reduce<ExtractedImageResultPart | undefined>((bestCandidate, candidate) => {
-        if (!bestCandidate) {
-            return candidate;
-        }
+    const selectedImage = outputImageCandidates.reduce<ExtractedImageResultPart | undefined>(
+        (bestCandidate, candidate) => {
+            if (!bestCandidate) {
+                return candidate;
+            }
 
-        const bestArea = getImageArea(bestCandidate.imageDimensions);
-        const candidateArea = getImageArea(candidate.imageDimensions);
-        if (candidateArea > bestArea) {
-            return candidate;
-        }
-        if (candidateArea === bestArea && candidate.candidateIndex > bestCandidate.candidateIndex) {
-            return candidate;
-        }
-        if (
-            candidateArea === bestArea &&
-            candidate.candidateIndex === bestCandidate.candidateIndex &&
-            candidate.partIndex > bestCandidate.partIndex
-        ) {
-            return candidate;
-        }
+            const bestArea = getImageArea(bestCandidate.imageDimensions);
+            const candidateArea = getImageArea(candidate.imageDimensions);
+            if (candidateArea > bestArea) {
+                return candidate;
+            }
+            if (candidateArea === bestArea && candidate.candidateIndex > bestCandidate.candidateIndex) {
+                return candidate;
+            }
+            if (
+                candidateArea === bestArea &&
+                candidate.candidateIndex === bestCandidate.candidateIndex &&
+                candidate.partIndex > bestCandidate.partIndex
+            ) {
+                return candidate;
+            }
 
-        return bestCandidate;
-    }, undefined);
+            return bestCandidate;
+        },
+        undefined,
+    );
 
     return {
         imageUrl: selectedImage?.imageUrl,
@@ -560,7 +565,9 @@ export const applyLiveProgressChunkToAccumulator = (
             ...nextState,
             preCompletionArtifactCount: nextState.preCompletionArtifactCount + newThoughtPartCount,
             firstPreCompletionArtifactKind:
-                nextState.firstPreCompletionArtifactKind || firstThoughtPart?.kind || nextState.firstPreCompletionArtifactKind,
+                nextState.firstPreCompletionArtifactKind ||
+                firstThoughtPart?.kind ||
+                nextState.firstPreCompletionArtifactKind,
         };
     }
 
@@ -593,7 +600,9 @@ export function extractStreamCompletionContent(
     state: LiveProgressAccumulatorState,
     response?: any,
 ): ExtractedGeneratedContent {
-    const lastChunkExtracted = response ? extractGeneratedContent(response) : extractGeneratedContent({ candidates: [] });
+    const lastChunkExtracted = response
+        ? extractGeneratedContent(response)
+        : extractGeneratedContent({ candidates: [] });
 
     if (!state.orderingStable) {
         return lastChunkExtracted;
@@ -678,13 +687,8 @@ function buildPreparedGenerateRequest(
     body: ImageGenerateBody,
     resolvedDir: string,
 ): PreparedGenerateRequest {
-    const {
-        requestConfig,
-        resolvedResponseModalities,
-        groundingMode,
-        effectiveThinkingLevel,
-        shouldIncludeThoughts,
-    } = buildImageRequestConfig(model, body);
+    const { requestConfig, resolvedResponseModalities, groundingMode, effectiveThinkingLevel, shouldIncludeThoughts } =
+        buildImageRequestConfig(model, body);
     const parts = buildGenerateParts(body, resolvedDir);
     const conversationHistory = buildConversationHistory(body.conversationContext, resolvedDir);
     const useOfficialConversation = body.executionMode === 'chat-continuation' && Boolean(body.conversationContext);
@@ -792,7 +796,9 @@ function buildGeneratedResponsePayload(
                 ? `${extracted.imageDimensions.width}x${extracted.imageDimensions.height}`
                 : undefined,
             groundingMode: prepared.groundingMode,
-            groundingMetadataReturned: Boolean(groundingDetails.searchEntryPointAvailable || groundingDetails.sources.length),
+            groundingMetadataReturned: Boolean(
+                groundingDetails.searchEntryPointAvailable || groundingDetails.sources.length,
+            ),
             textReturned: Boolean(extracted.text),
             thoughtsReturned: Boolean(extracted.thoughts),
             thoughtImagesReturned: Boolean(extracted.thoughtImagePartCount),
@@ -1079,7 +1085,8 @@ export function registerGenerateRoutes(server: any, { getAIClient, resolvedDir }
                 executionMode: body.executionMode || 'single-turn',
                 outputFormat: body.outputFormat || 'images-only',
                 thinkingLevel:
-                    body.thinkingLevel || (validated.model === 'gemini-3.1-flash-image-preview' ? 'minimal' : 'disabled'),
+                    body.thinkingLevel ||
+                    (validated.model === 'gemini-3.1-flash-image-preview' ? 'minimal' : 'disabled'),
                 includeThoughts: Boolean(body.includeThoughts),
                 batchSize: 1,
             });
@@ -1204,8 +1211,13 @@ export function registerGenerateRoutes(server: any, { getAIClient, resolvedDir }
             const matrix = getLiveProgressCapabilityMatrix({ includeExcluded: true });
             const selectedCells =
                 requestedIds.length > 0 ? matrix.filter((cell) => requestedIds.includes(cell.id)) : matrix;
-            const unknownCellIds = requestedIds.filter((requestedId) => !matrix.some((cell) => cell.id === requestedId));
-            const prompt = typeof body.prompt === 'string' && body.prompt.trim() ? body.prompt.trim() : DEFAULT_LIVE_PROGRESS_PROBE_PROMPT;
+            const unknownCellIds = requestedIds.filter(
+                (requestedId) => !matrix.some((cell) => cell.id === requestedId),
+            );
+            const prompt =
+                typeof body.prompt === 'string' && body.prompt.trim()
+                    ? body.prompt.trim()
+                    : DEFAULT_LIVE_PROGRESS_PROBE_PROMPT;
 
             const results: LiveProgressProbeResult[] = [];
             for (const cell of selectedCells) {

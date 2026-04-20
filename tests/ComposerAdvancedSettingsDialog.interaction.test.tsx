@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import React, { act, useState } from 'react';
+import { act, useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import ComposerAdvancedSettingsDialog from '../components/ComposerAdvancedSettingsDialog';
@@ -24,72 +24,18 @@ function AdvancedSettingsHarness() {
                 Reopen advanced settings
             </button>
             <ComposerAdvancedSettingsDialog
-                prompt="Test prompt"
-                placeholder="Type here"
-                enterToSubmit={false}
-                isGenerating={false}
-                isEnhancingPrompt={false}
                 currentLanguage="en"
-                imageStyleLabel="None"
-                modelLabel={getTranslation('en', 'modelGemini3Pro')}
-                aspectRatio="1:1"
-                imageSize="2K"
-                batchSize={1}
-                hasSizePicker={true}
-                totalReferenceCount={0}
-                objectCount={0}
-                characterCount={0}
-                maxObjects={4}
-                maxCharacters={2}
                 outputFormat={outputFormat}
                 thinkingLevel={thinkingLevel}
-                includeThoughts={true}
                 groundingMode={groundingMode}
                 imageModel="gemini-3-pro-image-preview"
-                currentStageAsset={null}
                 capability={MODEL_CAPABILITIES['gemini-3-pro-image-preview']}
                 availableGroundingModes={['off', 'google-search']}
                 temperature={temperature}
-                isAdvancedSettingsOpen={isOpen}
-                generateLabel="Generate"
-                queuedJobs={[]}
-                isQueueBatchDisabled={false}
-                queueBatchDisabledReason={null}
-                queueBatchModeSummary="Queued batch runs as a separate official job workflow."
-                queueBatchConversationNotice="Official chat continuation stays out of queued batch mode."
-                getImportedQueuedResultCount={() => 0}
-                getImportedQueuedHistoryItems={() => []}
-                activeImportedQueuedHistoryId={null}
-                onPromptChange={() => {}}
-                onToggleEnterToSubmit={() => {}}
-                onGenerate={() => {}}
-                onQueueBatchJob={() => {}}
-                onOpenQueuedBatchJobs={() => {}}
-                onCancelGeneration={() => {}}
-                onStartNewConversation={() => {}}
-                onFollowUpGenerate={() => {}}
-                onSurpriseMe={() => {}}
-                onSmartRewrite={() => {}}
-                onOpenPromptHistory={() => {}}
-                onOpenTemplates={() => {}}
-                onOpenStyles={() => {}}
-                onOpenSettings={() => {}}
-                onToggleAdvancedSettings={() => {}}
                 onOutputFormatChange={setOutputFormat}
                 onTemperatureChange={setTemperature}
                 onThinkingLevelChange={setThinkingLevel}
                 onGroundingModeChange={setGroundingMode}
-                onImportAllQueuedJobs={() => {}}
-                onPollAllQueuedJobs={() => {}}
-                onPollQueuedJob={() => {}}
-                onCancelQueuedJob={() => {}}
-                onImportQueuedJob={() => {}}
-                onOpenImportedQueuedJob={() => {}}
-                onOpenLatestImportedQueuedJob={() => {}}
-                onOpenImportedQueuedHistoryItem={() => {}}
-                onRemoveQueuedJob={() => {}}
-                getStageOriginLabel={() => 'Generated'}
-                getLineageActionLabel={() => 'Root'}
                 isOpen={isOpen}
                 onClose={() => setIsOpen(false)}
             />

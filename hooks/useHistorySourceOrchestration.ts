@@ -16,7 +16,6 @@ import {
     EMPTY_WORKSPACE_CONVERSATION_STATE,
     getConversationSelectionState,
     promoteConversationSource,
-    resolveConversationSelectionState,
 } from '../utils/conversationState';
 import { buildStageErrorState } from '../utils/generationFailure';
 
@@ -65,7 +64,10 @@ type UseHistorySourceOrchestrationArgs = {
     resetWorkspaceSession: () => void;
     clearAssetRoles: (roles: Array<'object' | 'character' | 'stage-source'>) => void;
     buildResultArtifacts: (
-        item: Pick<GeneratedImageType, 'text' | 'thoughts' | 'resultParts' | 'grounding' | 'metadata' | 'sessionHints' | 'id'>,
+        item: Pick<
+            GeneratedImageType,
+            'text' | 'thoughts' | 'resultParts' | 'grounding' | 'metadata' | 'sessionHints' | 'id'
+        >,
     ) => ResultArtifacts;
     applySelectedResultArtifacts: (artifacts: ResultArtifacts | null) => void;
     promoteResultArtifactsToSession: PromoteResultArtifactsToSession;
@@ -80,7 +82,6 @@ type UseHistorySourceOrchestrationArgs = {
     setSelectedHistoryId: Dispatch<SetStateAction<string | null>>;
     setError: Dispatch<SetStateAction<import('../types').StageErrorState | null>>;
     setLogs: Dispatch<SetStateAction<string[]>>;
-    setIsGenerating: Dispatch<SetStateAction<boolean>>;
     upsertViewerStageSource: (args: {
         url: string;
         origin: 'generated' | 'history' | 'upload' | 'sketch' | 'editor';
@@ -167,7 +168,6 @@ export function useHistorySourceOrchestration({
     setSelectedHistoryId,
     setError,
     setLogs,
-    setIsGenerating,
     upsertViewerStageSource,
     addLog,
     showNotification,
@@ -377,7 +377,9 @@ export function useHistorySourceOrchestration({
 
                 if (lineageAction === 'continue') {
                     showNotification(
-                        item.variantGroupId ? t('historySourceVariantContinueNotice') : t('historySourceContinueNotice'),
+                        item.variantGroupId
+                            ? t('historySourceVariantContinueNotice')
+                            : t('historySourceContinueNotice'),
                         'info',
                     );
                     addLog(
@@ -581,7 +583,12 @@ export function useHistorySourceOrchestration({
         }
 
         handleHistorySelect(item, { lineageAction: pendingSelection.lineageAction });
-    }, [getHistoryTurnById, handleHistorySelect, workspaceSession.sourceHistoryId, workspaceSession.sourceLineageAction]);
+    }, [
+        getHistoryTurnById,
+        handleHistorySelect,
+        workspaceSession.sourceHistoryId,
+        workspaceSession.sourceLineageAction,
+    ]);
 
     return {
         handleStartNewConversation,

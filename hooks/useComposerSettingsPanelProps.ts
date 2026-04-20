@@ -4,32 +4,18 @@ import type { PickerSheet } from '../components/WorkspacePickerSheet';
 import { Language } from '../utils/translations';
 import {
     AspectRatio,
-    GeneratedImage,
     GroundingMode,
+    ImageModel,
+    ImageSize,
     OutputFormat,
     QueuedBatchJob,
     StageAsset,
     StickySendIntent,
     ThinkingLevel,
     TurnLineageAction,
-    ImageSize,
 } from '../types';
 
 type ComposerSettingsPanelProps = React.ComponentProps<typeof ComposerSettingsPanel>;
-export type ComposerSettingsPanelPickerEntryProps = {
-    modelLabel: string;
-    aspectRatio: AspectRatio;
-    imageSize: ImageSize;
-    batchSize: number;
-    hasSizePicker: boolean;
-    totalReferenceCount: number;
-    objectCount: number;
-    characterCount: number;
-    maxObjects: number;
-    maxCharacters: number;
-    onOpenSettings: () => void;
-};
-type ComposerSettingsPanelOwnedProps = ComposerSettingsPanelProps & ComposerSettingsPanelPickerEntryProps;
 
 type UseComposerSettingsPanelPropsArgs = {
     prompt: string;
@@ -42,10 +28,9 @@ type UseComposerSettingsPanelPropsArgs = {
     imageStyleLabel: string;
     outputFormat: OutputFormat;
     thinkingLevel: ThinkingLevel;
-    includeThoughts: boolean;
     groundingMode: GroundingMode;
     stickySendIntent: StickySendIntent;
-    imageModel: ComposerSettingsPanelProps['imageModel'];
+    imageModel: ImageModel;
     aspectRatio: AspectRatio;
     imageSize: ImageSize;
     batchSize: number;
@@ -55,20 +40,12 @@ type UseComposerSettingsPanelPropsArgs = {
     temperature: number;
     isAdvancedSettingsOpen: boolean;
     generateLabel: string;
-    hasSizePicker: boolean;
-    totalReferenceCount: number;
-    objectCount: number;
-    characterCount: number;
-    maxObjects: number;
-    maxCharacters: number;
     queuedJobs: QueuedBatchJob[];
     isQueueBatchDisabled: boolean;
     queueBatchDisabledReason: string | null;
     queueBatchModeSummary: string;
     queueBatchConversationNotice: string | null;
     getImportedQueuedResultCount: (job: QueuedBatchJob) => number;
-    getImportedQueuedHistoryItems: (job: QueuedBatchJob) => GeneratedImage[];
-    activeImportedQueuedHistoryId: string | null;
     promptTextareaRef: MutableRefObject<HTMLTextAreaElement | null>;
     setPrompt: (value: string) => void;
     setStickySendIntent: Dispatch<SetStateAction<StickySendIntent>>;
@@ -85,25 +62,28 @@ type UseComposerSettingsPanelPropsArgs = {
     openSettings: () => void;
     openAdvancedSettings: () => void;
     setActivePickerSheet: Dispatch<SetStateAction<PickerSheet>>;
-    setIsAdvancedSettingsOpen: Dispatch<SetStateAction<boolean>>;
-    setOutputFormat: (value: OutputFormat) => void;
-    setTemperature: (value: number) => void;
-    setThinkingLevel: (value: ThinkingLevel) => void;
-    setGroundingMode: (value: GroundingMode) => void;
-    getGroundingFlagsFromMode: (mode: GroundingMode) => { googleSearch: boolean; imageSearch: boolean };
-    showNotification: (message: string, type?: 'info' | 'error') => void;
     t: (key: string) => string;
-    handleImportAllQueuedJobs: () => void;
-    handlePollAllQueuedJobs: () => void;
-    handlePollQueuedJob: (localId: string) => void;
-    handleCancelQueuedJob: (localId: string) => void;
-    handleImportQueuedJob: (localId: string) => void;
-    handleOpenImportedQueuedJob: (localId: string) => void;
-    handleOpenLatestImportedQueuedJob: (localId: string) => void;
-    handleOpenImportedQueuedHistoryItem: (historyId: string) => void;
-    handleRemoveQueuedJob: (localId: string) => void;
     getStageOriginLabel: (origin?: StageAsset['origin']) => string;
     getLineageActionLabel: (action?: TurnLineageAction) => string;
+};
+
+type ComposerSettingsPanelHandlers = {
+    setPrompt: (value: string) => void;
+    setStickySendIntent: Dispatch<SetStateAction<StickySendIntent>>;
+    toggleEnterToSubmit: () => void;
+    handleGenerate: () => void;
+    handleQueueBatchJob: () => void;
+    handleOpenQueuedBatchJobs: () => void;
+    handleCancelGeneration: () => void;
+    handleStartNewConversation: () => void;
+    handleFollowUpGenerate: () => void;
+    handleSurpriseMe: () => void;
+    handleSmartRewrite: () => void;
+    handleImageToPrompt?: (file: File) => void | Promise<void>;
+    openSettings: () => void;
+    openAdvancedSettings: () => void;
+    setActivePickerSheet: Dispatch<SetStateAction<PickerSheet>>;
+    getImportedQueuedResultCount: (job: QueuedBatchJob) => number;
 };
 
 export function useComposerSettingsPanelProps({
@@ -117,7 +97,6 @@ export function useComposerSettingsPanelProps({
     imageStyleLabel,
     outputFormat,
     thinkingLevel,
-    includeThoughts,
     groundingMode,
     stickySendIntent,
     imageModel,
@@ -130,20 +109,12 @@ export function useComposerSettingsPanelProps({
     temperature,
     isAdvancedSettingsOpen,
     generateLabel,
-    hasSizePicker,
-    totalReferenceCount,
-    objectCount,
-    characterCount,
-    maxObjects,
-    maxCharacters,
     queuedJobs,
     isQueueBatchDisabled,
     queueBatchDisabledReason,
     queueBatchModeSummary,
     queueBatchConversationNotice,
     getImportedQueuedResultCount,
-    getImportedQueuedHistoryItems,
-    activeImportedQueuedHistoryId,
     promptTextareaRef,
     setPrompt,
     setStickySendIntent,
@@ -160,28 +131,12 @@ export function useComposerSettingsPanelProps({
     openSettings,
     openAdvancedSettings,
     setActivePickerSheet,
-    setIsAdvancedSettingsOpen,
-    setOutputFormat,
-    setTemperature,
-    setThinkingLevel,
-    setGroundingMode,
-    getGroundingFlagsFromMode,
-    showNotification,
     t,
-    handleImportAllQueuedJobs,
-    handlePollAllQueuedJobs,
-    handlePollQueuedJob,
-    handleCancelQueuedJob,
-    handleImportQueuedJob,
-    handleOpenImportedQueuedJob,
-    handleOpenLatestImportedQueuedJob,
-    handleOpenImportedQueuedHistoryItem,
-    handleRemoveQueuedJob,
     getStageOriginLabel,
     getLineageActionLabel,
-}: UseComposerSettingsPanelPropsArgs): ComposerSettingsPanelOwnedProps {
+}: UseComposerSettingsPanelPropsArgs): ComposerSettingsPanelProps {
     const getModelLabel = useCallback(
-        (model: ComposerSettingsPanelProps['imageModel']) => {
+        (model: ImageModel) => {
             if (model === 'gemini-3.1-flash-image-preview') {
                 return t('modelGemini31Flash');
             }
@@ -192,7 +147,7 @@ export function useComposerSettingsPanelProps({
         },
         [t],
     );
-    const latestHandlersRef = useRef({
+    const latestHandlersRef = useRef<ComposerSettingsPanelHandlers>({
         setPrompt,
         setStickySendIntent,
         toggleEnterToSubmit,
@@ -208,26 +163,7 @@ export function useComposerSettingsPanelProps({
         openSettings,
         openAdvancedSettings,
         setActivePickerSheet,
-        setIsAdvancedSettingsOpen,
-        setOutputFormat,
-        setTemperature,
-        setThinkingLevel,
-        setGroundingMode,
-        getGroundingFlagsFromMode,
-        showNotification,
-        t,
-        outputFormat,
-        handleImportAllQueuedJobs,
-        handlePollAllQueuedJobs,
-        handlePollQueuedJob,
-        handleCancelQueuedJob,
-        handleImportQueuedJob,
-        handleOpenImportedQueuedJob,
-        handleOpenLatestImportedQueuedJob,
-        handleOpenImportedQueuedHistoryItem,
-        handleRemoveQueuedJob,
         getImportedQueuedResultCount,
-        getImportedQueuedHistoryItems,
     });
 
     useLayoutEffect(() => {
@@ -247,26 +183,7 @@ export function useComposerSettingsPanelProps({
             openSettings,
             openAdvancedSettings,
             setActivePickerSheet,
-            setIsAdvancedSettingsOpen,
-            setOutputFormat,
-            setTemperature,
-            setThinkingLevel,
-            setGroundingMode,
-            getGroundingFlagsFromMode,
-            showNotification,
-            t,
-            outputFormat,
-            handleImportAllQueuedJobs,
-            handlePollAllQueuedJobs,
-            handlePollQueuedJob,
-            handleCancelQueuedJob,
-            handleImportQueuedJob,
-            handleOpenImportedQueuedJob,
-            handleOpenLatestImportedQueuedJob,
-            handleOpenImportedQueuedHistoryItem,
-            handleRemoveQueuedJob,
             getImportedQueuedResultCount,
-            getImportedQueuedHistoryItems,
         };
     }, [
         setPrompt,
@@ -281,27 +198,10 @@ export function useComposerSettingsPanelProps({
         handleSurpriseMe,
         handleSmartRewrite,
         handleImageToPrompt,
+        openSettings,
+        openAdvancedSettings,
         setActivePickerSheet,
-        setIsAdvancedSettingsOpen,
-        setOutputFormat,
-        setTemperature,
-        setThinkingLevel,
-        setGroundingMode,
-        getGroundingFlagsFromMode,
-        showNotification,
-        t,
-        outputFormat,
-        handleImportAllQueuedJobs,
-        handlePollAllQueuedJobs,
-        handlePollQueuedJob,
-        handleCancelQueuedJob,
-        handleImportQueuedJob,
-        handleOpenImportedQueuedJob,
-        handleOpenLatestImportedQueuedJob,
-        handleOpenImportedQueuedHistoryItem,
-        handleRemoveQueuedJob,
         getImportedQueuedResultCount,
-        getImportedQueuedHistoryItems,
     ]);
 
     return useMemo(
@@ -316,10 +216,8 @@ export function useComposerSettingsPanelProps({
             imageStyleLabel,
             outputFormat,
             thinkingLevel,
-            includeThoughts,
             groundingMode,
             stickySendIntent,
-            imageModel,
             currentStageAsset,
             capability,
             availableGroundingModes,
@@ -330,12 +228,6 @@ export function useComposerSettingsPanelProps({
             aspectRatio,
             imageSize,
             batchSize,
-            hasSizePicker,
-            totalReferenceCount,
-            objectCount,
-            characterCount,
-            maxObjects,
-            maxCharacters,
             queuedJobs,
             isQueueBatchDisabled,
             queueBatchDisabledReason,
@@ -343,9 +235,6 @@ export function useComposerSettingsPanelProps({
             queueBatchConversationNotice,
             getImportedQueuedResultCount: (job: QueuedBatchJob) =>
                 latestHandlersRef.current.getImportedQueuedResultCount(job),
-            getImportedQueuedHistoryItems: (job: QueuedBatchJob) =>
-                latestHandlersRef.current.getImportedQueuedHistoryItems(job),
-            activeImportedQueuedHistoryId,
             promptTextareaRef,
             onPromptChange: (value: string) => latestHandlersRef.current.setPrompt(value),
             onStickySendIntentChange: (value: StickySendIntent) => latestHandlersRef.current.setStickySendIntent(value),
@@ -362,32 +251,6 @@ export function useComposerSettingsPanelProps({
             onOpenStyles: () => latestHandlersRef.current.setActivePickerSheet('styles'),
             onOpenSettings: () => latestHandlersRef.current.openSettings(),
             onToggleAdvancedSettings: () => latestHandlersRef.current.openAdvancedSettings(),
-            onOutputFormatChange: (value: OutputFormat) => latestHandlersRef.current.setOutputFormat(value),
-            onTemperatureChange: (value: number) => latestHandlersRef.current.setTemperature(value),
-            onThinkingLevelChange: (value: ThinkingLevel) => latestHandlersRef.current.setThinkingLevel(value),
-            onGroundingModeChange: (nextMode: GroundingMode) => {
-                const nextFlags = latestHandlersRef.current.getGroundingFlagsFromMode(nextMode);
-                latestHandlersRef.current.setGroundingMode(nextMode);
-                if (nextFlags.imageSearch && latestHandlersRef.current.outputFormat !== 'images-and-text') {
-                    latestHandlersRef.current.setOutputFormat('images-and-text');
-                    latestHandlersRef.current.showNotification(
-                        latestHandlersRef.current.t('composerGroundingImageSearchUpgradeNotice'),
-                        'info',
-                    );
-                }
-            },
-            onImportAllQueuedJobs: () => latestHandlersRef.current.handleImportAllQueuedJobs(),
-            onPollAllQueuedJobs: () => latestHandlersRef.current.handlePollAllQueuedJobs(),
-            onPollQueuedJob: (localId: string) => latestHandlersRef.current.handlePollQueuedJob(localId),
-            onCancelQueuedJob: (localId: string) => latestHandlersRef.current.handleCancelQueuedJob(localId),
-            onImportQueuedJob: (localId: string) => latestHandlersRef.current.handleImportQueuedJob(localId),
-            onOpenImportedQueuedJob: (localId: string) =>
-                latestHandlersRef.current.handleOpenImportedQueuedJob(localId),
-            onOpenLatestImportedQueuedJob: (localId: string) =>
-                latestHandlersRef.current.handleOpenLatestImportedQueuedJob(localId),
-            onOpenImportedQueuedHistoryItem: (historyId: string) =>
-                latestHandlersRef.current.handleOpenImportedQueuedHistoryItem(historyId),
-            onRemoveQueuedJob: (localId: string) => latestHandlersRef.current.handleRemoveQueuedJob(localId),
             getStageOriginLabel,
             getLineageActionLabel,
         }),
@@ -402,7 +265,6 @@ export function useComposerSettingsPanelProps({
             imageStyleLabel,
             outputFormat,
             thinkingLevel,
-            includeThoughts,
             groundingMode,
             stickySendIntent,
             imageModel,
@@ -415,24 +277,15 @@ export function useComposerSettingsPanelProps({
             temperature,
             isAdvancedSettingsOpen,
             generateLabel,
-            hasSizePicker,
-            totalReferenceCount,
-            objectCount,
-            characterCount,
-            maxObjects,
-            maxCharacters,
             queuedJobs,
             isQueueBatchDisabled,
             queueBatchDisabledReason,
             queueBatchModeSummary,
             queueBatchConversationNotice,
-            activeImportedQueuedHistoryId,
             promptTextareaRef,
             getModelLabel,
             getStageOriginLabel,
             getLineageActionLabel,
-            openSettings,
-            openAdvancedSettings,
         ],
     );
 }

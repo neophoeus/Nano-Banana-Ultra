@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import React, { act, createRef } from 'react';
+import { act, createRef } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import './setupTranslations';
@@ -30,7 +30,6 @@ function HookHarness({ currentLanguage, stickySendIntent, getStageOriginLabel, g
         imageStyleLabel: 'None',
         outputFormat: 'images-only',
         thinkingLevel: 'high',
-        includeThoughts: true,
         groundingMode: 'off',
         stickySendIntent,
         imageModel: 'gemini-3.1-flash-image-preview',
@@ -50,20 +49,12 @@ function HookHarness({ currentLanguage, stickySendIntent, getStageOriginLabel, g
         temperature: 1,
         isAdvancedSettingsOpen: false,
         generateLabel: 'Generate',
-        hasSizePicker: true,
-        totalReferenceCount: 0,
-        objectCount: 0,
-        characterCount: 0,
-        maxObjects: 10,
-        maxCharacters: 4,
         queuedJobs: [],
         isQueueBatchDisabled: true,
         queueBatchDisabledReason: 'Queued edits are disabled.',
         queueBatchModeSummary: 'Queue summary',
         queueBatchConversationNotice: null,
         getImportedQueuedResultCount: () => 0,
-        getImportedQueuedHistoryItems: () => [],
-        activeImportedQueuedHistoryId: null,
         promptTextareaRef,
         setPrompt: vi.fn(),
         setStickySendIntent: vi.fn() as any,
@@ -79,23 +70,7 @@ function HookHarness({ currentLanguage, stickySendIntent, getStageOriginLabel, g
         openSettings: vi.fn(),
         openAdvancedSettings: vi.fn(),
         setActivePickerSheet: vi.fn() as any,
-        setIsAdvancedSettingsOpen: vi.fn() as any,
-        setOutputFormat: vi.fn(),
-        setTemperature: vi.fn(),
-        setThinkingLevel: vi.fn(),
-        setGroundingMode: vi.fn(),
-        getGroundingFlagsFromMode: () => ({ googleSearch: false, imageSearch: false }),
-        showNotification: vi.fn(),
         t,
-        handleImportAllQueuedJobs: vi.fn(),
-        handlePollAllQueuedJobs: vi.fn(),
-        handlePollQueuedJob: vi.fn(),
-        handleCancelQueuedJob: vi.fn(),
-        handleImportQueuedJob: vi.fn(),
-        handleOpenImportedQueuedJob: vi.fn(),
-        handleOpenLatestImportedQueuedJob: vi.fn(),
-        handleOpenImportedQueuedHistoryItem: vi.fn(),
-        handleRemoveQueuedJob: vi.fn(),
         getStageOriginLabel,
         getLineageActionLabel,
     });

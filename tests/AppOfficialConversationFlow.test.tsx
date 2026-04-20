@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import React, { act } from 'react';
+import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
@@ -18,7 +18,14 @@ const { saveImageToLocalMock, generateThumbnailMock, persistHistoryThumbnailMock
 );
 
 vi.mock('../components/GeneratedImage', () => ({
-    default: ({ stageTopRight }: { stageTopRight?: { visibleActions?: Array<{ key: string; onClick?: () => void }>; overflowActions?: Array<{ key: string; onClick?: () => void }> } }) => {
+    default: ({
+        stageTopRight,
+    }: {
+        stageTopRight?: {
+            visibleActions?: Array<{ key: string; onClick?: () => void }>;
+            overflowActions?: Array<{ key: string; onClick?: () => void }>;
+        };
+    }) => {
         const clearAction = [...(stageTopRight?.visibleActions || []), ...(stageTopRight?.overflowActions || [])].find(
             (action) => action.key === 'clear',
         );
@@ -554,7 +561,9 @@ describe('App official conversation flow', () => {
             expect(document.querySelector('[data-testid="workspace-sources-detail-modal"]')).toBeTruthy();
         });
 
-        expect(document.querySelector('[data-testid="workspace-evidence-detail-summary"]')).toBeTruthy();
+        await waitFor(() => {
+            expect(document.querySelector('[data-testid="workspace-evidence-detail-summary"]')).toBeTruthy();
+        });
 
         const thoughtsTab = await waitFor(() => {
             const button = document.querySelector(
@@ -578,7 +587,9 @@ describe('App official conversation flow', () => {
         });
 
         const failedHistoryCard = await waitFor(() => {
-            const card = container.querySelector('[data-testid="history-card-failed-stream-turn"]') as HTMLElement | null;
+            const card = container.querySelector(
+                '[data-testid="history-card-failed-stream-turn"]',
+            ) as HTMLElement | null;
             expect(card).toBeTruthy();
             return card!;
         });
@@ -693,27 +704,35 @@ describe('App official conversation flow', () => {
         });
 
         const repaintButton = await waitFor(() => {
-            const button = container.querySelector('[data-testid="side-tools-repaint-current"]') as HTMLButtonElement | null;
+            const button = container.querySelector(
+                '[data-testid="side-tools-repaint-current"]',
+            ) as HTMLButtonElement | null;
             expect(button).toBeTruthy();
             return button!;
         });
         expect(repaintButton.disabled).toBe(false);
 
         const clearButton = await waitFor(() => {
-            const button = container.querySelector('[data-testid="mock-generated-image-clear"]') as HTMLButtonElement | null;
+            const button = container.querySelector(
+                '[data-testid="mock-generated-image-clear"]',
+            ) as HTMLButtonElement | null;
             expect(button).toBeTruthy();
             return button!;
         });
         await clickElement(clearButton);
 
         await waitFor(() => {
-            const button = container.querySelector('[data-testid="side-tools-repaint-current"]') as HTMLButtonElement | null;
+            const button = container.querySelector(
+                '[data-testid="side-tools-repaint-current"]',
+            ) as HTMLButtonElement | null;
             expect(button).toBeTruthy();
             expect(button!.disabled).toBe(true);
             return button!;
         });
 
-        const uploadButton = container.querySelector('[data-testid="side-tools-upload-to-repaint"]') as HTMLButtonElement | null;
+        const uploadButton = container.querySelector(
+            '[data-testid="side-tools-upload-to-repaint"]',
+        ) as HTMLButtonElement | null;
         expect(uploadButton).toBeTruthy();
         expect(uploadButton!.disabled).toBe(false);
     });

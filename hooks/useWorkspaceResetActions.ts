@@ -1,5 +1,5 @@
 import { Dispatch, MutableRefObject, SetStateAction, useCallback } from 'react';
-import { WorkspaceSettingsDraft } from '../types';
+import type { WorkspaceDetailModalState } from './useWorkspaceShellOwnerState';
 
 type UseWorkspaceResetActionsArgs = {
     lastPromotedHistoryIdRef: MutableRefObject<string | null>;
@@ -7,12 +7,11 @@ type UseWorkspaceResetActionsArgs = {
     clearAssetRoles: (roles: Array<'object' | 'character' | 'stage-source'>) => void;
     applyEmptyWorkspaceSnapshot: () => void;
     clearSharedWorkspaceSnapshot: () => void | Promise<void>;
-    setActiveWorkspaceDetailModal: Dispatch<SetStateAction<'progress' | 'sources' | 'versions' | 'queued-jobs' | null>>;
+    setActiveWorkspaceDetailModal: Dispatch<SetStateAction<WorkspaceDetailModalState>>;
     setIsAdvancedSettingsOpen: Dispatch<SetStateAction<boolean>>;
     setIsSketchPadOpen: Dispatch<SetStateAction<boolean>>;
     setShowSketchReplaceConfirm: Dispatch<SetStateAction<boolean>>;
-    setSettingsSessionDraft: Dispatch<SetStateAction<WorkspaceSettingsDraft | null>>;
-    setSettingsSessionReturnToGeneration: Dispatch<SetStateAction<boolean>>;
+    clearSettingsSession: () => void;
     setSurfaceSharedControlsBottom: Dispatch<SetStateAction<number | null>>;
 };
 
@@ -26,8 +25,7 @@ export function useWorkspaceResetActions({
     setIsAdvancedSettingsOpen,
     setIsSketchPadOpen,
     setShowSketchReplaceConfirm,
-    setSettingsSessionDraft,
-    setSettingsSessionReturnToGeneration,
+    clearSettingsSession,
     setSurfaceSharedControlsBottom,
 }: UseWorkspaceResetActionsArgs) {
     const handleClearCurrentStage = useCallback(() => {
@@ -42,19 +40,17 @@ export function useWorkspaceResetActions({
         setIsAdvancedSettingsOpen(false);
         setIsSketchPadOpen(false);
         setShowSketchReplaceConfirm(false);
-        setSettingsSessionDraft(null);
-        setSettingsSessionReturnToGeneration(false);
+        clearSettingsSession();
         setSurfaceSharedControlsBottom(null);
         lastPromotedHistoryIdRef.current = null;
     }, [
         applyEmptyWorkspaceSnapshot,
+        clearSettingsSession,
         clearSharedWorkspaceSnapshot,
         lastPromotedHistoryIdRef,
         setActiveWorkspaceDetailModal,
         setIsAdvancedSettingsOpen,
         setIsSketchPadOpen,
-        setSettingsSessionDraft,
-        setSettingsSessionReturnToGeneration,
         setShowSketchReplaceConfirm,
         setSurfaceSharedControlsBottom,
     ]);

@@ -1,4 +1,3 @@
-import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import SurfaceSharedControls from '../components/SurfaceSharedControls';
@@ -33,7 +32,6 @@ describe('SurfaceSharedControls', () => {
                 outputFormat="images-and-text"
                 temperature={1.4}
                 thinkingLevel="high"
-                includeThoughts={true}
                 groundingMode="google-search"
                 objectImageCount={2}
                 characterImageCount={1}
@@ -118,7 +116,6 @@ describe('SurfaceSharedControls', () => {
                 outputFormat="images-only"
                 temperature={1}
                 thinkingLevel="disabled"
-                includeThoughts={false}
                 groundingMode="off"
                 objectImageCount={0}
                 characterImageCount={0}
@@ -162,7 +159,6 @@ describe('SurfaceSharedControls', () => {
                 outputFormat="images-only"
                 temperature={1}
                 thinkingLevel="disabled"
-                includeThoughts={false}
                 groundingMode="off"
                 objectImageCount={2}
                 characterImageCount={1}

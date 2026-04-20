@@ -2,7 +2,6 @@ import React from 'react';
 import BranchRenameDialog from './BranchRenameDialog';
 import ComposerAdvancedSettingsDialog from './ComposerAdvancedSettingsDialog';
 import SurfaceSharedControls from './SurfaceSharedControls';
-import SurfaceLoadingFallback from './SurfaceLoadingFallback';
 import ThemeToggle from './ThemeToggle';
 import WorkspaceImportReview from './WorkspaceImportReview';
 import WorkspaceModalFrame from './WorkspaceModalFrame';

@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import React, { act, useState } from 'react';
+import { act, useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import WorkspacePickerSheet, { PickerSheet } from '../components/WorkspacePickerSheet';
@@ -25,29 +25,9 @@ function PromptSheetHarness({ initialPrompt = 'Committed prompt' }: { initialPro
                 pickerSheetZIndex={120}
                 prompt={prompt}
                 setPrompt={setPrompt}
-                handleSurpriseMe={vi.fn()}
-                handleSmartRewrite={vi.fn()}
                 isEnhancingPrompt={false}
                 closePickerSheet={() => setActivePickerSheet(null)}
-                openPromptSheet={vi.fn()}
-                openTemplatesSheet={vi.fn()}
-                openHistorySheet={vi.fn()}
-                openStylesSheet={vi.fn()}
-                openReferencesSheet={vi.fn()}
-                promptHistory={[]}
-                removePrompt={vi.fn()}
-                clearPromptHistory={vi.fn()}
-                history={[]}
-                handleHistorySelect={vi.fn()}
-                handleContinueFromHistoryTurn={vi.fn()}
-                handleBranchFromHistoryTurn={vi.fn()}
-                handleRenameBranch={vi.fn()}
-                isPromotedContinuationSource={() => false}
-                getContinueActionLabel={() => 'Continue from turn'}
-                branchNameOverrides={{}}
-                selectedHistoryId={null}
                 currentLanguage="en"
-                handleClearGalleryHistory={vi.fn()}
                 t={t}
                 imageStyle="none"
                 setImageStyle={vi.fn()}

@@ -18,14 +18,6 @@ type WorkflowEntryLike = {
     stage: 'system' | 'input' | 'request' | 'processing' | 'output' | 'history' | 'error';
 };
 
-type LineageRootGroup = {
-    rootId: string;
-    branches: Array<{
-        branchOriginId: string;
-        branchLabel: string;
-        turns: GeneratedImage[];
-    }>;
-};
 type WorkspaceInsightsSidebarProps = {
     currentLanguage: Language;
     showHeader?: boolean;

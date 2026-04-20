@@ -1,6 +1,4 @@
-import React from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { preloadAllTranslations, translations } from '../utils/translations';
 
 const translationTokenRegex = /\{\d+\}|\$\{[^}]+\}|%s|%d|\bhttps?:\/\/\S+|\n/g;
@@ -18,15 +16,7 @@ beforeAll(async () => {
 });
 
 const workspaceFlowKeys = [
-    'workspaceTopHeaderModel',
-    'workspaceTopHeaderRatio',
-    'workspaceTopHeaderSize',
-    'workspaceTopHeaderQty',
     'workspaceTopHeaderReferenceTray',
-    'workspaceTopHeaderObjectRefs',
-    'workspaceTopHeaderCharacterRefs',
-    'workspacePickerPromptHistoryTitle',
-    'workspaceSheetTitleGallery',
     'workspaceImportReviewEyebrow',
     'workspaceImportReviewTitle',
     'workspaceImportReviewDesc',
@@ -280,7 +270,6 @@ const workspaceInsightsStructuralKeys = [
     'workspaceInsightsRoot',
     'workspaceInsightsLineageEmpty',
     'workspaceInsightsOpenGallery',
-    'workspaceInsightsOpenPromptHistory',
     'workspaceInsightsItemsCount',
 ] as const;
 
@@ -319,13 +308,7 @@ const composerControlChromeFallbackSensitiveKeys = [
 const composerQueueBatchJobFallbackSensitiveKeys = ['composerQueueBatchJob'] as const;
 
 const phaseEGroup1ShellParityKeys = [
-    'workspaceTopHeaderModel',
-    'workspaceTopHeaderRatio',
-    'workspaceTopHeaderSize',
-    'workspaceTopHeaderQty',
     'workspaceTopHeaderReferenceTray',
-    'workspaceTopHeaderObjectRefs',
-    'workspaceTopHeaderCharacterRefs',
     'workspaceViewerResultText',
     'workspaceViewerThoughts',
     'workspaceSupportProgress',
@@ -493,7 +476,6 @@ const workspaceInsightsStructuralFallbackSensitiveKeys = [
     'workspaceInsightsRoot',
     'workspaceInsightsLineageEmpty',
     'workspaceInsightsOpenGallery',
-    'workspaceInsightsOpenPromptHistory',
     'workspaceInsightsItemsCount',
 ] as const;
 
@@ -1540,7 +1522,8 @@ const zhTwQueuedBatchWordingBaseline = {
         '這會以目前的階段圖像與已暫存參考圖送出一個官方影像條件批次工作。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
     queueBatchModeReferences:
         '這會以目前提示詞與參考圖托盤送出一個官方參考驅動批次工作。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
-    queueBatchModePromptOnly: '這會送出一個僅依提示詞的官方批次工作。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
+    queueBatchModePromptOnly:
+        '這會送出一個僅依提示詞的官方批次工作。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
     queueBatchConversationNotice:
         '佇列批次工作會保留來源延續脈絡，但不會送出官方多輪對話歷史。若要延續對話，請使用開始生成。',
     queueBatchMemoryContinuationDisabledReason:
@@ -1559,7 +1542,8 @@ const zhCnQueuedBatchWordingBaseline = {
         '这会以当前阶段图像和已暂存参考图提交一个官方图像条件批处理任务。队列批处理一律只输出图像，且不请求返回思考内容。',
     queueBatchModeReferences:
         '这会以当前提示词和参考图托盘提交一个官方参考驱动批处理任务。队列批处理一律只输出图像，且不请求返回思考内容。',
-    queueBatchModePromptOnly: '这会提交一个仅基于提示词的官方批处理任务。队列批处理一律只输出图像，且不请求返回思考内容。',
+    queueBatchModePromptOnly:
+        '这会提交一个仅基于提示词的官方批处理任务。队列批处理一律只输出图像，且不请求返回思考内容。',
     queueBatchConversationNotice:
         '队列批处理任务会保留来源延续脉络，但不会发送官方多轮对话历史。若要继续对话，请使用开始生成。',
     queueBatchMemoryContinuationDisabledReason:
@@ -1656,13 +1640,13 @@ const frQueuedBatchWordingBaseline = {
     queueBatchModeStage:
         "Cela enverra un lot officiel conditionne par image en utilisant l'image actuelle de la scene et les references preparees. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
     queueBatchModeReferences:
-        "Cela enverra un lot officiel pilote par references avec le prompt actuel et le bac de references. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
+        'Cela enverra un lot officiel pilote par references avec le prompt actuel et le bac de references. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.',
     queueBatchModePromptOnly:
-        "Cela enverra un lot officiel base uniquement sur le prompt. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
+        'Cela enverra un lot officiel base uniquement sur le prompt. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.',
     queueBatchConversationNotice:
         "Les lots en file d'attente conservent la lignee source, mais n'envoient pas l'historique officiel des conversations multi-tours. Pour poursuivre une conversation, utilisez le flux de generation normal.",
     queueBatchMemoryContinuationDisabledReason:
-        "Les travaux en file ne peuvent pas poursuivre une conversation officielle memory. Demarrez une nouvelle conversation ou passez a Independent send.",
+        'Les travaux en file ne peuvent pas poursuivre une conversation officielle memory. Demarrez une nouvelle conversation ou passez a Independent send.',
     queuedBatchJobsWorkflowHint:
         "Surveillez la file ici, importez les resultats termines dans l'historique lorsqu'ils sont prets, puis effacez l'entree une fois le flux termine.",
     queuedBatchJobsConversationNoticeLabel: 'Note de continuite',
@@ -3027,7 +3011,6 @@ const jaWorkspaceInsightsStructuralBaseline = {
     workspaceInsightsRoot: 'ルート',
     workspaceInsightsLineageEmpty: '複数の成功ターンがたまると、そのルートと分岐関係がここに表示されます。',
     workspaceInsightsOpenGallery: 'ギャラリーを開く',
-    workspaceInsightsOpenPromptHistory: 'プロンプト履歴を開く',
     workspaceInsightsItemsCount: '{0} 件',
 } as const;
 
@@ -3050,7 +3033,6 @@ const koWorkspaceInsightsStructuralBaseline = {
     workspaceInsightsRoot: '루트',
     workspaceInsightsLineageEmpty: '성공한 턴이 여러 개 쌓이면 루트와 브랜치 관계가 여기에 표시됩니다.',
     workspaceInsightsOpenGallery: '갤러리 열기',
-    workspaceInsightsOpenPromptHistory: '프롬프트 기록 열기',
     workspaceInsightsItemsCount: '{0}개 항목',
 } as const;
 
@@ -3075,7 +3057,6 @@ const esWorkspaceInsightsStructuralBaseline = {
     workspaceInsightsLineageEmpty:
         'Cuando se acumulen varios turnos exitosos, sus raices y relaciones de rama apareceran aqui.',
     workspaceInsightsOpenGallery: 'Abrir galeria',
-    workspaceInsightsOpenPromptHistory: 'Abrir historial de prompts',
     workspaceInsightsItemsCount: '{0} elementos',
 } as const;
 
@@ -3100,7 +3081,6 @@ const frWorkspaceInsightsStructuralBaseline = {
     workspaceInsightsLineageEmpty:
         'Quand plusieurs tours reussis s accumulent, leur racine et leurs relations de branche apparaitront ici.',
     workspaceInsightsOpenGallery: 'Ouvrir la galerie',
-    workspaceInsightsOpenPromptHistory: 'Ouvrir l historique des prompts',
     workspaceInsightsItemsCount: '{0} elements',
 } as const;
 
@@ -3125,7 +3105,6 @@ const deWorkspaceInsightsStructuralBaseline = {
     workspaceInsightsLineageEmpty:
         'Sobald mehrere erfolgreiche Runden vorhanden sind, erscheinen ihre Wurzeln und Verzweigungsbeziehungen hier.',
     workspaceInsightsOpenGallery: 'Galerie offnen',
-    workspaceInsightsOpenPromptHistory: 'Prompt-Verlauf offnen',
     workspaceInsightsItemsCount: '{0} Elemente',
 } as const;
 
@@ -3149,7 +3128,6 @@ const ruWorkspaceInsightsStructuralBaseline = {
     workspaceInsightsLineageEmpty:
         'Когда накопится несколько успешных ходов, их корни и связи между ветками появятся здесь.',
     workspaceInsightsOpenGallery: 'Открыть галерею',
-    workspaceInsightsOpenPromptHistory: 'Открыть историю промптов',
     workspaceInsightsItemsCount: '{0} элементов',
 } as const;
 
@@ -4021,11 +3999,6 @@ const ruPickerViewerBaseline = {
 } as const;
 
 const jaPickerSheetSurfaceBaseline = {
-    workspacePickerInspiration: 'インスピレーション',
-    workspacePickerPromptHistoryTitle: '履歴',
-    workspacePickerNoSavedPrompts: '保存済みプロンプトはまだありません。',
-    workspacePickerRemovePrompt: '削除',
-    workspacePickerClearPromptHistory: 'プロンプト履歴を消去',
     workspacePickerFullGallery: 'フルギャラリー',
     workspacePickerEmptyGallery: '画像を生成または読み込むとギャラリーに表示されます。',
     workspacePickerModelSupportImageSearch: 'グラウンディング済み画像検索に対応',
@@ -4045,7 +4018,6 @@ const jaPickerSheetSurfaceBaseline = {
     workspacePickerCapabilityHint: 'モデルが対応しない機能のコントロールは自動的に非表示になります。',
     workspaceSheetTitlePrompt: '共有プロンプト',
     workspaceSheetTitleHistory: '履歴',
-    workspaceSheetTitleTemplates: 'テンプレート',
     workspaceSheetTitleStyles: 'スタイル',
     workspaceSheetTitleModel: 'モデル',
     workspaceSheetTitleRatio: 'アスペクト比',
@@ -4057,11 +4029,6 @@ const jaPickerSheetSurfaceBaseline = {
 } as const;
 
 const koPickerSheetSurfaceBaseline = {
-    workspacePickerInspiration: '영감',
-    workspacePickerPromptHistoryTitle: '기록',
-    workspacePickerNoSavedPrompts: '저장된 프롬프트가 아직 없습니다.',
-    workspacePickerRemovePrompt: '제거',
-    workspacePickerClearPromptHistory: '프롬프트 기록 지우기',
     workspacePickerFullGallery: '전체 갤러리',
     workspacePickerEmptyGallery: '이미지를 생성하거나 불러오면 갤러리가 채워집니다.',
     workspacePickerModelSupportImageSearch: '그라운딩 이미지 검색 준비됨',
@@ -4081,7 +4048,6 @@ const koPickerSheetSurfaceBaseline = {
     workspacePickerCapabilityHint: '모델이 지원하지 않는 기능 제어는 자동으로 숨겨집니다.',
     workspaceSheetTitlePrompt: '공유 프롬프트',
     workspaceSheetTitleHistory: '기록',
-    workspaceSheetTitleTemplates: '템플릿',
     workspaceSheetTitleStyles: '스타일',
     workspaceSheetTitleModel: '모델',
     workspaceSheetTitleRatio: '화면 비율',
@@ -4093,11 +4059,6 @@ const koPickerSheetSurfaceBaseline = {
 } as const;
 
 const esPickerSheetSurfaceBaseline = {
-    workspacePickerInspiration: 'Inspiracion',
-    workspacePickerPromptHistoryTitle: 'Historial',
-    workspacePickerNoSavedPrompts: 'Todavia no hay prompts guardados.',
-    workspacePickerRemovePrompt: 'Quitar',
-    workspacePickerClearPromptHistory: 'Borrar historial de prompts',
     workspacePickerFullGallery: 'Galeria completa',
     workspacePickerEmptyGallery: 'Genera o carga una imagen para llenar la galeria.',
     workspacePickerModelSupportImageSearch: 'Busqueda de imagenes con contexto lista',
@@ -4117,7 +4078,6 @@ const esPickerSheetSurfaceBaseline = {
     workspacePickerCapabilityHint: 'Los controles segun capacidad se ocultan cuando el modelo no los admite.',
     workspaceSheetTitlePrompt: 'Prompt compartido',
     workspaceSheetTitleHistory: 'Historial',
-    workspaceSheetTitleTemplates: 'Plantillas',
     workspaceSheetTitleStyles: 'Estilos',
     workspaceSheetTitleModel: 'Modelo',
     workspaceSheetTitleRatio: 'Proporcion',
@@ -4129,11 +4089,6 @@ const esPickerSheetSurfaceBaseline = {
 } as const;
 
 const frPickerSheetSurfaceBaseline = {
-    workspacePickerInspiration: 'Inspiration',
-    workspacePickerPromptHistoryTitle: 'Historique',
-    workspacePickerNoSavedPrompts: "Aucun prompt enregistre pour l'instant.",
-    workspacePickerRemovePrompt: 'Supprimer',
-    workspacePickerClearPromptHistory: "Effacer l'historique des prompts",
     workspacePickerFullGallery: 'Galerie complete',
     workspacePickerEmptyGallery: 'Generez ou chargez une image pour remplir la galerie.',
     workspacePickerModelSupportImageSearch: "Recherche d'images ancree prete",
@@ -4154,7 +4109,6 @@ const frPickerSheetSurfaceBaseline = {
         'Les controles adaptes aux capacites restent caches quand le modele ne les prend pas en charge.',
     workspaceSheetTitlePrompt: 'Prompt partage',
     workspaceSheetTitleHistory: 'Historique',
-    workspaceSheetTitleTemplates: 'Modeles',
     workspaceSheetTitleStyles: 'Styles',
     workspaceSheetTitleModel: 'Modele',
     workspaceSheetTitleRatio: 'Format',
@@ -4166,11 +4120,6 @@ const frPickerSheetSurfaceBaseline = {
 } as const;
 
 const dePickerSheetSurfaceBaseline = {
-    workspacePickerInspiration: 'Inspiration',
-    workspacePickerPromptHistoryTitle: 'Verlauf',
-    workspacePickerNoSavedPrompts: 'Noch keine gespeicherten Prompts.',
-    workspacePickerRemovePrompt: 'Entfernen',
-    workspacePickerClearPromptHistory: 'Prompt-Verlauf loschen',
     workspacePickerFullGallery: 'Vollstandige Galerie',
     workspacePickerEmptyGallery: 'Erzeugen oder laden Sie ein Bild, um die Galerie zu fullen.',
     workspacePickerModelSupportImageSearch: 'Geerdete Bildsuche bereit',
@@ -4191,7 +4140,6 @@ const dePickerSheetSurfaceBaseline = {
         'Fahigkeitsbezogene Steuerelemente bleiben verborgen, wenn das Modell sie nicht unterstutzt.',
     workspaceSheetTitlePrompt: 'Gemeinsamer Prompt',
     workspaceSheetTitleHistory: 'Verlauf',
-    workspaceSheetTitleTemplates: 'Vorlagen',
     workspaceSheetTitleStyles: 'Stile',
     workspaceSheetTitleModel: 'Modell',
     workspaceSheetTitleRatio: 'Seitenverhaltnis',
@@ -4203,11 +4151,6 @@ const dePickerSheetSurfaceBaseline = {
 } as const;
 
 const ruPickerSheetSurfaceBaseline = {
-    workspacePickerInspiration: 'Вдохновение',
-    workspacePickerPromptHistoryTitle: 'История',
-    workspacePickerNoSavedPrompts: 'Сохраненных промптов пока нет.',
-    workspacePickerRemovePrompt: 'Удалить',
-    workspacePickerClearPromptHistory: 'Очистить историю промптов',
     workspacePickerFullGallery: 'Полная галерея',
     workspacePickerEmptyGallery: 'Сгенерируйте или загрузите изображение, чтобы заполнить галерею.',
     workspacePickerModelSupportImageSearch: 'Поиск изображений с grounding готов',
@@ -4228,7 +4171,6 @@ const ruPickerSheetSurfaceBaseline = {
         'Элементы управления по возможностям автоматически скрываются, если модель их не поддерживает.',
     workspaceSheetTitlePrompt: 'Общий промпт',
     workspaceSheetTitleHistory: 'История',
-    workspaceSheetTitleTemplates: 'Шаблоны',
     workspaceSheetTitleStyles: 'Стили',
     workspaceSheetTitleModel: 'Модель',
     workspaceSheetTitleRatio: 'Формат',

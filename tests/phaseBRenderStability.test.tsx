@@ -10,13 +10,21 @@ type RenderTracker = {
     changedKeys: string[][];
 };
 
+type RenderTrackers = {
+    generatedImage: RenderTracker;
+    recentHistoryFilmstrip: RenderTracker;
+    workspaceUnifiedHistoryPanel: RenderTracker;
+    composerSettingsPanel: RenderTracker;
+    workspaceSideToolPanel: RenderTracker;
+};
+
 const trackers = vi.hoisted(() => ({
     generatedImage: { renders: 0, changedKeys: [] as string[][] },
     recentHistoryFilmstrip: { renders: 0, changedKeys: [] as string[][] },
     workspaceUnifiedHistoryPanel: { renders: 0, changedKeys: [] as string[][] },
     composerSettingsPanel: { renders: 0, changedKeys: [] as string[][] },
     workspaceSideToolPanel: { renders: 0, changedKeys: [] as string[][] },
-}));
+})) as RenderTrackers;
 
 const recordRender = (tracker: RenderTracker, props: Record<string, unknown>, previous?: Record<string, unknown>) => {
     tracker.renders += 1;
@@ -73,9 +81,6 @@ vi.mock('../components/ComposerSettingsPanel', async () => {
                 {props.imageToolsPanel as React.ReactNode}
                 <button onClick={() => (props.onToggleAdvancedSettings as (() => void) | undefined)?.()}>
                     Advanced Settings
-                </button>
-                <button onClick={() => (props.onOpenReferences as (() => void) | undefined)?.()}>
-                    Open References
                 </button>
             </div>
         );
@@ -333,26 +338,6 @@ describe('Phase B render stability', () => {
             'WorkspaceUnifiedHistoryPanel',
         );
         expect(trackers.composerSettingsPanel.renders).toBeGreaterThan(0);
-    });
-
-    it('does not rerender stage/history memo surfaces when opening references from the composer owner route', async () => {
-        const initialGeneratedImageRenders = trackers.generatedImage.renders;
-        const initialRecentHistoryRenders = trackers.recentHistoryFilmstrip.renders;
-        const initialHistoryPanelRenders = trackers.workspaceUnifiedHistoryPanel.renders;
-
-        await clickButton('Open References');
-
-        assertNoAdditionalRenders(trackers.generatedImage, initialGeneratedImageRenders, 'GeneratedImage');
-        assertNoAdditionalRenders(
-            trackers.recentHistoryFilmstrip,
-            initialRecentHistoryRenders,
-            'RecentHistoryFilmstrip',
-        );
-        assertNoAdditionalRenders(
-            trackers.workspaceUnifiedHistoryPanel,
-            initialHistoryPanelRenders,
-            'WorkspaceUnifiedHistoryPanel',
-        );
     });
 
     it('does not rerender stage/history memo surfaces when toggling theme', async () => {

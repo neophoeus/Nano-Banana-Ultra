@@ -1,4 +1,5 @@
 import { ChangeEvent, Dispatch, MutableRefObject, SetStateAction, useCallback } from 'react';
+import type { PickerSheet } from '../components/WorkspacePickerSheet';
 import { ASPECT_RATIOS } from '../constants';
 import {
     EDITOR_IMAGE_MAX_DIMENSION,
@@ -50,8 +51,6 @@ type GenerationSourceOverride = {
     sourceLineageAction?: ContinuationLineageAction | null;
 };
 
-type PickerSheet = 'prompt' | 'styles' | 'settings' | 'model' | 'ratio' | 'size' | 'batch' | 'references' | null;
-
 type UseWorkspaceEditorActionsArgs = {
     history: GeneratedImage[];
     branchOriginIdByTurnId: Record<string, string>;
@@ -77,7 +76,6 @@ type UseWorkspaceEditorActionsArgs = {
     currentStageAsset: StageAsset | null | undefined;
     editorContextSnapshot: EditorContextSnapshot | null;
     hasSketch: boolean;
-    isEditing: boolean;
     uploadInputRef: MutableRefObject<HTMLInputElement | null>;
     setObjectImages: Dispatch<SetStateAction<string[]>>;
     setCharacterImages: Dispatch<SetStateAction<string[]>>;
@@ -106,7 +104,6 @@ type UseWorkspaceEditorActionsArgs = {
         lineageAction?: 'root' | 'continue' | 'branch' | 'editor-follow-up' | 'reopen';
     }) => void;
     removeAssetAtRoleIndex: (role: 'object' | 'character', index: number) => void;
-    clearAssetRoles: (roles: Array<'object' | 'character' | 'stage-source'>) => void;
     showNotification: (message: string, type?: 'info' | 'error') => void;
     addLog: (message: string) => void;
     t: (key: string) => string;
@@ -163,7 +160,6 @@ export function useWorkspaceEditorActions({
     currentStageAsset,
     editorContextSnapshot,
     hasSketch,
-    isEditing,
     uploadInputRef,
     setObjectImages,
     setCharacterImages,
@@ -183,7 +179,6 @@ export function useWorkspaceEditorActions({
     getActiveImageUrl,
     addWorkspaceAsset,
     removeAssetAtRoleIndex,
-    clearAssetRoles,
     showNotification,
     addLog,
     t,

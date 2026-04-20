@@ -1,42 +1,6 @@
 export const en = {
     appTitle: 'Nano Banana Ultra',
-    tplPortrait: 'Portrait',
-    tplLandscape: 'Landscape',
-    tplProduct: 'Product',
-    tplAnimal: 'Animal',
-    tplFood: 'Food',
-    tplInterior: 'Interior',
-    tplCharacter: 'Character',
-    tplSciFi: 'Sci-Fi',
-    tplAbstract: 'Abstract',
-    tplArchitecture: 'Architecture',
-    tplUnderwater: 'Underwater',
-    tplPoster: 'Poster',
     clearAll: 'Clear All',
-    tplPromptPortrait:
-        'A professional studio portrait with soft lighting, shallow depth of field, and natural skin texture. Eye-level perspective, warm tones.',
-    tplPromptLandscape:
-        'A breathtaking panoramic landscape at golden hour with dramatic clouds, rich natural colors, and a sense of depth and scale.',
-    tplPromptProduct:
-        'A sleek product photography shot on a clean background with studio lighting, precise reflections, and premium feel.',
-    tplPromptAnimal:
-        'A stunning wildlife photograph capturing an animal in its natural habitat, with sharp detail and beautiful bokeh background.',
-    tplPromptFood:
-        'Appetizing food photography with warm overhead lighting, careful plating, steam or motion captured, and rustic table setting.',
-    tplPromptInterior:
-        'A modern interior design render with natural lighting streaming through windows, clean lines, curated décor, and warm atmosphere.',
-    tplPromptCharacter:
-        'A detailed fantasy character concept art with intricate armor/clothing design, dynamic pose, and rich background environment.',
-    tplPromptSciFi:
-        'A futuristic sci-fi scene with advanced technology, neon lighting, volumetric fog, and a cinematic composition suggesting a larger narrative.',
-    tplPromptAbstract:
-        'An abstract artwork with bold colors, dynamic shapes, flowing gradients, and a strong sense of movement and emotional depth.',
-    tplPromptArchitecture:
-        'A stunning architectural photograph emphasizing geometric patterns, leading lines, dramatic perspective, and interplay of light and shadow.',
-    tplPromptUnderwater:
-        'A mesmerizing underwater scene with vibrant coral reefs, tropical fish, light rays penetrating the water, and crystal blue clarity.',
-    tplPromptPoster:
-        'A cinematic movie poster design with dramatic composition, bold typography area, atmospheric lighting, and a compelling visual narrative.',
     toolPen: 'Pen',
     toolEraser: 'Eraser',
     toolUndo: 'Undo',
@@ -51,8 +15,6 @@ export const en = {
     locked: 'Locked',
     ratioSkyscraper: 'Skyscraper',
     ratioTall: 'Tall',
-    templates: 'Templates',
-    promptHistory: 'History',
     switchLight: 'Switch to Light Mode',
     switchDark: 'Switch to Dark Mode',
     shiftEnter: 'Shift+Enter ↵',
@@ -456,13 +418,7 @@ export const en = {
     workspaceRestoreTitle: 'Workspace Restored',
     workspaceRestoreTurns: '{0} turns',
     workspaceRestoreActionsTitle: 'Choose next step',
-    workspaceTopHeaderModel: 'Model',
-    workspaceTopHeaderRatio: 'Ratio',
-    workspaceTopHeaderSize: 'Size',
-    workspaceTopHeaderQty: 'Qty',
     workspaceTopHeaderReferenceTray: 'Reference Tray',
-    workspaceTopHeaderObjectRefs: '{0} object refs',
-    workspaceTopHeaderCharacterRefs: '{0} character refs',
     workspaceTopHeaderSendIntent: 'Send',
     workspaceSendIntentIndependent: 'Independent',
     workspaceSendIntentMemory: 'Memory',
@@ -483,11 +439,6 @@ export const en = {
     surfaceSharedControlsWorkspace: 'Workspace',
     workspacePickerSharedPrompt: 'Prompt',
     workspacePickerSharedPromptPlaceholder: 'Update the prompt here.',
-    workspacePickerInspiration: 'Inspiration',
-    workspacePickerPromptHistoryTitle: 'History',
-    workspacePickerNoSavedPrompts: 'No saved prompts yet.',
-    workspacePickerRemovePrompt: 'Remove',
-    workspacePickerClearPromptHistory: 'Clear saved prompts',
     workspacePickerFullGallery: 'Gallery',
     workspacePickerEmptyGallery: 'Generate or load an image to populate the gallery.',
     workspacePickerModelSupportImageSearch: 'Grounded image search ready',
@@ -512,8 +463,6 @@ export const en = {
     workspacePickerCapabilityHint: 'Controls stay hidden when the model does not support them.',
     workspaceSheetTitlePrompt: 'Prompt',
     workspaceSheetTitleHistory: 'History',
-    workspaceSheetTitleGallery: 'Gallery',
-    workspaceSheetTitleTemplates: 'Templates',
     workspaceSheetTitleStyles: 'Styles',
     workspaceSheetTitleModel: 'Model',
     workspaceSheetTitleRatio: 'Aspect Ratio',
@@ -809,7 +758,6 @@ export const en = {
     stageActionBranchFromHere: 'Branch From Here',
     stageActionClear: 'Clear',
     stageActionMore: 'More actions',
-    stageContextContinuationDiffers: 'Continuation differs',
     queuedBatchSubmittedNotice: 'Queued batch job submitted to the official Batch API.',
     queuedBatchSubmittedLog: 'Queued official batch job {0}.',
     queuedBatchSubmissionFailedLog: 'Queued batch submission failed: {0}',
@@ -871,7 +819,6 @@ export const en = {
     workspaceInsightsLineageEmpty:
         'Once multiple successful turns accumulate, their root and branch relationships will appear here.',
     workspaceInsightsOpenGallery: 'Open gallery',
-    workspaceInsightsOpenPromptHistory: 'Open prompt history',
     workspaceInsightsItemsCount: '{0} items',
     historyFilmstripTitle: 'Recent Turns',
     historyFilmstripDesc:

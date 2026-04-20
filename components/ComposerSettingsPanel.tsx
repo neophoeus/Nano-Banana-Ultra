@@ -9,7 +9,6 @@ import { getTranslation, Language } from '../utils/translations';
 import { useWorkspaceFloatingLayer } from './WorkspaceFloatingLayerContext';
 import {
     AspectRatio,
-    GeneratedImage,
     GroundingMode,
     ImageModel,
     ImageSize,
@@ -39,18 +38,10 @@ export type ComposerSettingsPanelProps = {
     aspectRatio: AspectRatio;
     imageSize: ImageSize;
     batchSize: number;
-    hasSizePicker: boolean;
-    totalReferenceCount: number;
-    objectCount: number;
-    characterCount: number;
-    maxObjects: number;
-    maxCharacters: number;
     outputFormat: OutputFormat;
     thinkingLevel: ThinkingLevel;
-    includeThoughts: boolean;
     groundingMode: GroundingMode;
     stickySendIntent: StickySendIntent;
-    imageModel: ImageModel;
     currentStageAsset: StageAsset | null;
     capability: (typeof MODEL_CAPABILITIES)[ImageModel];
     availableGroundingModes: GroundingMode[];
@@ -63,8 +54,6 @@ export type ComposerSettingsPanelProps = {
     queueBatchModeSummary: string;
     queueBatchConversationNotice: string | null;
     getImportedQueuedResultCount: (job: QueuedBatchJob) => number;
-    getImportedQueuedHistoryItems: (job: QueuedBatchJob) => GeneratedImage[];
-    activeImportedQueuedHistoryId: string | null;
     onPromptChange: (value: string) => void;
     onStickySendIntentChange: (value: StickySendIntent) => void;
     onToggleEnterToSubmit: () => void;
@@ -79,24 +68,7 @@ export type ComposerSettingsPanelProps = {
     onImageToPrompt?: (file: File) => void | Promise<void>;
     onOpenStyles: () => void;
     onOpenSettings: () => void;
-    onOpenModelPicker?: () => void;
-    onOpenRatioPicker?: () => void;
-    onOpenSizePicker?: () => void;
-    onOpenBatchPicker?: () => void;
     onToggleAdvancedSettings: () => void;
-    onOutputFormatChange: (value: OutputFormat) => void;
-    onTemperatureChange: (value: number) => void;
-    onThinkingLevelChange: (value: ThinkingLevel) => void;
-    onGroundingModeChange: (value: GroundingMode) => void;
-    onImportAllQueuedJobs: () => void;
-    onPollAllQueuedJobs: () => void;
-    onPollQueuedJob: (localId: string) => void;
-    onCancelQueuedJob: (localId: string) => void;
-    onImportQueuedJob: (localId: string) => void;
-    onOpenImportedQueuedJob: (localId: string) => void;
-    onOpenLatestImportedQueuedJob: (localId: string) => void;
-    onOpenImportedQueuedHistoryItem: (historyId: string) => void;
-    onRemoveQueuedJob: (localId: string) => void;
     getStageOriginLabel: (origin?: StageAsset['origin']) => string;
     getLineageActionLabel: (action?: TurnLineageAction) => string;
     promptTextareaRef?: React.RefObject<HTMLTextAreaElement | null>;
@@ -168,17 +140,10 @@ function ComposerSettingsPanel({
     aspectRatio,
     imageSize,
     batchSize,
-    hasSizePicker,
-    totalReferenceCount,
-    objectCount,
-    characterCount,
-    maxObjects,
-    maxCharacters,
     outputFormat,
     thinkingLevel,
     groundingMode,
     stickySendIntent = 'independent',
-    imageModel,
     currentStageAsset,
     capability,
     availableGroundingModes,
@@ -191,8 +156,6 @@ function ComposerSettingsPanel({
     queueBatchModeSummary,
     queueBatchConversationNotice,
     getImportedQueuedResultCount,
-    getImportedQueuedHistoryItems,
-    activeImportedQueuedHistoryId,
     onPromptChange,
     onStickySendIntentChange,
     onToggleEnterToSubmit,
@@ -208,19 +171,6 @@ function ComposerSettingsPanel({
     onOpenStyles,
     onOpenSettings,
     onToggleAdvancedSettings,
-    onOutputFormatChange,
-    onTemperatureChange,
-    onThinkingLevelChange,
-    onGroundingModeChange,
-    onImportAllQueuedJobs,
-    onPollAllQueuedJobs,
-    onPollQueuedJob,
-    onCancelQueuedJob,
-    onImportQueuedJob,
-    onOpenImportedQueuedJob,
-    onOpenLatestImportedQueuedJob,
-    onOpenImportedQueuedHistoryItem,
-    onRemoveQueuedJob,
     getStageOriginLabel,
     getLineageActionLabel,
     promptTextareaRef,
@@ -447,7 +397,6 @@ function ComposerSettingsPanel({
     const followUpGenerateAriaLabel = followUpSourceSummary
         ? `${followUpGenerateLabel}. ${t('composerFollowUpSource')}: ${followUpSourceSummary}.`
         : followUpGenerateLabel;
-    const followUpGenerateDisabled = !currentStageAsset || isGenerating;
     const followUpGenerateTitle = currentStageAsset
         ? followUpSourceSummary
             ? `${t('composerFollowUpSource')}: ${followUpSourceSummary}`

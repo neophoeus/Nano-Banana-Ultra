@@ -1,42 +1,6 @@
 export const es = {
     appTitle: 'Nano Banana Ultra',
-    tplPortrait: 'Retrato',
-    tplLandscape: 'Paisaje',
-    tplProduct: 'Producto',
-    tplAnimal: 'Animal',
-    tplFood: 'Comida',
-    tplInterior: 'Interior',
-    tplCharacter: 'Personaje',
-    tplSciFi: 'Ciencia Ficción',
-    tplAbstract: 'Abstracto',
-    tplArchitecture: 'Arquitectura',
-    tplUnderwater: 'Bajo el Agua',
-    tplPoster: 'Póster',
     clearAll: 'Borrar todo',
-    tplPromptPortrait:
-        'Un retrato de estudio profesional con iluminación suave, poca profundidad de campo y textura de piel natural. Perspectiva a nivel de los ojos, tonos cálidos.',
-    tplPromptLandscape:
-        'Un impresionante paisaje panorámico en la hora dorada con nubes dramáticas, ricos colores naturales y una sensación de profundidad y escala.',
-    tplPromptProduct:
-        'Una elegante fotografía de producto sobre un fondo limpio con iluminación de estudio, reflejos precisos y sensación premium.',
-    tplPromptAnimal:
-        'Una impresionante fotografía de vida silvestre que captura a un animal en su hábitat natural, con detalles nítidos y un hermoso fondo bokeh.',
-    tplPromptFood:
-        'Apetitiva fotografía de comida con iluminación cenital cálida, emplatado cuidadoso, vapor o movimiento capturado y decoración de mesa rústica.',
-    tplPromptInterior:
-        'Un moderno render de diseño de interiores con luz natural entrando a través de las ventanas, líneas limpias, una decoración curada y un ambiente cálido.',
-    tplPromptCharacter:
-        'Un detallado arte conceptual de un personaje de fantasía con un intrincado diseño de armadura/ropa, pose dinámica y un entorno de fondo rico.',
-    tplPromptSciFi:
-        'Una escena futurista de ciencia ficción con tecnología avanzada, iluminación de neón, niebla volumétrica y una composición cinematográfica que sugiere una narrativa más amplia.',
-    tplPromptAbstract:
-        'Una obra de arte abstracta con colores llamativos, formas dinámicas, degradados fluidos y un fuerte sentido de movimiento y profundidad emocional.',
-    tplPromptArchitecture:
-        'Una impresionante fotografía arquitectónica que enfatiza los patrones geométricos, las líneas dominantes, la perspectiva dramática y la interacción de la luz y la sombra.',
-    tplPromptUnderwater:
-        'Una fascinante escena submarina con vibrantes arrecifes de coral, peces tropicales, rayos de luz penetrando el agua y claridad azul cristalina.',
-    tplPromptPoster:
-        'Un diseño cinematográfico de póster de película con una composición dramática, área de tipografía audaz, iluminación atmosférica y una narrativa visual atractiva.',
     toolPen: 'Bolígrafo',
     toolEraser: 'Borrador',
     toolUndo: 'Deshacer',
@@ -51,8 +15,6 @@ export const es = {
     locked: 'Bloqueado',
     ratioSkyscraper: 'Rascacielos',
     ratioTall: 'Alto',
-    templates: 'Plantillas',
-    promptHistory: 'Historial',
     switchLight: 'Modo Claro',
     switchDark: 'Modo Oscuro',
     shiftEnter: 'Shift+Enter salto',
@@ -481,13 +443,7 @@ export const es = {
     workspaceRestoreTitle: 'Espacio de trabajo restaurado',
     workspaceRestoreTurns: '{0} turnos',
     workspaceRestoreActionsTitle: 'Elige el siguiente paso',
-    workspaceTopHeaderModel: 'Modelo',
-    workspaceTopHeaderRatio: 'Proporcion',
-    workspaceTopHeaderSize: 'Tamano',
-    workspaceTopHeaderQty: 'Cantidad',
     workspaceTopHeaderReferenceTray: 'Bandeja de referencias',
-    workspaceTopHeaderObjectRefs: 'refs de objetos {0}',
-    workspaceTopHeaderCharacterRefs: 'refs de personajes {0}',
     workspaceTopHeaderSendIntent: 'Envio',
     workspaceSendIntentIndependent: 'Independiente',
     workspaceSendIntentMemory: 'Memoria',
@@ -568,7 +524,6 @@ export const es = {
     stageActionBranchFromHere: 'Ramificar desde aqui',
     stageActionClear: 'Limpiar',
     stageActionMore: 'Mas acciones',
-    stageContextContinuationDiffers: 'La fuente de continuacion difiere',
     loadingPrepareSketchPad: 'Preparando SketchPad...',
     loadingPrepareUltraEditor: 'Preparando Ultra Editor...',
     loadingPrepareProvenancePanel: 'Preparando el panel de procedencia...',
@@ -587,10 +542,6 @@ export const es = {
     workspaceConstraintTrimCharacters: 'Las imagenes de personajes se recortaron a {0} por restricciones del modelo.',
     workspacePickerSharedPrompt: 'Prompt compartido',
     workspacePickerSharedPromptPlaceholder: 'Actualiza aqui el prompt compartido del compositor.',
-    workspacePickerInspiration: 'Inspiracion',
-    workspacePickerNoSavedPrompts: 'Todavia no hay prompts guardados.',
-    workspacePickerRemovePrompt: 'Quitar',
-    workspacePickerClearPromptHistory: 'Borrar historial de prompts',
     workspacePickerFullGallery: 'Galeria completa',
     workspacePickerEmptyGallery: 'Genera o carga una imagen para llenar la galeria.',
     workspacePickerModelSupportImageSearch: 'Busqueda de imagenes con contexto lista',
@@ -601,7 +552,6 @@ export const es = {
     workspacePickerNoSketchAsset: 'No hay ningun recurso de boceto preparado.',
     workspacePickerCharacters: 'Personajes',
     workspacePickerCharacterHint: 'Las referencias de personajes se mantienen en el mismo modelo de ingreso preparado.',
-    workspacePickerPromptHistoryTitle: 'Historial',
     workspacePickerStageSource: 'Origen de la escena',
     workspacePickerHistoryLinked: 'vinculado al historial',
     workspacePickerStageSourceHint:
@@ -616,8 +566,6 @@ export const es = {
     workspacePickerCapabilityHint: 'Los controles segun capacidad se ocultan cuando el modelo no los admite.',
     workspaceSheetTitlePrompt: 'Prompt compartido',
     workspaceSheetTitleHistory: 'Historial',
-    workspaceSheetTitleGallery: 'Galeria',
-    workspaceSheetTitleTemplates: 'Plantillas',
     workspaceSheetTitleStyles: 'Estilos',
     workspaceSheetTitleModel: 'Modelo',
     workspaceSheetTitleRatio: 'Proporcion',
@@ -888,7 +836,6 @@ export const es = {
     workspaceInsightsLineageEmpty:
         'Cuando se acumulen varios turnos exitosos, sus raices y relaciones de rama apareceran aqui.',
     workspaceInsightsOpenGallery: 'Abrir galeria',
-    workspaceInsightsOpenPromptHistory: 'Abrir historial de prompts',
     workspaceInsightsItemsCount: '{0} elementos',
     groundingPanelContinuitySummary: 'Resumen de continuidad',
     groundingPanelAttributionOverview: 'Resumen de atribucion',

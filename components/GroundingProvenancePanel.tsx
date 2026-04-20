@@ -176,10 +176,6 @@ function GroundingProvenancePanel({
             ? 'text-[11px] font-bold uppercase tracking-[0.16em] text-white/45'
             : 'text-[11px] font-bold uppercase tracking-[0.16em] text-gray-400 dark:text-gray-500';
     const emptyClassName = tone === 'dark' ? 'text-sm text-white/60' : 'text-sm text-gray-500 dark:text-gray-400';
-    const selectionNoticeClassName =
-        tone === 'dark'
-            ? 'rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-100'
-            : 'rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-500/20 dark:bg-amber-950/20 dark:text-amber-200';
     const detailCardClassName =
         tone === 'dark' ? 'rounded-xl border border-white/10 bg-black/10 px-3 py-3' : 'nbu-subpanel px-3 py-3';
     const detailSecondaryActionClassName =
@@ -188,22 +184,6 @@ function GroundingProvenancePanel({
             : 'nbu-control-button px-3 py-1.5 text-[11px] font-semibold';
     const detailMetaClassName =
         tone === 'dark' ? 'mt-1 text-xs text-white/55' : 'mt-1 text-xs text-gray-500 dark:text-gray-400';
-
-    const renderDisclosureChevron = () => (
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4 text-gray-400 transition-transform group-open:rotate-180 dark:text-gray-500"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            aria-hidden="true"
-        >
-            <path
-                fillRule="evenodd"
-                d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 011.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-                clipRule="evenodd"
-            />
-        </svg>
-    );
 
     const renderPromptPreview = (value?: string | null) => {
         const preview = value?.trim();

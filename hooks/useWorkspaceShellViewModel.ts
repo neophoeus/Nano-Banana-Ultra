@@ -1,9 +1,8 @@
 import { useMemo } from 'react';
+import type { PickerSheet } from '../components/WorkspacePickerSheet';
 import { WORKSPACE_SURFACE_Z_INDEX } from '../constants/workspaceOverlays';
 import { GenerationSettings } from '../types';
 import { buildWorkflowTimeline, renderWorkflowMessage, workflowMessageIncludes } from '../utils/workflowTimeline';
-
-type PickerSheet = 'prompt' | 'styles' | 'settings' | 'model' | 'ratio' | 'size' | 'batch' | 'references' | null;
 
 type UseWorkspaceShellViewModelArgs = {
     generatedImageCount: number;

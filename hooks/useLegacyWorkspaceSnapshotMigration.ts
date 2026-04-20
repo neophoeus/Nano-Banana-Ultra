@@ -11,7 +11,6 @@ import { WorkspacePersistenceSnapshot } from '../types';
 import { loadSharedWorkspaceSnapshot } from '../utils/workspacePersistence';
 
 type UseLegacyWorkspaceSnapshotMigrationArgs = {
-    t: (key: string) => string;
     composeCurrentWorkspaceSnapshot: () => WorkspacePersistenceSnapshot;
     applyWorkspaceSnapshot: (incomingSnapshot: unknown, options?: { announceRestoreToast?: boolean }) => void;
     addLog: (message: string) => void;
@@ -24,7 +23,6 @@ export const useLegacyWorkspaceSnapshotBridge = (): void => {
 };
 
 export const useLegacyWorkspaceSnapshotMigration = ({
-    t,
     composeCurrentWorkspaceSnapshot,
     applyWorkspaceSnapshot,
     addLog,

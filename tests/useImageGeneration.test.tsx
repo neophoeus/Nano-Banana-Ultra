@@ -1,6 +1,5 @@
 /** @vitest-environment jsdom */
 
-import React from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';

@@ -3,14 +3,11 @@ import { buildStageTopRightModel } from '../hooks/useWorkspaceStageViewer';
 
 const translationMap: Record<string, string> = {
     workspaceSourceBadge: 'Source',
-    stageContextContinuationDiffers: 'Continuation differs',
     stageGroundingResultStatus: 'Grounding result',
-    stageActionContinueFromHere: 'Continue with this image',
     stageActionEdit: 'Edit',
     stageOpenViewer: 'Open Viewer',
     stageActionAddToObjectReference: 'Add to Object Reference',
     stageActionAddToCharacterReference: 'Add to Character Reference',
-    stageActionBranchFromHere: 'Branch From Here',
     stageActionClear: 'Clear',
     statusGenerating: 'Generating…',
 };
@@ -25,17 +22,13 @@ const createArgs = (
     currentStageIsCurrentSource: true,
     isGenerating: false,
     layoutBucket: 'wide',
-    currentStageOriginLabel: 'Upload',
     currentStageBranchLabel: 'Main',
-    continuationDiffers: true,
     hasMeaningfulResultStatus: true,
     resultStatusTone: 'warning',
-    onContinueFromStageSource: vi.fn(),
     onEdit: vi.fn(),
     onOpenViewer: vi.fn(),
     onAddToObjectReference: vi.fn(),
     onAddToCharacterReference: vi.fn(),
-    onBranchFromStageSource: vi.fn(),
     onClear: vi.fn(),
     t,
     ...overrides,
@@ -74,34 +67,14 @@ describe('buildStageTopRightModel', () => {
         ]);
     });
 
-    it('keeps stage context but removes source-owner actions when continue or branch handlers are omitted', () => {
-        const model = buildStageTopRightModel(
-            createArgs({
-                onContinueFromStageSource: undefined,
-                onBranchFromStageSource: undefined,
-            }),
-        );
-
-        expect(model?.contextChips.map((chip) => chip.key)).toEqual(['current-source', 'branch', 'result-status']);
-        expect(model?.visibleActions.map((action) => action.key)).toEqual(['edit', 'open-viewer']);
-        expect(model?.overflowActions.map((action) => action.key)).toEqual([
-            'add-object-reference',
-            'add-character-reference',
-            'clear',
-        ]);
-    });
-
     it('uses the same current source chip for no-linked-history stage-only follow-up', () => {
         const model = buildStageTopRightModel(
             createArgs({
                 hasLinkedHistoryTurn: false,
                 currentStageIsCurrentSource: true,
                 currentStageBranchLabel: null,
-                continuationDiffers: false,
                 hasMeaningfulResultStatus: false,
                 resultStatusTone: null,
-                onContinueFromStageSource: undefined,
-                onBranchFromStageSource: undefined,
             }),
         );
 
@@ -135,11 +108,8 @@ describe('buildStageTopRightModel', () => {
                 hasLinkedHistoryTurn: false,
                 currentStageIsCurrentSource: true,
                 currentStageBranchLabel: null,
-                continuationDiffers: false,
                 hasMeaningfulResultStatus: false,
                 resultStatusTone: null,
-                onContinueFromStageSource: undefined,
-                onBranchFromStageSource: undefined,
             }),
         );
 
@@ -166,7 +136,6 @@ describe('buildStageTopRightModel', () => {
         const model = buildStageTopRightModel(
             createArgs({
                 currentStageIsCurrentSource: false,
-                continuationDiffers: false,
                 hasMeaningfulResultStatus: false,
                 resultStatusTone: null,
             }),

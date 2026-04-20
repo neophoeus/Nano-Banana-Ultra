@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import React, { act } from 'react';
+import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ImageEditor from '../components/ImageEditor';
@@ -50,7 +50,6 @@ const renderEditor = ({
                 error={null}
                 onErrorClear={vi.fn()}
                 imageModel="gemini-3.1-flash-image-preview"
-                onModelChange={vi.fn()}
                 leftDockTopOffset={leftDockTopOffset}
             />,
         );
@@ -121,7 +120,6 @@ describe('ImageEditor quantity reset behavior', () => {
                     error={null}
                     onErrorClear={vi.fn()}
                     imageModel="gemini-3.1-flash-image-preview"
-                    onModelChange={vi.fn()}
                     leftDockTopOffset={96}
                 />,
             );

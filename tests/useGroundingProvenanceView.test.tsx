@@ -1,6 +1,5 @@
 /** @vitest-environment jsdom */
 
-import React from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -53,8 +52,10 @@ describe('useGroundingProvenanceView', () => {
         imageSize = '1K',
         workspaceSessionOverrides: Record<string, unknown> = {},
         selectedGrounding: any = null,
-        model: 'gemini-3.1-flash-image-preview' | 'gemini-3-pro-image-preview' | 'gemini-2.5-flash-image' =
-            'gemini-3.1-flash-image-preview',
+        model:
+            | 'gemini-3.1-flash-image-preview'
+            | 'gemini-3-pro-image-preview'
+            | 'gemini-2.5-flash-image' = 'gemini-3.1-flash-image-preview',
     ) => {
         function TestComponent() {
             latestHook = useGroundingProvenanceView({

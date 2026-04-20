@@ -1,4 +1,3 @@
-import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { useHistoryPresentationHelpers } from '../hooks/useHistoryPresentationHelpers';
@@ -26,20 +25,6 @@ describe('useHistoryPresentationHelpers', () => {
         const TestView = () => {
             const { renderActiveBranchSummaryContent } = useHistoryPresentationHelpers({
                 history: [originTurn, latestTurn],
-                branchSummaryByOriginId: {
-                    'turn-origin': {
-                        branchOriginId: 'turn-origin',
-                        rootId: 'turn-origin',
-                        branchLabel: 'Main',
-                        autoBranchLabel: 'Main',
-                        createdAt: 1,
-                        updatedAt: 1,
-                        turnCount: 2,
-                        originTurn,
-                        latestTurn,
-                        turns: [originTurn, latestTurn],
-                    },
-                },
                 effectiveBranchContinuationSourceByBranchOriginId: { 'turn-origin': 'turn-origin' },
                 getBranchAccentClassName: () => 'border-gray-200 bg-white text-gray-700',
                 getContinueActionLabel: () => 'Continue',
@@ -110,7 +95,6 @@ describe('useHistoryPresentationHelpers', () => {
         const TestView = () => {
             const { renderHistoryTurnBadges } = useHistoryPresentationHelpers({
                 history: [queuedTurn],
-                branchSummaryByOriginId: {},
                 effectiveBranchContinuationSourceByBranchOriginId: {},
                 getBranchAccentClassName: () => 'border-gray-200 bg-white text-gray-700',
                 getContinueActionLabel: () => 'Continue',
@@ -151,7 +135,6 @@ describe('useHistoryPresentationHelpers', () => {
         const TestView = () => {
             const { renderHistoryTurnBadges } = useHistoryPresentationHelpers({
                 history: [memoryTurn],
-                branchSummaryByOriginId: {},
                 effectiveBranchContinuationSourceByBranchOriginId: {},
                 getBranchAccentClassName: () => 'border-gray-200 bg-white text-gray-700',
                 getContinueActionLabel: () => 'Continue',
@@ -210,7 +193,6 @@ describe('useHistoryPresentationHelpers', () => {
         const TestView = () => {
             const { buildSelectedItemSummaryStripProps } = useHistoryPresentationHelpers({
                 history: [earlierQueuedTurn, selectedQueuedTurn],
-                branchSummaryByOriginId: {},
                 effectiveBranchContinuationSourceByBranchOriginId: { 'turn-root': 'turn-queued-2' },
                 getBranchAccentClassName: () => 'border-gray-200 bg-white text-gray-700',
                 getContinueActionLabel: () => 'Continue',
@@ -286,7 +268,6 @@ describe('useHistoryPresentationHelpers', () => {
         const TestView = () => {
             const { buildSelectedItemSummaryStripProps } = useHistoryPresentationHelpers({
                 history: [selectedTurn],
-                branchSummaryByOriginId: {},
                 effectiveBranchContinuationSourceByBranchOriginId: { 'turn-root': 'turn-matrix' },
                 getBranchAccentClassName: () => 'border-gray-200 bg-white text-gray-700',
                 getContinueActionLabel: () => 'Continue',
@@ -375,5 +356,4 @@ describe('useHistoryPresentationHelpers', () => {
             'created-at',
         ]);
     });
-
 });

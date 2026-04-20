@@ -9,7 +9,7 @@ type RegisterWorkspaceRoutesArgs = {
     resolvedDir: string;
 };
 
-type FileBackedSnapshotRouteArgs<T extends Record<string, unknown>> = {
+type FileBackedSnapshotRouteArgs<T extends object> = {
     route: string;
     snapshotPath: string;
     sanitizeSnapshot: (value: unknown) => T;
@@ -18,7 +18,7 @@ type FileBackedSnapshotRouteArgs<T extends Record<string, unknown>> = {
 };
 
 export function registerWorkspaceRoutes(server: any, { geminiApiKey, resolvedDir }: RegisterWorkspaceRoutesArgs): void {
-    const registerFileBackedSnapshotRoute = <T extends Record<string, unknown>>({
+    const registerFileBackedSnapshotRoute = <T extends object>({
         route,
         snapshotPath,
         sanitizeSnapshot,
@@ -230,17 +230,17 @@ export function registerWorkspaceRoutes(server: any, { geminiApiKey, resolvedDir
         route: '/api/workspace-snapshot',
         snapshotPath: path.join(resolvedDir, 'workspace_snapshot.json'),
         sanitizeSnapshot: sanitizeWorkspaceSnapshot,
-        hasContent: (normalizedSnapshot) =>
+        hasContent: ({ history, stagedAssets, workflowLogs, viewState, composerState, workspaceSession }) =>
             Boolean(
-                normalizedSnapshot.history.length ||
-                    normalizedSnapshot.stagedAssets.length ||
-                    normalizedSnapshot.workflowLogs.length ||
-                    normalizedSnapshot.viewState.generatedImageUrls.length ||
-                    normalizedSnapshot.viewState.selectedHistoryId ||
-                    normalizedSnapshot.composerState.prompt.trim() ||
-                    normalizedSnapshot.workspaceSession.activeResult ||
-                    normalizedSnapshot.workspaceSession.sourceHistoryId ||
-                    normalizedSnapshot.workspaceSession.conversationId,
+                history.length ||
+                stagedAssets.length ||
+                workflowLogs.length ||
+                viewState.generatedImageUrls.length ||
+                viewState.selectedHistoryId ||
+                composerState.prompt.trim() ||
+                workspaceSession.activeResult ||
+                workspaceSession.sourceHistoryId ||
+                workspaceSession.conversationId,
             ),
         writeErrorMessage: 'Failed to save workspace snapshot backup.',
     });

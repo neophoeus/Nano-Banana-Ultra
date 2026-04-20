@@ -1,6 +1,5 @@
 /** @vitest-environment jsdom */
 
-import React from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -23,8 +22,7 @@ describe('useWorkspaceResetActions', () => {
         const setIsAdvancedSettingsOpen = vi.fn() as any;
         const setIsSketchPadOpen = vi.fn() as any;
         const setShowSketchReplaceConfirm = vi.fn() as any;
-        const setSettingsSessionDraft = vi.fn() as any;
-        const setSettingsSessionReturnToGeneration = vi.fn() as any;
+        const clearSettingsSession = vi.fn();
         const setSurfaceSharedControlsBottom = vi.fn() as any;
 
         function TestComponent() {
@@ -38,8 +36,7 @@ describe('useWorkspaceResetActions', () => {
                 setIsAdvancedSettingsOpen,
                 setIsSketchPadOpen,
                 setShowSketchReplaceConfirm,
-                setSettingsSessionDraft,
-                setSettingsSessionReturnToGeneration,
+                clearSettingsSession,
                 setSurfaceSharedControlsBottom,
             });
 
@@ -60,8 +57,7 @@ describe('useWorkspaceResetActions', () => {
             setIsAdvancedSettingsOpen,
             setIsSketchPadOpen,
             setShowSketchReplaceConfirm,
-            setSettingsSessionDraft,
-            setSettingsSessionReturnToGeneration,
+            clearSettingsSession,
             setSurfaceSharedControlsBottom,
         };
     };
@@ -104,8 +100,7 @@ describe('useWorkspaceResetActions', () => {
         expect(context.setIsAdvancedSettingsOpen).toHaveBeenCalledWith(false);
         expect(context.setIsSketchPadOpen).toHaveBeenCalledWith(false);
         expect(context.setShowSketchReplaceConfirm).toHaveBeenCalledWith(false);
-        expect(context.setSettingsSessionDraft).toHaveBeenCalledWith(null);
-        expect(context.setSettingsSessionReturnToGeneration).toHaveBeenCalledWith(false);
+        expect(context.clearSettingsSession).toHaveBeenCalledTimes(1);
         expect(context.setSurfaceSharedControlsBottom).toHaveBeenCalledWith(null);
         expect(context.clearAssetRoles).not.toHaveBeenCalled();
         expect(context.lastPromotedHistoryIdRef.current).toBeNull();

@@ -36,7 +36,6 @@ type SurfaceSharedControlsProps = {
     outputFormat: OutputFormat;
     temperature: number;
     thinkingLevel: ThinkingLevel;
-    includeThoughts: boolean;
     groundingMode: GroundingMode;
     containerClassName: string;
     containerStyle?: React.CSSProperties;
@@ -86,7 +85,6 @@ const SurfaceSharedControls: React.FC<SurfaceSharedControlsProps> = ({
     outputFormat,
     temperature,
     thinkingLevel,
-    includeThoughts,
     groundingMode,
     containerClassName,
     containerStyle,

@@ -1,4 +1,3 @@
-import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import GeneratedImage from '../components/GeneratedImage';
@@ -17,7 +16,6 @@ describe('GeneratedImage', () => {
             <GeneratedImage
                 imageUrls={['https://example.com/result.png']}
                 isLoading={false}
-                prompt="Test prompt"
                 settings={{
                     aspectRatio: '1:1',
                     size: '4K',
@@ -128,7 +126,6 @@ describe('GeneratedImage', () => {
             <GeneratedImage
                 imageUrls={['https://example.com/result.png']}
                 isLoading={false}
-                prompt="Test prompt"
                 settings={{
                     aspectRatio: '1:1',
                     size: '1K',
@@ -284,7 +281,6 @@ describe('GeneratedImage', () => {
             <GeneratedImage
                 imageUrls={['https://example.com/result.png']}
                 isLoading={false}
-                prompt="Test prompt"
                 settings={{
                     aspectRatio: '1:1',
                     size: '1K',
@@ -317,13 +313,7 @@ describe('GeneratedImage', () => {
 
     it('removes the empty-stage upload and repaint CTA while keeping the ready state copy', () => {
         const markup = renderToStaticMarkup(
-            <GeneratedImage
-                imageUrls={[]}
-                isLoading={false}
-                onGenerate={() => {}}
-                onUpload={() => {}}
-                currentLanguage="en"
-            />,
+            <GeneratedImage imageUrls={[]} isLoading={false} onGenerate={() => {}} currentLanguage="en" />,
         );
 
         expect(markup).toContain(getTranslation('en', 'readyTitle'));
@@ -337,7 +327,6 @@ describe('GeneratedImage', () => {
             <GeneratedImage
                 imageUrls={['https://example.com/result.png']}
                 isLoading={false}
-                prompt="Test prompt"
                 settings={{
                     aspectRatio: '1:1',
                     size: '1K',
@@ -399,7 +388,6 @@ describe('GeneratedImage', () => {
             <GeneratedImage
                 imageUrls={['https://example.com/result.png']}
                 isLoading={false}
-                prompt="Square stage"
                 settings={{
                     aspectRatio: '3:4',
                     size: '1K',

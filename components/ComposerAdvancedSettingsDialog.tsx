@@ -2,21 +2,34 @@ import React from 'react';
 import Button from './Button';
 import WorkspaceModalFrame from './WorkspaceModalFrame';
 import ComposerAdvancedSettingsContent from './ComposerAdvancedSettingsContent';
-import type { ComposerSettingsPanelProps } from './ComposerSettingsPanel';
+import { MODEL_CAPABILITIES } from '../constants';
 import { WORKSPACE_OVERLAY_Z_INDEX } from '../constants/workspaceOverlays';
-import { getTranslation } from '../utils/translations';
+import type { GroundingMode, ImageModel, OutputFormat, ThinkingLevel } from '../types';
+import { getTranslation, type Language } from '../utils/translations';
 
-type ComposerAdvancedSettingsDialogProps = ComposerSettingsPanelProps & {
+type ComposerAdvancedSettingsDialogProps = {
+    currentLanguage: Language;
+    outputFormat: OutputFormat;
+    thinkingLevel: ThinkingLevel;
+    groundingMode: GroundingMode;
+    imageModel: ImageModel;
+    capability: (typeof MODEL_CAPABILITIES)[ImageModel];
+    availableGroundingModes: GroundingMode[];
+    temperature: number;
+    onOutputFormatChange: (value: OutputFormat) => void;
+    onTemperatureChange: (value: number) => void;
+    onThinkingLevelChange: (value: ThinkingLevel) => void;
+    onGroundingModeChange: (value: GroundingMode) => void;
     isOpen: boolean;
     onClose: () => void;
     onApply?: () => void;
 };
 
 type AdvancedSettingsDraft = {
-    outputFormat: ComposerSettingsPanelProps['outputFormat'];
-    temperature: ComposerSettingsPanelProps['temperature'];
-    thinkingLevel: ComposerSettingsPanelProps['thinkingLevel'];
-    groundingMode: ComposerSettingsPanelProps['groundingMode'];
+    outputFormat: OutputFormat;
+    temperature: number;
+    thinkingLevel: ThinkingLevel;
+    groundingMode: GroundingMode;
 };
 
 export default function ComposerAdvancedSettingsDialog({

@@ -1,5 +1,25 @@
 # Changelog
 
+## v3.6.3 - 2026-04-20
+
+- Release title: Nano Banana Ultra 3.6.3 - Leaner Shell Ownership, Narrower Settings Surfaces & On-Demand Detail Panels
+- Release summary:
+    - leaner workspace shell ownership:
+        - editor entry state, batch preview and progress state, detail-modal state, queued-batch detail state, and floating shell control ownership now live behind dedicated workspace shell hooks instead of being scattered inline across the main app surface
+        - Progress, Sources, and viewer-provenance state now derive through dedicated shell paths, keeping active detail views, restored workspaces, and archived-turn support flows aligned through one shared ownership model
+
+    - narrower settings and picker surfaces:
+        - generation settings, advanced settings, and picker-sheet flows now consume surface-specific contracts instead of inheriting older wide compatibility prop sets from the full composer toolbar path
+        - advanced settings now runs on an explicit minimal settings contract, while the composer, picker, editor, and stage surfaces no longer carry stale props that had stopped affecting runtime behavior
+
+    - on-demand detail panels:
+        - Progress, Sources, Versions, and Queued Batch Jobs detail panels now load only when their detail surface opens instead of being bundled into the initial workspace shell payload
+        - the initial workspace shell stays lighter while preserving the same detail modal and support-surface workflows after open
+
+    - dead shell residue removal:
+        - removed leftover no-longer-shipped workspace wording and stale shell traces tied to retired prompt-history, template, old header-counter, and obsolete stage-context paths
+        - shared controls, viewer, generated-image, editor, and import-review paths now expose only the runtime inputs that still belong to the current product surface
+
 ## v3.6.2 - 2026-04-19
 
 - Release title: Nano Banana Ultra 3.6.2 - File-Backed Batch Source, Response-File Import Readiness & Queue Continuation Policy
