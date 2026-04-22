@@ -14,6 +14,7 @@ import {
     summarizeLiveProgressTruthfulness,
 } from '../../utils/liveProgressCapabilities';
 import { VALID_IMAGE_MODELS, VALID_IMAGE_SIZES } from '../../utils/modelCapabilities';
+import { DEFAULT_TEMPERATURE, normalizeTemperature } from '../../utils/temperature';
 import {
     logApiError,
     readJsonBody,
@@ -758,7 +759,8 @@ function buildGeneratedResponsePayload(
         metadata: {
             model,
             outputFormat: body.outputFormat || 'images-only',
-            temperature: typeof body.temperature === 'number' ? body.temperature : 1,
+            temperature:
+                typeof body.temperature === 'number' ? normalizeTemperature(body.temperature) : DEFAULT_TEMPERATURE,
             thinkingLevel: prepared.effectiveThinkingLevel,
             includeThoughts: prepared.shouldIncludeThoughts,
             requestedAspectRatio: body.aspectRatio || null,

@@ -15,6 +15,18 @@ export const en = {
     locked: 'Locked',
     ratioSkyscraper: 'Skyscraper',
     ratioTall: 'Tall',
+    outputFormatImagesAndText: 'Images & text',
+    outputFormatImagesOnly: 'Images only',
+    thinkingLevelMinimal: 'Minimal',
+    thinkingLevelHigh: 'High',
+    thinkingLevelDisabled: 'Disabled',
+    groundingModeOff: 'Off',
+    groundingModeGoogleSearch: 'Google Search',
+    groundingModeImageSearch: 'Image Search',
+    groundingModeGoogleSearchPlusImageSearch: 'Google Search + Image Search',
+    groundingModeSummaryGoogleSearch: 'Web',
+    groundingModeSummaryImageSearch: 'Image',
+    groundingModeSummaryGoogleSearchPlusImageSearch: 'Web + image',
     switchLight: 'Switch to Light Mode',
     switchDark: 'Switch to Dark Mode',
     shiftEnter: 'Shift+Enter ↵',
@@ -175,7 +187,7 @@ export const en = {
     // Clear History Dialog
     clearHistoryTitle: 'Clear Workspace',
     clearHistoryMsg:
-        'Reset this workspace to its default empty state? History, stage, queued jobs, and session context will be removed. This cannot be undone.',
+        'Clear this workspace back to its default empty state? History, stage, prompt, and session context will be removed. Shared queued batch jobs stay available separately. We recommend using Export Workspace first. This cannot be undone.',
     clearHistoryConfirm: 'Reset Workspace',
     clearHistoryCancel: 'Cancel',
 
@@ -318,15 +330,17 @@ export const en = {
     queueBatchModeEditor:
         'This sends an editor-origin image-conditioned batch using the current editor input plus any staged references. Queued batches always use images-only output and do not request returned thoughts.',
     queueBatchModeStage:
-        'This sends a stage-image-conditioned batch using the current stage image plus any staged references. Queued batches always use images-only output and do not request returned thoughts.',
+        'This queues a follow-up batch using the current stage image plus any staged references. Queued batches always use images-only output and do not request returned thoughts.',
+    queueBatchModeStageGenerate:
+        'This queues a fresh batch from the current prompt plus any staged references. It does not use the current stage image. Queued batches always use images-only output and do not request returned thoughts.',
     queueBatchModeReferences:
-        'This sends a reference-driven batch using the current prompt and reference tray. Queued batches always use images-only output and do not request returned thoughts.',
+        'This queues a fresh reference-driven batch using the current prompt and reference tray. Queued batches always use images-only output and do not request returned thoughts.',
     queueBatchModePromptOnly:
-        'This sends a prompt-only official batch job. Queued batches always use images-only output and do not request returned thoughts.',
+        'This queues a fresh prompt-only official batch job. Queued batches always use images-only output and do not request returned thoughts.',
     queueBatchConversationNotice:
-        'Queued batch jobs keep source lineage, but they do not send official multi-turn conversation history. Use Generate for chat continuation.',
+        'Queued batch jobs keep source lineage, but they do not send official multi-turn conversation history. Use Generate to continue the chat.',
     queueBatchMemoryContinuationDisabledReason:
-        'Queued jobs cannot continue an official memory conversation. Start a new conversation or switch to Independent send.',
+        'Queued jobs cannot continue an official conversation in Memory send mode. Start a new conversation or switch to Independent send.',
     queueBatchEditDisabledReason:
         'Queued image-conditioned follow-up edits are temporarily disabled because official batch results have been unreliable. Use Generate instead.',
     queuedBatchJobsTitle: 'Queued Batch Jobs',
@@ -710,11 +724,13 @@ export const en = {
     composerToolbarImportWorkspace: 'Import Workspace',
     workspaceSnapshotActionsTitle: 'Workspace Snapshot',
     composerToolbarAdvancedSettings: 'Advanced settings',
-    composerEnterSends: 'Press Enter to Send',
-    composerEnterNewline: 'Press Enter for New Line',
+    composerEnterSends: 'Enter\nsends',
+    composerEnterNewline: 'Enter\nnewline',
     composerVisibilityVisible: 'Visible',
     composerVisibilityHidden: 'Hidden',
-    composerQueueBatchJob: 'Send to Queue',
+    workspaceQueueLauncher: 'Queue',
+    composerQueueBatchJob: 'Add to queue',
+    composerQueueBatchFollowUpJob: 'Add this image to queue',
     composerAdvancedTitle: 'Advanced settings',
     composerAdvancedDesc: 'Unsupported controls stay hidden and reset automatically when the model changes.',
     composerAdvancedGenerationSectionTitle: 'Generation controls',
@@ -760,6 +776,8 @@ export const en = {
     stageActionMore: 'More actions',
     queuedBatchSubmittedNotice: 'Queued batch job submitted to the official Batch API.',
     queuedBatchSubmittedLog: 'Queued official batch job {0}.',
+    queuedBatchSubmittedManyNotice: 'Queued {0} batch jobs to the official Batch API.',
+    queuedBatchSubmittedPartialNotice: 'Queued {0} of {1} batch jobs. {2} failed before submission.',
     queuedBatchSubmissionFailedLog: 'Queued batch submission failed: {0}',
     queuedBatchPolledLog: 'Polled queued batch job {0}: {1}.',
     queuedBatchReadyToImportNotice: 'Queued batch job {0} is ready to import.',
@@ -837,6 +855,7 @@ export const en = {
     historyBadgeParent: 'parent',
     historyBadgeCandidate: 'Candidate',
     historyBadgeActive: 'Viewing',
+    historyBadgeQueuedResult: 'Queued result',
     historyBadgeMemory: 'Memory',
     historyBadgeThread: 'Thread',
     historyBranchMain: 'Main',

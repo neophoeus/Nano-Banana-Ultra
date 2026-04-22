@@ -3,8 +3,9 @@ import { createPortal } from 'react-dom';
 import Button from './Button';
 import InfoTooltip from './InfoTooltip';
 import { useAnchoredFloatingPlacement } from '../hooks/useAnchoredFloatingPlacement';
-import { MODEL_CAPABILITIES, OUTPUT_FORMATS, THINKING_LEVELS } from '../constants';
-import { getGroundingModeLabel } from '../utils/groundingMode';
+import { getOutputFormatLabelKey, getThinkingLevelLabelKey, MODEL_CAPABILITIES } from '../constants';
+import { getGroundingModeSummaryTranslationKey } from '../utils/groundingMode';
+import { formatTemperature } from '../utils/temperature';
 import { getTranslation, Language } from '../utils/translations';
 import { useWorkspaceFloatingLayer } from './WorkspaceFloatingLayerContext';
 import {
@@ -13,17 +14,11 @@ import {
     ImageModel,
     ImageSize,
     OutputFormat,
-    QueuedBatchJob,
     StageAsset,
     StickySendIntent,
     ThinkingLevel,
     TurnLineageAction,
 } from '../types';
-import {
-    isQueuedBatchJobActive,
-    isQueuedBatchJobAutoImportReady,
-    isQueuedBatchJobClosedIssue,
-} from '../utils/queuedBatchJobs';
 
 export type ComposerSettingsPanelProps = {
     prompt: string;
@@ -48,18 +43,17 @@ export type ComposerSettingsPanelProps = {
     temperature: number;
     isAdvancedSettingsOpen: boolean;
     generateLabel: string;
-    queuedJobs: QueuedBatchJob[];
     isQueueBatchDisabled: boolean;
     queueBatchDisabledReason: string | null;
     queueBatchModeSummary: string;
+    queueBatchGenerateModeSummary: string;
     queueBatchConversationNotice: string | null;
-    getImportedQueuedResultCount: (job: QueuedBatchJob) => number;
     onPromptChange: (value: string) => void;
     onStickySendIntentChange: (value: StickySendIntent) => void;
     onToggleEnterToSubmit: () => void;
     onGenerate: () => void;
     onQueueBatchJob: () => void;
-    onOpenQueuedBatchJobs: () => void;
+    onQueueBatchFollowUpJob: () => void;
     onCancelGeneration: () => void;
     onStartNewConversation: () => void;
     onFollowUpGenerate: () => void;
@@ -150,18 +144,17 @@ function ComposerSettingsPanel({
     temperature,
     isAdvancedSettingsOpen,
     generateLabel,
-    queuedJobs,
     isQueueBatchDisabled,
     queueBatchDisabledReason,
     queueBatchModeSummary,
+    queueBatchGenerateModeSummary,
     queueBatchConversationNotice,
-    getImportedQueuedResultCount,
     onPromptChange,
     onStickySendIntentChange,
     onToggleEnterToSubmit,
     onGenerate,
     onQueueBatchJob,
-    onOpenQueuedBatchJobs,
+    onQueueBatchFollowUpJob,
     onCancelGeneration,
     onStartNewConversation,
     onFollowUpGenerate,
@@ -230,22 +223,9 @@ function ComposerSettingsPanel({
     const imageToPromptLabel = resolveIntentText('composerPromptToolImageToPrompt', 'Image to Prompt');
     const surpriseMeLabel = resolveIntentText('composerPromptToolSurpriseMe', 'Surprise Me');
     const autoRewriteLabel = resolveIntentText('composerPromptToolAutoRewrite', 'Auto Rewrite');
-    const getOutputFormatSummaryLabel = (value: OutputFormat) =>
-        OUTPUT_FORMATS.find((option) => option.value === value)?.label ?? value;
-    const getThinkingLevelSummaryLabel = (value: ThinkingLevel) =>
-        THINKING_LEVELS.find((option) => option.value === value)?.label ?? value;
-    const getGroundingModeSummaryLabel = (value: GroundingMode) => {
-        switch (value) {
-            case 'google-search':
-                return 'Web';
-            case 'image-search':
-                return 'Image';
-            case 'google-search-plus-image-search':
-                return 'Web + image';
-            default:
-                return getGroundingModeLabel(value);
-        }
-    };
+    const getOutputFormatSummaryLabel = (value: OutputFormat) => t(getOutputFormatLabelKey(value));
+    const getThinkingLevelSummaryLabel = (value: ThinkingLevel) => t(getThinkingLevelLabelKey(value));
+    const getGroundingModeSummaryLabel = (value: GroundingMode) => t(getGroundingModeSummaryTranslationKey(value));
     const promptToolButtonClassName =
         'nbu-control-button group flex min-h-[42px] w-full min-w-0 items-center justify-center gap-2 overflow-hidden rounded-[18px] border-slate-200/85 bg-white/92 px-3 py-2 text-center text-[11px] font-semibold tracking-normal text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-300/70 hover:bg-white hover:text-amber-700 hover:shadow-md disabled:cursor-not-allowed dark:border-white/10 dark:bg-slate-900/94 dark:text-slate-200 dark:shadow-none dark:hover:border-amber-400/35 dark:hover:bg-slate-900 dark:hover:text-amber-100';
     const promptToolIconClassName =
@@ -407,6 +387,20 @@ function ComposerSettingsPanel({
     const primaryGenerateTitle = hasStageSourceForContinuation ? followUpGenerateTitle : undefined;
     const handlePrimaryGenerate = hasStageSourceForContinuation ? onFollowUpGenerate : onGenerate;
     const showSecondaryGenerateButton = !isGenerating && hasStageSourceForContinuation;
+    const primaryQueueLabel = hasStageSourceForContinuation
+        ? t('composerQueueBatchFollowUpJob')
+        : t('composerQueueBatchJob');
+    const secondaryQueueLabel = t('composerQueueBatchJob');
+    const primaryQueueAriaLabel = hasStageSourceForContinuation ? followUpGenerateAriaLabel : primaryQueueLabel;
+    const primaryQueueTitle = isQueueBatchDisabled
+        ? queueBatchDisabledReason || queueBatchModeSummary
+        : hasStageSourceForContinuation
+          ? followUpGenerateTitle
+          : undefined;
+    const handlePrimaryQueueAction = hasStageSourceForContinuation ? onQueueBatchFollowUpJob : onQueueBatchJob;
+    const showSecondaryQueueButton = hasStageSourceForContinuation;
+    const primaryQueueModeHint = queueBatchDisabledReason || queueBatchModeSummary;
+    const secondaryQueueModeHint = queueBatchDisabledReason || queueBatchGenerateModeSummary;
     const supportsThinkingLevelControl = capability.thinkingLevels.some((level) => level !== 'disabled');
     const hasGroundingControl = availableGroundingModes.length > 1;
     const sendIntentInfoPanelNode = sendIntentInfoOpen ? (
@@ -503,7 +497,7 @@ function ComposerSettingsPanel({
             ? [
                   {
                       key: 'temperature',
-                      value: `${t('groundingProvenanceInsightTemperature')}: ${temperature.toFixed(1)}`,
+                      value: `${t('groundingProvenanceInsightTemperature')}: ${formatTemperature(temperature)}`,
                       className: '',
                   },
               ]
@@ -532,6 +526,16 @@ function ComposerSettingsPanel({
     const summaryStripChipClassName =
         'inline-flex h-6 shrink-0 items-center rounded-full border border-slate-200/80 bg-white/88 px-2 text-[10px] font-semibold leading-none whitespace-nowrap text-slate-700 dark:border-slate-700/80 dark:bg-slate-900/80 dark:text-slate-200';
     const summaryStripContentClassName = 'flex min-w-0 flex-1 flex-wrap items-center gap-1.5';
+    const promptOverlaySpacingStyle = {
+        '--composer-prompt-overlay-inset': '0.375rem',
+        '--composer-prompt-overlay-inset-sm': '0.5rem',
+        '--composer-prompt-text-reserve': '4.75rem',
+        '--composer-prompt-text-reserve-sm': '5rem',
+    } as React.CSSProperties;
+    const promptTextareaReserveClassName =
+        'w-[calc(100%-var(--composer-prompt-text-reserve))] sm:w-[calc(100%-var(--composer-prompt-text-reserve-sm))]';
+    const promptOverlayInsetClassName =
+        'right-[var(--composer-prompt-overlay-inset)] sm:right-[var(--composer-prompt-overlay-inset-sm)]';
     const handleImageToPromptButtonClick = () => {
         if (!onImageToPrompt || isEnhancingPrompt) {
             return;
@@ -639,17 +643,6 @@ function ComposerSettingsPanel({
         onPromptChange('');
         resolvedPromptTextareaRef.current?.focus();
     };
-    const runningQueueCount = queuedJobs.filter(isQueuedBatchJobActive).length;
-    const importReadyQueueCount = queuedJobs.filter(
-        (job) => isQueuedBatchJobAutoImportReady(job) && getImportedQueuedResultCount(job) === 0,
-    ).length;
-    const issueQueueCount = queuedJobs.filter(isQueuedBatchJobClosedIssue).length;
-    const trackedQueueCount = queuedJobs.length;
-    const settledQueueCount = trackedQueueCount - runningQueueCount;
-    const queueProgressPercent =
-        trackedQueueCount > 0
-            ? Math.max(0, Math.min(100, Math.round((settledQueueCount / trackedQueueCount) * 100)))
-            : 0;
     const advancedSettingsButton = (
         <button
             type="button"
@@ -859,10 +852,13 @@ function ComposerSettingsPanel({
                         />
 
                         <div className="mt-1.5 min-w-0 space-y-1.5">
-                            <div className="relative">
+                            <div
+                                className="relative overflow-hidden rounded-[26px] border nbu-composer-dock-textarea transition-all focus-within:border-amber-400/90 focus-within:ring-4 focus-within:ring-amber-100/70 dark:focus-within:border-amber-400/50 dark:focus-within:ring-amber-500/10"
+                                style={promptOverlaySpacingStyle}
+                            >
                                 <textarea
                                     ref={resolvedPromptTextareaRef}
-                                    className="nbu-composer-dock-textarea nbu-scrollbar-subtle h-36 w-full resize-none overflow-y-auto rounded-[26px] border px-4 py-3.5 pr-12 text-sm leading-6 outline-none transition-all focus:ring-4 focus:ring-amber-100/70 dark:focus:ring-amber-500/10"
+                                    className={`nbu-scrollbar-subtle block h-48 resize-none overflow-y-auto bg-transparent px-4 py-3.5 pb-3.5 pr-4 text-sm leading-6 outline-none ${promptTextareaReserveClassName}`}
                                     placeholder={promptSurfacePlaceholder}
                                     value={prompt}
                                     onChange={(e) => onPromptChange(e.target.value)}
@@ -880,10 +876,59 @@ function ComposerSettingsPanel({
                                     title={t('clear')}
                                     disabled={prompt.length === 0}
                                     onClick={handleClearPrompt}
-                                    className="absolute right-3 top-3 rounded-full border border-slate-200/80 bg-white/92 p-2 text-slate-400 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700/80 dark:bg-slate-950/70 dark:text-slate-500 dark:hover:border-red-900/40 dark:hover:bg-red-950/30 dark:hover:text-red-300"
+                                    className={`absolute top-3.5 rounded-full border border-slate-200/80 bg-white/92 p-2 text-slate-400 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700/80 dark:bg-slate-950/70 dark:text-slate-500 dark:hover:border-red-900/40 dark:hover:bg-red-950/30 dark:hover:text-red-300 ${promptOverlayInsetClassName}`}
                                 >
                                     {renderClearIcon()}
                                 </button>
+                                <div
+                                    data-testid="composer-enter-behavior-card"
+                                    className={`pointer-events-none absolute bottom-3.5 z-10 ${promptOverlayInsetClassName}`}
+                                >
+                                    <button
+                                        type="button"
+                                        data-testid="composer-enter-behavior-toggle"
+                                        data-active-mode={enterToSubmit ? 'send' : 'newline'}
+                                        aria-label={enterBehaviorToggleAriaLabel}
+                                        aria-pressed={enterToSubmit}
+                                        onClick={onToggleEnterToSubmit}
+                                        className="pointer-events-auto group relative grid min-h-[52px] w-[3.5rem] min-w-0 grid-rows-2 gap-1 overflow-hidden rounded-[20px] border border-slate-300/90 bg-slate-200/95 p-px text-left shadow-inner shadow-slate-300/70 transition-colors hover:border-slate-400/80 focus:outline-none focus:ring-2 focus:ring-amber-300 dark:border-slate-800 dark:bg-slate-950 dark:shadow-black/30 sm:w-[3.75rem]"
+                                    >
+                                        <span
+                                            data-testid="composer-enter-behavior-thumb"
+                                            data-active-mode={enterToSubmit ? 'send' : 'newline'}
+                                            aria-hidden="true"
+                                            className={`pointer-events-none absolute left-px right-px bg-amber-500 transition-all duration-200 ease-out dark:bg-amber-300 ${
+                                                enterToSubmit
+                                                    ? 'top-px bottom-[calc(50%+0.125rem)] rounded-t-[19px] rounded-b-[4px] shadow-[0_10px_24px_rgba(245,158,11,0.18)] dark:shadow-none'
+                                                    : 'top-[calc(50%+0.125rem)] bottom-px rounded-t-[4px] rounded-b-[19px] shadow-[0_10px_24px_rgba(245,158,11,0.18)] dark:shadow-none'
+                                            }`}
+                                        />
+                                        <span
+                                            data-testid="composer-enter-behavior-send-option"
+                                            data-selected={enterToSubmit ? 'true' : 'false'}
+                                            aria-hidden="true"
+                                            className={`relative z-10 flex min-w-0 items-center justify-center rounded-t-[19px] rounded-b-[4px] px-1.5 py-1.5 text-center text-[10px] font-semibold leading-[0.85rem] transition-colors ${
+                                                enterToSubmit
+                                                    ? 'text-white dark:text-slate-950'
+                                                    : 'text-slate-600 dark:text-slate-500'
+                                            }`}
+                                        >
+                                            <span className="whitespace-pre-line break-words">{enterBehaviorSendLabel}</span>
+                                        </span>
+                                        <span
+                                            data-testid="composer-enter-behavior-newline-option"
+                                            data-selected={enterToSubmit ? 'false' : 'true'}
+                                            aria-hidden="true"
+                                            className={`relative z-10 flex min-w-0 items-center justify-center rounded-t-[4px] rounded-b-[19px] px-1.5 py-1.5 text-center text-[10px] font-semibold leading-[0.85rem] transition-colors ${
+                                                enterToSubmit
+                                                    ? 'text-slate-600 dark:text-slate-500'
+                                                    : 'text-white dark:text-slate-950'
+                                            }`}
+                                        >
+                                            <span className="whitespace-pre-line break-words">{enterBehaviorNewlineLabel}</span>
+                                        </span>
+                                    </button>
+                                </div>
                             </div>
                             <div className="space-y-1.5">{advancedSettingsButton}</div>
                         </div>
@@ -895,7 +940,7 @@ function ComposerSettingsPanel({
                 data-testid="composer-generate-card"
                 className="mt-1.5 min-w-0 nbu-floating-panel rounded-[30px] p-2 text-slate-900 dark:text-white"
             >
-                <div className="grid gap-1.5 md:items-center md:grid-cols-[minmax(0,1fr)_minmax(0,208px)]">
+                <div className="space-y-1.5">
                     <div
                         data-testid="composer-generate-actions"
                         className={`grid gap-1.5 ${showSecondaryGenerateButton ? 'sm:grid-cols-[minmax(0,1fr)_minmax(0,180px)]' : 'sm:grid-cols-1'}`}
@@ -928,124 +973,58 @@ function ComposerSettingsPanel({
                             </Button>
                         ) : null}
                     </div>
-
                     <div
-                        data-testid="composer-enter-behavior-card"
-                        className="flex min-w-0 justify-center md:self-center"
+                        data-testid="composer-queue-actions"
+                        className={`grid gap-1.5 ${showSecondaryQueueButton ? 'sm:grid-cols-[minmax(0,1fr)_minmax(0,180px)]' : 'sm:grid-cols-1'}`}
                     >
-                        <button
-                            type="button"
-                            data-testid="composer-enter-behavior-toggle"
-                            data-active-mode={enterToSubmit ? 'send' : 'newline'}
-                            aria-label={enterBehaviorToggleAriaLabel}
-                            aria-pressed={enterToSubmit}
-                            onClick={onToggleEnterToSubmit}
-                            className="group relative grid min-h-[56px] w-full max-w-[19rem] min-w-0 grid-rows-2 gap-1 overflow-hidden rounded-[24px] border border-slate-300/90 bg-slate-200/95 p-px text-left shadow-inner shadow-slate-300/70 transition-colors hover:border-slate-400/80 focus:outline-none focus:ring-2 focus:ring-amber-300 dark:border-slate-800 dark:bg-slate-950 dark:shadow-black/30 md:max-w-none"
-                        >
-                            <span
-                                data-testid="composer-enter-behavior-thumb"
-                                data-active-mode={enterToSubmit ? 'send' : 'newline'}
-                                aria-hidden="true"
-                                className={`pointer-events-none absolute left-px right-px bg-amber-500 transition-all duration-200 ease-out dark:bg-amber-300 ${
-                                    enterToSubmit
-                                        ? 'top-px bottom-[calc(50%+0.125rem)] rounded-t-[23px] rounded-b-[4px] shadow-[0_10px_24px_rgba(245,158,11,0.18)] dark:shadow-none'
-                                        : 'top-[calc(50%+0.125rem)] bottom-px rounded-t-[4px] rounded-b-[23px] shadow-[0_10px_24px_rgba(245,158,11,0.18)] dark:shadow-none'
-                                }`}
+                        <div className="flex min-w-0 items-center gap-1.5">
+                            <Button
+                                data-testid="composer-queue-batch-primary-button"
+                                variant="secondary"
+                                onClick={handlePrimaryQueueAction}
+                                aria-label={primaryQueueAriaLabel}
+                                disabled={isGenerating || isQueueBatchDisabled}
+                                title={primaryQueueTitle}
+                                className="min-h-9 min-w-0 flex-1 rounded-[20px] px-3 text-[12px] font-semibold"
+                            >
+                                {primaryQueueLabel}
+                            </Button>
+                            <InfoTooltip
+                                content={primaryQueueModeHint}
+                                buttonLabel={primaryQueueLabel}
+                                ariaLabel={primaryQueueModeHint}
+                                dataTestId="composer-queue-batch-mode-hint"
+                                tone="light"
+                                align="right"
+                                preferredVerticalPlacement="top"
+                                autoAdjust={true}
                             />
-                            <span
-                                data-testid="composer-enter-behavior-send-option"
-                                data-selected={enterToSubmit ? 'true' : 'false'}
-                                aria-hidden="true"
-                                className={`relative z-10 flex min-w-0 items-center justify-center rounded-t-[23px] rounded-b-[4px] px-2.5 py-1.5 text-center text-[11px] font-semibold leading-tight transition-colors ${
-                                    enterToSubmit
-                                        ? 'text-white dark:text-slate-950'
-                                        : 'text-slate-600 dark:text-slate-500'
-                                }`}
-                            >
-                                <span className="truncate">{enterBehaviorSendLabel}</span>
-                            </span>
-                            <span
-                                data-testid="composer-enter-behavior-newline-option"
-                                data-selected={enterToSubmit ? 'false' : 'true'}
-                                aria-hidden="true"
-                                className={`relative z-10 flex min-w-0 items-center justify-center rounded-t-[4px] rounded-b-[23px] px-2.5 py-1.5 text-center text-[11px] font-semibold leading-tight transition-colors ${
-                                    enterToSubmit
-                                        ? 'text-slate-600 dark:text-slate-500'
-                                        : 'text-white dark:text-slate-950'
-                                }`}
-                            >
-                                <span className="truncate">{enterBehaviorNewlineLabel}</span>
-                            </span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div data-testid="composer-queue-row" className="nbu-subpanel mt-1.5 p-2.5">
-                <div className="grid gap-1.5 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)]">
-                    <div className="flex min-w-0 items-center gap-1.5">
-                        <Button
-                            variant="secondary"
-                            onClick={onQueueBatchJob}
-                            disabled={isGenerating || isQueueBatchDisabled}
-                            title={isQueueBatchDisabled ? queueBatchDisabledReason || queueBatchModeSummary : undefined}
-                            className="min-h-10 min-w-0 flex-1 rounded-[16px]"
-                        >
-                            {t('composerQueueBatchJob')}
-                        </Button>
-                        <InfoTooltip
-                            content={queueBatchDisabledReason || queueBatchModeSummary}
-                            buttonLabel={t('composerQueueBatchJob')}
-                            ariaLabel={queueBatchDisabledReason || queueBatchModeSummary}
-                            dataTestId="composer-queue-batch-mode-hint"
-                            tone="light"
-                            align="right"
-                            preferredVerticalPlacement="top"
-                            autoAdjust={true}
-                        />
-                    </div>
-
-                    <button
-                        type="button"
-                        aria-haspopup="dialog"
-                        data-testid="composer-queue-status-button"
-                        onClick={onOpenQueuedBatchJobs}
-                        className="nbu-inline-panel flex min-w-0 items-center gap-2 px-3 py-2 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
-                    >
-                        <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-1">
-                                <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                                    {t('queuedBatchJobsTitle')}
-                                </span>
-                                <span className="nbu-chip px-2 py-0.5 text-[10px]">
-                                    {t('queuedBatchJobsTrackedCount').replace('{0}', trackedQueueCount.toString())}
-                                </span>
-                            </div>
-                            <div
-                                data-testid="composer-queue-status-progress"
-                                className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-slate-800/80"
-                            >
-                                <div
-                                    className="h-full rounded-full bg-[linear-gradient(90deg,rgba(245,158,11,0.95),rgba(16,185,129,0.95))] transition-all duration-300"
-                                    style={{ width: `${queueProgressPercent}%` }}
+                        </div>
+                        {showSecondaryQueueButton ? (
+                            <div className="flex min-w-0 items-center gap-1.5">
+                                <Button
+                                    data-testid="composer-queue-batch-generate-button"
+                                    variant="secondary"
+                                    onClick={onQueueBatchJob}
+                                    disabled={isGenerating || isQueueBatchDisabled}
+                                    title={isQueueBatchDisabled ? secondaryQueueModeHint : undefined}
+                                    className="min-h-9 min-w-0 flex-1 rounded-[20px] px-3 text-[12px] font-semibold"
+                                >
+                                    {secondaryQueueLabel}
+                                </Button>
+                                <InfoTooltip
+                                    content={secondaryQueueModeHint}
+                                    buttonLabel={secondaryQueueLabel}
+                                    ariaLabel={secondaryQueueModeHint}
+                                    dataTestId="composer-queue-batch-generate-mode-hint"
+                                    tone="light"
+                                    align="right"
+                                    preferredVerticalPlacement="top"
+                                    autoAdjust={true}
                                 />
                             </div>
-                        </div>
-                        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1 text-[10px] text-slate-500 dark:text-slate-400">
-                            <span className="nbu-chip px-2 py-0.5">
-                                {t('queuedBatchJobsActiveCount').replace('{0}', runningQueueCount.toString())}
-                            </span>
-                            <span className="nbu-chip px-2 py-0.5">
-                                {t('queuedBatchJobsImportReadyCount').replace('{0}', importReadyQueueCount.toString())}
-                            </span>
-                            <span className="nbu-chip px-2 py-0.5">
-                                {t('queuedBatchJobsClosedIssuesCount').replace('{0}', issueQueueCount.toString())}
-                            </span>
-                            <span className="nbu-control-button px-2.5 py-1 text-[10px] font-semibold">
-                                {t('workspacePanelViewDetails')}
-                            </span>
-                        </div>
-                    </button>
+                        ) : null}
+                    </div>
                 </div>
             </div>
         </section>

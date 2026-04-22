@@ -16,6 +16,9 @@ const buildQueuedJob = (overrides: Partial<QueuedBatchJob> = {}): QueuedBatchJob
     localId: 'queued-job-1',
     name: 'batches/queued-job-1',
     displayName: 'Queued job 1',
+    submissionGroupId: overrides.submissionGroupId || `submission-${overrides.localId || 'queued-job-1'}`,
+    submissionItemIndex: overrides.submissionItemIndex ?? 0,
+    submissionItemCount: overrides.submissionItemCount ?? 1,
     state: 'JOB_STATE_PENDING',
     model: 'gemini-3.1-flash-image-preview',
     prompt: 'Queued job prompt',
@@ -56,29 +59,26 @@ describe('queuedBatchSpacePersistence', () => {
         expect(loadQueuedBatchSpaceSnapshot().queuedJobs).toEqual([buildQueuedJob()]);
     });
 
-    it('merges legacy workspace queued jobs into the dedicated batch-space seed', () => {
-        const persistedJob = buildQueuedJob({
-            localId: 'queued-job-persisted',
-            name: 'batches/queued-job-persisted',
-            displayName: 'Persisted queued job',
-            updatedAt: 5,
-        });
-        const legacyJob = buildQueuedJob({
+    it('drops legacy queued jobs without submission grouping metadata from the dedicated batch-space store', () => {
+        const {
+            submissionGroupId: _submissionGroupId,
+            submissionItemIndex: _submissionItemIndex,
+            submissionItemCount: _submissionItemCount,
+            ...legacyJob
+        } = buildQueuedJob({
             localId: 'queued-job-legacy',
             name: 'batches/queued-job-legacy',
             displayName: 'Legacy queued job',
-            updatedAt: 3,
         });
 
-        saveQueuedBatchSpaceSnapshot({
-            queuedJobs: [persistedJob],
-        });
+        localStorage.setItem(
+            QUEUED_BATCH_SPACE_STORAGE_KEY,
+            JSON.stringify({
+                queuedJobs: [legacyJob],
+            }),
+        );
 
-        const loaded = loadQueuedBatchSpaceSnapshot({
-            legacyQueuedJobs: [legacyJob],
-        });
-
-        expect(loaded.queuedJobs).toEqual([persistedJob, legacyJob]);
+        expect(loadQueuedBatchSpaceSnapshot().queuedJobs).toEqual([]);
     });
 
     it('clears the dedicated batch-space storage when no jobs remain', () => {

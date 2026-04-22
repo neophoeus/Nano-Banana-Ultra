@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import ComposerAdvancedSettingsDialog from '../components/ComposerAdvancedSettingsDialog';
 import { MODEL_CAPABILITIES } from '../constants';
 import type { GroundingMode, OutputFormat, ThinkingLevel } from '../types';
+import { formatTemperature, TEMPERATURE_STEP } from '../utils/temperature';
 import { getTranslation } from '../utils/translations';
 
 function AdvancedSettingsHarness() {
@@ -18,7 +19,7 @@ function AdvancedSettingsHarness() {
     return (
         <div>
             <div data-testid="committed-output-format">{outputFormat}</div>
-            <div data-testid="committed-temperature">{temperature.toFixed(1)}</div>
+            <div data-testid="committed-temperature">{formatTemperature(temperature)}</div>
             <div data-testid="committed-grounding-mode">{groundingMode}</div>
             <button data-testid="reopen-advanced-settings" type="button" onClick={() => setIsOpen(true)}>
                 Reopen advanced settings
@@ -104,6 +105,33 @@ describe('ComposerAdvancedSettingsDialog draft flow', () => {
         expect(container.querySelector('[data-testid="composer-advanced-settings-dialog"]')).toBeNull();
         expect(container.querySelector('[data-testid="committed-output-format"]')?.textContent).toBe('images-and-text');
         expect(container.querySelector('[data-testid="committed-temperature"]')?.textContent).toBe('0.6');
+    });
+
+    it('supports 0.05 temperature increments without rounding 1.05 to 1.1', () => {
+        act(() => {
+            root.render(<AdvancedSettingsHarness />);
+        });
+
+        const rangeInput = container.querySelector(
+            '[data-testid="composer-advanced-temperature-range"]',
+        ) as HTMLInputElement;
+        const numberInput = container.querySelector(
+            '[data-testid="composer-advanced-temperature-input"]',
+        ) as HTMLInputElement;
+
+        expect(rangeInput.getAttribute('step')).toBe(String(TEMPERATURE_STEP));
+        expect(numberInput.getAttribute('step')).toBe(String(TEMPERATURE_STEP));
+
+        setInputValue('[data-testid="composer-advanced-temperature-input"]', '1.05');
+
+        const applyButton = container.querySelector(
+            '[data-testid="composer-advanced-settings-apply"]',
+        ) as HTMLButtonElement;
+        act(() => {
+            applyButton.click();
+        });
+
+        expect(container.querySelector('[data-testid="committed-temperature"]')?.textContent).toBe('1.05');
     });
 
     it('treats backdrop and escape dismissals as cancel', () => {

@@ -523,7 +523,7 @@ describe('App official conversation flow', () => {
         expect(requestBody.lang).toBe('zh_TW');
     });
 
-    it('switches between progress and sources inside the shared detail surface', async () => {
+    it('opens progress and sources from the top header without rendering in-modal support tabs', async () => {
         await act(async () => {
             root.render(<App />);
         });
@@ -546,16 +546,18 @@ describe('App official conversation flow', () => {
         await waitFor(() => {
             expect(document.querySelector('[data-testid="workspace-progress-detail-summary"]')).toBeTruthy();
         });
-        expect(document.querySelector('[data-testid="workspace-support-detail-tab-response"]')).toBeNull();
+        expect(document.querySelector('[data-testid="workspace-support-detail-tabs"]')).toBeNull();
+        expect(document.querySelector('[data-testid="workspace-support-detail-tab-progress"]')).toBeNull();
+        expect(document.querySelector('[data-testid="workspace-support-detail-tab-sources"]')).toBeNull();
 
-        const evidenceTab = await waitFor(() => {
+        const sourcesEntry = await waitFor(() => {
             const button = document.querySelector(
-                '[data-testid="workspace-support-detail-tab-sources"]',
+                '[data-testid="workspace-sources-open-details"]',
             ) as HTMLButtonElement | null;
             expect(button).toBeTruthy();
             return button!;
         });
-        await clickElement(evidenceTab);
+        await clickElement(sourcesEntry);
 
         await waitFor(() => {
             expect(document.querySelector('[data-testid="workspace-sources-detail-modal"]')).toBeTruthy();
@@ -564,19 +566,33 @@ describe('App official conversation flow', () => {
         await waitFor(() => {
             expect(document.querySelector('[data-testid="workspace-evidence-detail-summary"]')).toBeTruthy();
         });
+        expect(document.querySelector('[data-testid="workspace-support-detail-tabs"]')).toBeNull();
+    });
 
-        const thoughtsTab = await waitFor(() => {
+    it('shows clear workspace guidance that keeps shared queued batch jobs separate', async () => {
+        await act(async () => {
+            root.render(<App />);
+        });
+
+        const clearWorkspaceButton = await waitFor(() => {
             const button = document.querySelector(
-                '[data-testid="workspace-support-detail-tab-progress"]',
+                '[data-testid="workspace-unified-history-clear"]',
             ) as HTMLButtonElement | null;
             expect(button).toBeTruthy();
             return button!;
         });
-        await clickElement(thoughtsTab);
+        await clickElement(clearWorkspaceButton);
 
-        await waitFor(() => {
-            expect(document.querySelector('[data-testid="workspace-progress-detail-modal"]')).toBeTruthy();
+        const clearConfirm = await waitFor(() => {
+            const modal = document.querySelector(
+                '[data-testid="workspace-unified-history-clear-confirm"]',
+            ) as HTMLElement | null;
+            expect(modal).toBeTruthy();
+            return modal!;
         });
+
+        expect(clearConfirm.textContent).toContain('Shared queued batch jobs stay available separately.');
+        expect(clearConfirm.textContent).toContain('Export Workspace');
     });
 
     it('shows persisted failed thought text and image after selecting a failed history item', async () => {

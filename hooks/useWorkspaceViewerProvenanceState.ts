@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { OUTPUT_FORMATS, THINKING_LEVELS } from '../constants';
+import { getOutputFormatLabelKey, getThinkingLevelLabelKey } from '../constants';
 import {
     GeneratedImage as GeneratedImageType,
     GroundingMode,
@@ -7,13 +7,14 @@ import {
     ImageStyle,
     ViewerComposerSettingsSnapshot,
 } from '../types';
-import { deriveGroundingMode, getGroundingModeLabel } from '../utils/groundingMode';
+import { deriveGroundingMode, getGroundingModeTranslationKey } from '../utils/groundingMode';
 import {
     getImageSidecarMetadataState,
     isPersistedImageSidecarMetadata,
     normalizeImageSidecarMetadata,
 } from '../utils/imageSidecarMetadata';
 import { MODEL_CAPABILITIES } from '../utils/modelCapabilities';
+import { formatTemperature } from '../utils/temperature';
 import { buildViewerComposerSettingsSnapshot } from '../utils/viewerComposerSettings';
 import { useGroundingProvenancePanelProps } from './useGroundingProvenancePanelProps';
 import { useGroundingProvenanceView } from './useGroundingProvenanceView';
@@ -143,14 +144,12 @@ export function useWorkspaceViewerProvenanceState({
     });
 
     const getOutputFormatSummaryLabel = useCallback(
-        (value: string) => OUTPUT_FORMATS.find((option) => option.value === value)?.label ?? value,
-        [],
+        (value: string) => t(getOutputFormatLabelKey(value as OutputFormat)),
+        [t],
     );
     const getThinkingLevelSummaryLabel = useCallback(
-        (value: string) =>
-            THINKING_LEVELS.find((option) => option.value === value)?.label ??
-            (value === 'disabled' ? 'Disabled' : value),
-        [],
+        (value: string) => t(getThinkingLevelLabelKey(value as ThinkingLevel)),
+        [t],
     );
     const getThoughtVisibilitySummaryLabel = useCallback(
         (value: boolean) => t(value ? 'composerVisibilityVisible' : 'composerVisibilityHidden'),
@@ -163,15 +162,17 @@ export function useWorkspaceViewerProvenanceState({
                 case 'google-search':
                 case 'image-search':
                 case 'google-search-plus-image-search':
-                    return getGroundingModeLabel(metadata.groundingMode as GroundingMode);
+                    return t(getGroundingModeTranslationKey(metadata.groundingMode as GroundingMode));
                 default:
                     return metadata.groundingMode;
             }
         }
 
         if (typeof metadata?.googleSearch === 'boolean' || typeof metadata?.imageSearch === 'boolean') {
-            return getGroundingModeLabel(
-                deriveGroundingMode(Boolean(metadata?.googleSearch), Boolean(metadata?.imageSearch)),
+            return t(
+                getGroundingModeTranslationKey(
+                    deriveGroundingMode(Boolean(metadata?.googleSearch), Boolean(metadata?.imageSearch)),
+                ),
             );
         }
 
@@ -270,8 +271,8 @@ export function useWorkspaceViewerProvenanceState({
         getModelLabel(viewSettings.model),
     );
     const viewerMetadataTemperature = resolveViewerMetadataValue(
-        typeof selectedMetadata?.temperature === 'number' ? selectedMetadata.temperature.toFixed(1) : null,
-        viewSettings.temperature.toFixed(1),
+        typeof selectedMetadata?.temperature === 'number' ? formatTemperature(selectedMetadata.temperature) : null,
+        formatTemperature(viewSettings.temperature),
     );
     const viewerMetadataOutputFormat = resolveViewerMetadataValue(
         typeof selectedMetadata?.outputFormat === 'string'
@@ -287,7 +288,7 @@ export function useWorkspaceViewerProvenanceState({
     );
     const viewerMetadataGrounding = resolveViewerMetadataValue(
         getMetadataGroundingModeLabel(selectedMetadata),
-        getGroundingModeLabel(deriveGroundingMode(viewSettings.googleSearch, viewSettings.imageSearch)),
+        t(getGroundingModeTranslationKey(deriveGroundingMode(viewSettings.googleSearch, viewSettings.imageSearch))),
     );
     const viewerMetadataReturnThoughts = resolveViewerMetadataValue(
         typeof selectedMetadata?.includeThoughts === 'boolean'

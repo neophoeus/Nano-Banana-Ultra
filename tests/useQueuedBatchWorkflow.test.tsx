@@ -50,6 +50,9 @@ const buildQueuedJob = (overrides: Partial<QueuedBatchJob> = {}): QueuedBatchJob
     localId: overrides.localId || 'job-ready',
     name: overrides.name || `batches/${overrides.localId || 'job-ready'}`,
     displayName: overrides.displayName || 'Ready queue job',
+    submissionGroupId: overrides.submissionGroupId || `submission-${overrides.localId || 'job-ready'}`,
+    submissionItemIndex: overrides.submissionItemIndex ?? 0,
+    submissionItemCount: overrides.submissionItemCount ?? 1,
     state: overrides.state || 'JOB_STATE_SUCCEEDED',
     model: overrides.model || 'gemini-3.1-flash-image-preview',
     prompt: overrides.prompt || 'Import queued result',
@@ -422,6 +425,57 @@ describe('useQueuedBatchWorkflow', () => {
         );
     });
 
+    it('keeps staged queue Generate stage-agnostic and prompt-only when a stage image exists', async () => {
+        const getGenerationLineageContext = vi.fn(() => ({
+            parentHistoryId: 'parent-turn-1',
+            rootHistoryId: 'root-turn-1',
+            sourceHistoryId: 'source-turn-1',
+            lineageAction: 'continue',
+            lineageDepth: 1,
+        }));
+
+        submitQueuedBatchJobMock.mockResolvedValue({
+            name: 'batches/staged-generate-job',
+            displayName: 'Staged generate queue job',
+            state: 'JOB_STATE_PENDING',
+            model: 'gemini-3.1-flash-image-preview',
+            createTime: '2025-01-01T00:00:00.000Z',
+            updateTime: '2025-01-01T00:00:00.000Z',
+            error: null,
+            batchStats: null,
+            hasImportablePayload: false,
+        });
+
+        renderHook([], [], {
+            prompt: 'Queue a fresh staged generate',
+            currentStageAsset: {
+                id: 'stage-source',
+                url: 'data:image/png;base64,STAGE',
+                role: 'stage-source',
+                origin: 'upload',
+                createdAt: 1,
+            },
+            getGenerationLineageContext,
+        });
+
+        await act(async () => {
+            await latestHook!.handleQueueBatchJob();
+        });
+
+        expect(getGenerationLineageContext).toHaveBeenCalledWith({ mode: 'Text to Image' });
+        expect(submitQueuedBatchJobMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                prompt: 'Queue a fresh staged generate',
+                editingInput: undefined,
+            }),
+        );
+        expect(latestHook!.queuedJobs[0]).toEqual(
+            expect.objectContaining({
+                generationMode: 'Text to Image',
+            }),
+        );
+    });
+
     it('uses the shared style-transfer fallback when queueing reference-led illustration jobs without a prompt', async () => {
         const submitDeferred = createDeferred<{
             name: string;
@@ -479,7 +533,7 @@ describe('useQueuedBatchWorkflow', () => {
         );
     });
 
-    it('queues upload-only staged image edits after resetting lineage to a fresh root', async () => {
+    it('queues upload-only staged follow-up edits after resetting lineage to a fresh root', async () => {
         const getGenerationLineageContext = vi.fn(({ sourceOverride }) => ({
             parentHistoryId: sourceOverride?.sourceHistoryId || null,
             rootHistoryId: sourceOverride?.sourceHistoryId || null,
@@ -519,12 +573,12 @@ describe('useQueuedBatchWorkflow', () => {
         });
 
         await act(async () => {
-            await latestHook!.handleQueueBatchJob();
+            await latestHook!.handleQueueBatchFollowUpJob();
         });
 
         expect(getGenerationLineageContext).toHaveBeenCalledWith(
             expect.objectContaining({
-                mode: 'Image to Image/Mixing',
+                mode: 'Follow-up Edit',
                 sourceOverride: {
                     sourceHistoryId: null,
                     sourceLineageAction: null,
@@ -539,7 +593,7 @@ describe('useQueuedBatchWorkflow', () => {
         );
         expect(latestHook!.queuedJobs[0]).toEqual(
             expect.objectContaining({
-                generationMode: 'Image to Image/Mixing',
+                generationMode: 'Follow-up Edit',
                 sourceHistoryId: null,
                 lineageAction: 'root',
             }),
@@ -1282,7 +1336,7 @@ describe('useQueuedBatchWorkflow', () => {
         });
     });
 
-    it('uses imported result count to correct stale batch size when import responses omit remote counts', async () => {
+    it('keeps queued child batch size fixed at 1 when import responses omit remote counts', async () => {
         const readyJob = buildQueuedJob({
             localId: 'job-import-count-fallback',
             name: 'batches/job-import-count-fallback',
@@ -1327,13 +1381,13 @@ describe('useQueuedBatchWorkflow', () => {
         expect(latestHook!.queuedJobs[0]).toEqual(
             expect.objectContaining({
                 localId: readyJob.localId,
-                batchSize: 2,
+                batchSize: 1,
             }),
         );
         expect(latestHistory[0]).toEqual(
             expect.objectContaining({
                 metadata: expect.objectContaining({
-                    batchSize: 2,
+                    batchSize: 1,
                 }),
             }),
         );

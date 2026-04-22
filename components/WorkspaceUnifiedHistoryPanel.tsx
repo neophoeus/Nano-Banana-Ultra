@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { WORKSPACE_OVERLAY_Z_INDEX } from '../constants/workspaceOverlays';
 import { useResponsivePanelState } from '../hooks/useResponsivePanelState';
 import { BatchPreviewTile, GeneratedImage } from '../types';
 import { BranchSummary } from '../utils/lineage';
@@ -43,7 +42,6 @@ function WorkspaceUnifiedHistoryPanel({
     previewTiles = [],
 }: WorkspaceUnifiedHistoryPanelProps) {
     const { isDesktop } = useResponsivePanelState();
-    const [showConfirm, setShowConfirm] = useState(false);
     const [page, setPage] = useState(0);
     const pageSize = isDesktop ? DESKTOP_HISTORY_PAGE_SIZE : MOBILE_HISTORY_PAGE_SIZE;
     const t = (key: string) => getTranslation(currentLanguage, key);
@@ -186,7 +184,7 @@ function WorkspaceUnifiedHistoryPanel({
                     <button
                         type="button"
                         data-testid="workspace-unified-history-clear"
-                        onClick={() => setShowConfirm(true)}
+                        onClick={onClearWorkspace}
                         className="inline-flex items-center justify-center rounded-full border border-red-200/80 bg-red-50/90 px-2.5 py-1.5 text-[11px] font-semibold text-red-600 transition-colors hover:border-red-300 hover:bg-red-100 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200 dark:hover:border-red-800 dark:hover:bg-red-950/50"
                     >
                         {t('clearHistory')}
@@ -336,66 +334,6 @@ function WorkspaceUnifiedHistoryPanel({
                 </div>
             )}
 
-            {showConfirm ? (
-                <div
-                    data-testid="workspace-unified-history-clear-confirm"
-                    className="fixed inset-0 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out]"
-                    style={{ zIndex: WORKSPACE_OVERLAY_Z_INDEX.historyConfirm }}
-                    onClick={() => setShowConfirm(false)}
-                >
-                    <div
-                        className="nbu-modal-shell w-full max-w-sm overflow-hidden"
-                        onClick={(event) => event.stopPropagation()}
-                    >
-                        <div className="p-6 text-center">
-                            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="h-6 w-6"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                    />
-                                </svg>
-                            </div>
-                            <h3 className="mb-2 text-lg font-bold text-gray-900 dark:text-gray-100">
-                                {t('clearHistoryTitle')}
-                            </h3>
-                            <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">
-                                {t('clearHistoryMsg')}
-                            </p>
-                        </div>
-
-                        <div className="flex gap-2 border-t border-gray-100 bg-gray-50 p-2 dark:border-gray-800 dark:bg-gray-900/50">
-                            <button
-                                type="button"
-                                data-testid="workspace-unified-history-clear-cancel"
-                                onClick={() => setShowConfirm(false)}
-                                className="flex-1 rounded-xl border border-transparent px-4 py-2.5 text-sm font-bold text-gray-600 transition-all hover:border-gray-200 hover:bg-white dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-800"
-                            >
-                                {t('clearHistoryCancel')}
-                            </button>
-                            <button
-                                type="button"
-                                data-testid="workspace-unified-history-clear-confirm-action"
-                                onClick={() => {
-                                    setShowConfirm(false);
-                                    onClearWorkspace();
-                                }}
-                                className="flex-1 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-red-500/30 transition-all hover:bg-red-600"
-                            >
-                                {t('clearHistoryConfirm')}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            ) : null}
         </section>
     );
 }

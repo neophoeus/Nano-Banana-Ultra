@@ -944,7 +944,7 @@ export const submitQueuedBatchJob = async (options: SubmitQueuedBatchOptions): P
             googleSearch: options.googleSearch,
             imageSearch: options.imageSearch,
             executionMode: 'queued-batch-job',
-            requestCount: options.requestCount,
+            requestCount: 1,
             displayName: options.displayName,
         }),
     });

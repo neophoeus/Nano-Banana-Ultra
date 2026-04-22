@@ -1,6 +1,7 @@
 import type { AspectRatio, ImageModel, ImageSize } from '../../types';
 import { buildGroundingToolConfig, deriveGroundingMode } from '../../utils/groundingMode';
 import { MODEL_CAPABILITIES } from '../../utils/modelCapabilities';
+import { normalizeTemperature } from '../../utils/temperature';
 import { PERMISSIVE_SAFETY_SETTINGS } from './promptHelpers';
 
 type ImageGenerateBodyLike = {
@@ -80,7 +81,7 @@ export function buildImageRequestConfig(
     const requestConfig: Record<string, unknown> = {
         responseModalities: resolvedResponseModalities,
         imageConfig,
-        temperature: typeof body.temperature === 'number' ? body.temperature : undefined,
+        temperature: typeof body.temperature === 'number' ? normalizeTemperature(body.temperature) : undefined,
         safetySettings: PERMISSIVE_SAFETY_SETTINGS,
     };
 

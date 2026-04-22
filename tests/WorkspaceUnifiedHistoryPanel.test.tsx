@@ -412,7 +412,7 @@ describe('WorkspaceUnifiedHistoryPanel', () => {
         expect(container.innerHTML).not.toContain('history-card-turn-01');
     });
 
-    it('opens a two-button clear confirmation and only clears after the direct confirm action', () => {
+    it('delegates clear confirmation ownership to the parent shell instead of rendering an inline modal', () => {
         const { onClearWorkspace } = renderPanel();
 
         const openButton = container.querySelector(
@@ -422,36 +422,10 @@ describe('WorkspaceUnifiedHistoryPanel', () => {
             openButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         });
 
-        expect(container.querySelector('[data-testid="workspace-unified-history-clear-confirm"]')).not.toBeNull();
-        expect(container.querySelector('[data-testid="workspace-unified-history-clear-cancel"]')).not.toBeNull();
-        expect(
-            container.querySelector('[data-testid="workspace-unified-history-clear-confirm-action"]'),
-        ).not.toBeNull();
-        expect(onClearWorkspace).not.toHaveBeenCalled();
-
-        const cancelButton = container.querySelector(
-            '[data-testid="workspace-unified-history-clear-cancel"]',
-        ) as HTMLButtonElement;
-        flushSync(() => {
-            cancelButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-        });
-
-        expect(container.querySelector('[data-testid="workspace-unified-history-clear-confirm"]')).toBeNull();
-        expect(onClearWorkspace).not.toHaveBeenCalled();
-
-        flushSync(() => {
-            openButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-        });
-
-        const confirmButton = container.querySelector(
-            '[data-testid="workspace-unified-history-clear-confirm-action"]',
-        ) as HTMLButtonElement;
-        flushSync(() => {
-            confirmButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-        });
-
         expect(onClearWorkspace).toHaveBeenCalledTimes(1);
         expect(container.querySelector('[data-testid="workspace-unified-history-clear-confirm"]')).toBeNull();
+        expect(container.querySelector('[data-testid="workspace-unified-history-clear-cancel"]')).toBeNull();
+        expect(container.querySelector('[data-testid="workspace-unified-history-clear-confirm-action"]')).toBeNull();
     });
 
     it('renders the empty state when no history turns exist', () => {

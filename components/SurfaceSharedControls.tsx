@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { type ModelCapability } from '../constants';
+import { getOutputFormatLabelKey, getThinkingLevelLabelKey, type ModelCapability } from '../constants';
 import { GroundingMode, OutputFormat, ThinkingLevel } from '../types';
-import { getGroundingModeLabel } from '../utils/groundingMode';
+import { getGroundingModeTranslationKey } from '../utils/groundingMode';
+import { formatTemperature } from '../utils/temperature';
 import { getTranslation, Language } from '../utils/translations';
 
 export type SurfaceSharedControlSheet =
@@ -94,19 +95,9 @@ const SurfaceSharedControls: React.FC<SurfaceSharedControlsProps> = ({
 }) => {
     const t = (key: string) => getTranslation(currentLanguage, key);
     const containerRef = useRef<HTMLDivElement | null>(null);
-    const getOutputFormatLabel = (value: OutputFormat) =>
-        value === 'images-and-text' ? 'Images & text' : 'Images only';
-    const getThinkingLevelLabel = (value: ThinkingLevel) => {
-        switch (value) {
-            case 'minimal':
-                return 'Minimal';
-            case 'high':
-                return 'High';
-            default:
-                return 'Disabled';
-        }
-    };
-    const getGroundingLabel = (value: GroundingMode) => getGroundingModeLabel(value);
+    const getOutputFormatLabel = (value: OutputFormat) => t(getOutputFormatLabelKey(value));
+    const getThinkingLevelLabel = (value: ThinkingLevel) => t(getThinkingLevelLabelKey(value));
+    const getGroundingLabel = (value: GroundingMode) => t(getGroundingModeTranslationKey(value));
     const isSketchSurface = settingsVariant === 'sketch';
     const summaryModelLabel = getSummaryModelLabel(modelLabel);
     const supportsThinkingLevelControl = capability.thinkingLevels.some((value) => value !== 'disabled');
@@ -155,7 +146,7 @@ const SurfaceSharedControls: React.FC<SurfaceSharedControlsProps> = ({
                   {
                       id: 'temperature',
                       label: t('groundingProvenanceInsightTemperature'),
-                      value: temperature.toFixed(1),
+                      value: formatTemperature(temperature),
                   },
               ]
             : []),

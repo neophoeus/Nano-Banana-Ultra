@@ -1,6 +1,13 @@
-import { MODEL_CAPABILITIES, OUTPUT_FORMATS, THINKING_LEVELS } from '../constants';
+import {
+    getOutputFormatLabelKey,
+    getThinkingLevelLabelKey,
+    MODEL_CAPABILITIES,
+    OUTPUT_FORMATS,
+    THINKING_LEVELS,
+} from '../constants';
 import { GroundingMode, ImageModel, OutputFormat, ThinkingLevel } from '../types';
-import { getGroundingModeLabel } from '../utils/groundingMode';
+import { getGroundingModeTranslationKey } from '../utils/groundingMode';
+import { DEFAULT_TEMPERATURE, formatTemperature, normalizeTemperature, TEMPERATURE_STEP } from '../utils/temperature';
 import { getTranslation, Language } from '../utils/translations';
 import InfoTooltip from './InfoTooltip';
 
@@ -78,7 +85,7 @@ export default function ComposerAdvancedSettingsContent({
                                         capability.outputFormats.includes(option.value),
                                     ).map((option) => (
                                         <option key={option.value} value={option.value}>
-                                            {option.label}
+                                            {t(getOutputFormatLabelKey(option.value))}
                                         </option>
                                     ))}
                                 </select>
@@ -101,7 +108,7 @@ export default function ComposerAdvancedSettingsContent({
                                         capability.thinkingLevels.includes(option.value),
                                     ).map((option) => (
                                         <option key={option.value} value={option.value}>
-                                            {option.label}
+                                            {t(getThinkingLevelLabelKey(option.value))}
                                         </option>
                                     ))}
                                 </select>
@@ -117,7 +124,10 @@ export default function ComposerAdvancedSettingsContent({
                                         {t('groundingProvenanceInsightTemperature')}
                                     </span>
                                     <span className="rounded-full border border-gray-200 bg-white/80 px-2 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-gray-500 dark:border-gray-700 dark:bg-gray-900/70 dark:text-gray-300">
-                                        {t('composerDefaultTemp').replace('{0}', '= 1.0')}
+                                        {t('composerDefaultTemp').replace(
+                                            '{0}',
+                                            `= ${formatTemperature(DEFAULT_TEMPERATURE)}`,
+                                        )}
                                     </span>
                                 </div>
                                 <InfoTooltip
@@ -132,9 +142,11 @@ export default function ComposerAdvancedSettingsContent({
                                     type="range"
                                     min="0"
                                     max="2"
-                                    step="0.1"
+                                    step={TEMPERATURE_STEP}
                                     value={temperature}
-                                    onChange={(event) => onTemperatureChange(Number(event.target.value))}
+                                    onChange={(event) =>
+                                        onTemperatureChange(normalizeTemperature(Number(event.target.value)))
+                                    }
                                     className="flex-1"
                                 />
                                 <input
@@ -142,10 +154,10 @@ export default function ComposerAdvancedSettingsContent({
                                     type="number"
                                     min="0"
                                     max="2"
-                                    step="0.1"
-                                    value={temperature}
+                                    step={TEMPERATURE_STEP}
+                                    value={formatTemperature(temperature)}
                                     onChange={(event) =>
-                                        onTemperatureChange(Math.max(0, Math.min(2, Number(event.target.value) || 0)))
+                                        onTemperatureChange(normalizeTemperature(Number(event.target.value) || 0))
                                     }
                                     className="nbu-input-surface w-20 rounded-xl px-2 py-1.5 text-right"
                                 />
@@ -176,7 +188,7 @@ export default function ComposerAdvancedSettingsContent({
                                 >
                                     {availableGroundingModes.map((mode) => (
                                         <option key={mode} value={mode}>
-                                            {getGroundingModeLabel(mode)}
+                                            {t(getGroundingModeTranslationKey(mode))}
                                         </option>
                                     ))}
                                 </select>

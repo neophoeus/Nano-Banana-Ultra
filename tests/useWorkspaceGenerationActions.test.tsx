@@ -47,6 +47,7 @@ describe('useWorkspaceGenerationActions', () => {
 
         props = {
             abortControllerRef: { current: null },
+            isSurfaceWorkspaceOpen: false,
             prompt: 'Refine the staged image',
             aspectRatio: '1:1',
             imageSize: '1K',
@@ -126,6 +127,34 @@ describe('useWorkspaceGenerationActions', () => {
                 sourceHistoryId: null,
                 sourceLineageAction: null,
             },
+        );
+    });
+
+    it('keeps plain Generate stage-agnostic even when a staged image exists', () => {
+        props.currentStageAsset = {
+            id: 'stage-source',
+            url: 'data:image/png;base64,STAGE',
+            role: 'stage-source',
+            origin: 'history',
+            createdAt: 1,
+            sourceHistoryId: 'source-turn',
+            lineageAction: 'continue',
+        };
+
+        renderHook();
+
+        act(() => {
+            latestHook?.handleGenerate();
+        });
+
+        expect(props.clearPendingProvenanceContext).toHaveBeenCalledTimes(1);
+        expect(props.resetSelectedOutputState).toHaveBeenCalledTimes(1);
+        expect(props.performGeneration).toHaveBeenCalledWith(
+            'Refine the staged image',
+            '1:1',
+            '1K',
+            'None',
+            'gemini-3.1-flash-image-preview',
         );
     });
 

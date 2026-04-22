@@ -15,6 +15,18 @@ export const ja = {
     locked: 'ロック済み',
     ratioSkyscraper: '超縦長',
     ratioTall: '縦長',
+    outputFormatImagesAndText: '画像＋テキスト',
+    outputFormatImagesOnly: '画像のみ',
+    thinkingLevelMinimal: '最小',
+    thinkingLevelHigh: '高',
+    thinkingLevelDisabled: '無効',
+    groundingModeOff: 'オフ',
+    groundingModeGoogleSearch: 'ウェブ検索',
+    groundingModeImageSearch: '画像検索',
+    groundingModeGoogleSearchPlusImageSearch: 'ウェブ検索 + 画像検索',
+    groundingModeSummaryGoogleSearch: 'ウェブ',
+    groundingModeSummaryImageSearch: '画像',
+    groundingModeSummaryGoogleSearchPlusImageSearch: 'ウェブ + 画像',
     switchLight: 'ライトモードに切り替え',
     switchDark: 'ダークモードに切り替え',
     shiftEnter: 'Shift+Enterで改行',
@@ -183,7 +195,7 @@ export const ja = {
     // Clear History Dialog
     clearHistoryTitle: 'ワークスペースを消去',
     clearHistoryMsg:
-        'このワークスペースを既定の空の状態に戻しますか？履歴、ステージ、キュー済みジョブ、セッション内容が削除されます。この操作は取り消せません。',
+        'このワークスペースを既定の空の状態に戻しますか？履歴、ステージ、プロンプト、セッション文脈は削除されます。共有のキュー済みバッチジョブは別枠で利用できます。先にワークスペースを書き出しを使うことをおすすめします。この操作は取り消せません。',
     clearHistoryConfirm: 'ワークスペースを消去',
     clearHistoryCancel: 'キャンセル',
 
@@ -324,29 +336,31 @@ export const ja = {
     styleLineArt: 'ラインアート',
     styleStorybookIllustration: '絵本イラスト',
     queueBatchModeEditor:
-        'これは、現在のエディター入力とステージ済み参照を使って、編集ベースの公式画像条件付きバッチを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
+        'これは、現在のエディター入力画像と準備済み参照を使って、編集ベースの公式画像条件付きバッチジョブを送信します。バッチキューでは常に画像のみを出力し、思考の返却は要求しません。',
     queueBatchModeStage:
-        'これは、現在のステージ画像とステージ済み参照を使って、公式の画像条件付きバッチを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
+        'これは、現在のステージ画像と準備済み参照を使って、フォローアップ用の公式バッチジョブをキューに追加します。バッチキューでは常に画像のみを出力し、思考の返却は要求しません。',
+    queueBatchModeStageGenerate:
+        'これは、現在のプロンプトと準備済み参照から新しい公式バッチジョブをキューに追加します。現在のステージ画像は使いません。バッチキューでは常に画像のみを出力し、思考の返却は要求しません。',
     queueBatchModeReferences:
-        'これは、現在のプロンプトと参照トレイを使って、参照駆動の公式バッチを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
+        'これは、現在のプロンプトと参照トレイを使って、新しい参照駆動の公式バッチジョブをキューに追加します。バッチキューでは常に画像のみを出力し、思考の返却は要求しません。',
     queueBatchModePromptOnly:
-        'これは、プロンプトのみの公式バッチジョブを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
+        'これは、プロンプトのみの新しい公式バッチジョブをキューに追加します。バッチキューでは常に画像のみを出力し、思考の返却は要求しません。',
     queueBatchConversationNotice:
-        'キュー投入バッチジョブはソースの系統を保持しますが、公式の複数ターン会話履歴は送信しません。会話を継続する場合は通常の生成を使ってください。',
+        'バッチキューはソースの系統を保持しますが、公式の複数ターン会話履歴は送信しません。会話を続ける場合は生成を使ってください。',
     queueBatchMemoryContinuationDisabledReason:
-        'キュー投入ジョブは公式の memory 会話を継続できません。新しい会話を開始するか、Independent send に切り替えてください。',
+        'バッチキューでは、記憶送信モードの公式会話を続けられません。新しい会話を開始するか、独立送信に切り替えてください。',
     queueBatchEditDisabledReason:
-        'キュー済みバッチジョブは現在、フォローアップ編集やエディター編集をサポートしていません。まず通常の生成を使ってください。',
-    queuedBatchJobsTitle: 'キュー済みバッチジョブ',
+        'キュー投入中の画像条件付きフォローアップ編集は、公式バッチ結果の信頼性が低いため一時的に無効化されています。代わりに生成を使ってください。',
+    queuedBatchJobsTitle: 'バッチキュー',
     queuedBatchJobsDesc:
-        '保存済みの公式 Gemini Batch API ジョブはここで追跡され、待機中または実行中の間に状態確認、結果の取り込み、後片付けまで進められます。',
+        '保存済みの公式 Gemini Batch API ジョブは、待機中または実行中の間ここで追跡されます。Batch API は 24 時間以内の完了を目標としていますが、画像ジョブはサービス側で 48 時間後に失効するまで継続する場合があります。',
     queuedBatchJobsWorkflowHint:
-        'ここでキューを見守り、結果の準備ができたら履歴へ取り込み、作業が終わったらこのエントリをクリアします。',
-    queuedBatchJobsConversationNoticeLabel: '継続メモ',
+        'ここでバッチキューの状態を確認し、結果の準備ができたら履歴へ取り込み、作業が終わったらこのエントリを整理します。',
+    queuedBatchJobsConversationNoticeLabel: '継続に関する注意',
     queuedBatchJobsActiveCount: '進行中 {0}',
     queuedBatchJobsImportReadyCount: 'インポート可能 {0}',
     queuedBatchJobsClosedIssuesCount: '問題あり終了 {0}',
-    queuedBatchJobsImportReadyAction: '準備済みをインポート',
+    queuedBatchJobsImportReadyAction: '準備できた結果をインポート',
     queuedBatchJobsRefreshAll: 'すべて更新',
     queuedBatchJobsTrackedCount: '追跡中 {0}',
     queuedBatchJobsImportedTag: 'インポート済み',
@@ -391,6 +405,8 @@ export const ja = {
     queuedBatchStateExpired: '期限切れ',
     queuedBatchSubmittedNotice: 'キュー済みバッチジョブを公式 Batch API に送信しました。',
     queuedBatchSubmittedLog: '公式バッチジョブ {0} をキューに追加しました。',
+    queuedBatchSubmittedManyNotice: '公式 Batch API に {0} 件のバッチジョブをキュー投入しました。',
+    queuedBatchSubmittedPartialNotice: '{1} 件中 {0} 件を公式 Batch API に送信し、{2} 件は送信前に失敗しました。',
     queuedBatchSubmissionFailedLog: 'キュー済みバッチの送信に失敗しました: {0}',
     queuedBatchPolledLog: 'キュー済みバッチジョブ {0} を確認しました: {1}。',
     queuedBatchReadyToImportNotice: 'キュー済みバッチジョブ {0} はインポート可能です。',
@@ -445,11 +461,13 @@ export const ja = {
     composerToolbarImportWorkspace: 'ワークスペースを読み込み',
     workspaceSnapshotActionsTitle: 'ワークスペーススナップショット',
     composerToolbarAdvancedSettings: '詳細設定',
-    composerEnterSends: 'Enterキーで送信',
-    composerEnterNewline: 'Enterキーで改行',
+    composerEnterSends: 'Enter\n送信',
+    composerEnterNewline: 'Enter\n改行',
     composerVisibilityVisible: '表示',
     composerVisibilityHidden: '非表示',
-    composerQueueBatchJob: 'キューに送信',
+    workspaceQueueLauncher: 'バッチキュー',
+    composerQueueBatchJob: 'キューに追加',
+    composerQueueBatchFollowUpJob: 'この画像をキューに追加',
     composerAdvancedTitle: '機能対応の詳細設定',
     composerAdvancedDesc: '未対応のコントロールは非表示のままとなり、モデル変更時に安全な初期値へ自動で戻ります。',
     composerAdvancedGenerationSectionTitle: '生成コントロール',
@@ -469,15 +487,15 @@ export const ja = {
     composerAdvancedGroundingGuideTitle: '実行ガイド',
     composerAdvancedGroundingGuideDesc:
         'これらのグラウンディング解像度メモは、現在の製品経路での実機確認に基づいています。',
-    composerAdvancedGroundingGuideImageSearchLimit: 'Image Search は最大 1K です。',
+    composerAdvancedGroundingGuideImageSearchLimit: '画像検索は 1K までです。',
     composerAdvancedGroundingGuideFlashGoogle:
-        'Nano Banana 2 + Google Search: 2K と 4K の要求はそのままのサイズで返りました。',
+        'Nano Banana 2 + ウェブ検索: 2K と 4K の要求はそのままのサイズで返りました。',
     composerAdvancedGroundingGuideFlashImage:
-        'Nano Banana 2 + Image Search: 2K と 4K の要求でも実際の出力は 1K になる場合があります。',
+        'Nano Banana 2 + 画像検索: 2K と 4K の要求でも実際の出力は 1K になる場合があります。',
     composerAdvancedGroundingGuideProGoogle:
-        'Nano Banana Pro + Google Search: 2K と 4K の要求はそのままのサイズで返りました。',
+        'Nano Banana Pro + ウェブ検索: 2K と 4K の要求はそのままのサイズで返りました。',
     composerGroundingImageSearchUpgradeNotice:
-        '画像検索グラウンディングでは、帰属メタデータを返せるよう出力が自動で Images & text に切り替わります。',
+        '画像検索グラウンディングでは、帰属メタデータを返せるよう出力が自動で画像＋テキストに切り替わります。',
     composerActionPanelTitle: '作成',
     composerActionPanelDesc:
         '生成を主役に置いたまま、フォローアップとワークスペース操作を近くにまとめつつ控えめに扱います。',
@@ -649,7 +667,7 @@ export const ja = {
     workspaceImportReviewReplaceCurrentWorkspace: '現在のワークスペースを置換',
     workspaceImportReviewExecutionBatchVariants: 'バッチバリエーション',
     workspaceImportReviewExecutionChatContinuation: 'チャット継続',
-    workspaceImportReviewExecutionQueuedBatchJob: 'キュー投入バッチ結果',
+    workspaceImportReviewExecutionQueuedBatchJob: 'バッチキュー結果',
     workspaceImportReviewExecutionSingleTurn: '単一ターン',
     workflowCurrentStageSource: '現在のステージソース',
     historyActionOpenInHistory: '履歴で開く',
@@ -666,7 +684,8 @@ export const ja = {
     historyModeImage: '画像',
     historyBadgeParent: '親',
     historyBadgeCandidate: '候補',
-    historyBadgeActive: 'アクティブ',
+    historyBadgeActive: '表示中',
+    historyBadgeQueuedResult: 'キュー結果',
     historyBadgeMemory: '記憶',
     historyBadgeThread: 'スレッド',
     workflowStageLabelSystem: 'システム',

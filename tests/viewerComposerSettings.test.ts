@@ -53,12 +53,15 @@ describe('viewerComposerSettings', () => {
     });
 
     it('preserves the current composer size while normalizing no-size model snapshots', () => {
-        const normalized = normalizeViewerComposerSettingsSnapshot({
-            aspectRatio: '16:9',
-            imageStyle: 'None',
-            imageModel: 'gemini-2.5-flash-image',
-            batchSize: 1,
-        }, '1K');
+        const normalized = normalizeViewerComposerSettingsSnapshot(
+            {
+                aspectRatio: '16:9',
+                imageStyle: 'None',
+                imageModel: 'gemini-2.5-flash-image',
+                batchSize: 1,
+            },
+            '1K',
+        );
 
         expect(normalized).toEqual({
             aspectRatio: '16:9',
@@ -73,5 +76,18 @@ describe('viewerComposerSettings', () => {
             googleSearch: false,
             imageSearch: false,
         });
+    });
+
+    it('quantizes supported-model temperatures to the nearest 0.05 increment', () => {
+        const normalized = normalizeViewerComposerSettingsSnapshot({
+            aspectRatio: '1:1',
+            imageSize: '2K',
+            imageStyle: 'None',
+            imageModel: 'gemini-3.1-flash-image-preview',
+            batchSize: 1,
+            temperature: 1.03,
+        });
+
+        expect(normalized.temperature).toBe(1.05);
     });
 });

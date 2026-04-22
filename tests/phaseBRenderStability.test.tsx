@@ -400,7 +400,8 @@ describe('Phase B render stability', () => {
         expect(composerSettingsPanel?.contains(sideToolPanel)).toBe(true);
     });
 
-    it('keeps the top launchers as a compact two-button rail', async () => {
+    it('keeps the top launchers as a compact three-button rail with a 40/60 desktop split', async () => {
+        const topBand = await waitFor(() => document.querySelector('[data-testid="workspace-top-band"]'));
         const topLauncherRow = await waitFor(() =>
             document.querySelector('[data-testid="workspace-insights-collapsible"]'),
         );
@@ -410,15 +411,26 @@ describe('Phase B render stability', () => {
         const sourceButton = await waitFor(() =>
             document.querySelector('[data-testid="workspace-sources-open-details"]'),
         );
+        const queueButton = await waitFor(() => document.querySelector('[data-testid="workspace-queue-open-details"]'));
         const normalizeText = (value: string | null | undefined) => (value || '').replace(/\s+/g, ' ').trim();
 
         expect(
             Array.from(topLauncherRow?.children || []).map((element) => element.getAttribute('data-testid')),
-        ).toEqual(['workspace-progress-open-details', 'workspace-sources-open-details']);
+        ).toEqual([
+            'workspace-progress-open-details',
+            'workspace-sources-open-details',
+            'workspace-queue-open-details',
+        ]);
+        expect(topBand?.getAttribute('class')).toContain('xl:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]');
         expect(normalizeText(progressButton?.textContent)).toBe('Progress');
         expect(normalizeText(sourceButton?.textContent)).toBe('Support');
+        expect(normalizeText(queueButton?.textContent)).toBe('Queue');
+        expect(progressButton?.getAttribute('class')).toContain('nbu-shell-surface-context-rail');
+        expect(sourceButton?.getAttribute('class')).toContain('nbu-shell-surface-context-rail');
+        expect(queueButton?.getAttribute('class')).toContain('nbu-shell-surface-context-rail');
         const progressSignal = progressButton?.querySelector('[data-testid="workspace-progress-signal"]');
         const sourceSignal = sourceButton?.querySelector('[data-testid="workspace-sources-signal"]');
+        const queueSignal = queueButton?.querySelector('[data-testid="workspace-queue-signal"]');
 
         expect(progressSignal).toBeTruthy();
         expect(progressSignal?.getAttribute('class')).toContain('h-3.5');
@@ -427,11 +439,15 @@ describe('Phase B render stability', () => {
         expect(sourceSignal).toBeTruthy();
         expect(sourceSignal?.innerHTML).not.toContain('animate-pulse');
         expect(sourceSignal?.innerHTML).toContain('bg-slate-200/65');
-        expect(topLauncherRow?.getAttribute('class')).toContain('grid-cols-2');
-        expect(topLauncherRow?.getAttribute('class')).toContain('xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]');
+        expect(queueSignal).toBeTruthy();
+        expect(queueSignal?.innerHTML).not.toContain('animate-pulse');
+        expect(queueSignal?.innerHTML).toContain('bg-slate-200/65');
+        expect(topLauncherRow?.getAttribute('class')).toContain('grid-cols-3');
         expect(progressButton?.getAttribute('class')).toContain('h-[40px]');
         expect(progressButton?.getAttribute('class')).toContain('hover:-translate-y-0.5');
         expect(sourceButton?.getAttribute('class')).toContain('h-[40px]');
         expect(sourceButton?.getAttribute('class')).toContain('hover:-translate-y-0.5');
+        expect(queueButton?.getAttribute('class')).toContain('h-[40px]');
+        expect(queueButton?.getAttribute('class')).toContain('hover:-translate-y-0.5');
     });
 });

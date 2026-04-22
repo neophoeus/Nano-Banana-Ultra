@@ -5,31 +5,42 @@ export { STYLE_CATEGORIES, STYLES_BY_CATEGORY } from './utils/styleRegistry';
 export { IMAGE_MODELS, MODEL_CAPABILITIES };
 export type { ModelCapability };
 
-export const ASPECT_RATIOS: { value: AspectRatio; label: string; iconClass: string }[] = [
-    { value: '1:8', label: 'Skyscraper', iconClass: 'aspect-[1/8]' },
-    { value: '1:4', label: 'Tall', iconClass: 'aspect-[1/4]' },
-    { value: '9:16', label: 'Portrait', iconClass: 'aspect-[9/16]' },
-    { value: '2:3', label: 'Classic V', iconClass: 'aspect-[2/3]' },
-    { value: '3:4', label: 'Vertical', iconClass: 'aspect-[3/4]' },
-    { value: '4:5', label: 'Social', iconClass: 'aspect-[4/5]' },
-    { value: '1:1', label: 'Square', iconClass: 'aspect-square' },
-    { value: '5:4', label: 'Medium', iconClass: 'aspect-[5/4]' },
-    { value: '4:3', label: 'Standard', iconClass: 'aspect-[4/3]' },
-    { value: '3:2', label: 'Classic H', iconClass: 'aspect-[3/2]' },
-    { value: '16:9', label: 'Widescreen', iconClass: 'aspect-video' },
-    { value: '21:9', label: 'Cinematic', iconClass: 'aspect-[21/9]' },
-    { value: '4:1', label: 'Ultra Wide', iconClass: 'aspect-[4/1]' },
-    { value: '8:1', label: 'Panorama', iconClass: 'aspect-[8/1]' },
+export const ASPECT_RATIOS: { value: AspectRatio; labelKey: string; iconClass: string }[] = [
+    { value: '1:8', labelKey: 'ratioSkyscraper', iconClass: 'aspect-[1/8]' },
+    { value: '1:4', labelKey: 'ratioTall', iconClass: 'aspect-[1/4]' },
+    { value: '9:16', labelKey: 'ratioPortrait', iconClass: 'aspect-[9/16]' },
+    { value: '2:3', labelKey: 'ratioClassicV', iconClass: 'aspect-[2/3]' },
+    { value: '3:4', labelKey: 'ratioVertical', iconClass: 'aspect-[3/4]' },
+    { value: '4:5', labelKey: 'ratioSocial', iconClass: 'aspect-[4/5]' },
+    { value: '1:1', labelKey: 'ratioSquare', iconClass: 'aspect-square' },
+    { value: '5:4', labelKey: 'ratioMedium', iconClass: 'aspect-[5/4]' },
+    { value: '4:3', labelKey: 'ratioStandard', iconClass: 'aspect-[4/3]' },
+    { value: '3:2', labelKey: 'ratioClassicH', iconClass: 'aspect-[3/2]' },
+    { value: '16:9', labelKey: 'ratioWidescreen', iconClass: 'aspect-video' },
+    { value: '21:9', labelKey: 'ratioCinematic', iconClass: 'aspect-[21/9]' },
+    { value: '4:1', labelKey: 'ratioUltraWide', iconClass: 'aspect-[4/1]' },
+    { value: '8:1', labelKey: 'ratioPanorama', iconClass: 'aspect-[8/1]' },
 ];
 
 export const IMAGE_SIZES: ImageSize[] = ['512', '1K', '2K', '4K'];
 
-export const OUTPUT_FORMATS: Array<{ value: OutputFormat; label: string }> = [
-    { value: 'images-and-text', label: 'Images & text' },
-    { value: 'images-only', label: 'Images only' },
+export const OUTPUT_FORMATS: Array<{ value: OutputFormat; labelKey: string }> = [
+    { value: 'images-and-text', labelKey: 'outputFormatImagesAndText' },
+    { value: 'images-only', labelKey: 'outputFormatImagesOnly' },
 ];
 
-export const THINKING_LEVELS: Array<{ value: ThinkingLevel; label: string }> = [
-    { value: 'minimal', label: 'Minimal' },
-    { value: 'high', label: 'High' },
+export const THINKING_LEVELS: Array<{ value: ThinkingLevel; labelKey: string }> = [
+    { value: 'minimal', labelKey: 'thinkingLevelMinimal' },
+    { value: 'high', labelKey: 'thinkingLevelHigh' },
 ];
+
+export const getOutputFormatLabelKey = (value: OutputFormat) =>
+    OUTPUT_FORMATS.find((option) => option.value === value)?.labelKey ?? 'outputFormatImagesOnly';
+
+export const getThinkingLevelLabelKey = (value: ThinkingLevel) => {
+    if (value === 'disabled') {
+        return 'thinkingLevelDisabled';
+    }
+
+    return THINKING_LEVELS.find((option) => option.value === value)?.labelKey ?? 'thinkingLevelDisabled';
+};

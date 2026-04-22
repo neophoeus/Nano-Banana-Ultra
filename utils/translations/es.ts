@@ -15,6 +15,18 @@ export const es = {
     locked: 'Bloqueado',
     ratioSkyscraper: 'Rascacielos',
     ratioTall: 'Alto',
+    outputFormatImagesAndText: 'Imagenes y texto',
+    outputFormatImagesOnly: 'Solo imagenes',
+    thinkingLevelMinimal: 'Minimo',
+    thinkingLevelHigh: 'Alto',
+    thinkingLevelDisabled: 'Desactivado',
+    groundingModeOff: 'Desactivado',
+    groundingModeGoogleSearch: 'Busqueda web',
+    groundingModeImageSearch: 'Busqueda de imagenes',
+    groundingModeGoogleSearchPlusImageSearch: 'Busqueda web + busqueda de imagenes',
+    groundingModeSummaryGoogleSearch: 'Web',
+    groundingModeSummaryImageSearch: 'Imagen',
+    groundingModeSummaryGoogleSearchPlusImageSearch: 'Web + imagen',
     switchLight: 'Modo Claro',
     switchDark: 'Modo Oscuro',
     shiftEnter: 'Shift+Enter salto',
@@ -38,7 +50,7 @@ export const es = {
     composerSendIntentMemory: 'Envio con memoria',
     composerSendIntentHelperIndependent:
         'Usa la imagen y las herramientas actuales sin volver a reproducir la memoria oficial de la conversacion.',
-    composerSendIntentHelperMemory: 'El siguiente envio reutiliza la memoria oficial de la conversacion.',
+    composerSendIntentHelperMemory: 'Mantiene el siguiente envio dentro de la memoria oficial de la conversacion.',
     composerSendIntentMemoryTokenNotice: 'El contexto recordado aumenta el uso de tokens.',
     composerSendIntentDisabledReason: 'El envio con memoria solo esta disponible cuando la cantidad es 1.',
     composerSendIntentInfoButton: 'Detalles de la regla de envio',
@@ -188,7 +200,7 @@ export const es = {
     // Clear History Dialog
     clearHistoryTitle: 'Borrar espacio de trabajo',
     clearHistoryMsg:
-        '¿Restablecer este espacio de trabajo a su estado vacío predeterminado? Se eliminarán el historial, el escenario, los trabajos en cola y el contexto de la sesión. No se puede deshacer.',
+        '¿Restablecer este espacio de trabajo a su estado vacío predeterminado? Se eliminarán el historial, el escenario, el prompt y el contexto de la sesión. Los trabajos por lotes en cola compartidos seguirán disponibles por separado. Recomendamos usar primero Exportar espacio de trabajo. No se puede deshacer.',
     clearHistoryConfirm: 'Borrar espacio de trabajo',
     clearHistoryCancel: 'Cancelar',
 
@@ -329,29 +341,31 @@ export const es = {
     styleLineArt: 'Arte Lineal',
     styleStorybookIllustration: 'Ilustración de Cuento',
     queueBatchModeEditor:
-        'Esto enviara un lote oficial condicionado por imagen basado en el editor usando la entrada actual del editor y las referencias preparadas. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
+        'Esto envia un trabajo oficial por lotes condicionado por imagen desde el editor, usando la imagen de entrada actual del editor y las referencias preparadas. Los trabajos por lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
     queueBatchModeStage:
-        'Esto enviara un lote oficial condicionado por imagen usando la imagen actual del escenario y las referencias preparadas. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
+        'Esto pone en cola un trabajo oficial de seguimiento usando la imagen actual del escenario y las referencias preparadas. Los trabajos por lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
+    queueBatchModeStageGenerate:
+        'Esto pone en cola un trabajo oficial nuevo por lotes a partir del prompt actual y las referencias preparadas. No usa la imagen actual del escenario. Los trabajos por lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
     queueBatchModeReferences:
-        'Esto enviara un lote oficial guiado por referencias usando el prompt actual y la bandeja de referencias. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
+        'Esto pone en cola un trabajo oficial nuevo por lotes guiado por referencias, usando el prompt actual y la bandeja de referencias. Los trabajos por lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
     queueBatchModePromptOnly:
-        'Esto enviara un lote oficial basado solo en el prompt. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
+        'Esto pone en cola un trabajo oficial nuevo por lotes basado solo en el prompt. Los trabajos por lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
     queueBatchConversationNotice:
-        'Los trabajos por lotes en cola conservan el linaje de origen, pero no envian el historial oficial de conversacion de varios turnos. Para continuar un chat, usa la generacion normal.',
+        'Los trabajos por lotes en cola conservan el linaje de origen, pero no envian el historial oficial de conversacion de varios turnos. Para seguir el chat, usa Generar.',
     queueBatchMemoryContinuationDisabledReason:
-        'Los trabajos en cola no pueden continuar una conversacion oficial de memory. Inicia una conversacion nueva o cambia a Independent send.',
+        'Los trabajos en cola no pueden continuar una conversacion oficial en modo Envio con memoria. Inicia una conversacion nueva o cambia a Envio independiente.',
     queueBatchEditDisabledReason:
-        'Los trabajos por lotes en cola no admiten actualmente ediciones de seguimiento ni del editor. Usa primero el flujo de generacion normal.',
-    queuedBatchJobsTitle: 'Trabajos por lotes en cola',
+        'Las ediciones de seguimiento condicionadas por imagen en los trabajos en cola estan desactivadas temporalmente porque los resultados oficiales por lotes no han sido fiables. Usa Generar.',
+    queuedBatchJobsTitle: 'Cola de trabajos por lotes',
     queuedBatchJobsDesc:
-        'Los trabajos oficiales persistidos de Gemini Batch API se siguen aqui mientras estan en espera o en ejecucion, para avanzar por comprobacion de estado, importacion de resultados y limpieza.',
+        'Los trabajos oficiales guardados de Gemini Batch API permanecen aqui mientras estan pendientes o en ejecucion. Batch API apunta a completarlos en 24 horas, pero los trabajos de imagen pueden continuar hasta que el servicio los caduque a las 48 horas.',
     queuedBatchJobsWorkflowHint:
-        'Supervisa la cola aqui, importa los resultados terminados al historial cuando esten listos y limpia la entrada cuando el flujo haya terminado.',
-    queuedBatchJobsConversationNoticeLabel: 'Nota de continuidad',
+        'Revisa aqui el estado de la cola, importa los resultados terminados al historial cuando esten listos y elimina la entrada cuando el flujo haya terminado.',
+    queuedBatchJobsConversationNoticeLabel: 'Aviso de continuidad',
     queuedBatchJobsActiveCount: '{0} activos',
     queuedBatchJobsImportReadyCount: '{0} listos para importar',
     queuedBatchJobsClosedIssuesCount: '{0} cerrados con problemas',
-    queuedBatchJobsImportReadyAction: 'Importar listos',
+    queuedBatchJobsImportReadyAction: 'Importar resultados listos',
     queuedBatchJobsRefreshAll: 'Actualizar todo',
     queuedBatchJobsTrackedCount: '{0} seguidos',
     queuedBatchJobsImportedTag: 'Importado',
@@ -396,6 +410,8 @@ export const es = {
     queuedBatchStateExpired: 'Expirado',
     queuedBatchSubmittedNotice: 'El trabajo por lotes en cola se envio a la Batch API oficial.',
     queuedBatchSubmittedLog: 'Se puso en cola el trabajo por lotes oficial {0}.',
+    queuedBatchSubmittedManyNotice: 'Se pusieron en cola {0} trabajos por lotes para la Batch API oficial.',
+    queuedBatchSubmittedPartialNotice: 'Se enviaron {0} de {1} trabajos por lotes. {2} fallaron antes del envio.',
     queuedBatchSubmissionFailedLog: 'Fallo el envio del lote en cola: {0}',
     queuedBatchPolledLog: 'Se consulto el trabajo por lotes en cola {0}: {1}.',
     queuedBatchReadyToImportNotice: 'El trabajo por lotes en cola {0} esta listo para importar.',
@@ -454,11 +470,13 @@ export const es = {
     composerToolbarImportWorkspace: 'Importar espacio de trabajo',
     workspaceSnapshotActionsTitle: 'Instantanea del espacio de trabajo',
     composerToolbarAdvancedSettings: 'Ajustes avanzados',
-    composerEnterSends: 'Pulsa Enter para enviar',
-    composerEnterNewline: 'Pulsa Enter para nueva linea',
+    composerEnterSends: 'Enter\nenvia',
+    composerEnterNewline: 'Enter\nlinea',
     composerVisibilityVisible: 'Se muestra',
     composerVisibilityHidden: 'Oculto',
-    composerQueueBatchJob: 'Enviar a la cola',
+    workspaceQueueLauncher: 'Cola',
+    composerQueueBatchJob: 'Poner en cola',
+    composerQueueBatchFollowUpJob: 'Poner esta imagen en cola',
     composerAdvancedTitle: 'Ajustes avanzados segun capacidad',
     composerAdvancedDesc:
         'Los controles no compatibles se mantienen ocultos y se restablecen automaticamente cuando cambia el modelo.',
@@ -479,15 +497,15 @@ export const es = {
     composerAdvancedGroundingGuideTitle: 'Guia de ejecucion',
     composerAdvancedGroundingGuideDesc:
         'Estas notas de tamano con grounding se basan en comprobaciones reales dentro de la ruta actual del producto.',
-    composerAdvancedGroundingGuideImageSearchLimit: 'Image Search queda limitado a 1K.',
+    composerAdvancedGroundingGuideImageSearchLimit: 'La busqueda de imagenes queda limitada a 1K.',
     composerAdvancedGroundingGuideFlashGoogle:
-        'Nano Banana 2 + Google Search: las solicitudes de 2K y 4K mantuvieron el tamano pedido.',
+        'Nano Banana 2 + busqueda web: las solicitudes de 2K y 4K mantuvieron el tamano pedido.',
     composerAdvancedGroundingGuideFlashImage:
-        'Nano Banana 2 + Image Search: las solicitudes de 2K y 4K pueden devolver salida real de 1K.',
+        'Nano Banana 2 + busqueda de imagenes: las solicitudes de 2K y 4K pueden devolver salida real de 1K.',
     composerAdvancedGroundingGuideProGoogle:
-        'Nano Banana Pro + Google Search: las solicitudes de 2K y 4K mantuvieron el tamano pedido.',
+        'Nano Banana Pro + busqueda web: las solicitudes de 2K y 4K mantuvieron el tamano pedido.',
     composerGroundingImageSearchUpgradeNotice:
-        'El grounding con busqueda de imagenes cambia la salida automaticamente a Images & text para poder devolver metadatos de atribucion.',
+        'El grounding con busqueda de imagenes cambia la salida automaticamente a Imagenes y texto para poder devolver metadatos de atribucion.',
     composerActionPanelTitle: 'Crear',
     composerActionPanelDesc:
         'Generar sigue siendo lo principal. Las acciones de seguimiento y del espacio de trabajo se mantienen cerca, pero mas discretas.',
@@ -545,7 +563,7 @@ export const es = {
     workspacePickerFullGallery: 'Galeria completa',
     workspacePickerEmptyGallery: 'Genera o carga una imagen para llenar la galeria.',
     workspacePickerModelSupportImageSearch: 'Busqueda de imagenes con contexto lista',
-    workspacePickerModelSupportGoogleSearch: 'Contexto de Google Search listo',
+    workspacePickerModelSupportGoogleSearch: 'Contexto de busqueda web listo',
     workspacePickerModelSupportImageOnly: 'Enfoque en generacion solo de imagen',
     workspacePickerObjects: 'Objetos',
     workspacePickerHasSketchAsset: 'Incluye el recurso de boceto actual.',
@@ -663,7 +681,7 @@ export const es = {
     workspaceImportReviewReplaceCurrentWorkspace: 'Reemplazar el espacio de trabajo actual',
     workspaceImportReviewExecutionBatchVariants: 'Variantes por lote',
     workspaceImportReviewExecutionChatContinuation: 'Continuacion de chat',
-    workspaceImportReviewExecutionQueuedBatchJob: 'Resultado por lotes en cola',
+    workspaceImportReviewExecutionQueuedBatchJob: 'Resultado de lote en cola',
     workspaceImportReviewExecutionSingleTurn: 'Un solo turno',
     workflowCurrentStageSource: 'Origen actual de la escena',
     historyActionOpenInHistory: 'Abrir en el historial',
@@ -680,7 +698,8 @@ export const es = {
     historyModeImage: 'Imagen',
     historyBadgeParent: 'padre',
     historyBadgeCandidate: 'Candidata',
-    historyBadgeActive: 'Activa',
+    historyBadgeActive: 'En vista',
+    historyBadgeQueuedResult: 'Resultado en cola',
     historyBadgeMemory: 'Memoria',
     historyBadgeThread: 'Hilo',
     workflowStageLabelSystem: 'Sistema',

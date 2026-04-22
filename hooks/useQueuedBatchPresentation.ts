@@ -87,9 +87,9 @@ export function useQueuedBatchPresentation({
         [showEditorQueueBatch, t],
     );
 
-    const queueBatchModeSummary = useMemo(() => {
+    const queueBatchGenerateModeSummary = useMemo(() => {
         if (currentStageAsset?.url) {
-            return t('queueBatchModeStage');
+            return t('queueBatchModeStageGenerate');
         }
 
         if (objectImageCount > 0 || characterImageCount > 0) {
@@ -98,6 +98,14 @@ export function useQueuedBatchPresentation({
 
         return t('queueBatchModePromptOnly');
     }, [characterImageCount, currentStageAsset?.url, objectImageCount, t]);
+
+    const queueBatchModeSummary = useMemo(() => {
+        if (currentStageAsset?.url) {
+            return t('queueBatchModeStage');
+        }
+
+        return queueBatchGenerateModeSummary;
+    }, [currentStageAsset?.url, queueBatchGenerateModeSummary, t]);
 
     const queueBatchConversationNotice = useMemo(
         () => (hasOfficialConversationContext ? t('queueBatchConversationNotice') : null),
@@ -163,6 +171,7 @@ export function useQueuedBatchPresentation({
         queueBatchDisabledReason,
         editorQueueDisabledReason,
         queueBatchModeSummary,
+        queueBatchGenerateModeSummary,
         queueBatchConversationNotice,
         getImportedQueuedHistoryItems,
         getImportedQueuedResultCount,

@@ -241,7 +241,6 @@ export function registerBatchRoutes(server: any, { getAIClient, resolvedDir }: R
             const ai = getAIClient();
             const body = await readJsonBody<BatchCreateBody>(req);
             const model = String(body.model || 'gemini-3.1-flash-image-preview');
-            const requestCount = Math.max(1, Math.floor(Number(body.requestCount) || 0));
             const displayName = body.displayName || `${model}-queued-${new Date().toISOString()}`;
 
             if (!VALID_IMAGE_MODELS.has(model)) {
@@ -283,10 +282,12 @@ export function registerBatchRoutes(server: any, { getAIClient, resolvedDir }: R
                 const parts = await buildGenerateFileParts(body, (image) =>
                     uploadBatchSourceImage(ai, image, resolvedDir, tempDir),
                 );
-                const inlineRequests: GenerateBatchRequest[] = Array.from({ length: requestCount }, () => ({
-                    contents: [{ role: 'user', parts: parts as Array<Record<string, unknown>> }],
-                    config: batchRequestConfig,
-                }));
+                const inlineRequests: GenerateBatchRequest[] = [
+                    {
+                        contents: [{ role: 'user', parts: parts as Array<Record<string, unknown>> }],
+                        config: batchRequestConfig,
+                    },
+                ];
                 const batchJsonlRequests = buildBatchJsonlRequests(ai, model, inlineRequests, displayName);
                 const manifestPath = writeBatchJsonlManifest(tempDir, batchJsonlRequests);
                 const uploadedManifest = await ai.files.upload({

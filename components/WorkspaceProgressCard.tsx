@@ -1,5 +1,6 @@
 import React from 'react';
 import { getTranslation, Language } from '../utils/translations';
+import { topLauncherCompactButtonClassName, topLauncherCompactLabelClassName } from '../utils/workspaceTopLauncherStyles';
 
 type WorkspaceProgressCardProps = {
     currentLanguage: Language;
@@ -20,7 +21,7 @@ function WorkspaceProgressCard({ currentLanguage, thoughtsText, hasThoughtArtifa
             type="button"
             data-testid="workspace-progress-open-details"
             onClick={onOpenDetails}
-            className="group min-w-0 nbu-shell-panel nbu-shell-surface-context-rail flex h-[40px] min-h-[40px] w-full items-center justify-center gap-2 overflow-hidden px-2.5 py-2 text-center transition-all hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-[0_18px_40px_rgba(15,23,42,0.12)] dark:hover:border-amber-500/30 dark:hover:shadow-[0_18px_40px_rgba(2,6,23,0.38)]"
+            className={`${topLauncherCompactButtonClassName} nbu-shell-surface-context-rail hover:border-amber-300 dark:hover:border-amber-500/30`}
         >
             <div className="flex min-w-0 items-center gap-2">
                 <span
@@ -43,9 +44,7 @@ function WorkspaceProgressCard({ currentLanguage, thoughtsText, hasThoughtArtifa
                         }`}
                     />
                 </span>
-                <span className="whitespace-nowrap text-[9px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 sm:text-[10px]">
-                    {t('workspaceSupportProgress')}
-                </span>
+                <span className={topLauncherCompactLabelClassName}>{t('workspaceSupportProgress')}</span>
             </div>
         </button>
     );

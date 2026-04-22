@@ -53,6 +53,9 @@ const incomingSnapshot: WorkspacePersistenceSnapshot = {
             localId: 'import-job-local',
             name: 'batches/import-job',
             displayName: 'Imported queued job',
+            submissionGroupId: 'submission-import-job-local',
+            submissionItemIndex: 0,
+            submissionItemCount: 1,
             state: 'JOB_STATE_PENDING',
             model: 'gemini-3.1-flash-image-preview',
             prompt: 'Imported queued prompt',
@@ -66,7 +69,7 @@ const incomingSnapshot: WorkspacePersistenceSnapshot = {
             includeThoughts: true,
             googleSearch: false,
             imageSearch: false,
-            batchSize: 2,
+            batchSize: 1,
             objectImageCount: 0,
             characterImageCount: 0,
             createdAt: 12,
@@ -134,6 +137,22 @@ describe('workspacePersistence', () => {
         localStorage.clear();
     });
 
+    it('returns the requested empty-workspace defaults when nothing is persisted', () => {
+        expect(loadWorkspaceSnapshot().composerState).toEqual(
+            expect.objectContaining({
+                imageModel: 'gemini-3.1-flash-image-preview',
+                aspectRatio: '1:1',
+                imageSize: '2K',
+                batchSize: 1,
+                outputFormat: 'images-only',
+                temperature: 1,
+                thinkingLevel: 'minimal',
+                googleSearch: false,
+                imageSearch: false,
+            }),
+        );
+    });
+
     it('round-trips the wrapped export document', () => {
         const serialized = exportWorkspaceSnapshotDocument(baseSnapshot);
         const parsed = parseWorkspaceSnapshotDocument(serialized);
@@ -189,6 +208,9 @@ describe('workspacePersistence', () => {
                     localId: 'legacy-job',
                     name: 'batches/legacy-job',
                     displayName: 'Legacy job',
+                    submissionGroupId: 'submission-legacy-job',
+                    submissionItemIndex: 0,
+                    submissionItemCount: 1,
                     state: 'JOB_STATE_PENDING',
                     model: 'gemini-3.1-flash-image-preview',
                     prompt: 'Legacy queued prompt',
@@ -230,6 +252,18 @@ describe('workspacePersistence', () => {
         });
 
         expect(restored.composerState.stickySendIntent).toBe('memory');
+    });
+
+    it('normalizes restored composer temperature to 0.05 increments', () => {
+        const restored = sanitizeWorkspaceSnapshot({
+            ...EMPTY_WORKSPACE_SNAPSHOT,
+            composerState: {
+                ...EMPTY_WORKSPACE_SNAPSHOT.composerState,
+                temperature: 1.03,
+            },
+        });
+
+        expect(restored.composerState.temperature).toBe(1.05);
     });
 
     it('merges imported turns with remapped ids and branch overrides', () => {
@@ -302,7 +336,7 @@ describe('workspacePersistence', () => {
         expect(fetchMock).not.toHaveBeenCalled();
     });
 
-    it('migrates legacy succeeded queued jobs so restore keeps them import-ready until repolled', () => {
+    it('drops legacy succeeded queued jobs that do not include submission grouping metadata', () => {
         const restored = sanitizeWorkspaceSnapshot({
             ...EMPTY_WORKSPACE_SNAPSHOT,
             queuedJobs: [
@@ -336,15 +370,7 @@ describe('workspacePersistence', () => {
             ],
         });
 
-        expect(restored.queuedJobs).toHaveLength(1);
-        expect(restored.queuedJobs[0]).toEqual(
-            expect.objectContaining({
-                localId: 'legacy-succeeded-job',
-                state: 'JOB_STATE_SUCCEEDED',
-                hasImportablePayload: true,
-            }),
-        );
-        expect(restored.queuedJobs[0]?.importDiagnostic ?? null).toBeNull();
+        expect(restored.queuedJobs).toEqual([]);
     });
 
     it('sanitizes structured queued batch import issues in workspace snapshots', () => {
@@ -355,6 +381,9 @@ describe('workspacePersistence', () => {
                     localId: 'issue-job',
                     name: 'batches/issue-job',
                     displayName: 'Issue job',
+                    submissionGroupId: 'submission-issue-job',
+                    submissionItemIndex: 0,
+                    submissionItemCount: 1,
                     state: 'JOB_STATE_SUCCEEDED',
                     model: 'gemini-3.1-flash-image-preview',
                     prompt: 'Issue prompt',
@@ -368,7 +397,7 @@ describe('workspacePersistence', () => {
                     includeThoughts: true,
                     googleSearch: false,
                     imageSearch: false,
-                    batchSize: 2,
+                    batchSize: 1,
                     objectImageCount: 0,
                     characterImageCount: 0,
                     createdAt: 1710400000000,

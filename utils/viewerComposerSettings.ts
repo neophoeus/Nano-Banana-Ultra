@@ -12,6 +12,7 @@ import {
 } from '../types';
 import { getGroundingFlagsFromMode } from './groundingMode';
 import { IMAGE_MODELS, MODEL_CAPABILITIES } from './modelCapabilities';
+import { normalizeTemperature } from './temperature';
 import { EMPTY_WORKSPACE_COMPOSER_STATE } from './workspacePersistence';
 
 type ViewerComposerSettingsState = Pick<
@@ -69,8 +70,6 @@ const isGroundingModeValue = (value: unknown): value is GroundingMode =>
     value === 'google-search' ||
     value === 'image-search' ||
     value === 'google-search-plus-image-search';
-
-const clampTemperature = (value: number) => Math.max(0, Math.min(2, value));
 
 const normalizeViewerBatchSize = (value: number) => Math.max(1, Math.round(value));
 
@@ -178,20 +177,20 @@ export const normalizeViewerComposerSettingsSnapshot = (
             : capability.supportedRatios[0] || snapshot.aspectRatio;
     const imageSize =
         capability.supportedSizes.length === 0
-                        ? currentImageSize
-                        : snapshot.imageSize && capability.supportedSizes.includes(snapshot.imageSize)
+            ? currentImageSize
+            : snapshot.imageSize && capability.supportedSizes.includes(snapshot.imageSize)
               ? snapshot.imageSize
               : capability.supportedSizes.includes('1K')
                 ? '1K'
                 : capability.supportedSizes.includes(EMPTY_WORKSPACE_COMPOSER_STATE.imageSize)
                   ? EMPTY_WORKSPACE_COMPOSER_STATE.imageSize
-                                    : capability.supportedSizes[0] || currentImageSize;
+                  : capability.supportedSizes[0] || currentImageSize;
     const outputFormat =
         snapshot.outputFormat && capability.outputFormats.includes(snapshot.outputFormat)
             ? snapshot.outputFormat
             : fallbackOutputFormat;
     const temperature = capability.supportsTemperature
-        ? clampTemperature(
+        ? normalizeTemperature(
               typeof snapshot.temperature === 'number' && Number.isFinite(snapshot.temperature)
                   ? snapshot.temperature
                   : EMPTY_WORKSPACE_COMPOSER_STATE.temperature,

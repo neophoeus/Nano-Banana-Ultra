@@ -14,6 +14,7 @@ import {
     WorkspaceComposerState,
 } from '../types';
 import { getGroundingFlagsFromMode } from '../utils/groundingMode';
+import { normalizeTemperature } from '../utils/temperature';
 import { normalizeViewerComposerSettingsSnapshot } from '../utils/viewerComposerSettings';
 import { buildDisplaySettingsFromComposerState } from '../utils/workspaceSnapshotState';
 
@@ -89,7 +90,7 @@ export function useComposerState({
     const [imageModel, setImageModel] = useState<ImageModel>(initialComposerState.imageModel);
     const [batchSize, setBatchSize] = useState(initialComposerState.batchSize);
     const [outputFormat, setOutputFormat] = useState<OutputFormat>(initialComposerState.outputFormat);
-    const [temperature, setTemperature] = useState(initialComposerState.temperature);
+    const [temperature, setTemperatureState] = useState(normalizeTemperature(initialComposerState.temperature));
     const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel>(initialComposerState.thinkingLevel);
     const [includeThoughts, setIncludeThoughts] = useState(initialComposerState.includeThoughts);
     const [googleSearch, setGoogleSearch] = useState(initialComposerState.googleSearch);
@@ -97,6 +98,10 @@ export function useComposerState({
     const [stickySendIntent, setStickySendIntent] = useState<StickySendIntent>(
         initialComposerState.stickySendIntent ?? 'independent',
     );
+
+    const setTemperature: Dispatch<SetStateAction<number>> = useCallback((value) => {
+        setTemperatureState((previous) => normalizeTemperature(typeof value === 'function' ? value(previous) : value));
+    }, []);
 
     const composerState = useMemo<WorkspaceComposerState>(
         () => ({
@@ -153,7 +158,7 @@ export function useComposerState({
             setImageModel(nextComposerState.imageModel);
             setBatchSize(nextComposerState.batchSize);
             setOutputFormat(nextComposerState.outputFormat);
-            setTemperature(nextComposerState.temperature);
+            setTemperature(normalizeTemperature(nextComposerState.temperature));
             setThinkingLevel(nextComposerState.thinkingLevel);
             setIncludeThoughts(nextComposerState.includeThoughts);
             setGoogleSearch(nextComposerState.googleSearch);
@@ -228,7 +233,7 @@ export function useComposerState({
                 setOutputFormat(snapshot.outputFormat);
             }
             if (typeof snapshot.temperature === 'number') {
-                setTemperature(snapshot.temperature);
+                setTemperature(normalizeTemperature(snapshot.temperature));
             }
             if (snapshot.thinkingLevel) {
                 setThinkingLevel(snapshot.thinkingLevel);

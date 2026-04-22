@@ -235,6 +235,9 @@ export interface QueuedBatchJob {
     localId: string;
     name: string;
     displayName: string;
+    submissionGroupId: string;
+    submissionItemIndex: number;
+    submissionItemCount: number;
     restoredFromSnapshot?: boolean;
     state: QueuedBatchJobState;
     model: ImageModel;

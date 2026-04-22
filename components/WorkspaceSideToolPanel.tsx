@@ -46,6 +46,10 @@ function WorkspaceSideToolPanel({
     const [isReferencesOpen, setIsReferencesOpen] = React.useState(false);
     const actionButtonClassName =
         'min-w-0 justify-start rounded-[14px] px-2.5 py-2 whitespace-normal text-left text-[12px] font-semibold leading-[1.15]';
+    const referenceSummaryRowClassName = 'flex min-w-0 items-center justify-between gap-2 rounded-[10px] px-2 py-1';
+    const referenceSummaryLabelClassName = 'min-w-0 truncate text-[11px] font-semibold';
+    const referenceSummaryCountClassName =
+        'inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[11px] font-black tracking-[0.04em]';
     const uploadToRepaintIcon = (
         <svg
             aria-hidden="true"
@@ -212,20 +216,35 @@ function WorkspaceSideToolPanel({
                         >
                             <div
                                 data-testid="workspace-side-tools-references-summary"
-                                className="min-w-0 flex flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-[11px]"
+                                className="grid min-w-0 flex-1 gap-1"
                             >
                                 {referenceSummaryItems.map((item) => (
-                                    <span
+                                    <div
                                         key={item.key}
                                         data-testid={`workspace-side-tools-references-summary-${item.key}`}
                                         className={
                                             item.isActive
-                                                ? 'shrink-0 font-black tracking-[0.01em] text-amber-700 dark:text-amber-200'
-                                                : 'shrink-0 font-semibold text-slate-500 dark:text-slate-400'
+                                                ? `${referenceSummaryRowClassName} bg-amber-50/90 text-slate-700 dark:bg-amber-500/10 dark:text-slate-100`
+                                                : `${referenceSummaryRowClassName} bg-slate-100/80 text-slate-500 dark:bg-slate-800/80 dark:text-slate-300`
                                         }
                                     >
-                                        {`${item.label} ${item.count}/${item.max}`}
-                                    </span>
+                                        <span
+                                            data-testid={`workspace-side-tools-references-summary-${item.key}-label`}
+                                            className={referenceSummaryLabelClassName}
+                                        >
+                                            {item.label}
+                                        </span>
+                                        <span
+                                            data-testid={`workspace-side-tools-references-summary-${item.key}-count`}
+                                            className={
+                                                item.isActive
+                                                    ? `${referenceSummaryCountClassName} border-amber-300/80 bg-white/90 text-amber-700 dark:border-amber-400/30 dark:bg-slate-950/70 dark:text-amber-200`
+                                                    : `${referenceSummaryCountClassName} border-slate-200/80 bg-white/80 text-slate-600 dark:border-slate-700/80 dark:bg-slate-950/60 dark:text-slate-300`
+                                            }
+                                        >
+                                            {`${item.count}/${item.max}`}
+                                        </span>
+                                    </div>
                                 ))}
                             </div>
                         </button>

@@ -159,4 +159,14 @@ describe('useComposerState viewer apply', () => {
             }),
         );
     });
+
+    it('quantizes direct composer temperature updates to the nearest 0.05 increment', () => {
+        renderHook();
+
+        flushSync(() => {
+            latestHook!.setTemperature(1.03);
+        });
+
+        expect(latestHook!.composerState.temperature).toBe(1.05);
+    });
 });

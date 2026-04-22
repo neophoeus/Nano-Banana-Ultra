@@ -1,5 +1,64 @@
 # Changelog
 
+## v3.6.5 - 2026-04-22
+
+- Release title: Nano Banana Ultra 3.6.5 - Grouped Queue Tracking, Localized Runtime Labels & Cleaner Detail Navigation
+- Release summary:
+    - grouped queued-batch submission tracking:
+        - queued quantity now fans out into separate official batch jobs instead of one multi-request child payload, and the queued-jobs panel regroups those sibling jobs under one submission card with per-item numbering, grouped status chips, and clearer import/open cleanup flows
+        - restored queue space now keeps only submission-group-aware batch records, so older legacy queue entries that cannot round-trip through the grouped tracking model no longer come back as misleading import-ready jobs
+
+    - broader runtime localization parity:
+        - output format, thinking level, grounding mode, aspect-ratio labels, and temperature readback now resolve through translation-backed runtime labels across advanced settings, shared controls, viewer metadata, provenance details, and picker/tooltips instead of mixing localized shells with hard-coded English control text
+        - maintained locale dictionaries now carry matching runtime wording for queue launchers, queue actions, queued-result badges, import-review execution labels, and advanced-settings summaries so the shell reads as one coherent localized product surface
+
+    - cleaner support and reset guidance surfaces:
+        - the Progress and Support detail views now open directly from the top launcher rail without the older in-modal tab chip switcher, keeping those support surfaces as single-purpose detail entries instead of one shared tabbed header
+        - Clear Workspace guidance now tells the truth about what resets locally versus what stays available in the shared queued-batch space, and recommends exporting the workspace before destructive reset
+
+    - all-locale queue wording cleanup:
+        - queue stage, reference-driven, prompt-only, and follow-up wording was rewritten across maintained locales so queued actions consistently distinguish fresh batch submission from stage-image continuation instead of reusing older mixed or overly literal phrasing
+        - history and imported-result surfaces now use the newer queued-result naming family, aligning the queue launcher, queued jobs panel, and restored-result badges under the same product vocabulary
+
+    - prompt textarea lane refinement:
+        - the main prompt textarea now keeps its native scrollbar in a dedicated lane between typed content and the inline clear / Enter-behavior controls instead of leaving the scrollbar pinned to the far-right edge of the whole prompt card
+        - the inline clear button and vertical Enter toggle now share one local right-side spacing contract, so both controls shift right together while staying aligned with the textarea reserve width
+
+## v3.6.4 - 2026-04-21
+
+- Release title: Nano Banana Ultra 3.6.4 - Canonical Empty-Workspace Baseline, Queue Truth & Composer Shell Refinement
+- Release summary:
+    - canonical empty-workspace baseline:
+        - fresh workspace load and `Clear Workspace` now resolve through one explicit empty-workspace composer baseline, keeping `Nano Banana 2`, `1:1`, `2K`, `1x`, `Images only`, `1.0`, `Minimal`, and `Grounding Off` aligned as the shared reset/start point
+
+    - finer temperature control:
+        - advanced settings temperature slider and numeric input now move in `0.05` increments instead of `0.1`, allowing narrower generation tuning without forcing a full tenth-step jump
+        - temperature values now stay on one shared `0.05` contract across settings edits, viewer-applied settings, restored workspaces, generated metadata, and request assembly instead of drifting between different paths
+
+    - more truthful temperature readback across surfaces:
+        - advanced settings, composer summaries, shared controls, and viewer metadata now all render temperature with one decimal when exact and two decimals only when needed
+        - values such as `1.05` now reopen, summarize, and round-trip as `1.05` instead of being flattened to `1.1`
+
+    - truthful fresh-vs-follow-up generation and queue semantics:
+        - `Generate` now stays a fresh prompt-driven action even when a stage image is visible, instead of silently switching into staged-image continuation behavior
+        - `Continue with this image` is now the dedicated stage-image follow-up path, and queued submission mirrors the same split through `Queue` and `Queue with this image`
+        - queue mode wording now tells the truth when a staged image is being ignored for a fresh queued generate, while reference-backed requests still surface as image-conditioned or mixed-mode flows where applicable
+
+    - unified queue actions and top-shell queue ownership:
+        - queue submit actions now sit directly with the main generate actions inside the composer action card instead of reading as a separate footer-owned workflow
+        - queued submit wording was shortened to the final `Queue` and `Queue with this image` action labels, matching the fresh-vs-follow-up split and the main generate action pattern
+        - the standalone queue-status entry moved out of the composer footer and into the desktop top launcher rail beside `Progress` and `Support`, so queued batch details now open from one shared shell-owned entry point
+
+    - compact inline Enter behavior control:
+        - the Enter behavior control now lives inside the prompt textarea as a compact vertical toggle instead of an external action strip
+        - the selected thumb now stays visually aligned with the real send/newline mode instead of drifting out of sync with the active behavior
+        - maintained locale dictionaries now use fixed two-line Enter labels so the compact toggle width stays stable across languages instead of relying on natural wrapping heuristics
+        - prompt safe-area spacing around the inline Enter toggle and clear button was tightened so the bottom and right text clearance better match the top inset
+
+    - desktop shell and reset-flow polish:
+        - the desktop top shell now uses a `40/60` split between the main header bar and the launcher rail, and the right rail renders equal-width `Progress`, `Support`, and `Queue` launchers
+        - `Clear Workspace` confirmation now opens through the app-level overlay stack instead of an inline history-panel overlay, so the reset dialog presents as one top-layer modal over the workspace shell
+
 ## v3.6.3 - 2026-04-20
 
 - Release title: Nano Banana Ultra 3.6.3 - Leaner Shell Ownership, Narrower Settings Surfaces & On-Demand Detail Panels

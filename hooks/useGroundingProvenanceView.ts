@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { GenerationSettings, GroundingMetadata, ResultPart, WorkspaceSessionState } from '../types';
-import { deriveGroundingMode, getGroundingModeLabel } from '../utils/groundingMode';
+import { deriveGroundingMode, getGroundingModeTranslationKey } from '../utils/groundingMode';
 import { buildGroundingAttributionDetails, buildGroundingAttributionOverview } from '../utils/groundingProvenance';
 import { getImageSidecarMetadataState, isPersistedImageSidecarMetadata } from '../utils/imageSidecarMetadata';
 import {
@@ -169,7 +169,7 @@ export function useGroundingProvenanceView({
         ? OUTPUT_DIMENSION_SIZE_LABELS[actualOutputDimensions] || actualOutputDimensions
         : null;
     const effectiveGroundingMode = deriveGroundingMode(viewSettings.googleSearch, viewSettings.imageSearch);
-    const effectiveGroundingModeLabel = getGroundingModeLabel(effectiveGroundingMode);
+    const effectiveGroundingModeLabel = t(getGroundingModeTranslationKey(effectiveGroundingMode));
     const effectiveRequestedImageSize =
         requestedImageSize || fallbackRequestedImageSize || t('groundingProvenanceNone');
     const groundingResolutionStatusSummary =
@@ -188,10 +188,12 @@ export function useGroundingProvenanceView({
         : null;
     const metadataGroundingLabel =
         typeof effectiveMetadata?.googleSearch === 'boolean' || typeof effectiveMetadata?.imageSearch === 'boolean'
-            ? getGroundingModeLabel(
-                  deriveGroundingMode(
-                      Boolean(effectiveMetadata?.googleSearch),
-                      Boolean(effectiveMetadata?.imageSearch),
+            ? t(
+                  getGroundingModeTranslationKey(
+                      deriveGroundingMode(
+                          Boolean(effectiveMetadata?.googleSearch),
+                          Boolean(effectiveMetadata?.imageSearch),
+                      ),
                   ),
               )
             : null;
@@ -266,7 +268,11 @@ export function useGroundingProvenanceView({
                 label: t('groundingProvenanceInsightGrounding'),
                 value: resolveMetadataInsightValue(
                     metadataGroundingLabel,
-                    getGroundingModeLabel(deriveGroundingMode(viewSettings.googleSearch, viewSettings.imageSearch)),
+                    t(
+                        getGroundingModeTranslationKey(
+                            deriveGroundingMode(viewSettings.googleSearch, viewSettings.imageSearch),
+                        ),
+                    ),
                 ),
             },
             {

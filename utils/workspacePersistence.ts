@@ -23,6 +23,7 @@ import { resolveDisplayGenerationFailureInfo } from './generationFailure';
 import { sanitizeSessionHintsForStorage } from './inlineImageDisplay';
 import { buildLineagePresentation } from './lineage';
 import { normalizeImageStyle } from './styleRegistry';
+import { DEFAULT_TEMPERATURE, normalizeTemperature } from './temperature';
 
 export const WORKSPACE_SNAPSHOT_STORAGE_KEY = 'nbu_workspaceSnapshot';
 export const SHARED_WORKSPACE_SNAPSHOT_ENDPOINT = '/api/workspace-snapshot';
@@ -67,7 +68,7 @@ export const EMPTY_WORKSPACE_COMPOSER_STATE: WorkspaceComposerState = {
     imageModel: 'gemini-3.1-flash-image-preview',
     batchSize: 1,
     outputFormat: 'images-only',
-    temperature: 1,
+    temperature: DEFAULT_TEMPERATURE,
     thinkingLevel: 'minimal',
     includeThoughts: true,
     googleSearch: false,
@@ -621,6 +622,9 @@ export const sanitizeQueuedBatchJobs = (value: unknown): QueuedBatchJob[] => {
                 typeof item.localId === 'string' &&
                 typeof item.name === 'string' &&
                 typeof item.displayName === 'string' &&
+                typeof item.submissionGroupId === 'string' &&
+                typeof item.submissionItemIndex === 'number' &&
+                typeof item.submissionItemCount === 'number' &&
                 typeof item.state === 'string' &&
                 typeof item.model === 'string' &&
                 typeof item.prompt === 'string' &&
@@ -643,17 +647,27 @@ export const sanitizeQueuedBatchJobs = (value: unknown): QueuedBatchJob[] => {
             return [];
         }
 
+        if (
+            !Number.isFinite(item.submissionItemIndex) ||
+            !Number.isFinite(item.submissionItemCount) ||
+            item.submissionItemCount < 1 ||
+            item.submissionItemIndex < 0 ||
+            item.submissionItemIndex >= item.submissionItemCount ||
+            Math.floor(item.batchSize) !== 1 ||
+            item.submissionGroupId.trim().length === 0
+        ) {
+            return [];
+        }
+
         const importDiagnostic =
             item.importDiagnostic === 'no-payload' || item.importDiagnostic === 'extraction-failure'
                 ? item.importDiagnostic
                 : null;
         const hasExplicitImportIssues = Array.isArray(item.importIssues) || item.importIssues === null;
         const importIssues = sanitizeQueuedBatchJobImportIssues(item.importIssues);
-                const migratedHasImportablePayload =
-                        typeof item.hasImportablePayload === 'boolean'
-                                ? item.hasImportablePayload
-                                : typeof item.hasInlinedResponses === 'boolean'
-                                    ? item.hasInlinedResponses
+        const resolvedHasImportablePayload =
+            typeof item.hasImportablePayload === 'boolean'
+                ? item.hasImportablePayload
                 : importDiagnostic === 'extraction-failure'
                   ? true
                   : importDiagnostic === 'no-payload'
@@ -671,8 +685,8 @@ export const sanitizeQueuedBatchJobs = (value: unknown): QueuedBatchJob[] => {
                 style: normalizeImageStyle(item.style),
                 ...(importDiagnostic ? { importDiagnostic } : {}),
                 ...(hasExplicitImportIssues ? { importIssues: importIssues.length > 0 ? importIssues : null } : {}),
-                ...(typeof migratedHasImportablePayload === 'boolean'
-                    ? { hasImportablePayload: migratedHasImportablePayload }
+                ...(typeof resolvedHasImportablePayload === 'boolean'
+                    ? { hasImportablePayload: resolvedHasImportablePayload }
                     : {}),
             },
         ];
@@ -839,10 +853,11 @@ const sanitizeWorkspaceComposerState = (value: unknown): WorkspaceComposerState 
             typeof value.batchSize === 'number' && Number.isFinite(value.batchSize)
                 ? value.batchSize
                 : EMPTY_WORKSPACE_COMPOSER_STATE.batchSize,
-        temperature:
+        temperature: normalizeTemperature(
             typeof value.temperature === 'number' && Number.isFinite(value.temperature)
                 ? value.temperature
                 : EMPTY_WORKSPACE_COMPOSER_STATE.temperature,
+        ),
         includeThoughts: Boolean(value.includeThoughts),
         googleSearch: Boolean(value.googleSearch),
         imageSearch: Boolean(value.imageSearch),

@@ -30,19 +30,18 @@ const baseProps = {
     temperature: 1,
     isAdvancedSettingsOpen: true,
     generateLabel: 'Generate',
-    queuedJobs: [],
     isQueueBatchDisabled: false,
     queueBatchDisabledReason: null,
     queueBatchModeSummary: 'Queued batch runs as a separate official job workflow.',
+    queueBatchGenerateModeSummary: 'Queued prompt-only batch ignores the staged image.',
     queueBatchConversationNotice: 'Official chat continuation stays out of queued batch mode.',
-    getImportedQueuedResultCount: () => 0,
     onPromptChange: vi.fn(),
     stickySendIntent: 'independent' as const,
     onStickySendIntentChange: vi.fn(),
     onToggleEnterToSubmit: vi.fn(),
     onGenerate: vi.fn(),
     onQueueBatchJob: vi.fn(),
-    onOpenQueuedBatchJobs: vi.fn(),
+    onQueueBatchFollowUpJob: vi.fn(),
     onCancelGeneration: vi.fn(),
     onStartNewConversation: vi.fn(),
     onFollowUpGenerate: vi.fn(),
@@ -275,6 +274,40 @@ describe('ComposerSettingsPanel prompt focus wiring', () => {
         expect(onToggleEnterToSubmit).toHaveBeenCalledTimes(1);
     });
 
+    it('keeps the active thumb aligned with the selected Enter behavior option', () => {
+        act(() => {
+            root.render(<ComposerSettingsPanel {...baseProps} />);
+        });
+
+        let thumb = container.querySelector('[data-testid="composer-enter-behavior-thumb"]') as HTMLSpanElement;
+        let sendOption = container.querySelector(
+            '[data-testid="composer-enter-behavior-send-option"]',
+        ) as HTMLSpanElement;
+        let newlineOption = container.querySelector(
+            '[data-testid="composer-enter-behavior-newline-option"]',
+        ) as HTMLSpanElement;
+
+        expect(thumb.getAttribute('data-active-mode')).toBe('newline');
+        expect(thumb.className).toContain('top-[calc(50%+0.125rem)]');
+        expect(sendOption.getAttribute('data-selected')).toBe('false');
+        expect(newlineOption.getAttribute('data-selected')).toBe('true');
+
+        act(() => {
+            root.render(<ComposerSettingsPanel {...baseProps} enterToSubmit={true} />);
+        });
+
+        thumb = container.querySelector('[data-testid="composer-enter-behavior-thumb"]') as HTMLSpanElement;
+        sendOption = container.querySelector('[data-testid="composer-enter-behavior-send-option"]') as HTMLSpanElement;
+        newlineOption = container.querySelector(
+            '[data-testid="composer-enter-behavior-newline-option"]',
+        ) as HTMLSpanElement;
+
+        expect(thumb.getAttribute('data-active-mode')).toBe('send');
+        expect(thumb.className).toContain('top-px');
+        expect(sendOption.getAttribute('data-selected')).toBe('true');
+        expect(newlineOption.getAttribute('data-selected')).toBe('false');
+    });
+
     it('routes bare Enter through Generate when Enter submit is active without a staged image', () => {
         const onGenerate = vi.fn();
         const onFollowUpGenerate = vi.fn();
@@ -331,6 +364,44 @@ describe('ComposerSettingsPanel prompt focus wiring', () => {
 
         expect(onGenerate).not.toHaveBeenCalled();
         expect(onFollowUpGenerate).toHaveBeenCalledTimes(1);
+    });
+
+    it('routes staged queue buttons through separate follow-up and generate handlers', () => {
+        const onQueueBatchJob = vi.fn();
+        const onQueueBatchFollowUpJob = vi.fn();
+
+        act(() => {
+            root.render(
+                <ComposerSettingsPanel
+                    {...baseProps}
+                    currentStageAsset={{
+                        id: 'stage-source-1',
+                        url: 'https://example.com/stage-source.png',
+                        role: 'stage-source',
+                        origin: 'history',
+                        createdAt: 1710400010000,
+                        lineageAction: 'reopen',
+                    }}
+                    onQueueBatchJob={onQueueBatchJob}
+                    onQueueBatchFollowUpJob={onQueueBatchFollowUpJob}
+                />,
+            );
+        });
+
+        const primaryQueueButton = container.querySelector(
+            '[data-testid="composer-queue-batch-primary-button"]',
+        ) as HTMLButtonElement;
+        const generateQueueButton = container.querySelector(
+            '[data-testid="composer-queue-batch-generate-button"]',
+        ) as HTMLButtonElement;
+
+        act(() => {
+            primaryQueueButton.click();
+            generateQueueButton.click();
+        });
+
+        expect(onQueueBatchFollowUpJob).toHaveBeenCalledTimes(1);
+        expect(onQueueBatchJob).toHaveBeenCalledTimes(1);
     });
 
     it('keeps Shift+Enter as newline behavior even when Enter submit is active', () => {
@@ -563,57 +634,4 @@ describe('ComposerSettingsPanel prompt focus wiring', () => {
         expect(container.textContent).toContain('New Conversation');
     });
 
-    it('opens the queued jobs modal from the status button when tracked jobs exist', () => {
-        const onOpenQueuedBatchJobs = vi.fn();
-
-        act(() => {
-            root.render(
-                <ComposerSettingsPanel
-                    {...baseProps}
-                    queuedJobs={
-                        [
-                            {
-                                localId: 'job-ready',
-                                name: 'batches/job-ready',
-                                displayName: 'Ready queue job',
-                                state: 'JOB_STATE_SUCCEEDED',
-                                model: 'gemini-3.1-flash-image-preview',
-                                prompt: 'Import later',
-                                generationMode: 'Text to Image',
-                                aspectRatio: '1:1',
-                                imageSize: '1K',
-                                style: 'None',
-                                outputFormat: 'images-only',
-                                temperature: 1,
-                                thinkingLevel: 'minimal',
-                                includeThoughts: true,
-                                googleSearch: false,
-                                imageSearch: false,
-                                batchSize: 1,
-                                objectImageCount: 0,
-                                characterImageCount: 0,
-                                createdAt: 1710400000000,
-                                updatedAt: 1710400010000,
-                                startedAt: 1710400005000,
-                                completedAt: 1710400010000,
-                                lastPolledAt: 1710400010000,
-                                error: null,
-                            },
-                        ] as any
-                    }
-                    onOpenQueuedBatchJobs={onOpenQueuedBatchJobs}
-                />,
-            );
-        });
-
-        const queueStatusButton = container.querySelector(
-            '[data-testid="composer-queue-status-button"]',
-        ) as HTMLButtonElement;
-
-        act(() => {
-            queueStatusButton.click();
-        });
-
-        expect(onOpenQueuedBatchJobs).toHaveBeenCalledTimes(1);
-    });
 });

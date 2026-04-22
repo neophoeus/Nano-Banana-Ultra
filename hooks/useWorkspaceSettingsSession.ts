@@ -11,6 +11,7 @@ import {
     WorkspaceSettingsDraft,
 } from '../types';
 import { getAvailableGroundingModes, getGroundingFlagsFromMode } from '../utils/groundingMode';
+import { normalizeTemperature } from '../utils/temperature';
 
 type GenerationSettingsDraft = Pick<WorkspaceSettingsDraft, 'imageModel' | 'aspectRatio' | 'imageSize' | 'batchSize'>;
 
@@ -118,7 +119,7 @@ export function useWorkspaceSettingsSession({
                 aspectRatio: nextAspectRatio,
                 imageSize: nextImageSize,
                 outputFormat: nextOutputFormat,
-                temperature: Math.max(0, Math.min(2, draft.temperature)),
+                temperature: normalizeTemperature(draft.temperature),
                 thinkingLevel: nextThinkingLevel,
                 groundingMode: nextGroundingMode,
             };

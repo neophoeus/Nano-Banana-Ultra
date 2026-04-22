@@ -47,6 +47,32 @@ export const getGroundingModeLabel = (mode: GroundingMode): string => {
     }
 };
 
+export const getGroundingModeTranslationKey = (mode: GroundingMode): string => {
+    switch (mode) {
+        case 'google-search':
+            return 'groundingModeGoogleSearch';
+        case 'image-search':
+            return 'groundingModeImageSearch';
+        case 'google-search-plus-image-search':
+            return 'groundingModeGoogleSearchPlusImageSearch';
+        default:
+            return 'groundingModeOff';
+    }
+};
+
+export const getGroundingModeSummaryTranslationKey = (mode: GroundingMode): string => {
+    switch (mode) {
+        case 'google-search':
+            return 'groundingModeSummaryGoogleSearch';
+        case 'image-search':
+            return 'groundingModeSummaryImageSearch';
+        case 'google-search-plus-image-search':
+            return 'groundingModeSummaryGoogleSearchPlusImageSearch';
+        default:
+            return 'groundingModeOff';
+    }
+};
+
 export const getAvailableGroundingModes = (capability: GroundingCapabilityLike): GroundingMode[] => {
     const modes: GroundingMode[] = ['off'];
 

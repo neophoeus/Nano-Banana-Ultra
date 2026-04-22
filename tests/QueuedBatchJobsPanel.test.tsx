@@ -2,8 +2,45 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import './setupTranslations';
 import QueuedBatchJobsPanel from '../components/QueuedBatchJobsPanel';
+import { QueuedBatchJob } from '../types';
 
 const QUEUED_IMPORTED_DATA_URL = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+
+const buildQueuedJob = (overrides: Partial<QueuedBatchJob> = {}): QueuedBatchJob => ({
+    localId: overrides.localId || 'queued-job-1',
+    name: overrides.name || `batches/${overrides.localId || 'queued-job-1'}`,
+    displayName: overrides.displayName || 'Queued job',
+    submissionGroupId: overrides.submissionGroupId || `submission-${overrides.localId || 'queued-job-1'}`,
+    submissionItemIndex: overrides.submissionItemIndex ?? 0,
+    submissionItemCount: overrides.submissionItemCount ?? 1,
+    state: overrides.state || 'JOB_STATE_PENDING',
+    model: overrides.model || 'gemini-3.1-flash-image-preview',
+    prompt: overrides.prompt || 'Queued prompt',
+    generationMode: overrides.generationMode || 'Text to Image',
+    aspectRatio: overrides.aspectRatio || '1:1',
+    imageSize: overrides.imageSize || '1K',
+    style: overrides.style || 'None',
+    outputFormat: overrides.outputFormat || 'images-only',
+    temperature: overrides.temperature ?? 1,
+    thinkingLevel: overrides.thinkingLevel || 'minimal',
+    includeThoughts: overrides.includeThoughts ?? true,
+    googleSearch: overrides.googleSearch ?? false,
+    imageSearch: overrides.imageSearch ?? false,
+    batchSize: overrides.batchSize ?? 1,
+    batchStats: overrides.batchStats,
+    objectImageCount: overrides.objectImageCount ?? 0,
+    characterImageCount: overrides.characterImageCount ?? 0,
+    createdAt: overrides.createdAt ?? 1710400000000,
+    updatedAt: overrides.updatedAt ?? 1710400005000,
+    startedAt: overrides.startedAt ?? null,
+    completedAt: overrides.completedAt ?? null,
+    lastPolledAt: overrides.lastPolledAt ?? null,
+    hasImportablePayload: overrides.hasImportablePayload,
+    restoredFromSnapshot: overrides.restoredFromSnapshot,
+    error: overrides.error ?? null,
+    sourceHistoryId: overrides.sourceHistoryId ?? null,
+    lineageAction: overrides.lineageAction,
+});
 
 describe('QueuedBatchJobsPanel', () => {
     it('renders queue summary counts, job states, timelines, and job actions', () => {
@@ -12,42 +49,24 @@ describe('QueuedBatchJobsPanel', () => {
                 currentLanguage="en"
                 queueBatchConversationNotice="Queued batch jobs keep source lineage, but they do not send official multi-turn conversation history."
                 queuedJobs={[
-                    {
+                    buildQueuedJob({
                         localId: 'job-pending',
                         name: 'batches/job-pending',
                         displayName: 'Pending panorama batch',
                         state: 'JOB_STATE_PENDING',
-                        model: 'gemini-3.1-flash-image-preview',
                         prompt: 'Create a queued panorama',
-                        generationMode: 'Text to Image',
                         aspectRatio: '16:9',
-                        imageSize: '1K',
-                        style: 'None',
-                        outputFormat: 'images-only',
-                        temperature: 1,
-                        thinkingLevel: 'minimal',
-                        includeThoughts: true,
-                        googleSearch: false,
-                        imageSearch: false,
-                        batchSize: 1,
                         batchStats: {
-                            requestCount: 2,
+                            requestCount: 1,
                             successfulRequestCount: 0,
                             failedRequestCount: 0,
-                            pendingRequestCount: 2,
+                            pendingRequestCount: 1,
                         },
-                        objectImageCount: 0,
-                        characterImageCount: 0,
-                        createdAt: 1710400000000,
                         updatedAt: 1710400000000,
-                        startedAt: null,
-                        completedAt: null,
-                        lastPolledAt: null,
-                        error: null,
                         sourceHistoryId: 'queued-source-turn',
                         lineageAction: 'continue',
-                    },
-                    {
+                    }),
+                    buildQueuedJob({
                         localId: 'job-ready',
                         name: 'batches/job-ready',
                         displayName: 'Ready character batch',
@@ -55,16 +74,8 @@ describe('QueuedBatchJobsPanel', () => {
                         model: 'gemini-3-pro-image-preview',
                         prompt: 'Import queued character results',
                         generationMode: 'Follow-up Edit',
-                        aspectRatio: '1:1',
-                        imageSize: '1K',
                         style: 'Anime',
                         outputFormat: 'images-and-text',
-                        temperature: 1,
-                        thinkingLevel: 'minimal',
-                        includeThoughts: true,
-                        googleSearch: false,
-                        imageSearch: false,
-                        batchSize: 1,
                         batchStats: {
                             requestCount: 1,
                             successfulRequestCount: 1,
@@ -79,63 +90,35 @@ describe('QueuedBatchJobsPanel', () => {
                         completedAt: 1710400020000,
                         lastPolledAt: 1710400030000,
                         hasImportablePayload: true,
-                        error: null,
-                    },
-                    {
+                    }),
+                    buildQueuedJob({
                         localId: 'job-imported',
                         name: 'batches/job-imported',
                         displayName: 'Imported archive batch',
                         state: 'JOB_STATE_SUCCEEDED',
-                        model: 'gemini-3.1-flash-image-preview',
                         prompt: 'Imported queued results',
-                        generationMode: 'Text to Image',
-                        aspectRatio: '1:1',
-                        imageSize: '1K',
-                        style: 'None',
-                        outputFormat: 'images-only',
-                        temperature: 1,
-                        thinkingLevel: 'minimal',
-                        includeThoughts: true,
-                        googleSearch: false,
-                        imageSearch: false,
-                        batchSize: 1,
-                        objectImageCount: 0,
-                        characterImageCount: 0,
                         createdAt: 1710400040000,
                         updatedAt: 1710400060000,
                         startedAt: 1710400045000,
                         completedAt: 1710400050000,
                         lastPolledAt: 1710400060000,
-                        error: null,
-                    },
-                    {
+                        hasImportablePayload: true,
+                    }),
+                    buildQueuedJob({
                         localId: 'job-failed',
                         name: 'batches/job-failed',
                         displayName: 'Failed storyboard batch',
                         restoredFromSnapshot: true,
                         state: 'JOB_STATE_FAILED',
-                        model: 'gemini-3.1-flash-image-preview',
                         prompt: 'Generate failed storyboard',
-                        generationMode: 'Text to Image',
                         aspectRatio: '16:9',
-                        imageSize: '1K',
-                        style: 'None',
-                        outputFormat: 'images-only',
-                        temperature: 1,
-                        thinkingLevel: 'minimal',
-                        includeThoughts: true,
-                        googleSearch: false,
-                        imageSearch: false,
-                        batchSize: 4,
-                        objectImageCount: 0,
-                        characterImageCount: 0,
                         createdAt: 1710400070000,
                         updatedAt: 1710400080000,
                         startedAt: 1710400075000,
                         completedAt: 1710400080000,
                         lastPolledAt: 1710400080000,
                         error: 'Upstream batch failed.',
-                    },
+                    }),
                 ]}
                 getLineageActionLabel={(action) => action || 'root'}
                 getImportedQueuedResultCount={(job) => (job.localId === 'job-imported' ? 2 : 0)}
@@ -214,11 +197,11 @@ describe('QueuedBatchJobsPanel', () => {
         expect(markup).toContain('Pending panorama batch');
         expect(markup).toContain('Pending');
         expect(markup).toContain('queued-batch-job-job-pending-request-count');
-        expect(markup).toContain('2 request(s)');
+        expect(markup).toContain('1x');
         expect(markup).toContain('queued-batch-job-job-pending-resource-name');
         expect(markup).toContain('batches/job-pending');
         expect(markup).toContain('queued-batch-job-job-pending-batch-stats');
-        expect(markup).toContain('0 Succeeded · 2 Pending · 0 Failed');
+        expect(markup).toContain('0 Succeeded · 1 Pending · 0 Failed');
         expect(markup).toContain('Ready character batch');
         expect(markup).toContain('Succeeded');
         expect(markup).toContain('1 Succeeded · 0 Pending · 0 Failed');
@@ -278,46 +261,51 @@ describe('QueuedBatchJobsPanel', () => {
         expect(markup).toContain('queued-batch-job-job-failed-restored-history-note');
     });
 
-    it('renders authoritative request count and resource name when local batch size is stale', () => {
+    it('renders grouped submissions with quantity badges and per-item labels', () => {
         const markup = renderToStaticMarkup(
             <QueuedBatchJobsPanel
                 currentLanguage="en"
                 queueBatchConversationNotice={null}
                 queuedJobs={[
-                    {
-                        localId: 'job-stale-count',
-                        name: 'batches/job-stale-count',
-                        displayName: 'Stale count batch',
-                        state: 'JOB_STATE_SUCCEEDED',
-                        model: 'gemini-3.1-flash-image-preview',
-                        prompt: 'Prompt',
-                        generationMode: 'Text to Image',
-                        aspectRatio: '1:1',
-                        imageSize: '1K',
-                        style: 'None',
-                        outputFormat: 'images-only',
-                        temperature: 1,
-                        thinkingLevel: 'minimal',
-                        includeThoughts: false,
-                        googleSearch: false,
-                        imageSearch: false,
-                        batchSize: 1,
+                    buildQueuedJob({
+                        localId: 'job-stale-count-1',
+                        name: 'batches/job-stale-count-1',
+                        displayName: 'Grouped count batch',
+                        submissionGroupId: 'submission-stale-count',
+                        submissionItemIndex: 0,
+                        submissionItemCount: 2,
+                        state: 'JOB_STATE_PENDING',
+                        prompt: 'Prompt one',
                         batchStats: {
-                            requestCount: 2,
+                            requestCount: 1,
+                            successfulRequestCount: 0,
+                            failedRequestCount: 0,
+                            pendingRequestCount: 1,
+                        },
+                        updatedAt: 1710400030000,
+                    }),
+                    buildQueuedJob({
+                        localId: 'job-stale-count-2',
+                        name: 'batches/job-stale-count-2',
+                        displayName: 'Grouped count batch',
+                        submissionGroupId: 'submission-stale-count',
+                        submissionItemIndex: 1,
+                        submissionItemCount: 2,
+                        state: 'JOB_STATE_SUCCEEDED',
+                        prompt: 'Prompt two',
+                        batchStats: {
+                            requestCount: 1,
                             successfulRequestCount: 1,
-                            failedRequestCount: 1,
+                            failedRequestCount: 0,
                             pendingRequestCount: 0,
                         },
-                        objectImageCount: 0,
-                        characterImageCount: 0,
-                        createdAt: 1710400000000,
-                        updatedAt: 1710400030000,
+                        createdAt: 1710400001000,
+                        updatedAt: 1710400035000,
                         startedAt: 1710400015000,
                         completedAt: 1710400020000,
-                        lastPolledAt: 1710400030000,
+                        lastPolledAt: 1710400035000,
                         hasImportablePayload: true,
-                        error: null,
-                    },
+                    }),
                 ]}
                 getLineageActionLabel={(action) => action || 'root'}
                 getImportedQueuedResultCount={() => 0}
@@ -335,10 +323,12 @@ describe('QueuedBatchJobsPanel', () => {
             />,
         );
 
-        expect(markup).toContain('queued-batch-job-job-stale-count-request-count');
-        expect(markup).toContain('2 request(s)');
-        expect(markup).toContain('queued-batch-job-job-stale-count-resource-name');
-        expect(markup).toContain('batches/job-stale-count');
+        expect(markup).toContain('queued-batch-group-submission-stale-count');
+        expect(markup).toContain('queued-batch-group-submission-stale-count-qty');
+        expect(markup).toContain('#1/2');
+        expect(markup).toContain('#2/2');
+        expect(markup).toContain('batches/job-stale-count-1');
+        expect(markup).toContain('batches/job-stale-count-2');
     });
 
     it('shows queue age warnings after the 24h target and near the 48h expiry window', () => {

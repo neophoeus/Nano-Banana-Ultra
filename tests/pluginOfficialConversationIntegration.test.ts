@@ -201,24 +201,26 @@ describe('imageSavePlugin official conversation integration', () => {
             },
         }));
 
-        filesUploadMock.mockImplementation(async ({ file, config }: { file: string; config?: { mimeType?: string } }) => {
-            const mimeType = config?.mimeType;
-            if (mimeType === 'jsonl') {
-                uploadedBatchManifestContents.push(fs.readFileSync(file, 'utf8'));
+        filesUploadMock.mockImplementation(
+            async ({ file, config }: { file: string; config?: { mimeType?: string } }) => {
+                const mimeType = config?.mimeType;
+                if (mimeType === 'jsonl') {
+                    uploadedBatchManifestContents.push(fs.readFileSync(file, 'utf8'));
+                    return {
+                        name: `files/batch-manifest-${uploadedBatchManifestContents.length}`,
+                        mimeType: 'jsonl',
+                        state: 'ACTIVE',
+                    };
+                }
+
                 return {
-                    name: `files/batch-manifest-${uploadedBatchManifestContents.length}`,
-                    mimeType: 'jsonl',
+                    name: `files/uploaded-image-${Date.now()}`,
+                    uri: `https://example.com/uploaded/${path.basename(String(file))}`,
+                    mimeType: mimeType || 'image/png',
                     state: 'ACTIVE',
                 };
-            }
-
-            return {
-                name: `files/uploaded-image-${Date.now()}`,
-                uri: `https://example.com/uploaded/${path.basename(String(file))}`,
-                mimeType: mimeType || 'image/png',
-                state: 'ACTIVE',
-            };
-        });
+            },
+        );
         filesGetMock.mockImplementation(async ({ name }: { name: string }) => ({
             name,
             uri: `https://example.com/files/${name.replace(/[^a-zA-Z0-9_-]+/g, '-')}`,
@@ -440,7 +442,7 @@ describe('imageSavePlugin official conversation integration', () => {
             }),
         );
         expect(uploadedBatchManifestContents).toHaveLength(1);
-        expect(uploadedBatchManifestContents[0].split(/\r?\n/u)).toHaveLength(2);
+        expect(uploadedBatchManifestContents[0].split(/\r?\n/u)).toHaveLength(1);
         const firstManifestRequest = JSON.parse(uploadedBatchManifestContents[0].split(/\r?\n/u)[0]);
         expect(firstManifestRequest).toEqual(
             expect.objectContaining({
@@ -728,6 +730,9 @@ describe('imageSavePlugin official conversation integration', () => {
                     localId: 'queued-job-1',
                     name: 'batches/queued-job-1',
                     displayName: 'Persisted queued job',
+                    submissionGroupId: 'submission-queued-job-1',
+                    submissionItemIndex: 0,
+                    submissionItemCount: 1,
                     state: 'JOB_STATE_RUNNING',
                     model: 'gemini-3.1-flash-image-preview',
                     prompt: 'Persist this batch job',
@@ -741,7 +746,7 @@ describe('imageSavePlugin official conversation integration', () => {
                     includeThoughts: true,
                     googleSearch: false,
                     imageSearch: false,
-                    batchSize: 2,
+                    batchSize: 1,
                     objectImageCount: 0,
                     characterImageCount: 0,
                     createdAt: 100,
@@ -938,7 +943,10 @@ describe('imageSavePlugin official conversation integration', () => {
 
         try {
             renameSyncSpy.mockImplementation(((from: fs.PathLike, to: fs.PathLike) => {
-                if (String(from).endsWith('workspace_snapshot.json.tmp') && String(to).endsWith('workspace_snapshot.json')) {
+                if (
+                    String(from).endsWith('workspace_snapshot.json.tmp') &&
+                    String(to).endsWith('workspace_snapshot.json')
+                ) {
                     const error = Object.assign(new Error('rename blocked by Windows file lock'), { code: 'EPERM' });
                     throw error;
                 }
@@ -947,7 +955,10 @@ describe('imageSavePlugin official conversation integration', () => {
             }) as typeof fs.renameSync);
 
             copyFileSyncSpy.mockImplementation(((from: fs.PathLike, to: fs.PathLike, mode?: number) => {
-                if (String(from).endsWith('workspace_snapshot.json.tmp') && String(to).endsWith('workspace_snapshot.json')) {
+                if (
+                    String(from).endsWith('workspace_snapshot.json.tmp') &&
+                    String(to).endsWith('workspace_snapshot.json')
+                ) {
                     const error = Object.assign(new Error('copy blocked by Windows file lock'), { code: 'EBUSY' });
                     throw error;
                 }
@@ -955,18 +966,20 @@ describe('imageSavePlugin official conversation integration', () => {
                 return originalCopyFileSync(from, to, mode);
             }) as typeof fs.copyFileSync);
 
-            writeFileSyncSpy.mockImplementation(
-                ((file: fs.PathOrFileDescriptor, data: string | NodeJS.ArrayBufferView, options?: any) => {
-                    if (typeof file === 'string' && file.endsWith('workspace_snapshot.json')) {
-                        const error = Object.assign(new Error('final write blocked by Windows file lock'), {
-                            code: 'EBUSY',
-                        });
-                        throw error;
-                    }
+            writeFileSyncSpy.mockImplementation(((
+                file: fs.PathOrFileDescriptor,
+                data: string | NodeJS.ArrayBufferView,
+                options?: any,
+            ) => {
+                if (typeof file === 'string' && file.endsWith('workspace_snapshot.json')) {
+                    const error = Object.assign(new Error('final write blocked by Windows file lock'), {
+                        code: 'EBUSY',
+                    });
+                    throw error;
+                }
 
-                    return originalWriteFileSync(file, data as never, options);
-                }) as typeof fs.writeFileSync,
-            );
+                return originalWriteFileSync(file, data as never, options);
+            }) as typeof fs.writeFileSync);
 
             const response = await invokeJsonRoute(workspaceSnapshotHandler!, lockedPayload);
 

@@ -55,7 +55,7 @@ export const sanitizeQueuedBatchSpaceSnapshot = (value: unknown): QueuedBatchSpa
     };
 };
 
-export const loadQueuedBatchSpaceSnapshot = (options?: { legacyQueuedJobs?: unknown }): QueuedBatchSpaceSnapshot => {
+export const loadQueuedBatchSpaceSnapshot = (): QueuedBatchSpaceSnapshot => {
     const raw = localStorage.getItem(QUEUED_BATCH_SPACE_STORAGE_KEY);
     let persistedSnapshot = EMPTY_QUEUED_BATCH_SPACE_SNAPSHOT;
 
@@ -68,10 +68,7 @@ export const loadQueuedBatchSpaceSnapshot = (options?: { legacyQueuedJobs?: unkn
     }
 
     return {
-        queuedJobs: mergeQueuedBatchSpaceJobs(
-            persistedSnapshot.queuedJobs,
-            sanitizeQueuedBatchJobs(options?.legacyQueuedJobs),
-        ),
+        queuedJobs: mergeQueuedBatchSpaceJobs(persistedSnapshot.queuedJobs),
     };
 };
 

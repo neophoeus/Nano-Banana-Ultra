@@ -16,6 +16,8 @@ describe('WorkspaceProgressCard', () => {
         expect(markup).toContain('Progress');
         expect(markup).toContain('workspace-progress-signal');
         expect(markup).toContain('h-3.5 w-3.5');
+        expect(markup).toContain('nbu-shell-surface-context-rail');
+        expect(markup).toContain('hover:border-amber-300');
         expect(markup).toContain('animate-pulse');
         expect(markup).toContain('bg-amber-300/60');
         expect(markup).not.toContain('context-workflow-summary');

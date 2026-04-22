@@ -15,6 +15,18 @@ export const ko = {
     locked: '잠김',
     ratioSkyscraper: '매우 김',
     ratioTall: '김',
+    outputFormatImagesAndText: '이미지 + 텍스트',
+    outputFormatImagesOnly: '이미지만',
+    thinkingLevelMinimal: '최소',
+    thinkingLevelHigh: '높음',
+    thinkingLevelDisabled: '사용 안 함',
+    groundingModeOff: '사용 안 함',
+    groundingModeGoogleSearch: '웹 검색',
+    groundingModeImageSearch: '이미지 검색',
+    groundingModeGoogleSearchPlusImageSearch: '웹 검색 + 이미지 검색',
+    groundingModeSummaryGoogleSearch: '웹',
+    groundingModeSummaryImageSearch: '이미지',
+    groundingModeSummaryGoogleSearchPlusImageSearch: '웹 + 이미지',
     switchLight: '라이트 모드로 전환',
     switchDark: '다크 모드로 전환',
     shiftEnter: 'Shift+Enter로 줄바꿈',
@@ -183,7 +195,7 @@ export const ko = {
     // Clear History Dialog
     clearHistoryTitle: '작업공간 비우기',
     clearHistoryMsg:
-        '이 작업공간을 기본 초기 상태로 재설정할까요? 기록, 스테이지, 대기 작업, 세션 컨텍스트가 모두 삭제되며 되돌릴 수 없습니다.',
+        '이 작업공간을 기본 빈 상태로 되돌릴까요? 기록, 스테이지, 프롬프트, 세션 문맥은 삭제됩니다. 공유 대기열 배치 작업은 별도로 계속 사용할 수 있습니다. 먼저 워크스페이스 내보내기를 사용하는 것을 권장합니다. 이 작업은 되돌릴 수 없습니다.',
     clearHistoryConfirm: '작업공간 비우기',
     clearHistoryCancel: '취소',
 
@@ -324,25 +336,27 @@ export const ko = {
     styleLineArt: '라인 아트',
     styleStorybookIllustration: '스토리북 일러스트레이션',
     queueBatchModeEditor:
-        '이 작업은 현재 에디터 입력과 스테이징된 참조를 사용해 편집 기반의 공식 이미지 조건부 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
+        '이 작업은 현재 에디터 입력 이미지와 준비된 참조를 사용해 편집 기반의 공식 이미지 조건부 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지만 출력하며 생각 반환은 요청하지 않습니다.',
     queueBatchModeStage:
-        '이 작업은 현재 스테이지 이미지와 스테이징된 참조를 사용해 공식 이미지 조건부 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
+        '이 작업은 현재 스테이지 이미지와 준비된 참조를 사용해 후속 공식 배치 작업을 대기열에 추가합니다. 대기열 배치 작업은 항상 이미지만 출력하며 생각 반환은 요청하지 않습니다.',
+    queueBatchModeStageGenerate:
+        '이 작업은 현재 프롬프트와 준비된 참조를 사용해 새 공식 배치 작업을 대기열에 추가하며 현재 스테이지 이미지는 사용하지 않습니다. 대기열 배치 작업은 항상 이미지만 출력하며 생각 반환은 요청하지 않습니다.',
     queueBatchModeReferences:
-        '이 작업은 현재 프롬프트와 참조 트레이를 사용해 공식 참조 기반 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
+        '이 작업은 현재 프롬프트와 참조 트레이를 사용해 새 공식 참조 기반 배치 작업을 대기열에 추가합니다. 대기열 배치 작업은 항상 이미지만 출력하며 생각 반환은 요청하지 않습니다.',
     queueBatchModePromptOnly:
-        '이 작업은 프롬프트만 사용하는 공식 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
+        '이 작업은 프롬프트만 사용하는 새 공식 배치 작업을 대기열에 추가합니다. 대기열 배치 작업은 항상 이미지만 출력하며 생각 반환은 요청하지 않습니다.',
     queueBatchConversationNotice:
-        '대기열 배치 작업은 원본 계보를 유지하지만 공식 다중 턴 대화 기록은 전송하지 않습니다. 대화를 이어가려면 일반 생성 흐름을 사용하세요.',
+        '대기열 배치 작업은 원본 계보를 유지하지만 공식 다중 턴 대화 기록은 전송하지 않습니다. 대화를 이어가려면 생성을 사용하세요.',
     queueBatchMemoryContinuationDisabledReason:
-        '대기열 작업은 공식 memory 대화를 이어갈 수 없습니다. 새 대화를 시작하거나 Independent send로 전환하세요.',
+        '대기열 작업은 기억 전송 모드에서 공식 대화를 이어갈 수 없습니다. 새 대화를 시작하거나 독립 전송으로 전환하세요.',
     queueBatchEditDisabledReason:
-        '대기 중인 배치 작업은 현재 후속 편집이나 에디터 편집을 지원하지 않습니다. 먼저 일반 생성 흐름을 사용하세요.',
-    queuedBatchJobsTitle: '대기 중인 배치 작업',
+        '이미지 조건부 후속 편집은 공식 배치 결과의 신뢰성이 떨어져 현재 대기열에서 일시적으로 비활성화되어 있습니다. 대신 생성을 사용하세요.',
+    queuedBatchJobsTitle: '배치 대기열',
     queuedBatchJobsDesc:
-        '저장된 공식 Gemini Batch API 작업은 여기에서 계속 추적되며, 대기 중이거나 실행 중일 때 상태 확인, 결과 가져오기, 정리 순서로 마무리할 수 있습니다.',
+        '저장된 공식 Gemini Batch API 작업은 대기 중이거나 실행 중인 동안 여기에서 계속 추적됩니다. Batch API는 24시간 안의 완료를 목표로 하지만, 이미지 작업은 서비스가 48시간 뒤에 만료시킬 때까지 이어질 수 있습니다.',
     queuedBatchJobsWorkflowHint:
-        '여기서 대기열을 살피고, 결과가 준비되면 히스토리로 가져온 뒤 작업이 끝나면 이 항목을 정리합니다.',
-    queuedBatchJobsConversationNoticeLabel: '연속성 메모',
+        '여기서 대기열 상태를 확인하고, 결과가 준비되면 히스토리로 가져온 뒤 작업이 끝나면 이 항목을 정리하세요.',
+    queuedBatchJobsConversationNoticeLabel: '연속성 안내',
     queuedBatchJobsActiveCount: '진행 중 {0}',
     queuedBatchJobsImportReadyCount: '가져오기 준비 {0}',
     queuedBatchJobsClosedIssuesCount: '문제와 함께 종료 {0}',
@@ -391,6 +405,8 @@ export const ko = {
     queuedBatchStateExpired: '만료됨',
     queuedBatchSubmittedNotice: '대기열 배치 작업을 공식 Batch API에 제출했습니다.',
     queuedBatchSubmittedLog: '공식 배치 작업 {0}을 대기열에 추가했습니다.',
+    queuedBatchSubmittedManyNotice: '공식 Batch API에 배치 작업 {0}개를 대기열로 제출했습니다.',
+    queuedBatchSubmittedPartialNotice: '총 {1}개 중 {0}개를 공식 Batch API에 제출했고, {2}개는 제출 전에 실패했습니다.',
     queuedBatchSubmissionFailedLog: '대기열 배치 제출 실패: {0}',
     queuedBatchPolledLog: '대기열 배치 작업 {0} 상태를 조회했습니다: {1}.',
     queuedBatchReadyToImportNotice: '대기열 배치 작업 {0}을 가져올 수 있습니다.',
@@ -444,11 +460,13 @@ export const ko = {
     composerToolbarImportWorkspace: '워크스페이스 가져오기',
     workspaceSnapshotActionsTitle: '워크스페이스 스냅샷',
     composerToolbarAdvancedSettings: '고급 설정',
-    composerEnterSends: 'Enter를 눌러 전송',
-    composerEnterNewline: 'Enter를 눌러 줄바꿈',
+    composerEnterSends: 'Enter\n전송',
+    composerEnterNewline: 'Enter\n줄바꿈',
     composerVisibilityVisible: '표시',
     composerVisibilityHidden: '숨김',
-    composerQueueBatchJob: '대기열로 보내기',
+    workspaceQueueLauncher: '대기열',
+    composerQueueBatchJob: '대기열에 추가',
+    composerQueueBatchFollowUpJob: '이 이미지를 대기열에 추가',
     composerAdvancedTitle: '기능 인지 고급 설정',
     composerAdvancedDesc:
         '지원되지 않는 컨트롤은 숨겨진 상태로 유지되며, 모델이 바뀌면 안전한 기본값으로 자동 재설정됩니다.',
@@ -469,13 +487,13 @@ export const ko = {
     composerAdvancedGroundingGuideTitle: '런타임 가이드',
     composerAdvancedGroundingGuideDesc:
         '이 그라운딩 크기 메모는 현재 제품 경로에서 확인한 실제 동작을 기준으로 합니다.',
-    composerAdvancedGroundingGuideImageSearchLimit: 'Image Search는 최대 1K입니다.',
-    composerAdvancedGroundingGuideFlashGoogle: 'Nano Banana 2 + Google Search: 요청한 2K와 4K가 그대로 유지되었습니다.',
+    composerAdvancedGroundingGuideImageSearchLimit: '이미지 검색은 최대 1K입니다.',
+    composerAdvancedGroundingGuideFlashGoogle: 'Nano Banana 2 + 웹 검색: 요청한 2K와 4K가 그대로 유지되었습니다.',
     composerAdvancedGroundingGuideFlashImage:
-        'Nano Banana 2 + Image Search: 요청한 2K와 4K도 실제 출력은 1K가 될 수 있습니다.',
-    composerAdvancedGroundingGuideProGoogle: 'Nano Banana Pro + Google Search: 요청한 2K와 4K가 그대로 유지되었습니다.',
+        'Nano Banana 2 + 이미지 검색: 요청한 2K와 4K도 실제 출력은 1K가 될 수 있습니다.',
+    composerAdvancedGroundingGuideProGoogle: 'Nano Banana Pro + 웹 검색: 요청한 2K와 4K가 그대로 유지되었습니다.',
     composerGroundingImageSearchUpgradeNotice:
-        '이미지 검색 그라운딩은 귀속 메타데이터를 반환할 수 있도록 출력을 자동으로 Images & text로 올립니다.',
+        '이미지 검색 그라운딩은 귀속 메타데이터를 반환할 수 있도록 출력을 자동으로 이미지 + 텍스트로 올립니다.',
     composerActionPanelTitle: '생성',
     composerActionPanelDesc:
         '생성을 중심에 두고, 후속 편집과 워크스페이스 작업은 가까이에 두되 더 조용하게 유지합니다.',
@@ -645,7 +663,7 @@ export const ko = {
     workspaceImportReviewReplaceCurrentWorkspace: '현재 워크스페이스 교체',
     workspaceImportReviewExecutionBatchVariants: '배치 변형',
     workspaceImportReviewExecutionChatContinuation: '채팅 연속',
-    workspaceImportReviewExecutionQueuedBatchJob: '대기열 배치 결과',
+    workspaceImportReviewExecutionQueuedBatchJob: '배치 대기열 결과',
     workspaceImportReviewExecutionSingleTurn: '단일 턴',
     workflowCurrentStageSource: '현재 스테이지 소스',
     historyActionOpenInHistory: '히스토리에서 열기',
@@ -662,7 +680,8 @@ export const ko = {
     historyModeImage: '이미지',
     historyBadgeParent: '부모',
     historyBadgeCandidate: '후보',
-    historyBadgeActive: '활성',
+    historyBadgeActive: '표시 중',
+    historyBadgeQueuedResult: '대기열 결과',
     historyBadgeMemory: '기억',
     historyBadgeThread: '스레드',
     workflowStageLabelSystem: '시스템',

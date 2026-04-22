@@ -299,7 +299,7 @@ export function useHistoryPresentationHelpers({
             const queuedBatchBadge =
                 item.executionMode === 'queued-batch-job' ? (
                     <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] text-sky-700 dark:bg-sky-950/40 dark:text-sky-200">
-                        {t('workspaceImportReviewExecutionQueuedBatchJob')}
+                        {t('historyBadgeQueuedResult')}
                     </span>
                 ) : null;
             const memoryBadge = conversationCue.isMemoryTurn ? (

@@ -15,6 +15,18 @@ export const fr = {
     locked: 'Verrouillé',
     ratioSkyscraper: 'Gratte-ciel',
     ratioTall: 'Grand',
+    outputFormatImagesAndText: 'Images et texte',
+    outputFormatImagesOnly: 'Images uniquement',
+    thinkingLevelMinimal: 'Minimal',
+    thinkingLevelHigh: 'Eleve',
+    thinkingLevelDisabled: 'Desactive',
+    groundingModeOff: 'Desactive',
+    groundingModeGoogleSearch: 'Recherche web',
+    groundingModeImageSearch: 'Recherche d images',
+    groundingModeGoogleSearchPlusImageSearch: 'Recherche web + recherche d images',
+    groundingModeSummaryGoogleSearch: 'Web',
+    groundingModeSummaryImageSearch: 'Image',
+    groundingModeSummaryGoogleSearchPlusImageSearch: 'Web + image',
     switchLight: 'Mode Clair',
     switchDark: 'Mode Sombre',
     shiftEnter: 'Maj+Entrée à la ligne',
@@ -38,7 +50,7 @@ export const fr = {
     composerSendIntentMemory: 'Envoi avec memoire',
     composerSendIntentHelperIndependent:
         'Utilise l image et les outils actuels sans rejouer la memoire officielle de la conversation.',
-    composerSendIntentHelperMemory: 'Le prochain envoi reutilise la memoire officielle de la conversation.',
+    composerSendIntentHelperMemory: 'Le prochain envoi reste dans la memoire officielle de la conversation.',
     composerSendIntentMemoryTokenNotice: 'Le contexte memorise augmente l utilisation de tokens.',
     composerSendIntentDisabledReason: 'L envoi avec memoire est disponible seulement quand la quantite est 1.',
     composerSendIntentInfoButton: 'Details de la regle d envoi',
@@ -187,7 +199,7 @@ export const fr = {
     // Clear History Dialog
     clearHistoryTitle: "Effacer l'espace de travail",
     clearHistoryMsg:
-        "Réinitialiser cet espace de travail à son état vide par défaut ? L'historique, la scène, les tâches en file d'attente et le contexte de session seront supprimés. Cette action est irréversible.",
+        "Réinitialiser cet espace de travail à son état vide par défaut ? L'historique, la scène, le prompt et le contexte de session seront supprimés. Les lots en file d'attente partagés resteront disponibles séparément. Nous recommandons d'utiliser d'abord Exporter l espace de travail. Cette action est irréversible.",
     clearHistoryConfirm: "Effacer l'espace de travail",
     clearHistoryCancel: 'Annuler',
 
@@ -328,29 +340,31 @@ export const fr = {
     styleLineArt: 'Line Art',
     styleStorybookIllustration: 'Illustration de Conte',
     queueBatchModeEditor:
-        "Cela enverra un lot officiel conditionne par image base sur l'editeur en utilisant l'entree actuelle de l'editeur et les references preparees. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
+        "Cela envoie un travail officiel par lot conditionne par image depuis l'editeur, en utilisant l'image d'entree actuelle de l'editeur et les references preparees. Les travaux par lot en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
     queueBatchModeStage:
-        "Cela enverra un lot officiel conditionne par image en utilisant l'image actuelle de la scene et les references preparees. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
+        "Cela met en file un travail officiel de suivi avec l'image actuelle de la scene et les references preparees. Les travaux par lot en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
+    queueBatchModeStageGenerate:
+        "Cela met en file un nouveau travail officiel par lot a partir du prompt actuel et des references preparees. L'image actuelle de la scene n'est pas utilisee. Les travaux par lot en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
     queueBatchModeReferences:
-        'Cela enverra un lot officiel pilote par references avec le prompt actuel et le bac de references. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.',
+        'Cela met en file un nouveau travail officiel par lot guide par references avec le prompt actuel et le bac de references. Les travaux par lot en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.',
     queueBatchModePromptOnly:
-        'Cela enverra un lot officiel base uniquement sur le prompt. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.',
+        'Cela met en file un nouveau travail officiel par lot base uniquement sur le prompt. Les travaux par lot en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.',
     queueBatchConversationNotice:
-        "Les lots en file d'attente conservent la lignee source, mais n'envoient pas l'historique officiel des conversations multi-tours. Pour poursuivre une conversation, utilisez le flux de generation normal.",
+        "Les travaux par lot en file conservent la lignee source, mais n'envoient pas l'historique officiel des conversations multi-tours. Pour continuer le chat, utilisez Generer.",
     queueBatchMemoryContinuationDisabledReason:
-        'Les travaux en file ne peuvent pas poursuivre une conversation officielle memory. Demarrez une nouvelle conversation ou passez a Independent send.',
+        'Les travaux en file ne peuvent pas poursuivre une conversation officielle en mode Envoi avec memoire. Demarrez une nouvelle conversation ou passez a Envoi independant.',
     queueBatchEditDisabledReason:
-        "Les lots en file d'attente ne prennent actuellement pas en charge les retouches de suivi ou de l'editeur. Utilisez d'abord le flux de generation normal.",
-    queuedBatchJobsTitle: "Lots en file d'attente",
+        "Les retouches de suivi conditionnees par image en file d'attente sont desactivees temporairement parce que les resultats officiels par lot ont manque de fiabilite. Utilisez Générer.",
+    queuedBatchJobsTitle: 'File des lots',
     queuedBatchJobsDesc:
-        "Les jobs officiels persistants Gemini Batch API restent suivis ici lorsqu'ils sont en attente ou en cours, afin d'avancer par verification d'etat, import des resultats et nettoyage.",
+        "Les travaux officiels Gemini Batch API enregistres restent ici tant qu'ils sont en attente ou en cours. Batch API vise une completion en 24 heures, mais les travaux d'image peuvent continuer jusqu'a leur expiration par le service apres 48 heures.",
     queuedBatchJobsWorkflowHint:
-        "Surveillez la file ici, importez les resultats termines dans l'historique lorsqu'ils sont prets, puis effacez l'entree une fois le flux termine.",
-    queuedBatchJobsConversationNoticeLabel: 'Note de continuite',
+        "Verifiez ici l'etat de la file, importez les resultats termines dans l'historique lorsqu'ils sont prets, puis supprimez l'entree une fois le flux termine.",
+    queuedBatchJobsConversationNoticeLabel: 'Rappel de continuite',
     queuedBatchJobsActiveCount: '{0} actifs',
     queuedBatchJobsImportReadyCount: '{0} prets a importer',
     queuedBatchJobsClosedIssuesCount: '{0} termines avec problemes',
-    queuedBatchJobsImportReadyAction: 'Importer les prets',
+    queuedBatchJobsImportReadyAction: 'Importer les resultats prets',
     queuedBatchJobsRefreshAll: 'Tout actualiser',
     queuedBatchJobsTrackedCount: '{0} suivis',
     queuedBatchJobsImportedTag: 'Importe',
@@ -395,6 +409,8 @@ export const fr = {
     queuedBatchStateExpired: 'Expire',
     queuedBatchSubmittedNotice: 'Le lot en file a ete envoye a la Batch API officielle.',
     queuedBatchSubmittedLog: 'Le lot officiel {0} a ete place en file.',
+    queuedBatchSubmittedManyNotice: '{0} lots ont ete places en file vers la Batch API officielle.',
+    queuedBatchSubmittedPartialNotice: '{0} lots sur {1} ont ete envoyes. {2} ont echoue avant l envoi.',
     queuedBatchSubmissionFailedLog: 'Echec de l envoi du lot en file : {0}',
     queuedBatchPolledLog: 'Lot en file {0} verifie : {1}.',
     queuedBatchReadyToImportNotice: 'Le lot en file {0} est pret a etre importe.',
@@ -450,11 +466,13 @@ export const fr = {
     composerToolbarImportWorkspace: 'Importer l espace de travail',
     workspaceSnapshotActionsTitle: 'Instantane de l espace de travail',
     composerToolbarAdvancedSettings: 'Parametres avances',
-    composerEnterSends: 'Appuyer sur Entree pour envoyer',
-    composerEnterNewline: 'Appuyer sur Entree pour passer a la ligne',
+    composerEnterSends: 'Entree\nenvoie',
+    composerEnterNewline: 'Entree\nligne',
     composerVisibilityVisible: 'Affiché',
     composerVisibilityHidden: 'Masque',
-    composerQueueBatchJob: 'Envoyer a la file',
+    workspaceQueueLauncher: 'File',
+    composerQueueBatchJob: 'Mettre en file',
+    composerQueueBatchFollowUpJob: 'Mettre cette image en file',
     composerAdvancedTitle: 'Parametres avances sensibles aux capacites',
     composerAdvancedDesc:
         'Les controles non pris en charge restent masques et se reinitialisent automatiquement quand le modele change.',
@@ -475,15 +493,15 @@ export const fr = {
     composerAdvancedGroundingGuideTitle: 'Guide d execution',
     composerAdvancedGroundingGuideDesc:
         'Ces notes de taille avec grounding reposent sur des verifications reelles dans le parcours produit actuel.',
-    composerAdvancedGroundingGuideImageSearchLimit: 'Image Search est limite a 1K.',
+    composerAdvancedGroundingGuideImageSearchLimit: 'La recherche d images est limitee a 1K.',
     composerAdvancedGroundingGuideFlashGoogle:
-        'Nano Banana 2 + Google Search : les demandes 2K et 4K ont conserve la taille demandee.',
+        'Nano Banana 2 + recherche web : les demandes 2K et 4K ont conserve la taille demandee.',
     composerAdvancedGroundingGuideFlashImage:
-        'Nano Banana 2 + Image Search : les demandes 2K et 4K peuvent renvoyer une sortie reelle en 1K.',
+        'Nano Banana 2 + recherche d images : les demandes 2K et 4K peuvent renvoyer une sortie reelle en 1K.',
     composerAdvancedGroundingGuideProGoogle:
-        'Nano Banana Pro + Google Search : les demandes 2K et 4K ont conserve la taille demandee.',
+        'Nano Banana Pro + recherche web : les demandes 2K et 4K ont conserve la taille demandee.',
     composerGroundingImageSearchUpgradeNotice:
-        'Le grounding par recherche d images fait maintenant passer la sortie en Images & text afin de renvoyer les metadonnees d attribution.',
+        'Le grounding par recherche d images fait maintenant passer la sortie en Images et texte afin de renvoyer les metadonnees d attribution.',
     composerActionPanelTitle: 'Creer',
     composerActionPanelDesc:
         'La generation reste prioritaire. Les actions de suivi et d espace de travail restent proches, mais plus discretes.',
@@ -542,7 +560,7 @@ export const fr = {
     workspacePickerFullGallery: 'Galerie complete',
     workspacePickerEmptyGallery: 'Generez ou chargez une image pour remplir la galerie.',
     workspacePickerModelSupportImageSearch: "Recherche d'images ancree prete",
-    workspacePickerModelSupportGoogleSearch: 'Ancrage Google Search pret',
+    workspacePickerModelSupportGoogleSearch: 'Ancrage de recherche web pret',
     workspacePickerModelSupportImageOnly: "Accent sur la generation d'images seule",
     workspacePickerObjects: 'Objets',
     workspacePickerHasSketchAsset: 'Inclut la ressource de croquis actuelle.',
@@ -662,7 +680,7 @@ export const fr = {
     workspaceImportReviewReplaceCurrentWorkspace: "Remplacer l'espace de travail actuel",
     workspaceImportReviewExecutionBatchVariants: 'Variantes par lot',
     workspaceImportReviewExecutionChatContinuation: 'Continuation du chat',
-    workspaceImportReviewExecutionQueuedBatchJob: "Resultat de lot en file d'attente",
+    workspaceImportReviewExecutionQueuedBatchJob: 'Resultat de lot en file',
     workspaceImportReviewExecutionSingleTurn: 'Un seul tour',
     workflowCurrentStageSource: 'Source actuelle de la scene',
     historyActionOpenInHistory: "Ouvrir dans l'historique",
@@ -679,7 +697,8 @@ export const fr = {
     historyModeImage: 'Image generee',
     historyBadgeParent: 'parente',
     historyBadgeCandidate: 'Candidate locale',
-    historyBadgeActive: 'Activee',
+    historyBadgeActive: 'Affichee',
+    historyBadgeQueuedResult: 'Resultat en file',
     historyBadgeMemory: 'Memoire',
     historyBadgeThread: 'Fil',
     workflowStageLabelSystem: 'Systeme',

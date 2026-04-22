@@ -15,6 +15,18 @@ export const de = {
     locked: 'Gesperrt',
     ratioSkyscraper: 'Wolkenkratzer',
     ratioTall: 'Hochformat',
+    outputFormatImagesAndText: 'Bilder und Text',
+    outputFormatImagesOnly: 'Nur Bilder',
+    thinkingLevelMinimal: 'Minimal',
+    thinkingLevelHigh: 'Hoch',
+    thinkingLevelDisabled: 'Deaktiviert',
+    groundingModeOff: 'Aus',
+    groundingModeGoogleSearch: 'Websuche',
+    groundingModeImageSearch: 'Bildsuche',
+    groundingModeGoogleSearchPlusImageSearch: 'Websuche + Bildsuche',
+    groundingModeSummaryGoogleSearch: 'Web',
+    groundingModeSummaryImageSearch: 'Bild',
+    groundingModeSummaryGoogleSearchPlusImageSearch: 'Web + Bild',
     switchLight: 'Heller Modus',
     switchDark: 'Dunkler Modus',
     shiftEnter: 'Shift+Enter Umbruch',
@@ -191,7 +203,7 @@ export const de = {
     // Clear History Dialog
     clearHistoryTitle: 'Arbeitsbereich leeren',
     clearHistoryMsg:
-        'Diesen Arbeitsbereich auf den leeren Standardzustand zurücksetzen? Verlauf, Bühne, Warteschlangenjobs und Sitzungskontext werden entfernt. Dies kann nicht rückgängig gemacht werden.',
+        'Diesen Arbeitsbereich auf den leeren Standardzustand zurücksetzen? Verlauf, Buhne, Prompt und Sitzungskontext werden entfernt. Geteilte Batch-Jobs in der Warteschlange bleiben separat verfugbar. Wir empfehlen, zuerst Arbeitsbereich exportieren zu verwenden. Dies kann nicht ruckgangig gemacht werden.',
     clearHistoryConfirm: 'Arbeitsbereich leeren',
     clearHistoryCancel: 'Abbrechen',
 
@@ -332,29 +344,31 @@ export const de = {
     styleLineArt: 'Line Art',
     styleStorybookIllustration: 'Bilderbuch Illustration',
     queueBatchModeEditor:
-        'Dies sendet einen offiziellen bildkonditionierten Batch auf Editor-Basis mit der aktuellen Editoreingabe und den vorbereiteten Referenzen. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
+        'Dies sendet einen offiziellen bildkonditionierten Batchjob auf Editor-Basis mit dem aktuellen Editor-Eingabebild und den vorbereiteten Referenzen. Jobs in der Batch-Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
     queueBatchModeStage:
-        'Dies sendet einen offiziellen bildkonditionierten Batch mit dem aktuellen Stufenbild und den vorbereiteten Referenzen. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
+        'Dies stellt einen offiziellen Folge-Batchjob mit dem aktuellen Stufenbild und den vorbereiteten Referenzen in die Batch-Warteschlange. Jobs in der Batch-Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
+    queueBatchModeStageGenerate:
+        'Dies stellt einen neuen offiziellen Batchjob aus dem aktuellen Prompt und den vorbereiteten Referenzen in die Batch-Warteschlange. Das aktuelle Stufenbild wird nicht verwendet. Jobs in der Batch-Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
     queueBatchModeReferences:
-        'Dies sendet einen offiziellen referenzgesteuerten Batch mit dem aktuellen Prompt und der Referenzablage. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
+        'Dies stellt einen neuen offiziellen referenzgesteuerten Batchjob mit dem aktuellen Prompt und der Referenzablage in die Batch-Warteschlange. Jobs in der Batch-Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
     queueBatchModePromptOnly:
-        'Dies sendet einen offiziellen Batchauftrag nur mit Prompt. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
+        'Dies stellt einen neuen offiziellen Batchjob nur mit Prompt in die Batch-Warteschlange. Jobs in der Batch-Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
     queueBatchConversationNotice:
-        'Batchauftrage in der Warteschlange behalten die Quellherkunft bei, senden aber keinen offiziellen Multi-Turn-Konversationsverlauf. Fur Chat-Fortsetzung verwenden Sie den normalen Generierungsablauf.',
+        'Jobs in der Batch-Warteschlange behalten die Quellherkunft bei, senden aber keinen offiziellen Multi-Turn-Konversationsverlauf. Verwenden Sie zum Fortsetzen des Chats Generieren.',
     queueBatchMemoryContinuationDisabledReason:
-        'Warteschlangen-Jobs konnen keine offizielle Memory-Konversation fortsetzen. Starten Sie eine neue Konversation oder wechseln Sie zu Independent send.',
+        'Jobs in der Batch-Warteschlange konnen eine offizielle Konversation im Modus Mit Speicher senden nicht fortsetzen. Starten Sie eine neue Konversation oder wechseln Sie zu Unabhaengig senden.',
     queueBatchEditDisabledReason:
-        'Wartende Batch-Jobs unterstutzen derzeit keine Folge- oder Editor-Bearbeitungen. Verwenden Sie zuerst den normalen Generierungsablauf.',
-    queuedBatchJobsTitle: 'Wartende Batch-Jobs',
+        'Bildkonditionierte Folge-Bearbeitungen in Warteschlangen-Jobs sind vorubergehend deaktiviert, weil offizielle Batch-Ergebnisse zuletzt unzuverlassig waren. Verwenden Sie stattdessen Generieren.',
+    queuedBatchJobsTitle: 'Batch-Warteschlange',
     queuedBatchJobsDesc:
-        'Gespeicherte offizielle Gemini Batch API-Jobs bleiben hier im Blick, solange sie ausstehend oder in Ausfuhrung sind, sodass Statusprufung, Ergebnisimport und Aufraumen als Arbeitsablauf erfolgen konnen.',
+        'Gespeicherte offizielle Gemini Batch API-Jobs bleiben hier, solange sie ausstehend oder in Ausfuhrung sind. Batch API zielt auf einen Abschluss innerhalb von 24 Stunden, aber Bildjobs konnen weiterlaufen, bis der Dienst sie nach 48 Stunden verfallen lasst.',
     queuedBatchJobsWorkflowHint:
-        'Uberwachen Sie die Warteschlange hier, holen Sie fertige Ergebnisse in den Verlauf, und entfernen Sie den Eintrag, sobald der Ablauf abgeschlossen ist.',
+        'Prufen Sie hier den Status der Batch-Warteschlange, importieren Sie fertige Ergebnisse in den Verlauf und entfernen Sie den Eintrag, sobald der Ablauf abgeschlossen ist.',
     queuedBatchJobsConversationNoticeLabel: 'Kontinuitatshinweis',
     queuedBatchJobsActiveCount: '{0} aktiv',
     queuedBatchJobsImportReadyCount: '{0} importbereit',
     queuedBatchJobsClosedIssuesCount: '{0} mit Problemen beendet',
-    queuedBatchJobsImportReadyAction: 'Bereite importieren',
+    queuedBatchJobsImportReadyAction: 'Bereite Ergebnisse importieren',
     queuedBatchJobsRefreshAll: 'Alle aktualisieren',
     queuedBatchJobsTrackedCount: '{0} verfolgt',
     queuedBatchJobsImportedTag: 'Importiert',
@@ -399,6 +413,9 @@ export const de = {
     queuedBatchStateExpired: 'Abgelaufen',
     queuedBatchSubmittedNotice: 'Der Warteschlangen-Batch-Job wurde an die offizielle Batch-API gesendet.',
     queuedBatchSubmittedLog: 'Offizieller Batch-Job {0} in die Warteschlange gestellt.',
+    queuedBatchSubmittedManyNotice: '{0} Batch-Jobs wurden an die offizielle Batch-API in die Warteschlange gestellt.',
+    queuedBatchSubmittedPartialNotice:
+        '{0} von {1} Batch-Jobs wurden eingereiht. {2} sind vor dem Senden fehlgeschlagen.',
     queuedBatchSubmissionFailedLog: 'Senden des Warteschlangen-Batchs fehlgeschlagen: {0}',
     queuedBatchPolledLog: 'Warteschlangen-Batch-Job {0} abgefragt: {1}.',
     queuedBatchReadyToImportNotice: 'Warteschlangen-Batch-Job {0} ist importbereit.',
@@ -456,11 +473,13 @@ export const de = {
     composerToolbarImportWorkspace: 'Arbeitsbereich importieren',
     workspaceSnapshotActionsTitle: 'Arbeitsbereich-Schnappschuss',
     composerToolbarAdvancedSettings: 'Erweiterte Einstellungen',
-    composerEnterSends: 'Zum Senden Enter drucken',
-    composerEnterNewline: 'Fur neue Zeile Enter drucken',
+    composerEnterSends: 'Enter\nsendet',
+    composerEnterNewline: 'Enter\nZeile',
     composerVisibilityVisible: 'Sichtbar',
     composerVisibilityHidden: 'Ausgeblendet',
-    composerQueueBatchJob: 'An Warteschlange senden',
+    workspaceQueueLauncher: 'Warteschlange',
+    composerQueueBatchJob: 'Einreihen',
+    composerQueueBatchFollowUpJob: 'Dieses Bild einreihen',
     composerAdvancedTitle: 'Faehigkeitsbewusste erweiterte Einstellungen',
     composerAdvancedDesc:
         'Nicht unterstuetzte Steuerelemente bleiben verborgen und werden beim Modellwechsel automatisch auf sichere Standardwerte zurueckgesetzt.',
@@ -481,15 +500,15 @@ export const de = {
     composerAdvancedGroundingGuideTitle: 'Laufzeitleitfaden',
     composerAdvancedGroundingGuideDesc:
         'Diese Hinweise zu Grounding-Groessen basieren auf realen Pruefungen im aktuellen Produktpfad.',
-    composerAdvancedGroundingGuideImageSearchLimit: 'Image Search ist auf 1K begrenzt.',
+    composerAdvancedGroundingGuideImageSearchLimit: 'Die Bildsuche ist auf 1K begrenzt.',
     composerAdvancedGroundingGuideFlashGoogle:
-        'Nano Banana 2 + Google Search: Angeforderte 2K und 4K blieben bei der angeforderten Groesse.',
+        'Nano Banana 2 + Websuche: Angeforderte 2K und 4K blieben bei der angeforderten Groesse.',
     composerAdvancedGroundingGuideFlashImage:
-        'Nano Banana 2 + Image Search: Angeforderte 2K und 4K koennen als tatsaechliche 1K-Ausgabe zurueckkommen.',
+        'Nano Banana 2 + Bildsuche: Angeforderte 2K und 4K koennen als tatsaechliche 1K-Ausgabe zurueckkommen.',
     composerAdvancedGroundingGuideProGoogle:
-        'Nano Banana Pro + Google Search: Angeforderte 2K und 4K blieben bei der angeforderten Groesse.',
+        'Nano Banana Pro + Websuche: Angeforderte 2K und 4K blieben bei der angeforderten Groesse.',
     composerGroundingImageSearchUpgradeNotice:
-        'Grounding per Bildsuche stellt die Ausgabe jetzt automatisch auf Images & text um, damit Zuordnungsmetadaten zurueckgegeben werden koennen.',
+        'Grounding per Bildsuche stellt die Ausgabe jetzt automatisch auf Bilder und Text um, damit Zuordnungsmetadaten zurueckgegeben werden koennen.',
     composerActionPanelTitle: 'Erstellen',
     composerActionPanelDesc:
         'Generieren bleibt die Hauptaktion. Folgeaktionen und Arbeitsbereichsaktionen bleiben nah dran, aber leiser.',
@@ -667,7 +686,7 @@ export const de = {
     workspaceImportReviewReplaceCurrentWorkspace: 'Aktuellen Arbeitsbereich ersetzen',
     workspaceImportReviewExecutionBatchVariants: 'Stapelvarianten',
     workspaceImportReviewExecutionChatContinuation: 'Chat-Fortsetzung',
-    workspaceImportReviewExecutionQueuedBatchJob: 'Warteschlangen-Batchergebnis',
+    workspaceImportReviewExecutionQueuedBatchJob: 'Ergebnis aus der Batch-Warteschlange',
     workspaceImportReviewExecutionSingleTurn: 'Einzelrunde',
     workflowCurrentStageSource: 'Aktuelle Szenenquelle',
     historyActionOpenInHistory: 'Im Verlauf öffnen',
@@ -684,7 +703,8 @@ export const de = {
     historyModeImage: 'Bild',
     historyBadgeParent: 'Eltern',
     historyBadgeCandidate: 'Kandidat',
-    historyBadgeActive: 'Aktiv',
+    historyBadgeActive: 'Angezeigt',
+    historyBadgeQueuedResult: 'Warteschlangen-Ergebnis',
     historyBadgeMemory: 'Speicher',
     historyBadgeThread: 'Thread',
     workflowStageLabelSystem: 'System',

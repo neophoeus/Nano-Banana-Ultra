@@ -13,6 +13,8 @@ type UseWorkspaceSurfaceStateReturn = {
     setIsSketchPadOpen: Dispatch<SetStateAction<boolean>>;
     showSketchReplaceConfirm: boolean;
     setShowSketchReplaceConfirm: Dispatch<SetStateAction<boolean>>;
+    showClearWorkspaceConfirm: boolean;
+    setShowClearWorkspaceConfirm: Dispatch<SetStateAction<boolean>>;
     isAdvancedSettingsOpen: boolean;
     setIsAdvancedSettingsOpen: Dispatch<SetStateAction<boolean>>;
     isViewerOpen: boolean;
@@ -32,6 +34,7 @@ type UseWorkspaceSurfaceStateReturn = {
 export function useWorkspaceSurfaceState(): UseWorkspaceSurfaceStateReturn {
     const [isSketchPadOpen, setIsSketchPadOpen] = useState(false);
     const [showSketchReplaceConfirm, setShowSketchReplaceConfirm] = useState(false);
+    const [showClearWorkspaceConfirm, setShowClearWorkspaceConfirm] = useState(false);
     const [activePickerSheet, setActivePickerSheet] = useState<PickerSheet>(null);
     const [isAdvancedSettingsOpen, setIsAdvancedSettingsOpen] = useState(false);
     const [isViewerOpen, setIsViewerOpen] = useState(false);
@@ -76,6 +79,8 @@ export function useWorkspaceSurfaceState(): UseWorkspaceSurfaceStateReturn {
         setIsSketchPadOpen,
         showSketchReplaceConfirm,
         setShowSketchReplaceConfirm,
+        showClearWorkspaceConfirm,
+        setShowClearWorkspaceConfirm,
         isAdvancedSettingsOpen,
         setIsAdvancedSettingsOpen,
         isViewerOpen,

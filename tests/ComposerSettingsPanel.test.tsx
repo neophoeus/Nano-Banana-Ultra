@@ -27,18 +27,17 @@ const baseProps = {
     temperature: 1,
     isAdvancedSettingsOpen: true,
     generateLabel: 'Generate',
-    queuedJobs: [],
     isQueueBatchDisabled: false,
     queueBatchDisabledReason: null,
     queueBatchModeSummary: 'Queued batch runs as a separate official job workflow.',
+    queueBatchGenerateModeSummary: 'Queued prompt-only batch ignores the staged image.',
     queueBatchConversationNotice: 'Official chat continuation stays out of queued batch mode.',
-    getImportedQueuedResultCount: () => 0,
     onPromptChange: vi.fn(),
     onStickySendIntentChange: vi.fn(),
     onToggleEnterToSubmit: vi.fn(),
     onGenerate: vi.fn(),
     onQueueBatchJob: vi.fn(),
-    onOpenQueuedBatchJobs: vi.fn(),
+    onQueueBatchFollowUpJob: vi.fn(),
     onCancelGeneration: vi.fn(),
     onStartNewConversation: vi.fn(),
     onFollowUpGenerate: vi.fn(),
@@ -107,13 +106,28 @@ describe('ComposerSettingsPanel toolbar layout', () => {
         expect(markup).not.toContain('Next send');
         expect(markup).toContain('Independent send');
         expect(markup).toContain('Memory send');
-        expect(markup).toContain('Press Enter to Send');
-        expect(markup).toContain('Press Enter for New Line');
+        expect(markup).toContain('Enter\nsends');
+        expect(markup).toContain('Enter\nnewline');
         expect(markup).toContain('border-slate-200/85 bg-slate-100/90');
         expect(markup).toContain('border-slate-200/80 bg-slate-100/85');
-        expect(markup).toContain('min-h-[56px]');
-        expect(markup).toContain('max-w-[19rem]');
-        expect(markup).toContain('md:grid-cols-[minmax(0,1fr)_minmax(0,208px)]');
+        expect(markup).toContain('absolute bottom-3.5 z-10 right-[var(--composer-prompt-overlay-inset)] sm:right-[var(--composer-prompt-overlay-inset-sm)]');
+        expect(markup).toContain('h-48');
+        expect(markup).toContain('min-h-[52px] w-[3.5rem]');
+        expect(markup).toContain('sm:w-[3.75rem]');
+        expect(markup).toContain('grid-rows-2');
+        expect(markup).toContain('pb-3.5');
+        expect(markup).toContain('relative overflow-hidden rounded-[26px] border nbu-composer-dock-textarea');
+        expect(markup).toContain('focus-within:border-amber-400/90');
+        expect(markup).toContain('w-[calc(100%-var(--composer-prompt-text-reserve))]');
+        expect(markup).toContain('sm:w-[calc(100%-var(--composer-prompt-text-reserve-sm))]');
+        expect(markup).toContain('bg-transparent');
+        expect(markup).toContain('pr-4');
+        expect(markup).toContain('--composer-prompt-overlay-inset:0.375rem');
+        expect(markup).toContain('--composer-prompt-overlay-inset-sm:0.5rem');
+        expect(markup).toContain('--composer-prompt-text-reserve:4.75rem');
+        expect(markup).toContain('--composer-prompt-text-reserve-sm:5rem');
+        expect(markup).toContain('whitespace-pre-line break-words');
+        expect(markup).toContain('top-[calc(50%+0.125rem)] bottom-px');
         expect(markup).not.toContain('composer-sticky-send-intent-info-card');
         expect(markup).not.toContain(
             'Uses the selected image and tools without replaying official conversation memory.',
@@ -123,7 +137,6 @@ describe('ComposerSettingsPanel toolbar layout', () => {
         expect(markup.indexOf('composer-image-tools-slot')).toBeLessThan(markup.indexOf('composer-sticky-send-intent'));
         expect(markup.indexOf('composer-sticky-send-intent')).toBeLessThan(markup.indexOf('composer-quick-tools'));
         expect(markup.indexOf('composer-quick-tools')).toBeLessThan(markup.indexOf('composer-enter-behavior-card'));
-        expect(markup.indexOf('composer-generate-card')).toBeLessThan(markup.indexOf('composer-enter-behavior-card'));
         expect(markup).toContain('Generation Settings');
         expect(markup).toContain('Style');
         expect(markup).toContain('None');
@@ -179,19 +192,18 @@ describe('ComposerSettingsPanel toolbar layout', () => {
         expect(markup).not.toContain('Gallery');
         expect(markup).toContain('composer-queue-batch-mode-hint-trigger');
         expect(markup).toContain('composer-queue-batch-mode-hint');
-        expect(markup).toContain('composer-queue-row');
-        expect(markup).toContain('Send to Queue');
+        expect(markup).toContain('composer-queue-actions');
+        expect(markup).not.toContain('composer-queue-row');
+        expect(markup).toContain('Queue');
+        expect(markup).toContain('composer-queue-batch-primary-button');
+        expect(markup).not.toContain('composer-queue-batch-generate-button');
         expect(markup).toContain('composer-generate-card');
         expect(markup).toContain('composer-generate-actions');
         expect(markup).toContain('rounded-[30px]');
         expect(markup).toContain('rounded-[28px]');
-        expect(markup).toContain('composer-queue-status-button');
         expect(markup).toContain('aria-label="Queued batch runs as a separate official job workflow."');
         expect(markup).not.toContain('aria-label="Queued Batch Jobs"');
-        expect(markup).toContain('0 tracked');
-        expect(markup).toContain('0 active');
-        expect(markup).toContain('0 ready to import');
-        expect(markup).toContain('0 closed with issues');
+        expect(markup).not.toContain('composer-queue-status-button');
         expect(markup).not.toContain('composer-queue-summary-details');
         expect(markup).not.toContain('composer-queue-summary-summary');
         expect(markup).not.toContain('composer-queue-summary-notice');
@@ -205,255 +217,15 @@ describe('ComposerSettingsPanel toolbar layout', () => {
         expect(markup).not.toContain('Follow-up Edit');
         expect(markup).not.toContain(getTranslation('en', 'followUpEditRequiresStageImage'));
         expect(markup).not.toContain('Continue with this image');
-        expect(markup).toContain('min-h-10');
         expect(markup).toContain('py-2');
         expect(markup).toContain('Memory send is available only when quantity is 1.');
         expect(markup).toContain('bg-slate-200/95');
         expect(markup).toContain('dark:bg-slate-950');
         expect(markup).toContain('bg-amber-500');
         expect(markup).toContain('text-white dark:text-slate-950');
-        expect(markup).toContain('px-2 py-1.5');
-    });
-
-    it('switches the prompt surface copy when memory send intent is active', () => {
-        const markup = renderToStaticMarkup(
-            <ComposerSettingsPanel
-                {...baseProps}
-                stickySendIntent="memory"
-                batchSize={1}
-                groundingMode="off"
-                capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
-            />,
-        );
-
-        expect(markup).not.toContain('Next send');
-        expect(markup).toContain('Independent send');
-        expect(markup).toContain('Memory send');
-        expect(markup).toContain('Press Enter to Send');
-        expect(markup).toContain('Press Enter for New Line');
-        expect(markup).toContain('composer-enter-behavior-toggle');
-        expect(markup).toContain('composer-sticky-send-intent-toggle');
-        expect(markup).toContain('composer-sticky-send-intent-thumb');
-        expect(markup).toContain('data-active-intent="memory"');
-        expect(markup).toContain('aria-pressed="true"');
-        expect(markup).not.toContain('composer-sticky-send-intent-info-card');
-        expect(markup).not.toContain('Keeps the next send inside official conversation memory.');
-        expect(markup).toContain('Conversation');
-        expect(markup).toContain(
-            'Continue the conversation and describe how this round should change with remembered context...',
-        );
-        expect(markup).toContain('New Conversation');
-        expect(markup).toContain('border-red-200/80 bg-red-50/90');
-        expect(markup).toContain('Press Enter to Send');
-        expect(markup).toContain('Press Enter for New Line');
-    });
-
-    it('shows a spinner only for the active quick tool while helper actions are busy', () => {
-        const markup = renderToStaticMarkup(
-            <ComposerSettingsPanel
-                {...baseProps}
-                isEnhancingPrompt={true}
-                activePromptTool="rewrite"
-                groundingMode="off"
-                capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
-            />,
-        );
-
-        expect(markup).toContain('composer-quick-tool-spinner-rewrite');
-        expect(markup).not.toContain('composer-quick-tool-spinner-image-to-prompt');
-        expect(markup).not.toContain('composer-quick-tool-spinner-inspiration');
-    });
-
-    it('keeps style visible while turning the primary CTA into a continuation action when a stage image exists', () => {
-        const markup = renderToStaticMarkup(
-            <ComposerSettingsPanel
-                {...baseProps}
-                imageStyleLabel="Cinematic"
-                currentStageAsset={{
-                    id: 'stage-source-1',
-                    url: 'https://example.com/stage-source.png',
-                    role: 'stage-source',
-                    origin: 'history',
-                    createdAt: 1710400010000,
-                    lineageAction: 'reopen',
-                }}
-                getStageOriginLabel={() => 'History'}
-                getLineageActionLabel={() => 'Reopen'}
-                groundingMode="off"
-                capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
-            />,
-        );
-
-        expect(markup).toContain('composer-style-strip');
-        expect(markup).toContain('Style');
-        expect(markup).toContain('Cinematic');
-        expect(markup).toContain('border-fuchsia-200/90 bg-fuchsia-50');
-        expect(markup).toContain('composer-style-clear');
-        expect(markup).toContain('composer-sticky-send-intent');
-        expect(markup).not.toContain('composer-follow-up-source-strip');
-        expect(markup).toContain('Continue with this image');
-        expect(markup).toContain('Continue with image: History · Reopen');
-        expect(markup).toContain('Generate');
-        expect(markup).toContain('Press Enter to Send');
-        expect(markup).toContain('Press Enter for New Line');
-        expect(markup.indexOf('composer-settings-button')).toBeLessThan(markup.indexOf('composer-style-strip'));
-        expect(markup.indexOf('composer-style-strip')).toBeLessThan(markup.indexOf('composer-image-tools-slot'));
-        expect(markup.indexOf('composer-image-tools-slot')).toBeLessThan(markup.indexOf('composer-sticky-send-intent'));
-    });
-
-    it('replaces the inline queued jobs panel with a compact status button when tracked jobs exist', () => {
-        const markup = renderToStaticMarkup(
-            <ComposerSettingsPanel
-                {...baseProps}
-                queuedJobs={
-                    [
-                        {
-                            localId: 'job-running',
-                            name: 'batches/job-running',
-                            displayName: 'Running queue job',
-                            state: 'JOB_STATE_RUNNING',
-                            model: 'gemini-3.1-flash-image-preview',
-                            prompt: 'Track the queue',
-                            generationMode: 'Text to Image',
-                            aspectRatio: '1:1',
-                            imageSize: '1K',
-                            style: 'None',
-                            outputFormat: 'images-only',
-                            temperature: 1,
-                            thinkingLevel: 'minimal',
-                            includeThoughts: true,
-                            googleSearch: false,
-                            imageSearch: false,
-                            batchSize: 1,
-                            objectImageCount: 0,
-                            characterImageCount: 0,
-                            createdAt: 1710400000000,
-                            updatedAt: 1710400010000,
-                            startedAt: 1710400005000,
-                            completedAt: null,
-                            lastPolledAt: 1710400010000,
-                            error: null,
-                        },
-                    ] as any
-                }
-                groundingMode="off"
-                capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
-            />,
-        );
-
-        expect(markup).toContain('composer-queue-status-button');
-        expect(markup).toContain('composer-queue-status-progress');
-        expect(markup).toContain('Queued Batch Jobs');
-        expect(markup).toContain('1 tracked');
-        expect(markup).toContain('1 active');
-        expect(markup).toContain('0 ready to import');
-        expect(markup).toContain('0 closed with issues');
-        expect(markup).not.toContain('queued-batch-panel');
-    });
-
-    it('counts submit-pending jobs as active and excludes no-payload successes from ready-to-import totals', () => {
-        const markup = renderToStaticMarkup(
-            <ComposerSettingsPanel
-                {...baseProps}
-                queuedJobs={
-                    [
-                        {
-                            localId: 'job-submit-pending',
-                            name: 'local-pending/job-submit-pending',
-                            displayName: 'Submitting queue job',
-                            state: 'JOB_STATE_PENDING',
-                            model: 'gemini-3.1-flash-image-preview',
-                            prompt: 'Track the queue immediately',
-                            generationMode: 'Text to Image',
-                            aspectRatio: '1:1',
-                            imageSize: '1K',
-                            style: 'None',
-                            outputFormat: 'images-only',
-                            temperature: 1,
-                            thinkingLevel: 'minimal',
-                            includeThoughts: true,
-                            googleSearch: false,
-                            imageSearch: false,
-                            batchSize: 1,
-                            objectImageCount: 0,
-                            characterImageCount: 0,
-                            createdAt: 1710400000000,
-                            updatedAt: 1710400000000,
-                            startedAt: null,
-                            completedAt: null,
-                            lastPolledAt: null,
-                            submissionPending: true,
-                            hasImportablePayload: false,
-                            error: null,
-                        },
-                        {
-                            localId: 'job-no-payload',
-                            name: 'batches/job-no-payload',
-                            displayName: 'No payload queue job',
-                            state: 'JOB_STATE_SUCCEEDED',
-                            model: 'gemini-3.1-flash-image-preview',
-                            prompt: 'Succeeded without inline payload',
-                            generationMode: 'Text to Image',
-                            aspectRatio: '1:1',
-                            imageSize: '1K',
-                            style: 'None',
-                            outputFormat: 'images-only',
-                            temperature: 1,
-                            thinkingLevel: 'minimal',
-                            includeThoughts: true,
-                            googleSearch: false,
-                            imageSearch: false,
-                            batchSize: 1,
-                            objectImageCount: 0,
-                            characterImageCount: 0,
-                            createdAt: 1710400001000,
-                            updatedAt: 1710400002000,
-                            startedAt: 1710400001000,
-                            completedAt: 1710400002000,
-                            lastPolledAt: 1710400002000,
-                            hasImportablePayload: false,
-                            error: null,
-                        },
-                        {
-                            localId: 'job-ready',
-                            name: 'batches/job-ready',
-                            displayName: 'Ready queue job',
-                            state: 'JOB_STATE_SUCCEEDED',
-                            model: 'gemini-3.1-flash-image-preview',
-                            prompt: 'Succeeded with inline payload',
-                            generationMode: 'Text to Image',
-                            aspectRatio: '1:1',
-                            imageSize: '1K',
-                            style: 'None',
-                            outputFormat: 'images-only',
-                            temperature: 1,
-                            thinkingLevel: 'minimal',
-                            includeThoughts: true,
-                            googleSearch: false,
-                            imageSearch: false,
-                            batchSize: 1,
-                            objectImageCount: 0,
-                            characterImageCount: 0,
-                            createdAt: 1710400003000,
-                            updatedAt: 1710400004000,
-                            startedAt: 1710400003000,
-                            completedAt: 1710400004000,
-                            lastPolledAt: 1710400004000,
-                            hasImportablePayload: true,
-                            error: null,
-                        },
-                    ] as any
-                }
-                groundingMode="off"
-                capability={MODEL_CAPABILITIES['gemini-3.1-flash-image-preview']}
-            />,
-        );
-
-        expect(markup).toContain('composer-queue-status-button');
-        expect(markup).toContain('3 tracked');
-        expect(markup).toContain('1 active');
-        expect(markup).toContain('1 ready to import');
-        expect(markup).toContain('0 closed with issues');
+        expect(markup).toContain('px-1.5 py-1.5');
+        expect(markup).toContain('leading-[0.85rem]');
+        expect(markup.indexOf('composer-enter-behavior-card')).toBeLessThan(markup.indexOf('composer-generate-card'));
     });
 });
 

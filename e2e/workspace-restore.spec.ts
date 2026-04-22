@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
 import playwrightTest from '@playwright/test';
 import { fileURLToPath } from 'node:url';
+import { formatTemperature } from '../utils/temperature';
 import { getTranslation, preloadAllTranslations, SUPPORTED_LANGUAGES, type Language } from '../utils/translations';
 
 const { expect, test } = playwrightTest;
@@ -511,6 +512,9 @@ const queuedBatchPanelSnapshot = {
             localId: 'job-pending',
             name: 'batches/job-pending',
             displayName: 'Pending panorama batch',
+            submissionGroupId: 'submission-job-pending',
+            submissionItemIndex: 0,
+            submissionItemCount: 1,
             state: 'JOB_STATE_PENDING',
             model: 'gemini-3.1-flash-image-preview',
             prompt: 'Create a queued panorama',
@@ -524,7 +528,7 @@ const queuedBatchPanelSnapshot = {
             includeThoughts: true,
             googleSearch: false,
             imageSearch: false,
-            batchSize: 2,
+            batchSize: 1,
             objectImageCount: 0,
             characterImageCount: 0,
             createdAt: 1710400000000,
@@ -540,6 +544,9 @@ const queuedBatchPanelSnapshot = {
             localId: 'job-ready',
             name: 'batches/job-ready',
             displayName: 'Ready character batch',
+            submissionGroupId: 'submission-job-ready',
+            submissionItemIndex: 0,
+            submissionItemCount: 1,
             state: 'JOB_STATE_SUCCEEDED',
             model: 'gemini-3-pro-image-preview',
             prompt: 'Import queued character results',
@@ -568,6 +575,9 @@ const queuedBatchPanelSnapshot = {
             localId: 'job-imported',
             name: 'batches/job-imported',
             displayName: 'Imported archive batch',
+            submissionGroupId: 'submission-job-imported',
+            submissionItemIndex: 0,
+            submissionItemCount: 1,
             state: 'JOB_STATE_SUCCEEDED',
             model: 'gemini-3.1-flash-image-preview',
             prompt: 'Imported queued results',
@@ -595,6 +605,9 @@ const queuedBatchPanelSnapshot = {
             localId: 'job-failed',
             name: 'batches/job-failed',
             displayName: 'Failed storyboard batch',
+            submissionGroupId: 'submission-job-failed',
+            submissionItemIndex: 0,
+            submissionItemCount: 1,
             state: 'JOB_STATE_FAILED',
             model: 'gemini-3.1-flash-image-preview',
             prompt: 'Generate failed storyboard',
@@ -608,7 +621,7 @@ const queuedBatchPanelSnapshot = {
             includeThoughts: true,
             googleSearch: false,
             imageSearch: false,
-            batchSize: 4,
+            batchSize: 1,
             objectImageCount: 0,
             characterImageCount: 0,
             createdAt: 1710400070000,
@@ -907,7 +920,7 @@ const openQueuedBatchDetailModal = async (page: Page) => {
         return;
     }
 
-    const opener = page.getByTestId('composer-queue-status-button').first();
+    const opener = page.getByTestId('workspace-queue-open-details').first();
     await expect(opener).toBeVisible();
     await opener.click();
     await expect(modal).toBeVisible();
@@ -2429,7 +2442,7 @@ test.describe('workspace restore flows', () => {
             composerStateBeforeOpen?.outputFormat || 'images-only',
         );
         await expect(secondDialog.getByTestId('composer-advanced-temperature-input')).toHaveValue(
-            String(composerStateBeforeOpen?.temperature ?? 1),
+            formatTemperature(composerStateBeforeOpen?.temperature ?? 1),
         );
 
         await secondDialog
@@ -2783,6 +2796,111 @@ test.describe('workspace restore flows', () => {
             }),
         );
         expect(persistedState?.generatedTurn.parentHistoryId ?? null).toBeNull();
+        expect(persistedState?.workspaceSession.sourceHistoryId).toBe(persistedState?.generatedTurn.id);
+        expect(persistedState?.viewState.selectedHistoryId).toBe(persistedState?.generatedTurn.id);
+    });
+
+    test('upload-only staged Generate stays text-to-image and does not send editing input', async ({ page }) => {
+        const responseText = 'Upload-only staged generate reply';
+        const capturedBodies = await installBasicImageGenerateCaptureRoute(page, responseText);
+
+        await openWorkspaceWithSnapshot(page, {
+            history: [
+                {
+                    id: 'stale-turn',
+                    url: queuedImportedFixtureDataUrl,
+                    prompt: 'Stale history turn',
+                    aspectRatio: '1:1',
+                    size: '1K',
+                    style: 'None',
+                    model: 'gemini-3.1-flash-image-preview',
+                    createdAt: 1710700000000,
+                    mode: 'Text to Image',
+                    executionMode: 'single-turn',
+                    status: 'success',
+                    text: 'Stale history text',
+                    rootHistoryId: 'stale-turn',
+                    lineageAction: 'root',
+                    lineageDepth: 0,
+                },
+            ],
+            stagedAssets: [
+                {
+                    id: 'upload-stage-source',
+                    url: distinctUploadStageDataUrl,
+                    role: 'stage-source',
+                    origin: 'upload',
+                    createdAt: 1710700001000,
+                },
+            ],
+            workflowLogs: ['[10:55:00] Upload-only stage restored with stale workspace source.'],
+            queuedJobs: [],
+            workspaceSession: {
+                activeResult: null,
+                continuityGrounding: null,
+                continuitySessionHints: null,
+                provenanceMode: null,
+                provenanceSourceHistoryId: null,
+                conversationId: 'stale-conversation',
+                conversationBranchOriginId: 'stale-turn',
+                conversationActiveSourceHistoryId: 'stale-turn',
+                conversationTurnIds: ['stale-turn'],
+                source: 'history',
+                sourceHistoryId: 'stale-turn',
+                sourceLineageAction: 'branch',
+                updatedAt: 1710700001000,
+            },
+            branchState: {
+                nameOverrides: {},
+                continuationSourceByBranchOriginId: {
+                    'stale-turn': 'stale-turn',
+                },
+            },
+            conversationState: {
+                byBranchOriginId: {},
+            },
+            viewState: {
+                generatedImageUrls: [],
+                selectedImageIndex: 0,
+                selectedHistoryId: null,
+            },
+            composerState: {
+                prompt: 'Upload-only staged generate prompt',
+                aspectRatio: '1:1',
+                imageSize: '1K',
+                imageStyle: 'None',
+                imageModel: 'gemini-3.1-flash-image-preview',
+                batchSize: 1,
+                outputFormat: 'images-only',
+                temperature: 1,
+                thinkingLevel: 'minimal',
+                includeThoughts: false,
+                googleSearch: false,
+                imageSearch: false,
+                generationMode: 'Text to Image',
+                executionMode: 'single-turn',
+            },
+        });
+
+        await expect(continueWithImageButton(page)).toBeVisible();
+        await expect(generateButton(page)).toBeVisible();
+        await generateButton(page).click();
+
+        await expect.poll(() => capturedBodies.length).toBe(1);
+        expect(String(capturedBodies[0]?.prompt || '')).toContain('Upload-only staged generate prompt');
+        expect(capturedBodies[0]).not.toHaveProperty('editingInput');
+
+        const persistedState = await readPersistedHistoryTurnByText(page, responseText, {
+            waitForPromotedSelection: true,
+        });
+
+        expect(persistedState).not.toBeNull();
+        expect(persistedState?.generatedTurn).toEqual(
+            expect.objectContaining({
+                mode: 'Text to Image',
+                executionMode: 'single-turn',
+            }),
+        );
         expect(persistedState?.workspaceSession.sourceHistoryId).toBe(persistedState?.generatedTurn.id);
         expect(persistedState?.viewState.selectedHistoryId).toBe(persistedState?.generatedTurn.id);
     });
@@ -3618,7 +3736,7 @@ test.describe('workspace restore flows', () => {
             });
         });
 
-        const queueBatchButton = page.getByRole('button', { name: tt('composerQueueBatchJob') }).first();
+        const queueBatchButton = page.getByTestId('composer-queue-batch-primary-button').first();
         await expect(queueBatchButton).toBeVisible();
         await queueBatchButton.click();
 
@@ -3987,7 +4105,9 @@ test.describe('workspace restore flows', () => {
         page,
     }) => {
         await openWorkspaceWithSnapshot(page, queuedBatchPanelSnapshot, {
-            sharedQueuedBatchSpaceSnapshot: null,
+            sharedQueuedBatchSpaceSnapshot: {
+                queuedJobs: queuedBatchPanelSnapshot.queuedJobs,
+            },
         });
         await dismissRestoreNoticeIfPresent(page);
         await openQueuedBatchDetailModal(page);

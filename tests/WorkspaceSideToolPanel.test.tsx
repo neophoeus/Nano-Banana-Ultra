@@ -32,8 +32,14 @@ describe('WorkspaceSideToolPanel', () => {
         expect(markup).toContain('References');
         expect(markup).toContain('>Clear<');
         expect(markup).toContain('border-red-200/80 bg-red-50/90');
-        expect(markup).toContain('Objects 1/4');
-        expect(markup).toContain('Characters 1/2');
+        expect(markup).toContain('workspace-side-tools-references-summary-object-label');
+        expect(markup).toContain('workspace-side-tools-references-summary-character-label');
+        expect(markup).toContain('>Objects<');
+        expect(markup).toContain('>Characters<');
+        expect(markup).toContain('workspace-side-tools-references-summary-object-count');
+        expect(markup).toContain('workspace-side-tools-references-summary-character-count');
+        expect(markup).toContain('>1/4<');
+        expect(markup).toContain('>1/2<');
         expect(markup).toContain('workspace-side-tools-actions-card');
         expect(markup).toContain('workspace-side-tools-references-card');
         expect(markup).toContain('workspace-side-tools-actions');
@@ -43,7 +49,8 @@ describe('WorkspaceSideToolPanel', () => {
         expect(markup).toContain('workspace-side-tools-references-summary');
         expect(markup).toContain('workspace-side-tools-references-summary-object');
         expect(markup).toContain('workspace-side-tools-references-summary-character');
-        expect(markup).toContain('font-black tracking-[0.01em] text-amber-700 dark:text-amber-200');
+        expect(markup).toContain('grid min-w-0 flex-1 gap-1');
+        expect(markup).toContain('border-amber-300/80 bg-white/90 text-amber-700');
         expect(markup).toContain('workspace-side-tool-panel');
         expect(markup).toContain('side-tools-upload-to-repaint-icon');
         expect(markup).toContain('side-tools-repaint-current-icon');
@@ -98,16 +105,18 @@ describe('WorkspaceSideToolPanel', () => {
 
         expect(markup).toContain('Upload Image To Repaint');
         expect(markup).toContain('Repaint Current Image');
-        expect(markup).toContain('Objects 0/4');
-        expect(markup).toContain('Characters 0/2');
-        expect(markup).toContain('font-semibold text-slate-500 dark:text-slate-400');
+        expect(markup).toContain('>Objects<');
+        expect(markup).toContain('>Characters<');
+        expect(markup).toContain('>0/4<');
+        expect(markup).toContain('>0/2<');
+        expect(markup).toContain('border-slate-200/80 bg-white/80 text-slate-600');
         expect(markup).toContain('side-tools-upload-to-repaint-icon');
         expect(markup).toContain('side-tools-repaint-current-icon');
         expect(markup).toContain('data-testid="side-tools-repaint-current"');
         expect(markup).toContain('disabled=""');
         expect(markup).not.toContain('Continue Editing');
         expect(markup).not.toContain('Upload Image To Edit');
-        expect(markup).not.toContain('font-black tracking-[0.01em] text-amber-700 dark:text-amber-200');
+        expect(markup).not.toContain('border-amber-300/80 bg-white/90 text-amber-700');
     });
 
     it('only emphasizes the populated reference type inside the collapsed summary', () => {
@@ -132,13 +141,16 @@ describe('WorkspaceSideToolPanel', () => {
             />,
         );
 
-        expect(markup).toContain('Objects 1/4');
-        expect(markup).toContain('Characters 0/2');
-        expect(markup).toContain(
-            'data-testid="workspace-side-tools-references-summary-object" class="shrink-0 font-black tracking-[0.01em] text-amber-700 dark:text-amber-200"',
-        );
-        expect(markup).toContain(
-            'data-testid="workspace-side-tools-references-summary-character" class="shrink-0 font-semibold text-slate-500 dark:text-slate-400"',
-        );
+        expect(markup).toContain('>Objects<');
+        expect(markup).toContain('>1/4<');
+        expect(markup).toContain('>Characters<');
+        expect(markup).toContain('>0/2<');
+        expect(markup).toContain('workspace-side-tools-references-summary-object-count');
+        expect(markup).toContain('workspace-side-tools-references-summary-character-count');
+        expect(markup).toContain('bg-amber-50/90 text-slate-700 dark:bg-amber-500/10 dark:text-slate-100');
+        expect(markup).toContain('rounded-full border px-2 py-0.5 text-[11px] font-black tracking-[0.04em]');
+        expect(markup).toContain('border-amber-300/80 bg-white/90 text-amber-700');
+        expect(markup).toContain('bg-slate-100/80 text-slate-500 dark:bg-slate-800/80 dark:text-slate-300');
+        expect(markup).toContain('border-slate-200/80 bg-white/80 text-slate-600');
     });
 });

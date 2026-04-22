@@ -8,7 +8,6 @@ import {
     ImageModel,
     ImageSize,
     OutputFormat,
-    QueuedBatchJob,
     StageAsset,
     StickySendIntent,
     ThinkingLevel,
@@ -40,19 +39,18 @@ type UseComposerSettingsPanelPropsArgs = {
     temperature: number;
     isAdvancedSettingsOpen: boolean;
     generateLabel: string;
-    queuedJobs: QueuedBatchJob[];
     isQueueBatchDisabled: boolean;
     queueBatchDisabledReason: string | null;
     queueBatchModeSummary: string;
+    queueBatchGenerateModeSummary: string;
     queueBatchConversationNotice: string | null;
-    getImportedQueuedResultCount: (job: QueuedBatchJob) => number;
     promptTextareaRef: MutableRefObject<HTMLTextAreaElement | null>;
     setPrompt: (value: string) => void;
     setStickySendIntent: Dispatch<SetStateAction<StickySendIntent>>;
     toggleEnterToSubmit: () => void;
     handleGenerate: () => void;
     handleQueueBatchJob: () => void;
-    handleOpenQueuedBatchJobs: () => void;
+    handleQueueBatchFollowUpJob: () => void;
     handleCancelGeneration: () => void;
     handleStartNewConversation: () => void;
     handleFollowUpGenerate: () => void;
@@ -73,7 +71,7 @@ type ComposerSettingsPanelHandlers = {
     toggleEnterToSubmit: () => void;
     handleGenerate: () => void;
     handleQueueBatchJob: () => void;
-    handleOpenQueuedBatchJobs: () => void;
+    handleQueueBatchFollowUpJob: () => void;
     handleCancelGeneration: () => void;
     handleStartNewConversation: () => void;
     handleFollowUpGenerate: () => void;
@@ -83,7 +81,6 @@ type ComposerSettingsPanelHandlers = {
     openSettings: () => void;
     openAdvancedSettings: () => void;
     setActivePickerSheet: Dispatch<SetStateAction<PickerSheet>>;
-    getImportedQueuedResultCount: (job: QueuedBatchJob) => number;
 };
 
 export function useComposerSettingsPanelProps({
@@ -109,19 +106,18 @@ export function useComposerSettingsPanelProps({
     temperature,
     isAdvancedSettingsOpen,
     generateLabel,
-    queuedJobs,
     isQueueBatchDisabled,
     queueBatchDisabledReason,
     queueBatchModeSummary,
+    queueBatchGenerateModeSummary,
     queueBatchConversationNotice,
-    getImportedQueuedResultCount,
     promptTextareaRef,
     setPrompt,
     setStickySendIntent,
     toggleEnterToSubmit,
     handleGenerate,
     handleQueueBatchJob,
-    handleOpenQueuedBatchJobs,
+    handleQueueBatchFollowUpJob,
     handleCancelGeneration,
     handleStartNewConversation,
     handleFollowUpGenerate,
@@ -153,7 +149,7 @@ export function useComposerSettingsPanelProps({
         toggleEnterToSubmit,
         handleGenerate,
         handleQueueBatchJob,
-        handleOpenQueuedBatchJobs,
+        handleQueueBatchFollowUpJob,
         handleCancelGeneration,
         handleStartNewConversation,
         handleFollowUpGenerate,
@@ -163,7 +159,6 @@ export function useComposerSettingsPanelProps({
         openSettings,
         openAdvancedSettings,
         setActivePickerSheet,
-        getImportedQueuedResultCount,
     });
 
     useLayoutEffect(() => {
@@ -173,7 +168,7 @@ export function useComposerSettingsPanelProps({
             toggleEnterToSubmit,
             handleGenerate,
             handleQueueBatchJob,
-            handleOpenQueuedBatchJobs,
+            handleQueueBatchFollowUpJob,
             handleCancelGeneration,
             handleStartNewConversation,
             handleFollowUpGenerate,
@@ -183,7 +178,6 @@ export function useComposerSettingsPanelProps({
             openSettings,
             openAdvancedSettings,
             setActivePickerSheet,
-            getImportedQueuedResultCount,
         };
     }, [
         setPrompt,
@@ -191,7 +185,7 @@ export function useComposerSettingsPanelProps({
         toggleEnterToSubmit,
         handleGenerate,
         handleQueueBatchJob,
-        handleOpenQueuedBatchJobs,
+        handleQueueBatchFollowUpJob,
         handleCancelGeneration,
         handleStartNewConversation,
         handleFollowUpGenerate,
@@ -201,7 +195,6 @@ export function useComposerSettingsPanelProps({
         openSettings,
         openAdvancedSettings,
         setActivePickerSheet,
-        getImportedQueuedResultCount,
     ]);
 
     return useMemo(
@@ -228,20 +221,18 @@ export function useComposerSettingsPanelProps({
             aspectRatio,
             imageSize,
             batchSize,
-            queuedJobs,
             isQueueBatchDisabled,
             queueBatchDisabledReason,
             queueBatchModeSummary,
+            queueBatchGenerateModeSummary,
             queueBatchConversationNotice,
-            getImportedQueuedResultCount: (job: QueuedBatchJob) =>
-                latestHandlersRef.current.getImportedQueuedResultCount(job),
             promptTextareaRef,
             onPromptChange: (value: string) => latestHandlersRef.current.setPrompt(value),
             onStickySendIntentChange: (value: StickySendIntent) => latestHandlersRef.current.setStickySendIntent(value),
             onToggleEnterToSubmit: () => latestHandlersRef.current.toggleEnterToSubmit(),
             onGenerate: () => latestHandlersRef.current.handleGenerate(),
             onQueueBatchJob: () => latestHandlersRef.current.handleQueueBatchJob(),
-            onOpenQueuedBatchJobs: () => latestHandlersRef.current.handleOpenQueuedBatchJobs(),
+            onQueueBatchFollowUpJob: () => latestHandlersRef.current.handleQueueBatchFollowUpJob(),
             onCancelGeneration: () => latestHandlersRef.current.handleCancelGeneration(),
             onStartNewConversation: () => latestHandlersRef.current.handleStartNewConversation(),
             onFollowUpGenerate: () => latestHandlersRef.current.handleFollowUpGenerate(),
@@ -277,10 +268,10 @@ export function useComposerSettingsPanelProps({
             temperature,
             isAdvancedSettingsOpen,
             generateLabel,
-            queuedJobs,
             isQueueBatchDisabled,
             queueBatchDisabledReason,
             queueBatchModeSummary,
+            queueBatchGenerateModeSummary,
             queueBatchConversationNotice,
             promptTextareaRef,
             getModelLabel,

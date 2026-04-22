@@ -12,6 +12,7 @@ import ComposerSettingsPanel from './components/ComposerSettingsPanel';
 import PanelLoadingFallback from './components/PanelLoadingFallback';
 import SurfaceLoadingFallback from './components/SurfaceLoadingFallback';
 import WorkspaceDetailModal from './components/WorkspaceDetailModal';
+import WorkspaceModalFrame from './components/WorkspaceModalFrame';
 import WorkspaceOverlayStack from './components/WorkspaceOverlayStack';
 import WorkspaceSideToolPanel from './components/WorkspaceSideToolPanel';
 import WorkspaceSupportDetailSurface from './components/WorkspaceSupportDetailSurface';
@@ -31,6 +32,10 @@ import {
 } from './utils/translations';
 import { IMAGE_MODELS, MODEL_CAPABILITIES } from './constants';
 import { buildStageErrorState } from './utils/generationFailure';
+import {
+    topLauncherCompactButtonClassName,
+    topLauncherCompactLabelClassName,
+} from './utils/workspaceTopLauncherStyles';
 import {
     clearSharedWorkspaceSnapshot,
     EMPTY_WORKSPACE_COMPOSER_STATE,
@@ -87,6 +92,7 @@ import { useLegacyWorkspaceSnapshotMigration } from './hooks/useLegacyWorkspaceS
 import { resolveCurrentStageSelectionFirstSourceOverride } from './utils/generationSourceOverride';
 import { buildSavedImageLoadUrl, loadImageMetadata } from './utils/imageSaveUtils';
 import { createImageSidecarMetadataState, normalizeImageSidecarMetadata } from './utils/imageSidecarMetadata';
+import { WORKSPACE_OVERLAY_Z_INDEX } from './constants/workspaceOverlays';
 
 const ImageEditor = lazy(() => import('./components/ImageEditor'));
 const GeneratedImage = lazy(() => import('./components/GeneratedImage'));
@@ -134,11 +140,7 @@ const TopLauncherSignal = ({ active, dataTestId }: { active: boolean; dataTestId
 
 const App: React.FC = () => {
     const [initialWorkspaceSnapshot] = useState(() => loadWorkspaceSnapshot());
-    const [initialQueuedBatchSpaceSnapshot] = useState(() =>
-        loadQueuedBatchSpaceSnapshot({
-            legacyQueuedJobs: initialWorkspaceSnapshot.queuedJobs,
-        }),
-    );
+    const [initialQueuedBatchSpaceSnapshot] = useState(() => loadQueuedBatchSpaceSnapshot());
     const initialActiveResult = initialWorkspaceSnapshot.workspaceSession.activeResult;
     const initialComposerState = initialWorkspaceSnapshot.composerState || EMPTY_WORKSPACE_COMPOSER_STATE;
     const [apiKeyReady, setApiKeyReady] = useState(false);
@@ -187,6 +189,8 @@ const App: React.FC = () => {
         setIsSketchPadOpen,
         showSketchReplaceConfirm,
         setShowSketchReplaceConfirm,
+        showClearWorkspaceConfirm,
+        setShowClearWorkspaceConfirm,
         activePickerSheet,
         setActivePickerSheet,
         closePickerSheet,
@@ -1107,6 +1111,7 @@ const App: React.FC = () => {
         queueBatchDisabledReason,
         editorQueueDisabledReason,
         queueBatchModeSummary,
+        queueBatchGenerateModeSummary,
         queueBatchConversationNotice,
         getImportedQueuedHistoryItems,
         getImportedQueuedResultCount,
@@ -1124,6 +1129,7 @@ const App: React.FC = () => {
         queuedJobs,
         setQueuedJobs,
         handleQueueBatchJob,
+        handleQueueBatchFollowUpJob,
         handleQueueBatchJobFromEditor,
         handlePollQueuedJob,
         handlePollAllQueuedJobs,
@@ -1678,19 +1684,18 @@ const App: React.FC = () => {
         temperature,
         isAdvancedSettingsOpen,
         generateLabel: t('generate'),
-        queuedJobs,
         isQueueBatchDisabled,
         queueBatchDisabledReason,
         queueBatchModeSummary,
+        queueBatchGenerateModeSummary,
         queueBatchConversationNotice,
-        getImportedQueuedResultCount,
         promptTextareaRef: composerPromptTextareaRef,
         setPrompt,
         setStickySendIntent,
         toggleEnterToSubmit,
         handleGenerate,
         handleQueueBatchJob,
-        handleOpenQueuedBatchJobs,
+        handleQueueBatchFollowUpJob,
         handleCancelGeneration,
         handleStartNewConversation,
         handleFollowUpGenerate,
@@ -1975,6 +1980,16 @@ const App: React.FC = () => {
         handleRemoveCharacterReference: handleSurfaceRemoveCharacterReference,
         showStyleEntry: !isEditing,
     });
+    const handleOpenClearWorkspaceConfirm = useCallback(() => {
+        setShowClearWorkspaceConfirm(true);
+    }, [setShowClearWorkspaceConfirm]);
+    const handleCloseClearWorkspaceConfirm = useCallback(() => {
+        setShowClearWorkspaceConfirm(false);
+    }, [setShowClearWorkspaceConfirm]);
+    const handleConfirmClearWorkspace = useCallback(() => {
+        setShowClearWorkspaceConfirm(false);
+        handleClearGalleryHistory();
+    }, [handleClearGalleryHistory, setShowClearWorkspaceConfirm]);
     const historySurface = useMemo(
         () => (
             <WorkspaceUnifiedHistoryPanel
@@ -1990,7 +2005,7 @@ const App: React.FC = () => {
                 onOpenVersionsDetails={handleOpenVersionsDetails}
                 onImportWorkspace={handleOpenWorkspaceImportPicker}
                 onExportWorkspace={handleExportWorkspaceSnapshot}
-                onClearWorkspace={handleClearGalleryHistory}
+                onClearWorkspace={handleOpenClearWorkspaceConfirm}
             />
         ),
         [
@@ -2001,7 +2016,7 @@ const App: React.FC = () => {
             currentLang,
             getBranchAccentClassName,
             handleExportWorkspaceSnapshot,
-            handleClearGalleryHistory,
+            handleOpenClearWorkspaceConfirm,
             handleHistorySelect,
             handleOpenVersionsDetails,
             handleOpenWorkspaceImportPicker,
@@ -2011,12 +2026,7 @@ const App: React.FC = () => {
     );
     const stagePanelClassName =
         'min-w-0 nbu-shell-panel nbu-shell-surface-stage-hero min-h-[400px] overflow-hidden p-3 lg:min-h-0 xl:flex-1';
-    const topLauncherCompactButtonClassName =
-        'group nbu-shell-panel flex h-[40px] min-h-[40px] min-w-0 w-full items-center justify-center px-2.5 py-2 text-center transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_18px_40px_rgba(2,6,23,0.38)]';
-    const topLauncherCompactLabelClassName =
-        'whitespace-nowrap text-[9px] font-black uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 sm:text-[10px]';
-    const supportDetailTabButtonClassName =
-        'rounded-full border px-3 py-1.5 text-[11px] font-semibold transition-colors';
+    const hasQueuedBatchActivity = queuedJobs.length > 0;
     const { progressThoughtEntries, progressThoughtsSummaryText, hasProgressActivity, hasSourceTrailInfo } =
         useWorkspaceProgressThoughts({
             selectedHistoryId,
@@ -2054,11 +2064,22 @@ const App: React.FC = () => {
                 type="button"
                 data-testid="workspace-sources-open-details"
                 onClick={handleOpenSourcesDetails}
-                className={`${topLauncherCompactButtonClassName} nbu-shell-surface-provenance-summary hover:border-sky-300 dark:hover:border-sky-500/30`}
+                className={`${topLauncherCompactButtonClassName} nbu-shell-surface-context-rail hover:border-sky-300 dark:hover:border-sky-500/30`}
             >
                 <span className="flex min-w-0 items-center gap-2">
                     <TopLauncherSignal active={hasSourceTrailInfo} dataTestId="workspace-sources-signal" />
                     <span className={topLauncherCompactLabelClassName}>{t('workspaceSupportSources')}</span>
+                </span>
+            </button>
+            <button
+                type="button"
+                data-testid="workspace-queue-open-details"
+                onClick={handleOpenQueuedBatchJobs}
+                className={`${topLauncherCompactButtonClassName} nbu-shell-surface-context-rail hover:border-emerald-300 dark:hover:border-emerald-500/30`}
+            >
+                <span className="flex min-w-0 items-center gap-2">
+                    <TopLauncherSignal active={hasQueuedBatchActivity} dataTestId="workspace-queue-signal" />
+                    <span className={topLauncherCompactLabelClassName}>{t('workspaceQueueLauncher')}</span>
                 </span>
             </button>
         </>
@@ -2171,35 +2192,6 @@ const App: React.FC = () => {
     const workspaceDetailOverlays =
         activeWorkspaceDetailModal === 'progress' || activeWorkspaceDetailModal === 'sources' ? (
             (() => {
-                const supportDetailHeaderExtra = (
-                    <div data-testid="workspace-support-detail-tabs" className="mt-3 flex flex-wrap items-center gap-2">
-                        <button
-                            type="button"
-                            data-testid="workspace-support-detail-tab-progress"
-                            onClick={handleOpenProgressDetails}
-                            className={`${supportDetailTabButtonClassName} ${
-                                activeWorkspaceDetailModal === 'progress'
-                                    ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200'
-                                    : 'border-gray-200/80 text-gray-600 hover:border-amber-300 hover:text-amber-700 dark:border-gray-700 dark:text-gray-300 dark:hover:border-amber-500/30 dark:hover:text-amber-200'
-                            }`}
-                        >
-                            {t('workspaceSupportProgress')}
-                        </button>
-                        <button
-                            type="button"
-                            data-testid="workspace-support-detail-tab-sources"
-                            onClick={handleOpenSourcesDetails}
-                            className={`${supportDetailTabButtonClassName} ${
-                                activeWorkspaceDetailModal === 'sources'
-                                    ? 'border-sky-300 bg-sky-50 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-200'
-                                    : 'border-gray-200/80 text-gray-600 hover:border-sky-300 hover:text-sky-700 dark:border-gray-700 dark:text-gray-300 dark:hover:border-sky-500/30 dark:hover:text-sky-200'
-                            }`}
-                        >
-                            {t('workspaceSupportSources')}
-                        </button>
-                    </div>
-                );
-
                 if (activeWorkspaceDetailModal === 'progress') {
                     return (
                         <WorkspaceSupportDetailSurface
@@ -2208,7 +2200,6 @@ const App: React.FC = () => {
                             closeLabel={t('workspaceViewerClose')}
                             onClose={handleCloseWorkspaceDetailModal}
                             compact={true}
-                            headerExtra={supportDetailHeaderExtra}
                             desktopWidthClass="max-w-[1120px]"
                         >
                             <Suspense
@@ -2243,7 +2234,6 @@ const App: React.FC = () => {
                         title={t('workspaceSupportSources')}
                         closeLabel={t('workspaceViewerClose')}
                         onClose={handleCloseWorkspaceDetailModal}
-                        headerExtra={supportDetailHeaderExtra}
                     >
                         <Suspense
                             fallback={
@@ -2327,6 +2317,66 @@ const App: React.FC = () => {
                 </Suspense>
             </WorkspaceSupportDetailSurface>
         ) : null;
+    const workspaceClearConfirmOverlay = showClearWorkspaceConfirm ? (
+        <WorkspaceModalFrame
+            dataTestId="workspace-unified-history-clear-confirm"
+            zIndex={WORKSPACE_OVERLAY_Z_INDEX.historyConfirm}
+            maxWidthClass="max-w-sm"
+            onClose={handleCloseClearWorkspaceConfirm}
+            closeLabel={t('clearHistoryCancel')}
+            title={t('clearHistoryTitle')}
+            description={t('clearHistoryMsg')}
+            hideCloseButton
+            panelClassName="nbu-modal-shell"
+            headerClassName="justify-center border-b-0 px-6 pt-6 pb-4 text-center"
+            headerExtra={
+                <div className="mt-4 flex justify-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-6 w-6"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                        </svg>
+                    </div>
+                </div>
+            }
+        >
+            <div className="flex gap-2 border-t border-gray-100 bg-gray-50 p-2 dark:border-gray-800 dark:bg-gray-900/50">
+                <button
+                    type="button"
+                    data-testid="workspace-unified-history-clear-cancel"
+                    onClick={handleCloseClearWorkspaceConfirm}
+                    className="flex-1 rounded-xl border border-transparent px-4 py-2.5 text-sm font-bold text-gray-600 transition-all hover:border-gray-200 hover:bg-white dark:text-gray-300 dark:hover:border-gray-700 dark:hover:bg-gray-800"
+                >
+                    {t('clearHistoryCancel')}
+                </button>
+                <button
+                    type="button"
+                    data-testid="workspace-unified-history-clear-confirm-action"
+                    onClick={handleConfirmClearWorkspace}
+                    className="flex-1 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-red-500/30 transition-all hover:bg-red-600"
+                >
+                    {t('clearHistoryConfirm')}
+                </button>
+            </div>
+        </WorkspaceModalFrame>
+    ) : null;
+    const workspaceOverlayContent =
+        workspaceDetailOverlays || workspaceClearConfirmOverlay ? (
+            <>
+                {workspaceDetailOverlays}
+                {workspaceClearConfirmOverlay}
+            </>
+        ) : null;
     const focusSurface = useMemo(
         () => (
             <div className={stagePanelClassName}>
@@ -2374,7 +2424,7 @@ const App: React.FC = () => {
                 surfaceSharedControlsProps={surfaceSharedControlsProps}
                 importReviewProps={importReviewProps}
                 advancedSettingsDialogProps={advancedSettingsDialogProps}
-                extraOverlays={workspaceDetailOverlays}
+                extraOverlays={workspaceOverlayContent}
                 sketchPadSurface={
                     isSketchPadOpen ? (
                         <Suspense fallback={<SurfaceLoadingFallback label={t('loadingPrepareSketchPad')} />}>

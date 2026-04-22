@@ -214,7 +214,11 @@ const composerControlChromeKeys = [
     'composerAdvancedEyebrow',
 ] as const;
 
-const composerQueueBatchJobKey = ['composerQueueBatchJob'] as const;
+const composerQueueBatchJobKey = [
+    'workspaceQueueLauncher',
+    'composerQueueBatchJob',
+    'composerQueueBatchFollowUpJob',
+] as const;
 
 const historyActionBadgeKeys = [
     'historyActionOpen',
@@ -227,6 +231,7 @@ const historyActionBadgeKeys = [
     'historyBadgeParent',
     'historyBadgeCandidate',
     'historyBadgeActive',
+    'historyBadgeQueuedResult',
 ] as const;
 
 const historyFilmstripKeys = [
@@ -305,7 +310,11 @@ const composerControlChromeFallbackSensitiveKeys = [
     'composerAdvancedEyebrow',
 ] as const;
 
-const composerQueueBatchJobFallbackSensitiveKeys = ['composerQueueBatchJob'] as const;
+const composerQueueBatchJobFallbackSensitiveKeys = [
+    'workspaceQueueLauncher',
+    'composerQueueBatchJob',
+    'composerQueueBatchFollowUpJob',
+] as const;
 
 const phaseEGroup1ShellParityKeys = [
     'workspaceTopHeaderReferenceTray',
@@ -348,12 +357,15 @@ const phaseEGroup2ShellParityKeys = [
     'composerAdvancedGroundingGuideFlashGoogle',
     'composerAdvancedGroundingGuideFlashImage',
     'composerAdvancedGroundingGuideProGoogle',
+    'workspaceQueueLauncher',
     'composerQueueBatchJob',
+    'composerQueueBatchFollowUpJob',
     'queuedBatchJobsTitle',
     'queuedBatchJobsWorkflowHint',
     'queuedBatchJobsConversationNoticeLabel',
     'queueBatchModeEditor',
     'queueBatchModeStage',
+    'queueBatchModeStageGenerate',
     'queueBatchModeReferences',
     'queueBatchModePromptOnly',
     'queueBatchConversationNotice',
@@ -1256,13 +1268,13 @@ const zhCnGroundingPanelNoQueriesBaseline = {
 } as const;
 
 const zhTwComposerEnterHintsBaseline = {
-    composerEnterSends: '按下 Enter 送出',
-    composerEnterNewline: '按下 Enter 換行',
+    composerEnterSends: 'Enter\n送出',
+    composerEnterNewline: 'Enter\n換行',
 } as const;
 
 const zhCnComposerEnterHintsBaseline = {
-    composerEnterSends: '按下 Enter 发送',
-    composerEnterNewline: '按下 Enter 换行',
+    composerEnterSends: 'Enter\n发送',
+    composerEnterNewline: 'Enter\n换行',
 } as const;
 
 const zhTwShiftEnterHintBaseline = {
@@ -1324,18 +1336,22 @@ const zhCnHistoryStageBaseline = {
 } as const;
 
 const zhTwComposerControlsBaseline = {
-    composerEnterSends: '按下 Enter 送出',
-    composerEnterNewline: '按下 Enter 換行',
-    composerQueueBatchJob: '送至佇列',
+    composerEnterSends: 'Enter\n送出',
+    composerEnterNewline: 'Enter\n換行',
+    workspaceQueueLauncher: '佇列',
+    composerQueueBatchJob: '加入佇列',
+    composerQueueBatchFollowUpJob: '將此圖加入佇列',
     composerActionPanelTitle: '建立',
     composerActionPanelDesc: '生成仍是主要動作，後續編修與工作區操作保持靠近，但語氣更收斂。',
     composerAdvancedEyebrow: '深度控制',
 } as const;
 
 const zhCnComposerControlsBaseline = {
-    composerEnterSends: '按下 Enter 发送',
-    composerEnterNewline: '按下 Enter 换行',
-    composerQueueBatchJob: '发送到队列',
+    composerEnterSends: 'Enter\n发送',
+    composerEnterNewline: 'Enter\n换行',
+    workspaceQueueLauncher: '队列',
+    composerQueueBatchJob: '加入队列',
+    composerQueueBatchFollowUpJob: '将此图加入队列',
     composerActionPanelTitle: '创建',
     composerActionPanelDesc: '生成仍然是主动作，后续编辑和工作区操作保持靠近，但语气更克制。',
     composerAdvancedEyebrow: '深度控制',
@@ -1345,8 +1361,8 @@ const jaComposerControlChromeBaseline = {
     composerToolbarExportWorkspace: 'ワークスペースを書き出し',
     composerToolbarImportWorkspace: 'ワークスペースを読み込み',
     composerToolbarAdvancedSettings: '詳細設定',
-    composerEnterSends: 'Enterキーで送信',
-    composerEnterNewline: 'Enterキーで改行',
+    composerEnterSends: 'Enter\n送信',
+    composerEnterNewline: 'Enter\n改行',
     composerVisibilityVisible: '表示',
     composerVisibilityHidden: '非表示',
     composerActionPanelTitle: '作成',
@@ -1359,8 +1375,8 @@ const koComposerControlChromeBaseline = {
     composerToolbarExportWorkspace: '워크스페이스 내보내기',
     composerToolbarImportWorkspace: '워크스페이스 가져오기',
     composerToolbarAdvancedSettings: '고급 설정',
-    composerEnterSends: 'Enter를 눌러 전송',
-    composerEnterNewline: 'Enter를 눌러 줄바꿈',
+    composerEnterSends: 'Enter\n전송',
+    composerEnterNewline: 'Enter\n줄바꿈',
     composerVisibilityVisible: '표시',
     composerVisibilityHidden: '숨김',
     composerActionPanelTitle: '생성',
@@ -1373,8 +1389,8 @@ const esComposerControlChromeBaseline = {
     composerToolbarExportWorkspace: 'Exportar espacio de trabajo',
     composerToolbarImportWorkspace: 'Importar espacio de trabajo',
     composerToolbarAdvancedSettings: 'Ajustes avanzados',
-    composerEnterSends: 'Pulsa Enter para enviar',
-    composerEnterNewline: 'Pulsa Enter para nueva linea',
+    composerEnterSends: 'Enter\nenvia',
+    composerEnterNewline: 'Enter\nlinea',
     composerVisibilityVisible: 'Se muestra',
     composerVisibilityHidden: 'Oculto',
     composerActionPanelTitle: 'Crear',
@@ -1387,8 +1403,8 @@ const frComposerControlChromeBaseline = {
     composerToolbarExportWorkspace: 'Exporter l espace de travail',
     composerToolbarImportWorkspace: 'Importer l espace de travail',
     composerToolbarAdvancedSettings: 'Parametres avances',
-    composerEnterSends: 'Appuyer sur Entree pour envoyer',
-    composerEnterNewline: 'Appuyer sur Entree pour passer a la ligne',
+    composerEnterSends: 'Entree\nenvoie',
+    composerEnterNewline: 'Entree\nligne',
     composerVisibilityVisible: 'Affiché',
     composerVisibilityHidden: 'Masque',
     composerActionPanelTitle: 'Creer',
@@ -1401,8 +1417,8 @@ const deComposerControlChromeBaseline = {
     composerToolbarExportWorkspace: 'Arbeitsbereich exportieren',
     composerToolbarImportWorkspace: 'Arbeitsbereich importieren',
     composerToolbarAdvancedSettings: 'Erweiterte Einstellungen',
-    composerEnterSends: 'Zum Senden Enter drucken',
-    composerEnterNewline: 'Fur neue Zeile Enter drucken',
+    composerEnterSends: 'Enter\nsendet',
+    composerEnterNewline: 'Enter\nZeile',
     composerVisibilityVisible: 'Sichtbar',
     composerVisibilityHidden: 'Ausgeblendet',
     composerActionPanelTitle: 'Erstellen',
@@ -1415,8 +1431,8 @@ const ruComposerControlChromeBaseline = {
     composerToolbarExportWorkspace: 'Экспортировать рабочее пространство',
     composerToolbarImportWorkspace: 'Импортировать рабочее пространство',
     composerToolbarAdvancedSettings: 'Расширенные настройки',
-    composerEnterSends: 'Нажмите Enter для отправки',
-    composerEnterNewline: 'Нажмите Enter для новой строки',
+    composerEnterSends: 'Enter\nотправка',
+    composerEnterNewline: 'Enter\nстрока',
     composerVisibilityVisible: 'Видимо',
     composerVisibilityHidden: 'Скрыто',
     composerActionPanelTitle: 'Создать',
@@ -1426,27 +1442,39 @@ const ruComposerControlChromeBaseline = {
 } as const;
 
 const jaComposerQueueBatchJobBaseline = {
-    composerQueueBatchJob: 'キューに送信',
+    workspaceQueueLauncher: 'バッチキュー',
+    composerQueueBatchJob: 'キューに追加',
+    composerQueueBatchFollowUpJob: 'この画像をキューに追加',
 } as const;
 
 const koComposerQueueBatchJobBaseline = {
-    composerQueueBatchJob: '대기열로 보내기',
+    workspaceQueueLauncher: '대기열',
+    composerQueueBatchJob: '대기열에 추가',
+    composerQueueBatchFollowUpJob: '이 이미지를 대기열에 추가',
 } as const;
 
 const esComposerQueueBatchJobBaseline = {
-    composerQueueBatchJob: 'Enviar a la cola',
+    workspaceQueueLauncher: 'Cola',
+    composerQueueBatchJob: 'Poner en cola',
+    composerQueueBatchFollowUpJob: 'Poner esta imagen en cola',
 } as const;
 
 const frComposerQueueBatchJobBaseline = {
-    composerQueueBatchJob: 'Envoyer a la file',
+    workspaceQueueLauncher: 'File',
+    composerQueueBatchJob: 'Mettre en file',
+    composerQueueBatchFollowUpJob: 'Mettre cette image en file',
 } as const;
 
 const deComposerQueueBatchJobBaseline = {
-    composerQueueBatchJob: 'An Warteschlange senden',
+    workspaceQueueLauncher: 'Warteschlange',
+    composerQueueBatchJob: 'Einreihen',
+    composerQueueBatchFollowUpJob: 'Dieses Bild einreihen',
 } as const;
 
 const ruComposerQueueBatchJobBaseline = {
-    composerQueueBatchJob: 'Отправить в очередь',
+    workspaceQueueLauncher: 'Очередь',
+    composerQueueBatchJob: 'Добавить в очередь',
+    composerQueueBatchFollowUpJob: 'Добавить это изображение в очередь',
 } as const;
 
 const zhTwComposerThoughtTempBaseline = {
@@ -1519,15 +1547,17 @@ const zhTwQueuedBatchWordingBaseline = {
     queueBatchModeEditor:
         '這會以目前編輯輸入影像與已暫存參考圖送出一個官方編輯批次工作。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
     queueBatchModeStage:
-        '這會以目前的階段圖像與已暫存參考圖送出一個官方影像條件批次工作。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
+        '這會以目前階段圖像與已暫存參考圖排入一個後續官方批次工作。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
+    queueBatchModeStageGenerate:
+        '這會依目前提示詞與已暫存參考圖排入一個全新官方批次工作，不會使用目前階段圖像。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
     queueBatchModeReferences:
-        '這會以目前提示詞與參考圖托盤送出一個官方參考驅動批次工作。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
+        '這會依目前提示詞與參考圖托盤排入一個全新官方參考驅動批次工作。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
     queueBatchModePromptOnly:
-        '這會送出一個僅依提示詞的官方批次工作。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
+        '這會排入一個僅依提示詞的全新官方批次工作。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
     queueBatchConversationNotice:
         '佇列批次工作會保留來源延續脈絡，但不會送出官方多輪對話歷史。若要延續對話，請使用開始生成。',
     queueBatchMemoryContinuationDisabledReason:
-        '佇列工作不能延續官方 memory 對話。請先開始新對話，或切換到 Independent send。',
+        '佇列工作不能在記憶發送模式下延續官方對話。請先開始新對話，或切換到獨立發送。',
     queuedBatchJobsWorkflowHint: '先在這裡追蹤佇列狀態，結果就緒後匯入歷史，流程完成後再清除這筆工作。',
     queuedBatchJobsConversationNoticeLabel: '延續提醒',
     queuedBatchJobsMonitorGroup: '監看',
@@ -1539,15 +1569,17 @@ const zhCnQueuedBatchWordingBaseline = {
     queueBatchModeEditor:
         '这会以当前编辑输入图像和已暂存参考图提交一个官方编辑批处理任务。队列批处理一律只输出图像，且不请求返回思考内容。',
     queueBatchModeStage:
-        '这会以当前阶段图像和已暂存参考图提交一个官方图像条件批处理任务。队列批处理一律只输出图像，且不请求返回思考内容。',
+        '这会以当前阶段图像和已暂存参考图排入一个后续官方批处理任务。队列批处理一律只输出图像，且不请求返回思考内容。',
+    queueBatchModeStageGenerate:
+        '这会按当前提示词与已暂存参考图排入一个全新的官方批处理任务，不会使用当前阶段图像。队列批处理一律只输出图像，且不请求返回思考内容。',
     queueBatchModeReferences:
-        '这会以当前提示词和参考图托盘提交一个官方参考驱动批处理任务。队列批处理一律只输出图像，且不请求返回思考内容。',
+        '这会按当前提示词与参考图托盘排入一个全新的官方参考驱动批处理任务。队列批处理一律只输出图像，且不请求返回思考内容。',
     queueBatchModePromptOnly:
-        '这会提交一个仅基于提示词的官方批处理任务。队列批处理一律只输出图像，且不请求返回思考内容。',
+        '这会排入一个仅基于提示词的全新官方批处理任务。队列批处理一律只输出图像，且不请求返回思考内容。',
     queueBatchConversationNotice:
         '队列批处理任务会保留来源延续脉络，但不会发送官方多轮对话历史。若要继续对话，请使用开始生成。',
     queueBatchMemoryContinuationDisabledReason:
-        '队列任务不能延续官方 memory 对话。请先开始新对话，或切换到 Independent send。',
+        '队列任务不能在记忆发送模式下延续官方对话。请先开始新对话，或切换到独立发送。',
     queuedBatchJobsWorkflowHint: '先在这里跟踪队列状态，结果就绪后导入历史，流程完成后再清除这条任务。',
     queuedBatchJobsConversationNoticeLabel: '延续提醒',
     queuedBatchJobsMonitorGroup: '监看',
@@ -1567,140 +1599,152 @@ const zhCnQueuedBatchDescBaseline = {
 
 const jaQueuedBatchWordingBaseline = {
     queueBatchModeEditor:
-        'これは、現在のエディター入力とステージ済み参照を使って、編集ベースの公式画像条件付きバッチを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
+        'これは、現在のエディター入力画像と準備済み参照を使って、編集ベースの公式画像条件付きバッチジョブを送信します。バッチキューでは常に画像のみを出力し、思考の返却は要求しません。',
     queueBatchModeStage:
-        'これは、現在のステージ画像とステージ済み参照を使って、公式の画像条件付きバッチを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
+        'これは、現在のステージ画像と準備済み参照を使って、フォローアップ用の公式バッチジョブをキューに追加します。バッチキューでは常に画像のみを出力し、思考の返却は要求しません。',
+    queueBatchModeStageGenerate:
+        'これは、現在のプロンプトと準備済み参照から新しい公式バッチジョブをキューに追加します。現在のステージ画像は使いません。バッチキューでは常に画像のみを出力し、思考の返却は要求しません。',
     queueBatchModeReferences:
-        'これは、現在のプロンプトと参照トレイを使って、参照駆動の公式バッチを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
+        'これは、現在のプロンプトと参照トレイを使って、新しい参照駆動の公式バッチジョブをキューに追加します。バッチキューでは常に画像のみを出力し、思考の返却は要求しません。',
     queueBatchModePromptOnly:
-        'これは、プロンプトのみの公式バッチジョブを送信します。キュー投入バッチは常に画像のみを出力し、思考の返却は要求しません。',
+        'これは、プロンプトのみの新しい公式バッチジョブをキューに追加します。バッチキューでは常に画像のみを出力し、思考の返却は要求しません。',
     queueBatchConversationNotice:
-        'キュー投入バッチジョブはソースの系統を保持しますが、公式の複数ターン会話履歴は送信しません。会話を継続する場合は通常の生成を使ってください。',
+        'バッチキューはソースの系統を保持しますが、公式の複数ターン会話履歴は送信しません。会話を続ける場合は生成を使ってください。',
     queueBatchMemoryContinuationDisabledReason:
-        'キュー投入ジョブは公式の memory 会話を継続できません。新しい会話を開始するか、Independent send に切り替えてください。',
+        'バッチキューでは、記憶送信モードの公式会話を続けられません。新しい会話を開始するか、独立送信に切り替えてください。',
     queuedBatchJobsWorkflowHint:
-        'ここでキューを見守り、結果の準備ができたら履歴へ取り込み、作業が終わったらこのエントリをクリアします。',
-    queuedBatchJobsConversationNoticeLabel: '継続メモ',
+        'ここでバッチキューの状態を確認し、結果の準備ができたら履歴へ取り込み、作業が終わったらこのエントリを整理します。',
+    queuedBatchJobsConversationNoticeLabel: '継続に関する注意',
     queuedBatchJobsMonitorGroup: '監視',
     queuedBatchJobsResultsGroup: '結果',
     queuedBatchJobsCleanupGroup: '整理',
     queuedBatchJobsDesc:
-        '保存済みの公式 Gemini Batch API ジョブはここで追跡され、待機中または実行中の間に状態確認、結果の取り込み、後片付けまで進められます。',
+        '保存済みの公式 Gemini Batch API ジョブは、待機中または実行中の間ここで追跡されます。Batch API は 24 時間以内の完了を目標としていますが、画像ジョブはサービス側で 48 時間後に失効するまで継続する場合があります。',
 } as const;
 
 const koQueuedBatchWordingBaseline = {
     queueBatchModeEditor:
-        '이 작업은 현재 에디터 입력과 스테이징된 참조를 사용해 편집 기반의 공식 이미지 조건부 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
+        '이 작업은 현재 에디터 입력 이미지와 준비된 참조를 사용해 편집 기반의 공식 이미지 조건부 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지만 출력하며 생각 반환은 요청하지 않습니다.',
     queueBatchModeStage:
-        '이 작업은 현재 스테이지 이미지와 스테이징된 참조를 사용해 공식 이미지 조건부 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
+        '이 작업은 현재 스테이지 이미지와 준비된 참조를 사용해 후속 공식 배치 작업을 대기열에 추가합니다. 대기열 배치 작업은 항상 이미지만 출력하며 생각 반환은 요청하지 않습니다.',
+    queueBatchModeStageGenerate:
+        '이 작업은 현재 프롬프트와 준비된 참조를 사용해 새 공식 배치 작업을 대기열에 추가하며 현재 스테이지 이미지는 사용하지 않습니다. 대기열 배치 작업은 항상 이미지만 출력하며 생각 반환은 요청하지 않습니다.',
     queueBatchModeReferences:
-        '이 작업은 현재 프롬프트와 참조 트레이를 사용해 공식 참조 기반 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
+        '이 작업은 현재 프롬프트와 참조 트레이를 사용해 새 공식 참조 기반 배치 작업을 대기열에 추가합니다. 대기열 배치 작업은 항상 이미지만 출력하며 생각 반환은 요청하지 않습니다.',
     queueBatchModePromptOnly:
-        '이 작업은 프롬프트만 사용하는 공식 배치 작업을 제출합니다. 대기열 배치 작업은 항상 이미지 전용 출력만 사용하며 사고 내용 반환은 요청하지 않습니다.',
+        '이 작업은 프롬프트만 사용하는 새 공식 배치 작업을 대기열에 추가합니다. 대기열 배치 작업은 항상 이미지만 출력하며 생각 반환은 요청하지 않습니다.',
     queueBatchConversationNotice:
-        '대기열 배치 작업은 원본 계보를 유지하지만 공식 다중 턴 대화 기록은 전송하지 않습니다. 대화를 이어가려면 일반 생성 흐름을 사용하세요.',
+        '대기열 배치 작업은 원본 계보를 유지하지만 공식 다중 턴 대화 기록은 전송하지 않습니다. 대화를 이어가려면 생성을 사용하세요.',
     queueBatchMemoryContinuationDisabledReason:
-        '대기열 작업은 공식 memory 대화를 이어갈 수 없습니다. 새 대화를 시작하거나 Independent send로 전환하세요.',
+        '대기열 작업은 기억 전송 모드에서 공식 대화를 이어갈 수 없습니다. 새 대화를 시작하거나 독립 전송으로 전환하세요.',
     queuedBatchJobsWorkflowHint:
-        '여기서 대기열을 살피고, 결과가 준비되면 히스토리로 가져온 뒤 작업이 끝나면 이 항목을 정리합니다.',
-    queuedBatchJobsConversationNoticeLabel: '연속성 메모',
+        '여기서 대기열 상태를 확인하고, 결과가 준비되면 히스토리로 가져온 뒤 작업이 끝나면 이 항목을 정리하세요.',
+    queuedBatchJobsConversationNoticeLabel: '연속성 안내',
     queuedBatchJobsMonitorGroup: '모니터링',
     queuedBatchJobsResultsGroup: '결과',
     queuedBatchJobsCleanupGroup: '정리',
     queuedBatchJobsDesc:
-        '저장된 공식 Gemini Batch API 작업은 여기에서 계속 추적되며, 대기 중이거나 실행 중일 때 상태 확인, 결과 가져오기, 정리 순서로 마무리할 수 있습니다.',
+        '저장된 공식 Gemini Batch API 작업은 대기 중이거나 실행 중인 동안 여기에서 계속 추적됩니다. Batch API는 24시간 안의 완료를 목표로 하지만, 이미지 작업은 서비스가 48시간 뒤에 만료시킬 때까지 이어질 수 있습니다.',
 } as const;
 
 const esQueuedBatchWordingBaseline = {
     queueBatchModeEditor:
-        'Esto enviara un lote oficial condicionado por imagen basado en el editor usando la entrada actual del editor y las referencias preparadas. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
+        'Esto envia un trabajo oficial por lotes condicionado por imagen desde el editor, usando la imagen de entrada actual del editor y las referencias preparadas. Los trabajos por lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
     queueBatchModeStage:
-        'Esto enviara un lote oficial condicionado por imagen usando la imagen actual del escenario y las referencias preparadas. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
+        'Esto pone en cola un trabajo oficial de seguimiento usando la imagen actual del escenario y las referencias preparadas. Los trabajos por lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
+    queueBatchModeStageGenerate:
+        'Esto pone en cola un trabajo oficial nuevo por lotes a partir del prompt actual y las referencias preparadas. No usa la imagen actual del escenario. Los trabajos por lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
     queueBatchModeReferences:
-        'Esto enviara un lote oficial guiado por referencias usando el prompt actual y la bandeja de referencias. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
+        'Esto pone en cola un trabajo oficial nuevo por lotes guiado por referencias, usando el prompt actual y la bandeja de referencias. Los trabajos por lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
     queueBatchModePromptOnly:
-        'Esto enviara un lote oficial basado solo en el prompt. Los lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
+        'Esto pone en cola un trabajo oficial nuevo por lotes basado solo en el prompt. Los trabajos por lotes en cola siempre usan salida solo de imagen y no solicitan pensamientos devueltos.',
     queueBatchConversationNotice:
-        'Los trabajos por lotes en cola conservan el linaje de origen, pero no envian el historial oficial de conversacion de varios turnos. Para continuar un chat, usa la generacion normal.',
+        'Los trabajos por lotes en cola conservan el linaje de origen, pero no envian el historial oficial de conversacion de varios turnos. Para seguir el chat, usa Generar.',
     queueBatchMemoryContinuationDisabledReason:
-        'Los trabajos en cola no pueden continuar una conversacion oficial de memory. Inicia una conversacion nueva o cambia a Independent send.',
+        'Los trabajos en cola no pueden continuar una conversacion oficial en modo Envio con memoria. Inicia una conversacion nueva o cambia a Envio independiente.',
     queuedBatchJobsWorkflowHint:
-        'Supervisa la cola aqui, importa los resultados terminados al historial cuando esten listos y limpia la entrada cuando el flujo haya terminado.',
-    queuedBatchJobsConversationNoticeLabel: 'Nota de continuidad',
+        'Revisa aqui el estado de la cola, importa los resultados terminados al historial cuando esten listos y elimina la entrada cuando el flujo haya terminado.',
+    queuedBatchJobsConversationNoticeLabel: 'Aviso de continuidad',
     queuedBatchJobsMonitorGroup: 'Seguimiento',
     queuedBatchJobsResultsGroup: 'Resultados',
     queuedBatchJobsCleanupGroup: 'Limpieza',
     queuedBatchJobsDesc:
-        'Los trabajos oficiales persistidos de Gemini Batch API se siguen aqui mientras estan en espera o en ejecucion, para avanzar por comprobacion de estado, importacion de resultados y limpieza.',
+        'Los trabajos oficiales guardados de Gemini Batch API permanecen aqui mientras estan pendientes o en ejecucion. Batch API apunta a completarlos en 24 horas, pero los trabajos de imagen pueden continuar hasta que el servicio los caduque a las 48 horas.',
 } as const;
 
 const frQueuedBatchWordingBaseline = {
     queueBatchModeEditor:
-        "Cela enverra un lot officiel conditionne par image base sur l'editeur en utilisant l'entree actuelle de l'editeur et les references preparees. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
+        "Cela envoie un travail officiel par lot conditionne par image depuis l'editeur, en utilisant l'image d'entree actuelle de l'editeur et les references preparees. Les travaux par lot en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
     queueBatchModeStage:
-        "Cela enverra un lot officiel conditionne par image en utilisant l'image actuelle de la scene et les references preparees. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
+        "Cela met en file un travail officiel de suivi avec l'image actuelle de la scene et les references preparees. Les travaux par lot en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
+    queueBatchModeStageGenerate:
+        "Cela met en file un nouveau travail officiel par lot a partir du prompt actuel et des references preparees. L'image actuelle de la scene n'est pas utilisee. Les travaux par lot en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.",
     queueBatchModeReferences:
-        'Cela enverra un lot officiel pilote par references avec le prompt actuel et le bac de references. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.',
+        'Cela met en file un nouveau travail officiel par lot guide par references avec le prompt actuel et le bac de references. Les travaux par lot en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.',
     queueBatchModePromptOnly:
-        'Cela enverra un lot officiel base uniquement sur le prompt. Les lots en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.',
+        'Cela met en file un nouveau travail officiel par lot base uniquement sur le prompt. Les travaux par lot en file utilisent toujours une sortie image uniquement et ne demandent pas de pensees renvoyees.',
     queueBatchConversationNotice:
-        "Les lots en file d'attente conservent la lignee source, mais n'envoient pas l'historique officiel des conversations multi-tours. Pour poursuivre une conversation, utilisez le flux de generation normal.",
+        "Les travaux par lot en file conservent la lignee source, mais n'envoient pas l'historique officiel des conversations multi-tours. Pour continuer le chat, utilisez Generer.",
     queueBatchMemoryContinuationDisabledReason:
-        'Les travaux en file ne peuvent pas poursuivre une conversation officielle memory. Demarrez une nouvelle conversation ou passez a Independent send.',
+        'Les travaux en file ne peuvent pas poursuivre une conversation officielle en mode Envoi avec memoire. Demarrez une nouvelle conversation ou passez a Envoi independant.',
     queuedBatchJobsWorkflowHint:
-        "Surveillez la file ici, importez les resultats termines dans l'historique lorsqu'ils sont prets, puis effacez l'entree une fois le flux termine.",
-    queuedBatchJobsConversationNoticeLabel: 'Note de continuite',
+        "Verifiez ici l'etat de la file, importez les resultats termines dans l'historique lorsqu'ils sont prets, puis supprimez l'entree une fois le flux termine.",
+    queuedBatchJobsConversationNoticeLabel: 'Rappel de continuite',
     queuedBatchJobsMonitorGroup: 'Suivi',
     queuedBatchJobsResultsGroup: 'Resultats',
     queuedBatchJobsCleanupGroup: 'Nettoyage',
     queuedBatchJobsDesc:
-        "Les jobs officiels persistants Gemini Batch API restent suivis ici lorsqu'ils sont en attente ou en cours, afin d'avancer par verification d'etat, import des resultats et nettoyage.",
+        "Les travaux officiels Gemini Batch API enregistres restent ici tant qu'ils sont en attente ou en cours. Batch API vise une completion en 24 heures, mais les travaux d'image peuvent continuer jusqu'a leur expiration par le service apres 48 heures.",
 } as const;
 
 const deQueuedBatchWordingBaseline = {
     queueBatchModeEditor:
-        'Dies sendet einen offiziellen bildkonditionierten Batch auf Editor-Basis mit der aktuellen Editoreingabe und den vorbereiteten Referenzen. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
+        'Dies sendet einen offiziellen bildkonditionierten Batchjob auf Editor-Basis mit dem aktuellen Editor-Eingabebild und den vorbereiteten Referenzen. Jobs in der Batch-Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
     queueBatchModeStage:
-        'Dies sendet einen offiziellen bildkonditionierten Batch mit dem aktuellen Stufenbild und den vorbereiteten Referenzen. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
+        'Dies stellt einen offiziellen Folge-Batchjob mit dem aktuellen Stufenbild und den vorbereiteten Referenzen in die Batch-Warteschlange. Jobs in der Batch-Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
+    queueBatchModeStageGenerate:
+        'Dies stellt einen neuen offiziellen Batchjob aus dem aktuellen Prompt und den vorbereiteten Referenzen in die Batch-Warteschlange. Das aktuelle Stufenbild wird nicht verwendet. Jobs in der Batch-Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
     queueBatchModeReferences:
-        'Dies sendet einen offiziellen referenzgesteuerten Batch mit dem aktuellen Prompt und der Referenzablage. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
+        'Dies stellt einen neuen offiziellen referenzgesteuerten Batchjob mit dem aktuellen Prompt und der Referenzablage in die Batch-Warteschlange. Jobs in der Batch-Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
     queueBatchModePromptOnly:
-        'Dies sendet einen offiziellen Batchauftrag nur mit Prompt. Batchauftrage in der Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
+        'Dies stellt einen neuen offiziellen Batchjob nur mit Prompt in die Batch-Warteschlange. Jobs in der Batch-Warteschlange verwenden immer reine Bildausgabe und fordern keine zuruckgegebenen Gedanken an.',
     queueBatchConversationNotice:
-        'Batchauftrage in der Warteschlange behalten die Quellherkunft bei, senden aber keinen offiziellen Multi-Turn-Konversationsverlauf. Fur Chat-Fortsetzung verwenden Sie den normalen Generierungsablauf.',
+        'Jobs in der Batch-Warteschlange behalten die Quellherkunft bei, senden aber keinen offiziellen Multi-Turn-Konversationsverlauf. Verwenden Sie zum Fortsetzen des Chats Generieren.',
     queueBatchMemoryContinuationDisabledReason:
-        'Warteschlangen-Jobs konnen keine offizielle Memory-Konversation fortsetzen. Starten Sie eine neue Konversation oder wechseln Sie zu Independent send.',
+        'Jobs in der Batch-Warteschlange konnen eine offizielle Konversation im Modus Mit Speicher senden nicht fortsetzen. Starten Sie eine neue Konversation oder wechseln Sie zu Unabhaengig senden.',
     queuedBatchJobsWorkflowHint:
-        'Uberwachen Sie die Warteschlange hier, holen Sie fertige Ergebnisse in den Verlauf, und entfernen Sie den Eintrag, sobald der Ablauf abgeschlossen ist.',
+        'Prufen Sie hier den Status der Batch-Warteschlange, importieren Sie fertige Ergebnisse in den Verlauf und entfernen Sie den Eintrag, sobald der Ablauf abgeschlossen ist.',
     queuedBatchJobsConversationNoticeLabel: 'Kontinuitatshinweis',
     queuedBatchJobsMonitorGroup: 'Uberwachung',
     queuedBatchJobsResultsGroup: 'Ergebnisse',
     queuedBatchJobsCleanupGroup: 'Bereinigen',
     queuedBatchJobsDesc:
-        'Gespeicherte offizielle Gemini Batch API-Jobs bleiben hier im Blick, solange sie ausstehend oder in Ausfuhrung sind, sodass Statusprufung, Ergebnisimport und Aufraumen als Arbeitsablauf erfolgen konnen.',
+        'Gespeicherte offizielle Gemini Batch API-Jobs bleiben hier, solange sie ausstehend oder in Ausfuhrung sind. Batch API zielt auf einen Abschluss innerhalb von 24 Stunden, aber Bildjobs konnen weiterlaufen, bis der Dienst sie nach 48 Stunden verfallen lasst.',
 } as const;
 
 const ruQueuedBatchWordingBaseline = {
     queueBatchModeEditor:
-        'Это отправит официальный пакет с условием по изображению на основе редактора, используя текущий ввод редактора и подготовленные референсы. Пакетные задачи в очереди всегда используют вывод только изображений и не запрашивают возврат мыслей.',
+        'Это отправляет официальный пакет с условием по изображению на основе текущего входного изображения редактора и подготовленных референсов. Пакетные задания в очереди всегда используют вывод только изображений и не запрашивают возврат мыслей.',
     queueBatchModeStage:
-        'Это отправит официальный пакет с условием по изображению, используя текущее изображение сцены и подготовленные референсы. Пакетные задачи в очереди всегда используют вывод только изображений и не запрашивают возврат мыслей.',
+        'Это ставит в очередь официальное пакетное задание продолжения, используя текущее изображение сцены и подготовленные референсы. Пакетные задания в очереди всегда используют вывод только изображений и не запрашивают возврат мыслей.',
+    queueBatchModeStageGenerate:
+        'Это ставит в очередь новое официальное пакетное задание на основе текущего промпта и подготовленных референсов. Текущее изображение сцены не используется. Пакетные задания в очереди всегда используют вывод только изображений и не запрашивают возврат мыслей.',
     queueBatchModeReferences:
-        'Это отправит официальный пакет с опорой на референсы, используя текущий промпт и лоток референсов. Пакетные задачи в очереди всегда используют вывод только изображений и не запрашивают возврат мыслей.',
+        'Это ставит в очередь новое официальное пакетное задание с опорой на референсы, используя текущий промпт и лоток референсов. Пакетные задания в очереди всегда используют вывод только изображений и не запрашивают возврат мыслей.',
     queueBatchModePromptOnly:
-        'Это отправит официальный пакет только по промпту. Пакетные задачи в очереди всегда используют вывод только изображений и не запрашивают возврат мыслей.',
+        'Это ставит в очередь новое официальное пакетное задание только по промпту. Пакетные задания в очереди всегда используют вывод только изображений и не запрашивают возврат мыслей.',
     queueBatchConversationNotice:
-        'Пакетные задачи в очереди сохраняют линию происхождения источника, но не отправляют официальный многходовый контекст диалога. Чтобы продолжить диалог, используйте обычную генерацию.',
+        'Пакетная очередь сохраняет исходную линию происхождения, но не отправляет официальный многотуровый контекст диалога. Чтобы продолжить диалог, используйте Генерировать.',
     queueBatchMemoryContinuationDisabledReason:
-        'Задания в очереди не могут продолжать официальный memory-диалог. Начните новый диалог или переключитесь на Independent send.',
+        'Задания в очереди не могут продолжать официальный диалог в режиме Отправка с памятью. Начните новый диалог или переключитесь на режим Независимая отправка.',
     queuedBatchJobsWorkflowHint:
-        'Следите здесь за очередью, переносите готовые результаты в историю, а после завершения работы очищайте эту запись.',
-    queuedBatchJobsConversationNoticeLabel: 'Заметка о продолжении',
+        'Проверяйте здесь состояние очереди, переносите готовые результаты в историю, а после завершения работы очищайте эту запись.',
+    queuedBatchJobsConversationNoticeLabel: 'Напоминание о продолжении',
     queuedBatchJobsMonitorGroup: 'Контроль',
     queuedBatchJobsResultsGroup: 'Результаты',
     queuedBatchJobsCleanupGroup: 'Очистка',
     queuedBatchJobsDesc:
-        'Сохраненные официальные задания Gemini Batch API остаются здесь под наблюдением, пока ждут или выполняются, чтобы пройти через проверку статуса, импорт результатов и очистку.',
+        'Сохраненные официальные задания Gemini Batch API остаются здесь, пока они ожидают или выполняются. Batch API ориентируется на завершение в течение 24 часов, но задания с изображениями могут продолжаться, пока сервис не завершит их через 48 часов.',
 } as const;
 
 const zhTwLineageDescriptionBaseline = {
@@ -1768,35 +1812,35 @@ const zhCnWorkspacePickerHelperBaseline = {
 const jaImportReviewExecutionLabelsBaseline = {
     workspaceImportReviewExecutionBatchVariants: 'バッチバリエーション',
     workspaceImportReviewExecutionChatContinuation: 'チャット継続',
-    workspaceImportReviewExecutionQueuedBatchJob: 'キュー投入バッチ結果',
+    workspaceImportReviewExecutionQueuedBatchJob: 'バッチキュー結果',
     workspaceImportReviewExecutionSingleTurn: '単一ターン',
 } as const;
 
 const koImportReviewExecutionLabelsBaseline = {
     workspaceImportReviewExecutionBatchVariants: '배치 변형',
     workspaceImportReviewExecutionChatContinuation: '채팅 연속',
-    workspaceImportReviewExecutionQueuedBatchJob: '대기열 배치 결과',
+    workspaceImportReviewExecutionQueuedBatchJob: '배치 대기열 결과',
     workspaceImportReviewExecutionSingleTurn: '단일 턴',
 } as const;
 
 const esImportReviewExecutionLabelsBaseline = {
     workspaceImportReviewExecutionBatchVariants: 'Variantes por lote',
     workspaceImportReviewExecutionChatContinuation: 'Continuacion de chat',
-    workspaceImportReviewExecutionQueuedBatchJob: 'Resultado por lotes en cola',
+    workspaceImportReviewExecutionQueuedBatchJob: 'Resultado de lote en cola',
     workspaceImportReviewExecutionSingleTurn: 'Un solo turno',
 } as const;
 
 const frImportReviewExecutionLabelsBaseline = {
     workspaceImportReviewExecutionBatchVariants: 'Variantes par lot',
     workspaceImportReviewExecutionChatContinuation: 'Continuation du chat',
-    workspaceImportReviewExecutionQueuedBatchJob: "Resultat de lot en file d'attente",
+    workspaceImportReviewExecutionQueuedBatchJob: 'Resultat de lot en file',
     workspaceImportReviewExecutionSingleTurn: 'Un seul tour',
 } as const;
 
 const deImportReviewExecutionLabelsBaseline = {
     workspaceImportReviewExecutionBatchVariants: 'Stapelvarianten',
     workspaceImportReviewExecutionChatContinuation: 'Chat-Fortsetzung',
-    workspaceImportReviewExecutionQueuedBatchJob: 'Warteschlangen-Batchergebnis',
+    workspaceImportReviewExecutionQueuedBatchJob: 'Ergebnis aus der Batch-Warteschlange',
     workspaceImportReviewExecutionSingleTurn: 'Einzelrunde',
 } as const;
 
@@ -2746,7 +2790,8 @@ const jaHistoryActionBadgeBaseline = {
     historyModeImage: '画像',
     historyBadgeParent: '親',
     historyBadgeCandidate: '候補',
-    historyBadgeActive: 'アクティブ',
+    historyBadgeActive: '表示中',
+    historyBadgeQueuedResult: 'キュー結果',
 } as const;
 
 const koHistoryActionBadgeBaseline = {
@@ -2759,7 +2804,8 @@ const koHistoryActionBadgeBaseline = {
     historyModeImage: '이미지',
     historyBadgeParent: '부모',
     historyBadgeCandidate: '후보',
-    historyBadgeActive: '활성',
+    historyBadgeActive: '표시 중',
+    historyBadgeQueuedResult: '대기열 결과',
 } as const;
 
 const esHistoryActionBadgeBaseline = {
@@ -2772,7 +2818,8 @@ const esHistoryActionBadgeBaseline = {
     historyModeImage: 'Imagen',
     historyBadgeParent: 'padre',
     historyBadgeCandidate: 'Candidata',
-    historyBadgeActive: 'Activa',
+    historyBadgeActive: 'En vista',
+    historyBadgeQueuedResult: 'Resultado en cola',
 } as const;
 
 const frHistoryActionBadgeBaseline = {
@@ -2785,7 +2832,8 @@ const frHistoryActionBadgeBaseline = {
     historyModeImage: 'Image generee',
     historyBadgeParent: 'parente',
     historyBadgeCandidate: 'Candidate locale',
-    historyBadgeActive: 'Activee',
+    historyBadgeActive: 'Affichee',
+    historyBadgeQueuedResult: 'Resultat en file',
 } as const;
 
 const deHistoryActionBadgeBaseline = {
@@ -2798,7 +2846,8 @@ const deHistoryActionBadgeBaseline = {
     historyModeImage: 'Bild',
     historyBadgeParent: 'Eltern',
     historyBadgeCandidate: 'Kandidat',
-    historyBadgeActive: 'Aktiv',
+    historyBadgeActive: 'Angezeigt',
+    historyBadgeQueuedResult: 'Warteschlangen-Ergebnis',
 } as const;
 
 const ruHistoryActionBadgeBaseline = {
@@ -2811,7 +2860,8 @@ const ruHistoryActionBadgeBaseline = {
     historyModeImage: 'Изображение',
     historyBadgeParent: 'родитель',
     historyBadgeCandidate: 'Кандидат',
-    historyBadgeActive: 'Активная',
+    historyBadgeActive: 'На экране',
+    historyBadgeQueuedResult: 'Результат очереди',
 } as const;
 
 const jaHistoryFilmstripBaseline = {
@@ -4062,7 +4112,7 @@ const esPickerSheetSurfaceBaseline = {
     workspacePickerFullGallery: 'Galeria completa',
     workspacePickerEmptyGallery: 'Genera o carga una imagen para llenar la galeria.',
     workspacePickerModelSupportImageSearch: 'Busqueda de imagenes con contexto lista',
-    workspacePickerModelSupportGoogleSearch: 'Contexto de Google Search listo',
+    workspacePickerModelSupportGoogleSearch: 'Contexto de busqueda web listo',
     workspacePickerModelSupportImageOnly: 'Enfoque en generacion solo de imagen',
     workspacePickerObjects: 'Objetos',
     workspacePickerHasSketchAsset: 'Incluye el recurso de boceto actual.',
@@ -4092,7 +4142,7 @@ const frPickerSheetSurfaceBaseline = {
     workspacePickerFullGallery: 'Galerie complete',
     workspacePickerEmptyGallery: 'Generez ou chargez une image pour remplir la galerie.',
     workspacePickerModelSupportImageSearch: "Recherche d'images ancree prete",
-    workspacePickerModelSupportGoogleSearch: 'Ancrage Google Search pret',
+    workspacePickerModelSupportGoogleSearch: 'Ancrage de recherche web pret',
     workspacePickerModelSupportImageOnly: "Accent sur la generation d'images seule",
     workspacePickerObjects: 'Objets',
     workspacePickerHasSketchAsset: 'Inclut la ressource de croquis actuelle.',
@@ -4154,7 +4204,7 @@ const ruPickerSheetSurfaceBaseline = {
     workspacePickerFullGallery: 'Полная галерея',
     workspacePickerEmptyGallery: 'Сгенерируйте или загрузите изображение, чтобы заполнить галерею.',
     workspacePickerModelSupportImageSearch: 'Поиск изображений с grounding готов',
-    workspacePickerModelSupportGoogleSearch: 'Grounding через Google Search готов',
+    workspacePickerModelSupportGoogleSearch: 'Grounding через веб-поиск готов',
     workspacePickerModelSupportImageOnly: 'Фокус на генерации только изображений',
     workspacePickerObjects: 'Объекты',
     workspacePickerHasSketchAsset: 'Включает текущий скетч-ресурс.',

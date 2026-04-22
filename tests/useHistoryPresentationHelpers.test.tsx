@@ -107,7 +107,7 @@ describe('useHistoryPresentationHelpers', () => {
                 isPromotedContinuationSource: () => false,
                 t: (key) =>
                     ({
-                        workspaceImportReviewExecutionQueuedBatchJob: 'Queued Batch Result',
+                        historyBadgeQueuedResult: 'Queued result',
                         historyModeImage: 'Image',
                         historyBadgeCandidate: 'Candidate',
                         historyBadgeParent: 'Parent',
@@ -121,7 +121,7 @@ describe('useHistoryPresentationHelpers', () => {
 
         const markup = renderToStaticMarkup(<TestView />);
 
-        expect((markup.match(/Queued Batch Result/g) || []).length).toBe(1);
+        expect((markup.match(/Queued result/g) || []).length).toBe(1);
     });
 
     it('uses passive memory and thread cues instead of execution mode labels', () => {
@@ -149,11 +149,11 @@ describe('useHistoryPresentationHelpers', () => {
                     ({
                         historyBadgeMemory: 'Memory',
                         historyBadgeThread: 'Thread',
+                        historyBadgeQueuedResult: 'Queued result',
                         historyModeImage: 'Image',
                         historyBadgeCandidate: 'Candidate',
                         historyBadgeParent: 'Parent',
                         workspaceSourceBadge: 'Source',
-                        workspaceImportReviewExecutionQueuedBatchJob: 'Queued Batch Result',
                     })[key] || key,
             });
 

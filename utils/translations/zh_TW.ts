@@ -15,6 +15,18 @@ export const zh_TW = {
     locked: '已鎖定',
     ratioSkyscraper: '摩天大樓',
     ratioTall: '高瘦',
+    outputFormatImagesAndText: '圖片加文字',
+    outputFormatImagesOnly: '僅圖片',
+    thinkingLevelMinimal: '精簡',
+    thinkingLevelHigh: '高',
+    thinkingLevelDisabled: '停用',
+    groundingModeOff: '關閉',
+    groundingModeGoogleSearch: '網頁搜尋',
+    groundingModeImageSearch: '圖片搜尋',
+    groundingModeGoogleSearchPlusImageSearch: '網頁搜尋 + 圖片搜尋',
+    groundingModeSummaryGoogleSearch: '網頁',
+    groundingModeSummaryImageSearch: '圖片',
+    groundingModeSummaryGoogleSearchPlusImageSearch: '網頁 + 圖片',
     switchLight: '切換為亮色模式',
     switchDark: '切換為暗色模式',
     shiftEnter: 'Shift+輸入鍵換行',
@@ -169,7 +181,8 @@ export const zh_TW = {
 
     // Clear History Dialog
     clearHistoryTitle: '清空工作區',
-    clearHistoryMsg: '確定要把整個工作區重設回預設初始狀態嗎？歷史、舞台、排隊工作與工作階段內容都會清除，且無法復原。',
+    clearHistoryMsg:
+        '確定要把這個工作區重設回預設空白狀態嗎？歷史、舞台、提示詞與工作階段脈絡都會清除。共用的佇列批次工作會另外保留。建議先使用匯出工作區。這個動作無法復原。',
     clearHistoryConfirm: '直接清除',
     clearHistoryCancel: '取消',
 
@@ -312,17 +325,19 @@ export const zh_TW = {
     queueBatchModeEditor:
         '這會以目前編輯輸入影像與已暫存參考圖送出一個官方編輯批次工作。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
     queueBatchModeStage:
-        '這會以目前的階段圖像與已暫存參考圖送出一個官方影像條件批次工作。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
+        '這會以目前階段圖像與已暫存參考圖排入一個後續官方批次工作。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
+    queueBatchModeStageGenerate:
+        '這會依目前提示詞與已暫存參考圖排入一個全新官方批次工作，不會使用目前階段圖像。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
     queueBatchModeReferences:
-        '這會以目前提示詞與參考圖托盤送出一個官方參考驅動批次工作。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
+        '這會依目前提示詞與參考圖托盤排入一個全新官方參考驅動批次工作。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
     queueBatchModePromptOnly:
-        '這會送出一個僅依提示詞的官方批次工作。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
+        '這會排入一個僅依提示詞的全新官方批次工作。佇列批次一律使用僅輸出圖像，且不要求回傳思考內容。',
     queueBatchConversationNotice:
         '佇列批次工作會保留來源延續脈絡，但不會送出官方多輪對話歷史。若要延續對話，請使用開始生成。',
     queueBatchMemoryContinuationDisabledReason:
-        '佇列工作不能延續官方 memory 對話。請先開始新對話，或切換到 Independent send。',
+        '佇列工作不能在記憶發送模式下延續官方對話。請先開始新對話，或切換到獨立發送。',
     queueBatchEditDisabledReason:
-        '佇列中的影像條件式後續編修目前暫時停用，因為官方批次結果一直不穩定。請改用開始生成。',
+        '佇列中的影像條件式後續編修目前暫時停用，因為官方批次結果一直不夠穩定。請改用開始生成。',
     queuedBatchJobsTitle: '佇列批次工作',
     queuedBatchJobsDesc:
         '已保存的官方 Gemini 批次 API 工作會在這裡持續追蹤。官方 Batch API 的目標是 24 小時內完成，但圖像批次最長可能要到 48 小時後才會過期。',
@@ -540,7 +555,7 @@ export const zh_TW = {
     workspaceImportReviewReplaceCurrentWorkspace: '取代目前工作區',
     workspaceImportReviewExecutionBatchVariants: '批次變體',
     workspaceImportReviewExecutionChatContinuation: '聊天延續',
-    workspaceImportReviewExecutionQueuedBatchJob: '排程批次結果',
+    workspaceImportReviewExecutionQueuedBatchJob: '佇列批次結果',
     workspaceImportReviewExecutionSingleTurn: '單回合',
     workflowCurrentStageSource: '目前階段來源',
     historyActionOpenInHistory: '前往歷程',
@@ -682,11 +697,13 @@ export const zh_TW = {
     composerToolbarImportWorkspace: '匯入工作區',
     workspaceSnapshotActionsTitle: '工作區快照',
     composerToolbarAdvancedSettings: '進階設定',
-    composerEnterSends: '按下 Enter 送出',
-    composerEnterNewline: '按下 Enter 換行',
+    composerEnterSends: 'Enter\n送出',
+    composerEnterNewline: 'Enter\n換行',
     composerVisibilityVisible: '顯示',
     composerVisibilityHidden: '隱藏',
-    composerQueueBatchJob: '送至佇列',
+    workspaceQueueLauncher: '佇列',
+    composerQueueBatchJob: '加入佇列',
+    composerQueueBatchFollowUpJob: '將此圖加入佇列',
     composerAdvancedTitle: '進階設定',
     composerAdvancedDesc: '不支援的控制項會保持隱藏，並在模型切換時自動重設為安全值。',
     composerAdvancedGenerationSectionTitle: '生成控制',
@@ -728,6 +745,8 @@ export const zh_TW = {
     stageActionMore: '更多操作',
     queuedBatchSubmittedNotice: '佇列批次工作已送交官方批次 API。',
     queuedBatchSubmittedLog: '已建立官方佇列批次工作 {0}。',
+    queuedBatchSubmittedManyNotice: '已將 {0} 筆佇列批次工作送交官方批次 API。',
+    queuedBatchSubmittedPartialNotice: '共 {1} 筆中已有 {0} 筆送交官方批次 API，另有 {2} 筆在送出前失敗。',
     queuedBatchSubmissionFailedLog: '佇列批次工作送出失敗：{0}',
     queuedBatchPolledLog: '已輪詢佇列批次工作 {0}：{1}。',
     queuedBatchReadyToImportNotice: '佇列批次工作 {0} 已可匯入。',
@@ -802,6 +821,7 @@ export const zh_TW = {
     historyBadgeParent: '父層',
     historyBadgeCandidate: '候選',
     historyBadgeActive: '查看中',
+    historyBadgeQueuedResult: '佇列結果',
     historyBadgeMemory: '記憶',
     historyBadgeThread: '對話線',
     historyBranchMain: '主線',

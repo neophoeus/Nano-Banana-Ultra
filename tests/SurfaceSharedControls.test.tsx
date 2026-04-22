@@ -30,7 +30,7 @@ describe('SurfaceSharedControls', () => {
                 imageSize="1024x1024"
                 batchSize={2}
                 outputFormat="images-and-text"
-                temperature={1.4}
+                temperature={1.05}
                 thinkingLevel="high"
                 groundingMode="google-search"
                 objectImageCount={2}
@@ -92,7 +92,7 @@ describe('SurfaceSharedControls', () => {
         expect(advancedButtonMarkup).toContain('shared-controls-summary-item-grounding');
         expect(advancedButtonMarkup).toContain('Google Search');
         expect(advancedButtonMarkup).toContain('shared-controls-summary-item-temperature');
-        expect(advancedButtonMarkup).toContain('1.4');
+        expect(advancedButtonMarkup).toContain('1.05');
         expect(advancedButtonMarkup).not.toContain('shared-controls-summary-item-structured-output');
         expect(referencesButtonMarkup).toContain('shared-controls-summary-item-references');
     });

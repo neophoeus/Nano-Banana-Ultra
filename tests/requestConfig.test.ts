@@ -76,6 +76,15 @@ describe('buildImageRequestConfig', () => {
         expect(result.requestConfig.responseJsonSchema).toBeUndefined();
         expect(result.requestConfig.thinkingConfig).toBeUndefined();
     });
+
+    it('normalizes temperature to the nearest 0.05 increment before serializing the request', () => {
+        const result = buildImageRequestConfig('gemini-3.1-flash-image-preview', {
+            outputFormat: 'images-only',
+            temperature: 1.03,
+        });
+
+        expect(result.requestConfig.temperature).toBe(1.05);
+    });
 });
 
 describe('buildGenerateParts', () => {

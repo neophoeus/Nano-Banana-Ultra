@@ -15,6 +15,18 @@ export const zh_CN = {
     locked: '已锁定',
     ratioSkyscraper: '摩天大楼',
     ratioTall: '高瘦',
+    outputFormatImagesAndText: '图片加文本',
+    outputFormatImagesOnly: '仅图片',
+    thinkingLevelMinimal: '精简',
+    thinkingLevelHigh: '高',
+    thinkingLevelDisabled: '停用',
+    groundingModeOff: '关闭',
+    groundingModeGoogleSearch: '网页搜索',
+    groundingModeImageSearch: '图片搜索',
+    groundingModeGoogleSearchPlusImageSearch: '网页搜索 + 图片搜索',
+    groundingModeSummaryGoogleSearch: '网页',
+    groundingModeSummaryImageSearch: '图片',
+    groundingModeSummaryGoogleSearchPlusImageSearch: '网页 + 图片',
     switchLight: '切换为亮色模式',
     switchDark: '切换为暗色模式',
     shiftEnter: 'Shift+回车键换行',
@@ -217,7 +229,8 @@ export const zh_CN = {
 
     // Clear History Dialog
     clearHistoryTitle: '清空工作区',
-    clearHistoryMsg: '您确定要将整个工作区重置为默认初始状态吗？历史、舞台、排队任务与会话内容都会被清除，且无法撤销。',
+    clearHistoryMsg:
+        '您确定要将这个工作区重置为默认空白状态吗？历史、舞台、提示词与会话上下文都会被清除。共享的队列批处理任务会另外保留。建议先使用导出工作区。此操作无法撤销。',
     clearHistoryConfirm: '直接清除',
     clearHistoryCancel: '取消',
 
@@ -360,17 +373,19 @@ export const zh_CN = {
     queueBatchModeEditor:
         '这会以当前编辑输入图像和已暂存参考图提交一个官方编辑批处理任务。队列批处理一律只输出图像，且不请求返回思考内容。',
     queueBatchModeStage:
-        '这会以当前阶段图像和已暂存参考图提交一个官方图像条件批处理任务。队列批处理一律只输出图像，且不请求返回思考内容。',
+        '这会以当前阶段图像和已暂存参考图排入一个后续官方批处理任务。队列批处理一律只输出图像，且不请求返回思考内容。',
+    queueBatchModeStageGenerate:
+        '这会按当前提示词与已暂存参考图排入一个全新的官方批处理任务，不会使用当前阶段图像。队列批处理一律只输出图像，且不请求返回思考内容。',
     queueBatchModeReferences:
-        '这会以当前提示词和参考图托盘提交一个官方参考驱动批处理任务。队列批处理一律只输出图像，且不请求返回思考内容。',
+        '这会按当前提示词与参考图托盘排入一个全新的官方参考驱动批处理任务。队列批处理一律只输出图像，且不请求返回思考内容。',
     queueBatchModePromptOnly:
-        '这会提交一个仅基于提示词的官方批处理任务。队列批处理一律只输出图像，且不请求返回思考内容。',
+        '这会排入一个仅基于提示词的全新官方批处理任务。队列批处理一律只输出图像，且不请求返回思考内容。',
     queueBatchConversationNotice:
         '队列批处理任务会保留来源延续脉络，但不会发送官方多轮对话历史。若要继续对话，请使用开始生成。',
     queueBatchMemoryContinuationDisabledReason:
-        '队列任务不能延续官方 memory 对话。请先开始新对话，或切换到 Independent send。',
+        '队列任务不能在记忆发送模式下延续官方对话。请先开始新对话，或切换到独立发送。',
     queueBatchEditDisabledReason:
-        '队列中的图像条件式后续编辑目前暂时停用，因为官方批处理结果一直不稳定。请改用开始生成。',
+        '队列中的图像条件式后续编辑目前暂时停用，因为官方批处理结果一直不够稳定。请改用开始生成。',
     queuedBatchJobsTitle: '队列批处理任务',
     queuedBatchJobsDesc:
         '已保存的官方 Gemini 批处理 API 任务会在这里持续跟踪。官方 Batch API 的目标是 24 小时内完成，但图像批处理最长可能要到 48 小时后才会过期。',
@@ -540,7 +555,7 @@ export const zh_CN = {
     workspaceImportReviewReplaceCurrentWorkspace: '替换当前工作区',
     workspaceImportReviewExecutionBatchVariants: '批量变体',
     workspaceImportReviewExecutionChatContinuation: '聊天延续',
-    workspaceImportReviewExecutionQueuedBatchJob: '排队批量结果',
+    workspaceImportReviewExecutionQueuedBatchJob: '队列批处理结果',
     workspaceImportReviewExecutionSingleTurn: '单回合',
     workflowCurrentStageSource: '当前阶段来源',
     historyActionOpenInHistory: '前往历史',
@@ -682,11 +697,13 @@ export const zh_CN = {
     composerToolbarImportWorkspace: '导入工作区',
     workspaceSnapshotActionsTitle: '工作区快照',
     composerToolbarAdvancedSettings: '高级设置',
-    composerEnterSends: '按下 Enter 发送',
-    composerEnterNewline: '按下 Enter 换行',
+    composerEnterSends: 'Enter\n发送',
+    composerEnterNewline: 'Enter\n换行',
     composerVisibilityVisible: '显示',
     composerVisibilityHidden: '隐藏',
-    composerQueueBatchJob: '发送到队列',
+    workspaceQueueLauncher: '队列',
+    composerQueueBatchJob: '加入队列',
+    composerQueueBatchFollowUpJob: '将此图加入队列',
     composerAdvancedTitle: '高级设置',
     composerAdvancedDesc: '不受支持的控件会保持隐藏，并在模型切换时自动重置为安全默认值。',
     composerAdvancedGenerationSectionTitle: '生成控制',
@@ -728,6 +745,8 @@ export const zh_CN = {
     stageActionMore: '更多操作',
     queuedBatchSubmittedNotice: '队列批处理任务已提交到官方批处理 API。',
     queuedBatchSubmittedLog: '已创建官方队列批处理任务 {0}。',
+    queuedBatchSubmittedManyNotice: '已将 {0} 个队列批处理任务提交到官方批处理 API。',
+    queuedBatchSubmittedPartialNotice: '共 {1} 个任务中已有 {0} 个提交到官方批处理 API，另有 {2} 个在提交前失败。',
     queuedBatchSubmissionFailedLog: '队列批处理任务提交失败：{0}',
     queuedBatchPolledLog: '已轮询队列批处理任务 {0}：{1}。',
     queuedBatchReadyToImportNotice: '队列批处理任务 {0} 已可导入。',
@@ -801,7 +820,8 @@ export const zh_CN = {
     historyModeImage: '图片',
     historyBadgeParent: '父层',
     historyBadgeCandidate: '候选',
-    historyBadgeActive: '当前',
+    historyBadgeActive: '查看中',
+    historyBadgeQueuedResult: '队列结果',
     historyBadgeMemory: '记忆',
     historyBadgeThread: '对话线',
     historyBranchMain: '主线',

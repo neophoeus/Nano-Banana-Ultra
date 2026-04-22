@@ -49,13 +49,6 @@ const RatioSelector: React.FC<RatioSelectorProps> = ({
         };
     };
 
-    const getRatioLabel = (originalLabel: string) => {
-        // Map original constants label to translation key
-        // e.g. "Classic V" -> "ratioClassicV"
-        const key = 'ratio' + originalLabel.replace(/\s/g, '');
-        return t(key);
-    };
-
     return (
         <div className="space-y-2">
             <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -82,7 +75,7 @@ const RatioSelector: React.FC<RatioSelectorProps> = ({
                 }
                 ${!isSupported ? 'opacity-30 grayscale cursor-not-allowed' : ''}
               `}
-                            title={!isSupported ? t('unsupportedModel') : getRatioLabel(ratio.label)}
+                            title={!isSupported ? t('unsupportedModel') : t(ratio.labelKey)}
                         >
                             <div className={`w-full h-6 mb-0.5 flex items-center justify-center`}>
                                 <div
