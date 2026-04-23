@@ -474,7 +474,7 @@ export const ru = {
     composerVisibilityHidden: 'Скрыто',
     workspaceQueueLauncher: 'Очередь',
     composerQueueBatchJob: 'Добавить в очередь',
-    composerQueueBatchFollowUpJob: 'Добавить это изображение в очередь',
+    composerQueueBatchFollowUpJob: 'Добавить изображение сцены в очередь',
     composerAdvancedTitle: 'Расширенные настройки с учетом возможностей',
     composerAdvancedDesc:
         'Неподдерживаемые элементы управления остаются скрытыми и автоматически сбрасываются к безопасным значениям при смене модели.',
@@ -533,7 +533,7 @@ export const ru = {
     stageGroundingResultSummary: '{0} · Запрошено {1} · Фактически {2}',
     stageGeneratedImageAlt: 'Сгенерированное изображение',
     stageOpenViewer: 'Открыть просмотр',
-    stageActionContinueFromHere: 'Продолжить отсюда',
+    stageActionContinueFromHere: 'Продолжить с изображением сцены',
     stageActionEdit: 'Редактировать',
     stageActionAddToObjectReference: 'Добавить в объектный референс',
     stageActionAddToCharacterReference: 'Добавить в референс персонажа',
@@ -568,7 +568,7 @@ export const ru = {
     workspacePickerNoSketchAsset: 'Скетч-ресурс не подготовлен.',
     workspacePickerCharacters: 'Персонажи',
     workspacePickerCharacterHint: 'Референсы персонажей остаются в той же подготовленной модели приема.',
-    workspacePickerStageSource: 'Источник сцены',
+    workspacePickerStageSource: 'Изображение сцены',
     workspacePickerHistoryLinked: 'связано с историей',
     workspacePickerStageSourceHint:
         'Текущая сцена и повторно открытые из истории изображения теперь подают данные в одну и ту же модель источника продолжения, которую могут повторно использовать действия редактора.',
@@ -803,7 +803,7 @@ export const ru = {
     groundingProvenanceSelectionNone:
         'Выберите источник или пакет поддержки, чтобы увидеть, как связаны доказательства граундинга.',
     provenanceCarryForwardLog: 'Сведения об источнике были перенесены из предыдущего хода с граундингом.',
-    composerFollowUpSource: 'Источник продолжения',
+    composerFollowUpSource: 'Источник изображения сцены',
     workspaceSourceBadge: 'Источник',
     historyBranchContinuationSource: 'Источник продолжения',
     workspaceCurrentStageSourceNoLinkedHistory:

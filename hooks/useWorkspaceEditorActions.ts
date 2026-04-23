@@ -100,6 +100,7 @@ type UseWorkspaceEditorActionsArgs = {
         maxAssets?: number;
         isSketch?: boolean;
         preferFront?: boolean;
+        aspectRatio?: AspectRatio;
         sourceHistoryId?: string;
         lineageAction?: 'root' | 'continue' | 'branch' | 'editor-follow-up' | 'reopen';
     }) => void;
@@ -423,12 +424,13 @@ export function useWorkspaceEditorActions({
     }, [hasSketch, objectImages.length, setActivePickerSheet, setIsSketchPadOpen, setShowSketchReplaceConfirm]);
 
     const handleSketchPadSave = useCallback(
-        (base64: string) => {
+        (base64: string, sketchAspectRatio: AspectRatio) => {
             addWorkspaceAsset({
                 role: 'object',
                 origin: 'sketch',
                 url: base64,
                 isSketch: true,
+                aspectRatio: sketchAspectRatio,
                 maxAssets: capability.maxObjects,
                 preferFront: true,
             });

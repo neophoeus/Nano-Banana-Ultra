@@ -76,7 +76,7 @@ describe('WorkspaceVersionsDetailPanel', () => {
                 renderHistoryTurnBadges={({ isActive, isCurrentStageSource }) => (
                     <span>
                         {isActive ? 'Viewing' : ''}
-                        {isCurrentStageSource ? 'Continue with this image' : ''}
+                        {isCurrentStageSource ? 'Continue with stage image' : ''}
                     </span>
                 )}
                 renderHistoryTurnActionRow={({ testIds }) => (
@@ -94,6 +94,6 @@ describe('WorkspaceVersionsDetailPanel', () => {
         expect(markup).toContain('Version map');
         expect(markup).toContain('active branch summary');
         expect(markup).toContain('Viewing');
-        expect(markup).toContain('Continue with this image');
+        expect(markup).toContain('Continue with stage image');
     });
 });

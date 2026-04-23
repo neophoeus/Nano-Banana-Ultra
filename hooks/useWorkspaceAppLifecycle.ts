@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useEffect, useRef } from 'react';
 import { checkApiKey } from '../services/geminiService';
 import { ASPECT_RATIOS } from '../constants';
-import { AspectRatio } from '../types';
+import { AspectRatio, StageAsset } from '../types';
 import {
     ensureLanguageLoaded,
     isLanguageLoaded,
@@ -10,38 +10,46 @@ import {
     resolvePreferredLanguage,
 } from '../utils/translations';
 import { syncThemeFromStoredPreference } from '../utils/theme';
+import { findClosestAspectRatio } from '../utils/canvasWorkspace';
 
 type UseWorkspaceAppLifecycleArgs = {
     historyCount: number;
     generatedImageCount: number;
-    objectImages: string[];
-    characterImages: string[];
+    orderedReferenceAssets: StageAsset[];
+    aspectRatio: AspectRatio;
     setApiKeyReady: Dispatch<SetStateAction<boolean>>;
     setCurrentLang: Dispatch<SetStateAction<Language>>;
     setInitialPreferencesReady: Dispatch<SetStateAction<boolean>>;
     setAspectRatio: Dispatch<SetStateAction<AspectRatio>>;
     addLog: (message: string) => void;
+    showNotification: (message: string, type?: 'info' | 'error') => void;
     t: (key: string) => string;
 };
 
 export function useWorkspaceAppLifecycle({
     historyCount,
     generatedImageCount,
-    objectImages,
-    characterImages,
+    orderedReferenceAssets,
+    aspectRatio,
     setApiKeyReady,
     setCurrentLang,
     setInitialPreferencesReady,
     setAspectRatio,
     addLog,
+    showNotification,
     t,
 }: UseWorkspaceAppLifecycleArgs) {
     const hasDataRef = useRef(false);
-    const firstRefImageRef = useRef<string | null>(null);
+    const leadingReferenceKeyRef = useRef<string | null>(null);
+    const currentAspectRatioRef = useRef<AspectRatio>(aspectRatio);
 
     useEffect(() => {
         hasDataRef.current = historyCount > 0 || generatedImageCount > 0;
     }, [generatedImageCount, historyCount]);
+
+    useEffect(() => {
+        currentAspectRatioRef.current = aspectRatio;
+    }, [aspectRatio]);
 
     useEffect(() => {
         let cancelled = false;
@@ -102,36 +110,39 @@ export function useWorkspaceAppLifecycle({
     }, [setApiKeyReady, setCurrentLang, setInitialPreferencesReady]);
 
     useEffect(() => {
-        if (objectImages.length === 0 && characterImages.length === 0) {
-            firstRefImageRef.current = null;
+        if (orderedReferenceAssets.length === 0) {
+            leadingReferenceKeyRef.current = null;
             return;
         }
 
-        const firstImage = objectImages.length > 0 ? objectImages[0] : characterImages[0];
-        if (firstImage === firstRefImageRef.current) {
+        const leadingAsset = orderedReferenceAssets[0];
+        const leadingKey = `${leadingAsset.id}:${leadingAsset.url}:${leadingAsset.aspectRatio ?? ''}`;
+        if (leadingKey === leadingReferenceKeyRef.current) {
             return;
         }
 
-        firstRefImageRef.current = firstImage;
+        leadingReferenceKeyRef.current = leadingKey;
+
+        const applyAutoRatio = (nextRatio: AspectRatio) => {
+            if (nextRatio === currentAspectRatioRef.current) {
+                return;
+            }
+
+            const message = t('autoRatioSet').replace('{0}', nextRatio);
+            setAspectRatio(nextRatio);
+            addLog(message);
+            showNotification(message, 'info');
+        };
+
+        if (leadingAsset.isSketch && leadingAsset.aspectRatio) {
+            applyAutoRatio(leadingAsset.aspectRatio);
+            return;
+        }
 
         const img = new Image();
-        img.src = firstImage;
+        img.src = leadingAsset.url;
         img.onload = () => {
-            const targetRatio = img.width / img.height;
-            let bestRatio: AspectRatio = '1:1';
-            let minDiff = Number.POSITIVE_INFINITY;
-
-            ASPECT_RATIOS.forEach((ratio) => {
-                const [rw, rh] = ratio.value.split(':').map(Number);
-                const diff = Math.abs(targetRatio - rw / rh);
-                if (diff < minDiff) {
-                    minDiff = diff;
-                    bestRatio = ratio.value;
-                }
-            });
-
-            setAspectRatio(bestRatio);
-            addLog(t('autoRatioSet').replace('{0}', bestRatio));
+            applyAutoRatio(findClosestAspectRatio(img.width, img.height, ASPECT_RATIOS));
         };
-    }, [addLog, characterImages, objectImages, setAspectRatio, t]);
+    }, [addLog, orderedReferenceAssets, setAspectRatio, showNotification, t]);
 }

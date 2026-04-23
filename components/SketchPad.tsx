@@ -26,7 +26,7 @@ import {
 } from '../utils/canvasWorkspace';
 
 interface SketchPadProps {
-    onSave: (base64: string) => void;
+    onSave: (base64: string, ratio: AspectRatio) => void;
     onClose: () => void;
     currentLanguage?: Language;
     imageModel: ImageModel;
@@ -228,7 +228,7 @@ const SketchPad: React.FC<SketchPadProps> = ({ onSave, onClose, currentLanguage 
         if (confirmAction === 'close' || confirmAction === 'use_blank') onClose();
         else if (confirmAction === 'use') {
             if (canvasRef.current) {
-                onSave(exportCanvasWithBackground(canvasRef.current));
+                onSave(exportCanvasWithBackground(canvasRef.current), currentRatio);
             }
         }
         setConfirmAction(null);

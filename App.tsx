@@ -285,6 +285,7 @@ const App: React.FC = () => {
         setStagedAssets,
         objectImages,
         characterImages,
+        orderedReferenceAssets,
         currentStageAsset,
         hasSketch,
         setObjectImages,
@@ -1022,13 +1023,14 @@ const App: React.FC = () => {
     useWorkspaceAppLifecycle({
         historyCount: history.length,
         generatedImageCount: generatedImageUrls.length,
-        objectImages,
-        characterImages,
+        orderedReferenceAssets,
+        aspectRatio,
         setApiKeyReady,
         setCurrentLang,
         setInitialPreferencesReady: setAreInitialPreferencesReady,
         setAspectRatio,
         addLog,
+        showNotification,
         t,
     });
 

@@ -466,7 +466,7 @@ export const ko = {
     composerVisibilityHidden: '숨김',
     workspaceQueueLauncher: '대기열',
     composerQueueBatchJob: '대기열에 추가',
-    composerQueueBatchFollowUpJob: '이 이미지를 대기열에 추가',
+    composerQueueBatchFollowUpJob: '스테이지 이미지를 대기열에 추가',
     composerAdvancedTitle: '기능 인지 고급 설정',
     composerAdvancedDesc:
         '지원되지 않는 컨트롤은 숨겨진 상태로 유지되며, 모델이 바뀌면 안전한 기본값으로 자동 재설정됩니다.',
@@ -519,7 +519,7 @@ export const ko = {
     stageGroundingResultSummary: '{0} · 요청 {1} · 실제 {2}',
     stageGeneratedImageAlt: '생성 이미지',
     stageOpenViewer: '뷰어 열기',
-    stageActionContinueFromHere: '여기서 이어가기',
+    stageActionContinueFromHere: '스테이지 이미지로 이어가기',
     stageActionEdit: '편집',
     stageActionAddToObjectReference: '오브젝트 참조에 추가',
     stageActionAddToCharacterReference: '캐릭터 참조에 추가',
@@ -555,7 +555,7 @@ export const ko = {
     workspacePickerNoSketchAsset: '스케치 자산이 아직 스테이징되지 않았습니다.',
     workspacePickerCharacters: '캐릭터',
     workspacePickerCharacterHint: '캐릭터 참조는 같은 스테이징 입력 모델을 유지합니다.',
-    workspacePickerStageSource: '스테이지 소스',
+    workspacePickerStageSource: '스테이지 이미지',
     workspacePickerHistoryLinked: '기록 연동됨',
     workspacePickerStageSourceHint:
         '현재 스테이지와 기록에서 다시 연 이미지는 이제 편집 동작에서 재사용할 수 있는 동일한 후속 소스 모델로 전달됩니다.',
@@ -779,7 +779,7 @@ export const ko = {
     groundingProvenanceSelectionSource: '선택한 소스는 {0}을(를) 인용하는 지원 번들을 강조 표시합니다.',
     groundingProvenanceSelectionNone: '그라운딩 근거가 어떻게 연결되는지 확인하려면 소스나 지원 번들을 선택하세요.',
     provenanceCarryForwardLog: '출처 연속성이 이전 그라운딩 턴에서 이어졌습니다.',
-    composerFollowUpSource: '후속 원본',
+    composerFollowUpSource: '스테이지 이미지 원본',
     workspaceSourceBadge: '원본',
     historyBranchContinuationSource: '연속 원본',
     workspaceCurrentStageSourceNoLinkedHistory:

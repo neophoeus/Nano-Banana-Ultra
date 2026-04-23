@@ -1,4 +1,4 @@
-import { StageAsset, StageAssetOrigin, StageAssetRole, TurnLineageAction } from '../types';
+import { AspectRatio, StageAsset, StageAssetOrigin, StageAssetRole, TurnLineageAction } from '../types';
 
 type CreateStageAssetOptions = {
     role: StageAssetRole;
@@ -6,6 +6,7 @@ type CreateStageAssetOptions = {
     url: string;
     savedFilename?: string;
     isSketch?: boolean;
+    aspectRatio?: AspectRatio;
     sourceHistoryId?: string;
     lineageAction?: TurnLineageAction;
 };
@@ -29,6 +30,7 @@ export const createStageAsset = ({
     url,
     savedFilename,
     isSketch,
+    aspectRatio,
     sourceHistoryId,
     lineageAction,
 }: CreateStageAssetOptions): StageAsset => ({
@@ -39,6 +41,7 @@ export const createStageAsset = ({
     origin,
     createdAt: Date.now(),
     isSketch,
+    aspectRatio,
     sourceHistoryId,
     lineageAction,
 });
@@ -75,7 +78,7 @@ export const replaceStageAssetRoleUrls = (
 };
 
 export const addStageAsset = (assets: StageAsset[], options: AddStageAssetOptions): StageAsset[] => {
-    const { role, origin, url, savedFilename, isSketch, sourceHistoryId, lineageAction, maxAssets, preferFront } =
+    const { role, origin, url, savedFilename, isSketch, aspectRatio, sourceHistoryId, lineageAction, maxAssets, preferFront } =
         options;
 
     if (role === 'stage-source') {
@@ -85,6 +88,7 @@ export const addStageAsset = (assets: StageAsset[], options: AddStageAssetOption
             existingSingletonAsset.url === url &&
             existingSingletonAsset.savedFilename === savedFilename &&
             existingSingletonAsset.origin === origin &&
+            existingSingletonAsset.aspectRatio === aspectRatio &&
             existingSingletonAsset.sourceHistoryId === sourceHistoryId &&
             existingSingletonAsset.lineageAction === lineageAction
         ) {
@@ -94,7 +98,7 @@ export const addStageAsset = (assets: StageAsset[], options: AddStageAssetOption
         const withoutSingletonRole = assets.filter((asset) => asset.role !== role);
         return [
             ...withoutSingletonRole,
-            createStageAsset({ role, origin, url, savedFilename, sourceHistoryId, lineageAction }),
+            createStageAsset({ role, origin, url, savedFilename, aspectRatio, sourceHistoryId, lineageAction }),
         ];
     }
 
@@ -102,12 +106,12 @@ export const addStageAsset = (assets: StageAsset[], options: AddStageAssetOption
     const dedupedRoleAssets = existingRoleAssets.filter((asset) => asset.url !== url && !(isSketch && asset.isSketch));
     const nextRoleAssets = preferFront
         ? [
-              createStageAsset({ role, origin, url, savedFilename, isSketch, sourceHistoryId, lineageAction }),
+              createStageAsset({ role, origin, url, savedFilename, isSketch, aspectRatio, sourceHistoryId, lineageAction }),
               ...dedupedRoleAssets,
           ]
         : [
               ...dedupedRoleAssets,
-              createStageAsset({ role, origin, url, savedFilename, isSketch, sourceHistoryId, lineageAction }),
+              createStageAsset({ role, origin, url, savedFilename, isSketch, aspectRatio, sourceHistoryId, lineageAction }),
           ];
     const trimmedRoleAssets =
         typeof maxAssets === 'number'

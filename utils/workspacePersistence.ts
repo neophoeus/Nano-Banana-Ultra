@@ -539,15 +539,30 @@ const sanitizeStagedAssets = (value: unknown): StageAsset[] => {
         return [];
     }
 
-    return value.filter(
-        (item): item is StageAsset =>
-            isRecord(item) &&
-            typeof item.id === 'string' &&
-            typeof item.url === 'string' &&
-            typeof item.role === 'string' &&
-            typeof item.origin === 'string' &&
-            typeof item.createdAt === 'number',
-    );
+    return value.flatMap((item): StageAsset[] => {
+        if (
+            !(
+                isRecord(item) &&
+                typeof item.id === 'string' &&
+                typeof item.url === 'string' &&
+                typeof item.role === 'string' &&
+                typeof item.origin === 'string' &&
+                typeof item.createdAt === 'number'
+            )
+        ) {
+            return [];
+        }
+
+        const aspectRatio =
+            typeof item.aspectRatio === 'string' && item.aspectRatio.trim().length > 0 ? item.aspectRatio : undefined;
+
+        return [
+            {
+                ...item,
+                ...(aspectRatio ? { aspectRatio } : {}),
+            },
+        ];
+    });
 };
 
 const sanitizeWorkflowLogs = (value: unknown): string[] => {

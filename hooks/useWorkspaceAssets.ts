@@ -20,6 +20,7 @@ type AddWorkspaceAssetArgs = {
     maxAssets?: number;
     preferFront?: boolean;
     isSketch?: boolean;
+    aspectRatio?: StageAsset['aspectRatio'];
     sourceHistoryId?: string;
     lineageAction?: TurnLineageAction;
 };
@@ -29,6 +30,7 @@ type UseWorkspaceAssetsReturn = {
     setStagedAssets: Dispatch<SetStateAction<StageAsset[]>>;
     objectImages: string[];
     characterImages: string[];
+    orderedReferenceAssets: StageAsset[];
     currentStageAsset: StageAsset | null;
     hasSketch: boolean;
     setObjectImages: (nextImages: string[] | ((prev: string[]) => string[])) => void;
@@ -60,6 +62,10 @@ export function useWorkspaceAssets({ initialStagedAssets }: UseWorkspaceAssetsAr
 
     const objectImages = useMemo(() => getStageAssetUrlsByRole(stagedAssets, 'object'), [stagedAssets]);
     const characterImages = useMemo(() => getStageAssetUrlsByRole(stagedAssets, 'character'), [stagedAssets]);
+    const orderedReferenceAssets = useMemo(
+        () => [...getStageAssetsByRole(stagedAssets, 'object'), ...getStageAssetsByRole(stagedAssets, 'character')],
+        [stagedAssets],
+    );
     const currentStageAsset = useMemo(
         () => getStageAssetsByRole(stagedAssets, 'stage-source')[0] || null,
         [stagedAssets],
@@ -146,6 +152,7 @@ export function useWorkspaceAssets({ initialStagedAssets }: UseWorkspaceAssetsAr
         setStagedAssets,
         objectImages,
         characterImages,
+        orderedReferenceAssets,
         currentStageAsset,
         hasSketch,
         setObjectImages,

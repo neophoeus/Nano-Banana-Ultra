@@ -479,7 +479,7 @@ export const de = {
     composerVisibilityHidden: 'Ausgeblendet',
     workspaceQueueLauncher: 'Warteschlange',
     composerQueueBatchJob: 'Einreihen',
-    composerQueueBatchFollowUpJob: 'Dieses Bild einreihen',
+    composerQueueBatchFollowUpJob: 'Stufenbild einreihen',
     composerAdvancedTitle: 'Faehigkeitsbewusste erweiterte Einstellungen',
     composerAdvancedDesc:
         'Nicht unterstuetzte Steuerelemente bleiben verborgen und werden beim Modellwechsel automatisch auf sichere Standardwerte zurueckgesetzt.',
@@ -538,7 +538,7 @@ export const de = {
     stageGroundingResultSummary: '{0} · Angefordert {1} · Tatsachlich {2}',
     stageGeneratedImageAlt: 'Generiertes Bild',
     stageOpenViewer: 'Betrachter offnen',
-    stageActionContinueFromHere: 'Von hier fortsetzen',
+    stageActionContinueFromHere: 'Mit Stufenbild fortsetzen',
     stageActionEdit: 'Bearbeiten',
     stageActionAddToObjectReference: 'Zur Objektreferenz hinzufugen',
     stageActionAddToCharacterReference: 'Zur Charakterreferenz hinzufugen',
@@ -573,7 +573,7 @@ export const de = {
     workspacePickerNoSketchAsset: 'Kein Skizzen-Asset vorbereitet.',
     workspacePickerCharacters: 'Charaktere',
     workspacePickerCharacterHint: 'Charakter-Referenzen bleiben im selben vorbereiteten Eingabemodell.',
-    workspacePickerStageSource: 'Szenenquelle',
+    workspacePickerStageSource: 'Stufenbild',
     workspacePickerHistoryLinked: 'mit Verlauf verknupft',
     workspacePickerStageSourceHint:
         'Aktuelle Stufe und erneut aus dem Verlauf geoffnete Bilder speisen jetzt dasselbe Folgequellmodell, das Editor-Aktionen wiederverwenden konnen.',
@@ -814,7 +814,7 @@ export const de = {
     groundingProvenanceSelectionNone:
         'Wahlen Sie eine Quelle oder ein Unterstutzungsbundel aus, um zu sehen, wie die Kontextbelege zusammenhangen.',
     provenanceCarryForwardLog: 'Die Herkunfts-Kontinuitat wurde aus der vorherigen verankerten Runde ubernommen.',
-    composerFollowUpSource: 'Folgequelle',
+    composerFollowUpSource: 'Stufenbildquelle',
     workspaceSourceBadge: 'Quelle',
     historyBranchContinuationSource: 'Fortsetzungsquelle',
     workspaceCurrentStageSourceNoLinkedHistory:

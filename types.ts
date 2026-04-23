@@ -286,6 +286,7 @@ export interface StageAsset {
     origin: StageAssetOrigin;
     createdAt: number;
     isSketch?: boolean;
+    aspectRatio?: AspectRatio;
     sourceHistoryId?: string;
     lineageAction?: TurnLineageAction;
 }

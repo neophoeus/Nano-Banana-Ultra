@@ -212,7 +212,7 @@ describe('useHistoryPresentationHelpers', () => {
                 t: (key) =>
                     ({
                         lblHistoryFailed: 'Failed',
-                        workspacePickerStageSource: 'Stage source',
+                        workspacePickerStageSource: 'Stage image',
                         historyBranchContinuationSource: 'Continuation source',
                         historyModeImage: 'Image',
                         workspaceImportReviewExecutionQueuedBatchJob: 'Queued batch job',
@@ -280,7 +280,7 @@ describe('useHistoryPresentationHelpers', () => {
                 isPromotedContinuationSource: () => false,
                 t: (key) =>
                     ({
-                        workspacePickerStageSource: 'Stage source',
+                        workspacePickerStageSource: 'Stage image',
                         historyBranchContinuationSource: 'Continuation source',
                         historyModeImage: 'Image',
                     })[key] || key,

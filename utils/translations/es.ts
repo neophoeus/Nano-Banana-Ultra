@@ -476,7 +476,7 @@ export const es = {
     composerVisibilityHidden: 'Oculto',
     workspaceQueueLauncher: 'Cola',
     composerQueueBatchJob: 'Poner en cola',
-    composerQueueBatchFollowUpJob: 'Poner esta imagen en cola',
+    composerQueueBatchFollowUpJob: 'Poner la imagen de escenario en cola',
     composerAdvancedTitle: 'Ajustes avanzados segun capacidad',
     composerAdvancedDesc:
         'Los controles no compatibles se mantienen ocultos y se restablecen automaticamente cuando cambia el modelo.',
@@ -535,7 +535,7 @@ export const es = {
     stageGroundingResultSummary: '{0} · Solicitado {1} · Real {2}',
     stageGeneratedImageAlt: 'Imagen generada',
     stageOpenViewer: 'Abrir visor',
-    stageActionContinueFromHere: 'Continuar desde aqui',
+    stageActionContinueFromHere: 'Continuar con la imagen de escenario',
     stageActionEdit: 'Editar',
     stageActionAddToObjectReference: 'Agregar a referencia de objetos',
     stageActionAddToCharacterReference: 'Agregar a referencia de personajes',
@@ -570,7 +570,7 @@ export const es = {
     workspacePickerNoSketchAsset: 'No hay ningun recurso de boceto preparado.',
     workspacePickerCharacters: 'Personajes',
     workspacePickerCharacterHint: 'Las referencias de personajes se mantienen en el mismo modelo de ingreso preparado.',
-    workspacePickerStageSource: 'Origen de la escena',
+    workspacePickerStageSource: 'Imagen de escenario',
     workspacePickerHistoryLinked: 'vinculado al historial',
     workspacePickerStageSourceHint:
         'El escenario actual y las reaperturas desde el historial ahora alimentan el mismo modelo de origen para seguimientos que pueden reutilizar las acciones del editor.',
@@ -809,7 +809,7 @@ export const es = {
     groundingProvenanceSelectionNone:
         'Selecciona una fuente o bloque de soporte para ver como se conecta la evidencia contextual.',
     provenanceCarryForwardLog: 'La continuidad de procedencia se arrastro desde el turno fundamentado anterior.',
-    composerFollowUpSource: 'Fuente de seguimiento',
+    composerFollowUpSource: 'Fuente de imagen de escenario',
     workspaceSourceBadge: 'Fuente',
     historyBranchContinuationSource: 'Fuente de continuacion',
     workspaceCurrentStageSourceNoLinkedHistory:

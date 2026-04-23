@@ -420,6 +420,26 @@ describe('useWorkspaceEditorActions', () => {
         expect(props.showNotification).toHaveBeenCalledWith('msgImageResized', 'info');
     });
 
+    it('persists sketch ratio metadata when saving a sketch pad asset', () => {
+        renderHook();
+
+        act(() => {
+            latestHook?.handleSketchPadSave('data:image/png;base64,sketch', '3:4');
+        });
+
+        expect(props.addWorkspaceAsset).toHaveBeenCalledWith({
+            role: 'object',
+            origin: 'sketch',
+            url: 'data:image/png;base64,sketch',
+            isSketch: true,
+            aspectRatio: '3:4',
+            maxAssets: 4,
+            preferFront: true,
+        });
+        expect(props.setIsSketchPadOpen).toHaveBeenCalledWith(false);
+        expect(props.showNotification).toHaveBeenCalledWith('notificationAddedToRef', 'info');
+    });
+
     it('preserves explicit null editor lineage overrides when generating from upload-only sources', () => {
         props.currentStageAsset = {
             id: 'stale-stage-source',

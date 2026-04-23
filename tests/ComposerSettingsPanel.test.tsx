@@ -216,7 +216,7 @@ describe('ComposerSettingsPanel toolbar layout', () => {
         expect(markup).not.toContain('New Conversation');
         expect(markup).not.toContain('Follow-up Edit');
         expect(markup).not.toContain(getTranslation('en', 'followUpEditRequiresStageImage'));
-        expect(markup).not.toContain('Continue with this image');
+        expect(markup).not.toContain(getTranslation('en', 'stageActionContinueFromHere'));
         expect(markup).toContain('py-2');
         expect(markup).toContain('Memory send is available only when quantity is 1.');
         expect(markup).toContain('bg-slate-200/95');

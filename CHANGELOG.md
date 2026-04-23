@@ -1,5 +1,26 @@
 # Changelog
 
+## v3.6.6 - 2026-04-23
+
+- Release title: Nano Banana Ultra 3.6.6 - Stage-Image Wording Parity, Locked Reference Ratio Priority & Visible Ratio-Switch Feedback
+- Release summary:
+    - unified stage-image wording across maintained locales:
+        - stage follow-up actions now consistently use the newer `stage image` naming family instead of older mixed `this image` wording, so continue, queue, source labels, and follow-up-source surfaces all describe the active stage source with one product vocabulary
+        - maintained locale dictionaries now keep the same stage-image wording contract across action buttons, queue actions, source badges, and follow-up metadata instead of mixing older literal or context-specific variants
+
+    - locked leading-reference aspect-ratio policy:
+        - automatic aspect-ratio selection now derives from the leading ordered reference asset rather than loosely from uploaded-reference lists, so the active ratio always follows the reference that actually owns the front position in the workspace
+        - uploaded reference images still pick the nearest supported output ratio from their real image dimensions, while a saved sketch reference now carries its own ratio metadata and can drive composer ratio selection directly without being reinterpreted through image probing
+
+    - sketch-first reference priority and stable slot behavior:
+        - when a sketch reference is added, it now stays pinned at the front of the reference list and takes precedence over later uploaded references for automatic ratio control
+        - if reference capacity is already full, adding a front-priority sketch now removes the trailing existing reference instead of displacing the sketch, keeping the sketch as the first active reference under the fixed ordering policy
+        - sketch-derived ratio context now survives workspace persistence paths so restored workspaces keep the same sketch-priority ratio behavior instead of losing that state after save or reopen
+
+    - truthful ratio-switch notifications:
+        - whenever automatic ratio selection changes the composer to a different supported ratio, the workspace now shows a toast announcing the new `X:Y` value so the switch is visible instead of silent
+        - ratio-change notifications and related workspace logs now fire only on real ratio changes, avoiding repeated noise when the leading reference updates but resolves to the same effective aspect ratio
+
 ## v3.6.5 - 2026-04-22
 
 - Release title: Nano Banana Ultra 3.6.5 - Grouped Queue Tracking, Localized Runtime Labels & Cleaner Detail Navigation

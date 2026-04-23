@@ -117,7 +117,7 @@ describe('useComposerSettingsPanelProps', () => {
             );
         });
 
-        expect(container.textContent).toContain('Continue with image: History · Reopen');
+        expect(container.textContent).toContain('Stage image source: History · Reopen');
 
         act(() => {
             root.render(
@@ -130,7 +130,7 @@ describe('useComposerSettingsPanelProps', () => {
             );
         });
 
-        expect(container.textContent).toContain('フォローアップ元: 履歴 · 再表示');
+        expect(container.textContent).toContain('ステージ画像ソース: 履歴 · 再表示');
         expect(container.textContent).not.toContain('Follow-up source: 履歴 · 再表示');
     });
 

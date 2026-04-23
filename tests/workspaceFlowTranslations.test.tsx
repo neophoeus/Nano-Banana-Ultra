@@ -810,7 +810,7 @@ const zhTwGroundingProvenancePolishBaseline = {
     groundingProvenanceInsightReturnThoughts: '回傳思考內容',
     groundingProvenanceSummarySourceTurn: '來源回合',
     groundingProvenanceSelectionNone: '選擇來源或支援組合來檢查脈絡證據如何連接。',
-    composerFollowUpSource: '接續用圖',
+    composerFollowUpSource: '舞台圖來源',
 } as const;
 
 const zhCnGroundingProvenancePolishBaseline = {
@@ -818,7 +818,7 @@ const zhCnGroundingProvenancePolishBaseline = {
     groundingProvenanceInsightReturnThoughts: '返回思考内容',
     groundingProvenanceSummarySourceTurn: '来源回合',
     groundingProvenanceSelectionNone: '选择来源或支持组合来查看脉络证据如何关联。',
-    composerFollowUpSource: '延续来源',
+    composerFollowUpSource: '舞台图来源',
 } as const;
 
 const zhTwGroundingProvenanceLongformBaseline = {
@@ -1340,7 +1340,7 @@ const zhTwComposerControlsBaseline = {
     composerEnterNewline: 'Enter\n換行',
     workspaceQueueLauncher: '佇列',
     composerQueueBatchJob: '加入佇列',
-    composerQueueBatchFollowUpJob: '將此圖加入佇列',
+    composerQueueBatchFollowUpJob: '將舞台圖加入佇列',
     composerActionPanelTitle: '建立',
     composerActionPanelDesc: '生成仍是主要動作，後續編修與工作區操作保持靠近，但語氣更收斂。',
     composerAdvancedEyebrow: '深度控制',
@@ -1351,7 +1351,7 @@ const zhCnComposerControlsBaseline = {
     composerEnterNewline: 'Enter\n换行',
     workspaceQueueLauncher: '队列',
     composerQueueBatchJob: '加入队列',
-    composerQueueBatchFollowUpJob: '将此图加入队列',
+    composerQueueBatchFollowUpJob: '将舞台图加入队列',
     composerActionPanelTitle: '创建',
     composerActionPanelDesc: '生成仍然是主动作，后续编辑和工作区操作保持靠近，但语气更克制。',
     composerAdvancedEyebrow: '深度控制',
@@ -1444,37 +1444,37 @@ const ruComposerControlChromeBaseline = {
 const jaComposerQueueBatchJobBaseline = {
     workspaceQueueLauncher: 'バッチキュー',
     composerQueueBatchJob: 'キューに追加',
-    composerQueueBatchFollowUpJob: 'この画像をキューに追加',
+    composerQueueBatchFollowUpJob: 'ステージ画像をキューに追加',
 } as const;
 
 const koComposerQueueBatchJobBaseline = {
     workspaceQueueLauncher: '대기열',
     composerQueueBatchJob: '대기열에 추가',
-    composerQueueBatchFollowUpJob: '이 이미지를 대기열에 추가',
+    composerQueueBatchFollowUpJob: '스테이지 이미지를 대기열에 추가',
 } as const;
 
 const esComposerQueueBatchJobBaseline = {
     workspaceQueueLauncher: 'Cola',
     composerQueueBatchJob: 'Poner en cola',
-    composerQueueBatchFollowUpJob: 'Poner esta imagen en cola',
+    composerQueueBatchFollowUpJob: 'Poner la imagen de escenario en cola',
 } as const;
 
 const frComposerQueueBatchJobBaseline = {
     workspaceQueueLauncher: 'File',
     composerQueueBatchJob: 'Mettre en file',
-    composerQueueBatchFollowUpJob: 'Mettre cette image en file',
+    composerQueueBatchFollowUpJob: 'Mettre l image de scene en file',
 } as const;
 
 const deComposerQueueBatchJobBaseline = {
     workspaceQueueLauncher: 'Warteschlange',
     composerQueueBatchJob: 'Einreihen',
-    composerQueueBatchFollowUpJob: 'Dieses Bild einreihen',
+    composerQueueBatchFollowUpJob: 'Stufenbild einreihen',
 } as const;
 
 const ruComposerQueueBatchJobBaseline = {
     workspaceQueueLauncher: 'Очередь',
     composerQueueBatchJob: 'Добавить в очередь',
-    composerQueueBatchFollowUpJob: 'Добавить это изображение в очередь',
+    composerQueueBatchFollowUpJob: 'Добавить изображение сцены в очередь',
 } as const;
 
 const zhTwComposerThoughtTempBaseline = {
@@ -1786,13 +1786,13 @@ const zhCnWorkspacePickerSupportBaseline = {
 } as const;
 
 const zhTwWorkspacePickerStageSourceBaseline = {
-    workspacePickerStageSource: '以此圖接續',
+    workspacePickerStageSource: '舞台圖',
     workspacePickerStageSourceHint:
         '目前階段與從歷史重新開啟的圖，現在都會進入同一套後續延伸來源模型，供編輯動作重用。',
 } as const;
 
 const zhCnWorkspacePickerStageSourceBaseline = {
-    workspacePickerStageSource: '阶段来源',
+    workspacePickerStageSource: '舞台图',
     workspacePickerStageSourceHint:
         '当前阶段与从历史重新打开的图像，现在都会进入同一套后续延展来源模型，供编辑动作复用。',
 } as const;
@@ -2625,7 +2625,7 @@ const ruHistoryBranchLabelBaseline = {
 } as const;
 
 const jaSourceLineageLabelBaseline = {
-    composerFollowUpSource: 'フォローアップ元',
+    composerFollowUpSource: 'ステージ画像ソース',
     workspaceSourceBadge: 'ソース',
     historyBranchContinuationSource: '継続元',
     workspaceCurrentStageSourceNoLinkedHistory:
@@ -2633,7 +2633,7 @@ const jaSourceLineageLabelBaseline = {
 } as const;
 
 const koSourceLineageLabelBaseline = {
-    composerFollowUpSource: '후속 원본',
+    composerFollowUpSource: '스테이지 이미지 원본',
     workspaceSourceBadge: '원본',
     historyBranchContinuationSource: '연속 원본',
     workspaceCurrentStageSourceNoLinkedHistory:
@@ -2641,7 +2641,7 @@ const koSourceLineageLabelBaseline = {
 } as const;
 
 const esSourceLineageLabelBaseline = {
-    composerFollowUpSource: 'Fuente de seguimiento',
+    composerFollowUpSource: 'Fuente de imagen de escenario',
     workspaceSourceBadge: 'Fuente',
     historyBranchContinuationSource: 'Fuente de continuacion',
     workspaceCurrentStageSourceNoLinkedHistory:
@@ -2649,7 +2649,7 @@ const esSourceLineageLabelBaseline = {
 } as const;
 
 const frSourceLineageLabelBaseline = {
-    composerFollowUpSource: 'Source de suivi',
+    composerFollowUpSource: 'Source de l image de scene',
     workspaceSourceBadge: 'Source',
     historyBranchContinuationSource: 'Source de continuation',
     workspaceCurrentStageSourceNoLinkedHistory:
@@ -2657,7 +2657,7 @@ const frSourceLineageLabelBaseline = {
 } as const;
 
 const deSourceLineageLabelBaseline = {
-    composerFollowUpSource: 'Folgequelle',
+    composerFollowUpSource: 'Stufenbildquelle',
     workspaceSourceBadge: 'Quelle',
     historyBranchContinuationSource: 'Fortsetzungsquelle',
     workspaceCurrentStageSourceNoLinkedHistory:
@@ -2665,7 +2665,7 @@ const deSourceLineageLabelBaseline = {
 } as const;
 
 const ruSourceLineageLabelBaseline = {
-    composerFollowUpSource: 'Источник продолжения',
+    composerFollowUpSource: 'Источник изображения сцены',
     workspaceSourceBadge: 'Источник',
     historyBranchContinuationSource: 'Источник продолжения',
     workspaceCurrentStageSourceNoLinkedHistory:
@@ -4059,7 +4059,7 @@ const jaPickerSheetSurfaceBaseline = {
     workspacePickerNoSketchAsset: 'スケッチ資産はまだステージされていません。',
     workspacePickerCharacters: 'キャラクター',
     workspacePickerCharacterHint: 'キャラクター参照は同じステージ済み入力モデルを維持します。',
-    workspacePickerStageSource: 'ステージソース',
+    workspacePickerStageSource: 'ステージ画像',
     workspacePickerHistoryLinked: '履歴にリンク済み',
     workspacePickerStageSourceHint:
         '現在のステージと履歴から再開した画像は、編集アクションで再利用できる同じ後続ソースモデルに送られます。',
@@ -4089,7 +4089,7 @@ const koPickerSheetSurfaceBaseline = {
     workspacePickerNoSketchAsset: '스케치 자산이 아직 스테이징되지 않았습니다.',
     workspacePickerCharacters: '캐릭터',
     workspacePickerCharacterHint: '캐릭터 참조는 같은 스테이징 입력 모델을 유지합니다.',
-    workspacePickerStageSource: '스테이지 소스',
+    workspacePickerStageSource: '스테이지 이미지',
     workspacePickerHistoryLinked: '기록 연동됨',
     workspacePickerStageSourceHint:
         '현재 스테이지와 기록에서 다시 연 이미지는 이제 편집 동작에서 재사용할 수 있는 동일한 후속 소스 모델로 전달됩니다.',
@@ -4119,7 +4119,7 @@ const esPickerSheetSurfaceBaseline = {
     workspacePickerNoSketchAsset: 'No hay ningun recurso de boceto preparado.',
     workspacePickerCharacters: 'Personajes',
     workspacePickerCharacterHint: 'Las referencias de personajes se mantienen en el mismo modelo de ingreso preparado.',
-    workspacePickerStageSource: 'Origen de la escena',
+    workspacePickerStageSource: 'Imagen de escenario',
     workspacePickerHistoryLinked: 'vinculado al historial',
     workspacePickerStageSourceHint:
         'El escenario actual y las reaperturas desde el historial ahora alimentan el mismo modelo de origen para seguimientos que pueden reutilizar las acciones del editor.',
@@ -4149,7 +4149,7 @@ const frPickerSheetSurfaceBaseline = {
     workspacePickerNoSketchAsset: "Aucune ressource de croquis n'est preparee.",
     workspacePickerCharacters: 'Personnages',
     workspacePickerCharacterHint: "Les references de personnage restent dans le meme modele d'ingestion prepare.",
-    workspacePickerStageSource: 'Source de la scene',
+    workspacePickerStageSource: 'Image de scene',
     workspacePickerHistoryLinked: "lie a l'historique",
     workspacePickerStageSourceHint:
         "La scene actuelle et les reouvertures depuis l'historique alimentent maintenant le meme modele source de suivi, reutilisable par les actions de l'editeur.",
@@ -4180,7 +4180,7 @@ const dePickerSheetSurfaceBaseline = {
     workspacePickerNoSketchAsset: 'Kein Skizzen-Asset vorbereitet.',
     workspacePickerCharacters: 'Charaktere',
     workspacePickerCharacterHint: 'Charakter-Referenzen bleiben im selben vorbereiteten Eingabemodell.',
-    workspacePickerStageSource: 'Szenenquelle',
+    workspacePickerStageSource: 'Stufenbild',
     workspacePickerHistoryLinked: 'mit Verlauf verknupft',
     workspacePickerStageSourceHint:
         'Aktuelle Stufe und erneut aus dem Verlauf geoffnete Bilder speisen jetzt dasselbe Folgequellmodell, das Editor-Aktionen wiederverwenden konnen.',
@@ -4211,7 +4211,7 @@ const ruPickerSheetSurfaceBaseline = {
     workspacePickerNoSketchAsset: 'Скетч-ресурс не подготовлен.',
     workspacePickerCharacters: 'Персонажи',
     workspacePickerCharacterHint: 'Референсы персонажей остаются в той же подготовленной модели приема.',
-    workspacePickerStageSource: 'Источник сцены',
+    workspacePickerStageSource: 'Изображение сцены',
     workspacePickerHistoryLinked: 'связано с историей',
     workspacePickerStageSourceHint:
         'Текущая сцена и повторно открытые из истории изображения теперь подают данные в одну и ту же модель источника продолжения, которую могут повторно использовать действия редактора.',

@@ -467,7 +467,7 @@ export const ja = {
     composerVisibilityHidden: '非表示',
     workspaceQueueLauncher: 'バッチキュー',
     composerQueueBatchJob: 'キューに追加',
-    composerQueueBatchFollowUpJob: 'この画像をキューに追加',
+    composerQueueBatchFollowUpJob: 'ステージ画像をキューに追加',
     composerAdvancedTitle: '機能対応の詳細設定',
     composerAdvancedDesc: '未対応のコントロールは非表示のままとなり、モデル変更時に安全な初期値へ自動で戻ります。',
     composerAdvancedGenerationSectionTitle: '生成コントロール',
@@ -522,7 +522,7 @@ export const ja = {
     stageGroundingResultSummary: '{0} ・ リクエスト {1} ・ 実際 {2}',
     stageGeneratedImageAlt: '生成画像',
     stageOpenViewer: 'ビューアーを開く',
-    stageActionContinueFromHere: 'ここから続ける',
+    stageActionContinueFromHere: 'ステージ画像で続ける',
     stageActionEdit: '編集',
     stageActionAddToObjectReference: 'オブジェクト参照に追加',
     stageActionAddToCharacterReference: 'キャラクター参照に追加',
@@ -559,7 +559,7 @@ export const ja = {
     workspacePickerNoSketchAsset: 'スケッチ資産はまだステージされていません。',
     workspacePickerCharacters: 'キャラクター',
     workspacePickerCharacterHint: 'キャラクター参照は同じステージ済み入力モデルを維持します。',
-    workspacePickerStageSource: 'ステージソース',
+    workspacePickerStageSource: 'ステージ画像',
     workspacePickerHistoryLinked: '履歴にリンク済み',
     workspacePickerStageSourceHint:
         '現在のステージと履歴から再開した画像は、編集アクションで再利用できる同じ後続ソースモデルに送られます。',
@@ -790,7 +790,7 @@ export const ja = {
     groundingProvenanceSelectionNone:
         'グラウンディング証拠のつながりを確認するには、ソースまたはサポートバンドルを選択してください。',
     provenanceCarryForwardLog: '前のグラウンディング済みターンから由来の継続状態を引き継ぎました。',
-    composerFollowUpSource: 'フォローアップ元',
+    composerFollowUpSource: 'ステージ画像ソース',
     workspaceSourceBadge: 'ソース',
     historyBranchContinuationSource: '継続元',
     workspaceCurrentStageSourceNoLinkedHistory:

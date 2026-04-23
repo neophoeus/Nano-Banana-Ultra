@@ -472,7 +472,7 @@ export const fr = {
     composerVisibilityHidden: 'Masque',
     workspaceQueueLauncher: 'File',
     composerQueueBatchJob: 'Mettre en file',
-    composerQueueBatchFollowUpJob: 'Mettre cette image en file',
+    composerQueueBatchFollowUpJob: 'Mettre l image de scene en file',
     composerAdvancedTitle: 'Parametres avances sensibles aux capacites',
     composerAdvancedDesc:
         'Les controles non pris en charge restent masques et se reinitialisent automatiquement quand le modele change.',
@@ -531,7 +531,7 @@ export const fr = {
     stageGroundingResultSummary: '{0} · Demande {1} · Reel {2}',
     stageGeneratedImageAlt: 'Image generee',
     stageOpenViewer: 'Ouvrir le visualiseur',
-    stageActionContinueFromHere: 'Continuer depuis ici',
+    stageActionContinueFromHere: 'Continuer avec l image de scene',
     stageActionEdit: 'Modifier',
     stageActionAddToObjectReference: 'Ajouter aux references d objet',
     stageActionAddToCharacterReference: 'Ajouter aux references de personnage',
@@ -567,7 +567,7 @@ export const fr = {
     workspacePickerNoSketchAsset: "Aucune ressource de croquis n'est preparee.",
     workspacePickerCharacters: 'Personnages',
     workspacePickerCharacterHint: "Les references de personnage restent dans le meme modele d'ingestion prepare.",
-    workspacePickerStageSource: 'Source de la scene',
+    workspacePickerStageSource: 'Image de scene',
     workspacePickerHistoryLinked: "lie a l'historique",
     workspacePickerStageSourceHint:
         "La scene actuelle et les reouvertures depuis l'historique alimentent maintenant le meme modele source de suivi, reutilisable par les actions de l'editeur.",
@@ -809,7 +809,7 @@ export const fr = {
     groundingProvenanceSelectionNone:
         'Selectionnez une source ou un bloc de support pour voir comment les preuves de contexte se relient.',
     provenanceCarryForwardLog: 'La continuite de provenance a ete reportee depuis le tour precedent avec contexte.',
-    composerFollowUpSource: 'Source de suivi',
+    composerFollowUpSource: 'Source de l image de scene',
     workspaceSourceBadge: 'Source',
     historyBranchContinuationSource: 'Source de continuation',
     workspaceCurrentStageSourceNoLinkedHistory:

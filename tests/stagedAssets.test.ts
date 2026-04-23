@@ -57,4 +57,52 @@ describe('stagedAssets', () => {
             lineageAction: 'reopen',
         });
     });
+
+    it('keeps a new sketch first and evicts the trailing object reference when object refs are full', () => {
+        const assets: StageAsset[] = [
+            {
+                id: 'object-1',
+                url: 'https://example.com/object-1.png',
+                role: 'object',
+                origin: 'upload',
+                createdAt: 1,
+            },
+            {
+                id: 'object-2',
+                url: 'https://example.com/object-2.png',
+                role: 'object',
+                origin: 'upload',
+                createdAt: 2,
+            },
+            {
+                id: 'object-3',
+                url: 'https://example.com/object-3.png',
+                role: 'object',
+                origin: 'upload',
+                createdAt: 3,
+            },
+        ];
+
+        const result = addStageAsset(assets, {
+            role: 'object',
+            origin: 'sketch',
+            url: 'data:image/png;base64,sketch',
+            isSketch: true,
+            aspectRatio: '3:4',
+            preferFront: true,
+            maxAssets: 3,
+        });
+
+        expect(result).toHaveLength(3);
+        expect(result.map((asset) => asset.url)).toEqual([
+            'data:image/png;base64,sketch',
+            'https://example.com/object-1.png',
+            'https://example.com/object-2.png',
+        ]);
+        expect(result[0]).toMatchObject({
+            origin: 'sketch',
+            isSketch: true,
+            aspectRatio: '3:4',
+        });
+    });
 });

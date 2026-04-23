@@ -797,7 +797,7 @@ const uncitedProvenanceSnapshot = {
     },
 };
 
-const composer = (page: Page) => page.locator('textarea.nbu-composer-dock-textarea').first();
+const composer = (page: Page) => page.locator('.nbu-composer-dock-textarea textarea').first();
 const visibleProvenancePanel = (scope: Page | Locator) =>
     scope
         .locator('[data-testid="provenance-panel-light"]:visible, [data-testid="provenance-panel-dark"]:visible')
