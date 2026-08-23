@@ -1384,7 +1384,7 @@ function ComposerSettingsPanel({
                                 <button
                                     type="button"
                                     data-testid="composer-round-count-decrease"
-                                    disabled={roundCount <= 1 || isActionLocked || settingsLocked}
+                                    disabled={roundCount <= 1 || isActionLocked}
                                     onClick={() => onRoundCountChange?.(Math.max(1, roundCount - 1))}
                                     className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-40 font-bold select-none text-slate-600 dark:text-slate-300"
                                 >
@@ -1394,7 +1394,7 @@ function ComposerSettingsPanel({
                                     <button
                                         type="button"
                                         data-testid="composer-round-count-grid-trigger"
-                                        disabled={isActionLocked || settingsLocked}
+                                        disabled={isActionLocked}
                                         onClick={() => setIsRoundGridOpen(!isRoundGridOpen)}
                                         className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-center font-mono font-bold text-[11px] text-slate-700 dark:text-slate-200 focus:outline-none"
                                         title={t('roundCount')}
@@ -1446,7 +1446,7 @@ function ComposerSettingsPanel({
                                 <button
                                     type="button"
                                     data-testid="composer-round-count-increase"
-                                    disabled={roundCount >= 10 || isActionLocked || settingsLocked}
+                                    disabled={roundCount >= 10 || isActionLocked}
                                     onClick={() => onRoundCountChange?.(Math.min(10, roundCount + 1))}
                                     className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-slate-700 disabled:opacity-40 font-bold select-none text-slate-600 dark:text-slate-300"
                                 >

@@ -1,5 +1,13 @@
 # Changelog
 
+## v4.1.4 - 2026-08-23
+
+- Release title: Nano Banana Ultra 4.1.4 - Round Count Independence & Focused Model Lock Scope
+- Release summary:
+    - **Fixed Round Count Control Interactivity & Lock Independence**: Resolved an issue where the Round Count controls (`-`, `+`, and the popover number grid trigger) in `ComposerSettingsPanel` were disabled when settings lock (`settingsLocked`) was active. Removed the lock restriction from round count controls so users can always freely increment, decrement, and select round counts from the 1~10 popover grid.
+    - **Focused Model Option Lock Scope**: Clarified and enforced the lock scope to strictly guard core model generation parameters (`imageModel`, `aspectRatio`, `imageSize`, `imageStyle`, `batchSize`, `outputFormat`, `temperature`, `thinkingLevel`, `includeThoughts`, `googleSearch`, `imageSearch`, and `safetyThresholds`), ensuring workflow and non-model auxiliary settings (such as round count and auto-export settings) remain fully interactive and customizable.
+    - **Comprehensive Unit Testing**: Added dedicated test suite `ComposerSettingsPanel.roundCount.test.tsx` verifying round count decrement/increment boundaries, popover grid selection, and lock independence. Updated `useComposerState.lock.test.tsx` to assert auxiliary state mutability under lock mode. 100% test pass rate across all 114 test suites (937 tests).
+
 ## v4.1.3 - 2026-08-19
 
 - Release title: Nano Banana Ultra 4.1.3 - AI Studio Fullscreen Viewer Metadata Loading Fix & Sidecar Hydration Resilience
