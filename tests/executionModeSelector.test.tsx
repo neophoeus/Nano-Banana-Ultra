@@ -116,4 +116,38 @@ describe('ExecutionModeSelector', () => {
         expect(button).toBeTruthy();
         expect(button.textContent).toContain('AI Studio 実行');
     });
+
+    it('renders and selects Google AI subscription tiers when in direct mode', async () => {
+        setExecutionModeSetting('direct');
+        await act(async () => {
+            root.render(<ExecutionModeSelector currentLanguage="zh_TW" />);
+        });
+
+        const button = container.querySelector('[data-testid="execution-mode-selector-btn"]') as HTMLButtonElement;
+        expect(button).toBeTruthy();
+
+        // Open menu
+        await act(async () => {
+            button.click();
+        });
+
+        const menu = container.querySelector('[data-testid="execution-mode-menu"]');
+        expect(menu).toBeTruthy();
+        expect(menu?.textContent).toContain('Google AI 訂閱方案');
+        expect(menu?.textContent).toContain('Google AI Pro');
+        expect(menu?.textContent).toContain('Google AI Ultra (5x 算力池)');
+        expect(menu?.textContent).toContain('Google AI Ultra (20x 極限算力池)');
+
+        // Click Ultra 5x tier option
+        const ultra5xOption = container.querySelector(
+            '[data-testid="ai-studio-tier-option-ultra_5x"]',
+        ) as HTMLButtonElement;
+        expect(ultra5xOption).toBeTruthy();
+
+        await act(async () => {
+            ultra5xOption.click();
+        });
+
+        expect(localStorage.getItem('nbu_ai_studio_subscription_tier')).toBe('ultra_5x');
+    });
 });

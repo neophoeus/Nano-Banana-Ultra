@@ -1,5 +1,21 @@
 # Changelog
 
+## v4.2.0 - 2026-09-02
+
+- Release title: Nano Banana Ultra 4.2.0 - Google AI Subscription Tiers (Pro / Ultra 5x / Ultra 20x) Pacing & Persistent 429 Adaptive Backoff
+- Release summary:
+    - **Google AI Subscription Tier Management & Adaptive Pacing (`utils/aiStudioPlan.ts`)**: Structured dedicated IPM (Images Per Minute) generation pacing profiles for Google AI subscription plans in AI Studio / Direct mode. In Google AI Studio, multimodal image generation requires a Google AI subscription (Free Tier has quota `limit: 0`). Configured tailored safe pacing intervals and burst limits across all three official tiers:
+        - **Google AI Pro (1x Baseline Quota)**: 15s delay for Pro image models (`gemini-3-pro-image`), 5s delay for Flash image models (`gemini-3.1-flash-image`, `gemini-2.5-flash-image`), 2s delay for prompt tools.
+        - **Google AI Ultra (5x Quota Multiplier)**: 7s delay for Pro image models, 3s delay for Flash image models, 1s delay for prompt tools.
+        - **Google AI Ultra (20x Maximum Quota Pool)**: 3.5s delay for Pro image models, 1.5s delay for Flash image models, 0.5s delay for prompt tools.
+        - Persisted subscription tier preferences in `localStorage` under `nbu_ai_studio_subscription_tier` with reactive listener support (`subscribeAiStudioSubscriptionTier`).
+    - **Global Model Rate Pacing Guard (`services/providers/browserDirectProvider.ts`)**: Introduced `ensureModelPacingDelay` and `modelLastRequestCompletedAt` tracking per model across both consecutive manual single-image generations and batch variants, proactively preventing transient `429: RESOURCE_EXHAUSTED` concurrency burst limit triggers caused by rapid clicking.
+    - **Dynamic 429 / `RESOURCE_EXHAUSTED` Parsing & Persistent Cooldown Window**: Expanded regex parsing to dynamically extract retry timings from server error messages (including `retry-after: (\d+)`, `retry in ([\d.]+)\s*(ms|s|seconds|minutes)`, and `wait ([\d.]+)\s*s`). Eliminated premature cooldown erasure on initial success, preserving active backoff windows to safeguard rolling time frames. Added Full Jitter and dynamic retries (5~6 attempts) with clear terminal and UI progress logs.
+    - **Prompt Engineering Tools Rate Limiting Integration**: Fully connected `enhancePrompt`, `generateRandomPrompt`, and `generatePromptFromImage` to model-level pacing and transient rate limit backoff management for `gemini-3.7-flash`.
+    - **Execution Engine Selector & UI Tier Switching (`components/ExecutionModeSelector.tsx`)**: Enhanced the execution engine dropdown with a dedicated Google AI Plan switcher (`Google AI Pro`, `Google AI Ultra 5x`, `Google AI Ultra 20x`) whenever AI Studio / Direct Mode is active, allowing users to customize generation pacing on the fly.
+    - **Complete 9-Language Localization**: Full translation coverage for subscription tier keys (`aiStudioTierTitle`, `aiStudioTierPro`, `aiStudioTierUltra5x`, `aiStudioTierUltra20x`, `aiStudioTierSelectorTooltip`) across Traditional Chinese (`zh_TW`), Simplified Chinese (`zh_CN`), English (`en`), Japanese (`ja`), Korean (`ko`), German (`de`), French (`fr`), Spanish (`es`), and Russian (`ru`).
+    - **Comprehensive Testing & Verification**: Expanded `tests/browserDirectProvider.test.ts` with tier pacing, regex parsing, and backoff tests. Updated `tests/executionModeSelector.test.tsx` for tier UI selection. 100% test pass rate across all 114 test suites (943 tests).
+
 ## v4.1.4 - 2026-08-23
 
 - Release title: Nano Banana Ultra 4.1.4 - Round Count Independence & Focused Model Lock Scope

@@ -35,6 +35,13 @@ import { Language } from '../../utils/translations';
 import { extractGroundingDetails } from '../../utils/geminiGroundingExtraction';
 import { buildImageRequestConfig, validateCapabilityRequest } from '../../utils/geminiRequestConfig';
 import { emitDebugTerminalEvent } from '../../utils/debugTerminalEvents';
+import {
+    getStoredAiStudioSubscriptionTier,
+    getModelPacingDelayMs,
+    getModelDefault429BackoffMs,
+    isProModel,
+    getAiStudioTierPacingConfig,
+} from '../../utils/aiStudioPlan';
 import type { GenerationLiveProgressEvent, ProgressCallbacks, WorkspaceExecutionProvider } from './types';
 
 function isAbortLikeError(error: unknown): boolean {
@@ -828,41 +835,100 @@ const mergeRecoveredFailureResult = (
 });
 
 const modelRateLimitBackoffs = new Map<string, number>();
+const modelLastRequestCompletedAt = new Map<string, number>();
 
-const getModelRateLimitBackoffUntil = (model: string): number => {
+export const getModelRateLimitBackoffUntil = (model: string): number => {
     return modelRateLimitBackoffs.get(model) || 0;
 };
 
-const clearModelRateLimitBackoff = (model: string): void => {
+export const clearModelRateLimitBackoff = (model: string): void => {
     modelRateLimitBackoffs.delete(model);
 };
 
-const updateGlobalRateLimitBackoff = (model: string, msg: string): void => {
-    const isRateLimit = msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED');
+export const getModelLastRequestCompletedAt = (model: string): number => {
+    return modelLastRequestCompletedAt.get(model) || 0;
+};
+
+export const setModelLastRequestCompletedAt = (model: string, timestamp: number = Date.now()): void => {
+    modelLastRequestCompletedAt.set(model, timestamp);
+};
+
+export const parseRateLimitWaitMs = (msg: string, model?: string): number => {
+    const tier = getStoredAiStudioSubscriptionTier();
+    const defaultBackoff = getModelDefault429BackoffMs(model, tier);
+    const jitter = Math.random() * 2000;
+
+    // 1. retry-after: 25
+    const retryAfterMatch = msg.match(/retry.?after[:\s]*(\d+)/i);
+    if (retryAfterMatch) {
+        return Math.max(1500, parseInt(retryAfterMatch[1], 10) * 1000 + jitter);
+    }
+
+    // 2. Please retry in 27.67s / 500ms / 2 minutes
+    const retryInMatch = msg.match(/retry\s+in\s+([\d.]+)\s*(ms|s|seconds|second|minutes|min)?/i);
+    if (retryInMatch) {
+        const value = parseFloat(retryInMatch[1]);
+        const unit = (retryInMatch[2] || 's').toLowerCase();
+        let ms = value * 1000;
+        if (unit === 'ms') {
+            ms = value;
+        } else if (unit === 'minutes' || unit === 'min') {
+            ms = value * 60000;
+        }
+        return Math.max(1500, Math.ceil(ms) + 600 + jitter);
+    }
+
+    // 3. wait 15s / wait 500ms
+    const waitMatch = msg.match(/wait\s+([\d.]+)\s*(ms|s|seconds|second)?/i);
+    if (waitMatch) {
+        const value = parseFloat(waitMatch[1]);
+        const unit = (waitMatch[2] || 's').toLowerCase();
+        const ms = unit === 'ms' ? value : value * 1000;
+        return Math.max(1500, Math.ceil(ms) + 600 + jitter);
+    }
+
+    // 4. Default tier-based cooldown with jitter
+    return defaultBackoff + jitter;
+};
+
+export const updateGlobalRateLimitBackoff = (model: string, msg: string): void => {
+    const isRateLimit = msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('Quota exceeded');
     if (!isRateLimit) {
         return;
     }
 
-    const retryAfterMatch = msg.match(/retry.?after[:\s]*(\d+)/i);
-    const jitter = Math.random() * 1500;
-    let calculatedWaitMs = 1500;
-
-    if (retryAfterMatch) {
-        calculatedWaitMs = Math.max(calculatedWaitMs, parseInt(retryAfterMatch[1], 10) * 1000 + jitter);
-    } else {
-        const retryInMatch = msg.match(/retry\s+in\s+([\d.]+)\s*(ms|s)/i);
-        if (retryInMatch) {
-            const value = parseFloat(retryInMatch[1]);
-            const isMs = retryInMatch[2].toLowerCase() === 'ms';
-            const ms = isMs ? value : value * 1000;
-            calculatedWaitMs = Math.max(calculatedWaitMs, Math.ceil(ms) + 600 + jitter);
-        } else {
-            calculatedWaitMs = Math.max(calculatedWaitMs, 60000 + jitter);
-        }
-    }
-
+    const calculatedWaitMs = parseRateLimitWaitMs(msg, model);
     const nextBackoff = Date.now() + calculatedWaitMs;
     modelRateLimitBackoffs.set(model, Math.max(getModelRateLimitBackoffUntil(model), nextBackoff));
+};
+
+export const ensureModelPacingDelay = async (
+    model: string,
+    abortSignal?: AbortSignal,
+    onLog?: (msg: string) => void,
+): Promise<void> => {
+    const isUnitTest = typeof process !== 'undefined' && process.env.NODE_ENV === 'test';
+    if (isUnitTest) {
+        return;
+    }
+
+    const tier = getStoredAiStudioSubscriptionTier();
+    const pacingDelay = getModelPacingDelayMs(model, tier);
+    const lastCompleted = getModelLastRequestCompletedAt(model);
+
+    if (lastCompleted > 0) {
+        const elapsed = Date.now() - lastCompleted;
+        if (elapsed < pacingDelay) {
+            const waitRemaining = pacingDelay - elapsed;
+            if (waitRemaining > 150) {
+                const tierConfig = getAiStudioTierPacingConfig(tier);
+                onLog?.(
+                    `⏳ [${tierConfig.tier.toUpperCase()}] Pacing protection active (${(waitRemaining / 1000).toFixed(1)}s remaining)...`,
+                );
+                await delayWithAbort(waitRemaining, abortSignal);
+            }
+        }
+    }
 };
 
 interface DirectRetryOptions {
@@ -886,7 +952,7 @@ const retryOperation = async <T>(
         const backoffUntil = model ? getModelRateLimitBackoffUntil(model) : 0;
         if (now < backoffUntil) {
             const extraWait = backoffUntil - now;
-            const releaseJitter = Math.random() * 1000;
+            const releaseJitter = Math.random() * 500;
             const totalWait = extraWait + releaseJitter;
             onLog?.(`⏳ Rate limit backoff active, stalling request for ${(totalWait / 1000).toFixed(1)}s...`);
             await delayWithAbort(totalWait, abortSignal);
@@ -894,7 +960,12 @@ const retryOperation = async <T>(
         return await operation();
     } catch (error: any) {
         const msg = error.message || '';
-        const isDeterministicQuota = msg.includes('limit: 0') || (msg.includes('quota') && !msg.includes('429') && !msg.includes('RESOURCE_EXHAUSTED'));
+        const isDeterministicQuota =
+            msg.includes('limit: 0') ||
+            (msg.includes('quota') &&
+                !msg.includes('429') &&
+                !msg.includes('RESOURCE_EXHAUSTED') &&
+                !msg.includes('Quota exceeded'));
         if (
             msg.includes('PROMPT_BLOCKED') ||
             msg.includes('SAFETY_BLOCK') ||
@@ -912,7 +983,7 @@ const retryOperation = async <T>(
         }
 
         if (retries > 0) {
-            const isRateLimit = msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED');
+            const isRateLimit = msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('Quota exceeded');
             if (
                 msg.includes('EMPTY_RESPONSE') ||
                 msg.includes('500') ||
@@ -920,11 +991,12 @@ const retryOperation = async <T>(
                 isRateLimit ||
                 msg.includes('fetch')
             ) {
-                const waitMs = isRateLimit && model
-                    ? Math.max(delayMs, getModelRateLimitBackoffUntil(model) - Date.now())
-                    : delayMs;
+                const waitMs =
+                    isRateLimit && model
+                        ? Math.max(delayMs, getModelRateLimitBackoffUntil(model) - Date.now())
+                        : delayMs;
 
-                onLog?.(`⏳ Retrying in ${(waitMs / 1000).toFixed(1)}s... (${retries} left)`);
+                onLog?.(`⏳ Rate limit protection: retrying in ${(waitMs / 1000).toFixed(1)}s... (${retries} left)`);
                 await delayWithAbort(waitMs, abortSignal);
                 const effectiveMaxDelay = isRateLimit ? Math.max(maxDelay, 60000) : maxDelay;
                 const nextDelay = Math.min(waitMs * backoffMultiplier, effectiveMaxDelay);
@@ -941,6 +1013,10 @@ const generateSingleImage = async (
     onLog?: (msg: string) => void,
     abortSignal?: AbortSignal,
 ): Promise<GenerateResponse> => {
+    if (options.model) {
+        await ensureModelPacingDelay(options.model, abortSignal, onLog);
+    }
+
     onLog?.(`Image #${imgIndex}: Sending request...`);
     const prepared = await prepareBrowserGenerateRequest(options, imgIndex, onLog, abortSignal);
     const requestConfig = withAbortSignal(prepared.requestConfig, abortSignal);
@@ -977,7 +1053,7 @@ const generateSingleImage = async (
         });
 
         if (options.model) {
-            clearModelRateLimitBackoff(options.model);
+            setModelLastRequestCompletedAt(options.model, Date.now());
         }
 
         emitGenerationDebugEvent({
@@ -1051,8 +1127,7 @@ const executeBlockingImageAttemptWithTransientRetry = async (
     abortSignal?: AbortSignal,
 ) => {
     try {
-        const isProModel = options.model?.toLowerCase().includes('pro');
-        const maxRetries = isProModel ? 6 : 3;
+        const maxRetries = isProModel(options.model) ? 6 : 5;
 
         const response = await retryOperation(
             () => generateSingleImage(options, slotIndex + 1, onLog, abortSignal),
@@ -1119,8 +1194,7 @@ export class BrowserDirectProvider implements WorkspaceExecutionProvider {
         for (let index = 0; index < batchSize; index++) {
             if (index > 0 && !isUnitTest) {
                 try {
-                    const isProModel = options.model?.toLowerCase().includes('pro');
-                    const staggerDelay = isProModel ? 15000 : 5000;
+                    const staggerDelay = getModelPacingDelayMs(options.model, getStoredAiStudioSubscriptionTier());
                     await delayWithAbort(staggerDelay, abortSignal);
                 } catch (error) {
                     results.push(
@@ -1167,8 +1241,7 @@ export class BrowserDirectProvider implements WorkspaceExecutionProvider {
 
                 if (!isUnitTest) {
                     try {
-                        const isProModel = options.model?.toLowerCase().includes('pro');
-                        const staggerDelay = isProModel ? 15000 : 5000;
+                        const staggerDelay = getModelPacingDelayMs(options.model, getStoredAiStudioSubscriptionTier());
                         await delayWithAbort(staggerDelay, abortSignal);
                     } catch (error) {
                         results.push(
@@ -1228,7 +1301,6 @@ export class BrowserDirectProvider implements WorkspaceExecutionProvider {
         thinkingLevel: PromptThinkingLevel = 'low',
     ): Promise<string> {
         const normalizedLanguage = normalizePromptToolLanguage(lang);
-        const requestId = createDebugRequestId();
         const resolvedSafetySettings = buildSafetySettings(safetyThresholds ?? DEFAULT_SAFETY_THRESHOLDS);
         const requestPayload = {
             model: 'gemini-3.7-flash',
@@ -1242,10 +1314,19 @@ export class BrowserDirectProvider implements WorkspaceExecutionProvider {
             contents: `Original prompt to rewrite: "${currentPrompt || 'A creative image'}"`,
         };
 
-        const response = await retryOperation(() => getGeminiClient().models.generateContent(requestPayload), 2, 1500, {
-            backoffMultiplier: 2,
-            maxDelay: 8000,
-        });
+        await ensureModelPacingDelay('gemini-3.7-flash');
+        const response = await retryOperation(
+            () => getGeminiClient().models.generateContent(requestPayload),
+            3,
+            1500,
+            {
+                backoffMultiplier: 2,
+                maxDelay: 15000,
+                model: 'gemini-3.7-flash',
+            },
+        );
+        setModelLastRequestCompletedAt('gemini-3.7-flash', Date.now());
+
         const promptText = cleanPromptToolResponseText(response.text, '');
         if (!promptText) {
             throw new Error('Prompt enhancement returned empty text.');
@@ -1260,7 +1341,6 @@ export class BrowserDirectProvider implements WorkspaceExecutionProvider {
         thinkingLevel: PromptThinkingLevel = 'low',
     ): Promise<string> {
         const normalizedLanguage = normalizePromptToolLanguage(lang);
-        const requestId = createDebugRequestId();
         const resolvedSafetySettings = buildSafetySettings(safetyThresholds ?? DEFAULT_SAFETY_THRESHOLDS);
         const requestPayload = {
             model: 'gemini-3.7-flash',
@@ -1274,10 +1354,19 @@ export class BrowserDirectProvider implements WorkspaceExecutionProvider {
             contents: buildRandomPromptRequest(),
         };
 
-        const response = await retryOperation(() => getGeminiClient().models.generateContent(requestPayload), 2, 1500, {
-            backoffMultiplier: 2,
-            maxDelay: 8000,
-        });
+        await ensureModelPacingDelay('gemini-3.7-flash');
+        const response = await retryOperation(
+            () => getGeminiClient().models.generateContent(requestPayload),
+            3,
+            1500,
+            {
+                backoffMultiplier: 2,
+                maxDelay: 15000,
+                model: 'gemini-3.7-flash',
+            },
+        );
+        setModelLastRequestCompletedAt('gemini-3.7-flash', Date.now());
+
         const promptText = cleanPromptToolResponseText(response.text, '');
         if (!promptText) {
             throw new Error('Random prompt generation returned empty text.');
@@ -1293,7 +1382,6 @@ export class BrowserDirectProvider implements WorkspaceExecutionProvider {
         thinkingLevel: PromptThinkingLevel = 'low',
     ): Promise<string> {
         const normalizedLanguage = normalizePromptToolLanguage(lang);
-        const requestId = createDebugRequestId();
         const parsedImage = parseInlineImageFromDataUrl(imageDataUrl);
         if (!parsedImage) {
             throw new Error('Failed to parse uploaded image data for prompt generation.');
@@ -1326,10 +1414,19 @@ export class BrowserDirectProvider implements WorkspaceExecutionProvider {
             ],
         };
 
-        const response = await retryOperation(() => getGeminiClient().models.generateContent(requestPayload), 2, 1500, {
-            backoffMultiplier: 2,
-            maxDelay: 8000,
-        });
+        await ensureModelPacingDelay('gemini-3.7-flash');
+        const response = await retryOperation(
+            () => getGeminiClient().models.generateContent(requestPayload),
+            3,
+            1500,
+            {
+                backoffMultiplier: 2,
+                maxDelay: 15000,
+                model: 'gemini-3.7-flash',
+            },
+        );
+        setModelLastRequestCompletedAt('gemini-3.7-flash', Date.now());
+
         const promptText = cleanPromptToolResponseText(response.text, '');
         if (!promptText) {
             throw new Error('Image to prompt returned empty text.');

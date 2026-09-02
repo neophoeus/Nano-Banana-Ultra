@@ -6,7 +6,7 @@ Nano Banana Ultra is a Gemini-powered image workspace for creation, guided editi
 
 Instead of treating image generation as a disposable one-shot action, Nano Banana Ultra keeps prompting, references, history, editing, reuse, and restore inside one connected workspace flow.
 
-The workspace features a dual-engine architecture combining both the Local API (Node backend) and AI Studio mode into a single cohesive codebase. You can run it locally with your local dev server, or run directly within Google AI Studio to take advantage of Google AI Pro/Ultra subscription quotas. The workspace automatically detects the environment and provides an on-the-fly engine selector in the top bar (`Auto Detect`, `Local API`, and `AI Studio`).
+The workspace features a dual-engine architecture combining both the Local API (Node backend) and AI Studio mode into a single cohesive codebase. You can run it locally with your local dev server, or run directly within Google AI Studio to take advantage of Google AI Pro/Ultra subscription quotas. The workspace automatically detects the environment and provides an on-the-fly engine selector in the top bar (`Auto Detect`, `Local API`, and `AI Studio`), along with a dedicated Google AI Plan tier selector (`Google AI Pro`, `Google AI Ultra 5x`, `Google AI Ultra 20x`) that optimizes IPM generation pacing and prevents rate limiting.
 
 ## At a Glance
 
@@ -112,13 +112,13 @@ Nano Banana Ultra currently supports four Gemini image-model paths. The UI expos
 
 ## Version Overview
 
-### Latest Release: 4.1.4
+### Latest Release: 4.2.0
 
 See [CHANGELOG.md](CHANGELOG.md) for details.
 
 ### 4.x
 
-Version 4.x introduces the unified dual-engine architecture, merging the local backend engine and AI Studio client engine into one seamless workspace. It features auto-detection of runtime environments, an on-the-fly execution mode selector, adaptive local disk and IndexedDB persistence, and full multilingual diagnostic capabilities.
+Version 4.x introduces the unified dual-engine architecture, merging the local backend engine and AI Studio client engine into one seamless workspace. Version 4.2.0 adds multi-tier Google AI Subscription Plan pacing (Pro / Ultra 5x / Ultra 20x) with persistent 429 adaptive backoff and global IPM rate protection. It also features auto-detection of runtime environments, an on-the-fly execution mode and plan selector, adaptive local disk and IndexedDB persistence, and full multilingual diagnostic capabilities.
 
 ### 3.5.x+ (3.x Series)
 
