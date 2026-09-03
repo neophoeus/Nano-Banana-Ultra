@@ -256,7 +256,10 @@ const pushSavedFilename = (savedFilenames: Set<string>, savedFilename?: string |
     savedFilenames.add(normalizedSavedFilename);
 };
 
-const collectResultPartSavedFilenames = (resultParts: ResultPart[] | null | undefined, savedFilenames: Set<string>): void => {
+const collectResultPartSavedFilenames = (
+    resultParts: ResultPart[] | null | undefined,
+    savedFilenames: Set<string>,
+): void => {
     resultParts?.forEach((part) => {
         if (isImageResultPart(part)) {
             pushSavedFilename(savedFilenames, part.savedFilename);
@@ -339,7 +342,8 @@ const isLineageAction = (value: unknown): value is NonNullable<GeneratedImage['l
 const isGeneratedImageStatus = (value: unknown): value is NonNullable<GeneratedImage['status']> =>
     typeof value === 'string' && GENERATED_IMAGE_STATUS_VALUES.has(value as NonNullable<GeneratedImage['status']>);
 const isFailureExtractionIssue = (value: unknown): value is NonNullable<QueuedBatchJobImportIssue['extractionIssue']> =>
-    typeof value === 'string' && FAILURE_EXTRACTION_ISSUE_VALUES.has(value as NonNullable<QueuedBatchJobImportIssue['extractionIssue']>);
+    typeof value === 'string' &&
+    FAILURE_EXTRACTION_ISSUE_VALUES.has(value as NonNullable<QueuedBatchJobImportIssue['extractionIssue']>);
 
 const buildLoadImageUrl = (savedFilename: string): string =>
     `${LOAD_IMAGE_ENDPOINT}?filename=${encodeURIComponent(savedFilename)}`;
@@ -731,14 +735,12 @@ const sanitizeHistory = (value: unknown): GeneratedImage[] => {
     }
 
     return value.flatMap((item): GeneratedImage[] => {
-        if (
-            !(
-                isRecord(item) &&
-                typeof item.id === 'string' &&
-                typeof item.url === 'string' &&
-                typeof item.prompt === 'string'
-            )
-        ) {
+        if (!(
+            isRecord(item) &&
+            typeof item.id === 'string' &&
+            typeof item.url === 'string' &&
+            typeof item.prompt === 'string'
+        )) {
             return [];
         }
 
@@ -746,11 +748,17 @@ const sanitizeHistory = (value: unknown): GeneratedImage[] => {
             sanitizeSessionHintsForStorage(
                 isRecord(item.sessionHints) ? (item.sessionHints as Record<string, unknown>) : null,
             ) || undefined;
-        const promptBlockReason = sessionHints ? normalizeNullableString(sessionHints.promptBlockReason) ?? null : null;
-        const finishReason = sessionHints ? normalizeNullableString(sessionHints.finishReason) ?? null : null;
-        const blockedSafetyCategories = sessionHints ? normalizeStringArrayOrNull(sessionHints.blockedSafetyCategories) : null;
+        const promptBlockReason = sessionHints
+            ? (normalizeNullableString(sessionHints.promptBlockReason) ?? null)
+            : null;
+        const finishReason = sessionHints ? (normalizeNullableString(sessionHints.finishReason) ?? null) : null;
+        const blockedSafetyCategories = sessionHints
+            ? normalizeStringArrayOrNull(sessionHints.blockedSafetyCategories)
+            : null;
         const extractionIssue =
-            sessionHints && isFailureExtractionIssue(sessionHints.extractionIssue) ? sessionHints.extractionIssue : null;
+            sessionHints && isFailureExtractionIssue(sessionHints.extractionIssue)
+                ? sessionHints.extractionIssue
+                : null;
         const normalizedFailure = resolveDisplayGenerationFailureInfo({
             failure: normalizeGenerationFailureInfo(item.failure),
             error: typeof item.error === 'string' ? item.error : null,
@@ -798,7 +806,9 @@ const sanitizeHistory = (value: unknown): GeneratedImage[] => {
             id: item.id,
             url: item.url,
             prompt: item.prompt,
-            aspectRatio: isAspectRatio(item.aspectRatio) ? item.aspectRatio : EMPTY_WORKSPACE_COMPOSER_STATE.aspectRatio,
+            aspectRatio: isAspectRatio(item.aspectRatio)
+                ? item.aspectRatio
+                : EMPTY_WORKSPACE_COMPOSER_STATE.aspectRatio,
             size: isImageSize(item.size) ? item.size : EMPTY_WORKSPACE_COMPOSER_STATE.imageSize,
             style: normalizeImageStyle(item.style),
             model: normalizeSavedImageModel(item.model),
@@ -841,17 +851,15 @@ const sanitizeStagedAssets = (value: unknown): StageAsset[] => {
     }
 
     return value.flatMap((item): StageAsset[] => {
-        if (
-            !(
-                isRecord(item) &&
-                typeof item.id === 'string' &&
-                typeof item.url === 'string' &&
-                isStageAssetRole(item.role) &&
-                isStageAssetOrigin(item.origin) &&
-                typeof item.createdAt === 'number' &&
-                Number.isFinite(item.createdAt)
-            )
-        ) {
+        if (!(
+            isRecord(item) &&
+            typeof item.id === 'string' &&
+            typeof item.url === 'string' &&
+            isStageAssetRole(item.role) &&
+            isStageAssetOrigin(item.origin) &&
+            typeof item.createdAt === 'number' &&
+            Number.isFinite(item.createdAt)
+        )) {
             return [];
         }
 
@@ -891,14 +899,12 @@ const sanitizeQueuedBatchJobImportIssues = (value: unknown): QueuedBatchJobImpor
     }
 
     return value.flatMap((item): QueuedBatchJobImportIssue[] => {
-        if (
-            !(
-                isRecord(item) &&
-                typeof item.index === 'number' &&
-                Number.isFinite(item.index) &&
-                typeof item.error === 'string'
-            )
-        ) {
+        if (!(
+            isRecord(item) &&
+            typeof item.index === 'number' &&
+            Number.isFinite(item.index) &&
+            typeof item.error === 'string'
+        )) {
             return [];
         }
 
@@ -943,34 +949,32 @@ export const sanitizeQueuedBatchJobs = (value: unknown): QueuedBatchJob[] => {
     }
 
     return value.flatMap((item): QueuedBatchJob[] => {
-        if (
-            !(
-                isRecord(item) &&
-                typeof item.localId === 'string' &&
-                typeof item.name === 'string' &&
-                typeof item.displayName === 'string' &&
-                typeof item.submissionGroupId === 'string' &&
-                typeof item.submissionItemIndex === 'number' &&
-                typeof item.submissionItemCount === 'number' &&
-                isQueuedBatchJobState(item.state) &&
-                typeof item.model === 'string' &&
-                typeof item.prompt === 'string' &&
-                typeof item.aspectRatio === 'string' &&
-                typeof item.imageSize === 'string' &&
-                typeof item.style === 'string' &&
-                typeof item.outputFormat === 'string' &&
-                typeof item.temperature === 'number' &&
-                typeof item.thinkingLevel === 'string' &&
-                typeof item.includeThoughts === 'boolean' &&
-                typeof item.googleSearch === 'boolean' &&
-                typeof item.imageSearch === 'boolean' &&
-                typeof item.batchSize === 'number' &&
-                typeof item.objectImageCount === 'number' &&
-                typeof item.characterImageCount === 'number' &&
-                typeof item.createdAt === 'number' &&
-                typeof item.updatedAt === 'number'
-            )
-        ) {
+        if (!(
+            isRecord(item) &&
+            typeof item.localId === 'string' &&
+            typeof item.name === 'string' &&
+            typeof item.displayName === 'string' &&
+            typeof item.submissionGroupId === 'string' &&
+            typeof item.submissionItemIndex === 'number' &&
+            typeof item.submissionItemCount === 'number' &&
+            isQueuedBatchJobState(item.state) &&
+            typeof item.model === 'string' &&
+            typeof item.prompt === 'string' &&
+            typeof item.aspectRatio === 'string' &&
+            typeof item.imageSize === 'string' &&
+            typeof item.style === 'string' &&
+            typeof item.outputFormat === 'string' &&
+            typeof item.temperature === 'number' &&
+            typeof item.thinkingLevel === 'string' &&
+            typeof item.includeThoughts === 'boolean' &&
+            typeof item.googleSearch === 'boolean' &&
+            typeof item.imageSearch === 'boolean' &&
+            typeof item.batchSize === 'number' &&
+            typeof item.objectImageCount === 'number' &&
+            typeof item.characterImageCount === 'number' &&
+            typeof item.createdAt === 'number' &&
+            typeof item.updatedAt === 'number'
+        )) {
             return [];
         }
 
@@ -1006,7 +1010,8 @@ export const sanitizeQueuedBatchJobs = (value: unknown): QueuedBatchJob[] => {
         const completedAt = normalizeFiniteNumber(item.completedAt) ?? null;
         const lastPolledAt = normalizeFiniteNumber(item.lastPolledAt) ?? null;
         const generationMode = normalizeOptionalString(item.generationMode);
-        const restoredFromSnapshot = typeof item.restoredFromSnapshot === 'boolean' ? item.restoredFromSnapshot : undefined;
+        const restoredFromSnapshot =
+            typeof item.restoredFromSnapshot === 'boolean' ? item.restoredFromSnapshot : undefined;
         const batchStats =
             isRecord(item.batchStats) &&
             typeof item.batchStats.requestCount === 'number' &&
@@ -1040,12 +1045,18 @@ export const sanitizeQueuedBatchJobs = (value: unknown): QueuedBatchJob[] => {
             model: isImageModel(item.model) ? item.model : EMPTY_WORKSPACE_COMPOSER_STATE.imageModel,
             prompt: item.prompt,
             ...(generationMode !== undefined ? { generationMode } : {}),
-            aspectRatio: isAspectRatio(item.aspectRatio) ? item.aspectRatio : EMPTY_WORKSPACE_COMPOSER_STATE.aspectRatio,
+            aspectRatio: isAspectRatio(item.aspectRatio)
+                ? item.aspectRatio
+                : EMPTY_WORKSPACE_COMPOSER_STATE.aspectRatio,
             imageSize: isImageSize(item.imageSize) ? item.imageSize : EMPTY_WORKSPACE_COMPOSER_STATE.imageSize,
             style: normalizeImageStyle(item.style),
-            outputFormat: isOutputFormat(item.outputFormat) ? item.outputFormat : EMPTY_WORKSPACE_COMPOSER_STATE.outputFormat,
+            outputFormat: isOutputFormat(item.outputFormat)
+                ? item.outputFormat
+                : EMPTY_WORKSPACE_COMPOSER_STATE.outputFormat,
             temperature: item.temperature,
-            thinkingLevel: isThinkingLevel(item.thinkingLevel) ? item.thinkingLevel : EMPTY_WORKSPACE_COMPOSER_STATE.thinkingLevel,
+            thinkingLevel: isThinkingLevel(item.thinkingLevel)
+                ? item.thinkingLevel
+                : EMPTY_WORKSPACE_COMPOSER_STATE.thinkingLevel,
             includeThoughts: item.includeThoughts,
             googleSearch: item.googleSearch,
             imageSearch: item.imageSearch,
@@ -1532,9 +1543,12 @@ export const loadSharedWorkspaceSnapshot = async (): Promise<WorkspacePersistenc
     try {
         const response = await fetch(SHARED_WORKSPACE_SNAPSHOT_ENDPOINT, {
             method: 'GET',
-            headers: withWorkspaceDebugHeaders({
-                Accept: 'application/json',
-            }, correlationId),
+            headers: withWorkspaceDebugHeaders(
+                {
+                    Accept: 'application/json',
+                },
+                correlationId,
+            ),
         });
 
         if (!response.ok) {
@@ -1586,6 +1600,15 @@ export const loadSharedWorkspaceSnapshot = async (): Promise<WorkspacePersistenc
     }
 };
 
+let sharedSnapshotOffline = false;
+let lastSharedSnapshotOfflineCheck = 0;
+const SHARED_SNAPSHOT_OFFLINE_COOLDOWN_MS = 60000;
+
+export const resetSharedSnapshotOfflineState = (): void => {
+    sharedSnapshotOffline = false;
+    lastSharedSnapshotOfflineCheck = 0;
+};
+
 export const saveSharedWorkspaceSnapshot = async (
     snapshot: WorkspacePersistenceSnapshot,
     options?: { allowClearing?: boolean },
@@ -1619,6 +1642,14 @@ export const saveSharedWorkspaceSnapshot = async (
         return;
     }
 
+    if (
+        !options?.allowClearing &&
+        sharedSnapshotOffline &&
+        Date.now() - lastSharedSnapshotOfflineCheck < SHARED_SNAPSHOT_OFFLINE_COOLDOWN_MS
+    ) {
+        return;
+    }
+
     const correlationId = createDebugTerminalCorrelationId('workspace');
 
     emitWorkspaceSnapshotDebugEvent({
@@ -1636,14 +1667,18 @@ export const saveSharedWorkspaceSnapshot = async (
     try {
         const response = await fetch(SHARED_WORKSPACE_SNAPSHOT_ENDPOINT, {
             method: 'POST',
-            headers: withWorkspaceDebugHeaders({
-                'Content-Type': 'application/json',
-            }, correlationId),
+            headers: withWorkspaceDebugHeaders(
+                {
+                    'Content-Type': 'application/json',
+                },
+                correlationId,
+            ),
             body: JSON.stringify(persistableSnapshot),
             keepalive: true,
         });
 
         if (response.ok) {
+            sharedSnapshotOffline = false;
             emitWorkspaceSnapshotDebugEvent({
                 kind: 'response',
                 label: options?.allowClearing ? 'Shared workspace snapshot cleared' : 'Shared workspace snapshot saved',
@@ -1672,6 +1707,14 @@ export const saveSharedWorkspaceSnapshot = async (
             phase: options?.allowClearing ? 'clear' : undefined,
         });
     } catch (error) {
+        const isNetworkFailure =
+            error instanceof TypeError ||
+            (error instanceof Error && (error.message.includes('fetch') || error.message.includes('Network')));
+        if (isNetworkFailure) {
+            sharedSnapshotOffline = true;
+            lastSharedSnapshotOfflineCheck = Date.now();
+        }
+
         emitWorkspaceSnapshotDebugEvent({
             kind: 'error',
             label: 'Shared workspace snapshot save failed',
@@ -1698,7 +1741,9 @@ export const exportWorkspaceSnapshotDocument = async (snapshot: WorkspacePersist
     );
 
     const chunks: (string | Blob)[] = [];
-    chunks.push(`{"format":${JSON.stringify(WORKSPACE_SNAPSHOT_EXPORT_FORMAT)},"version":${WORKSPACE_SNAPSHOT_EXPORT_VERSION},"exportedAt":${JSON.stringify(new Date().toISOString())},"snapshot":`);
+    chunks.push(
+        `{"format":${JSON.stringify(WORKSPACE_SNAPSHOT_EXPORT_FORMAT)},"version":${WORKSPACE_SNAPSHOT_EXPORT_VERSION},"exportedAt":${JSON.stringify(new Date().toISOString())},"snapshot":`,
+    );
     chunks.push(JSON.stringify(buildPersistableWorkspaceSnapshot(normalizedSnapshot)));
 
     if (embeddedSavedImages && Object.keys(embeddedSavedImages).length > 0) {

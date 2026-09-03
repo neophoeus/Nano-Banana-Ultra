@@ -94,6 +94,7 @@ import { useWorkspaceTransientUiState } from './hooks/useWorkspaceTransientUiSta
 import { useDebugTerminal } from './hooks/useDebugTerminal';
 import { useWorkspaceExecutionMode } from './hooks/useWorkspaceExecutionMode';
 import { useLegacyWorkspaceSnapshotMigration } from './hooks/useLegacyWorkspaceSnapshotMigration';
+import { useRateLimitNotice } from './utils/rateLimitNotice';
 import { resolveCurrentStageSelectionFirstSourceOverride } from './utils/generationSourceOverride';
 import { buildSavedImageLoadUrl, loadImageMetadata } from './utils/imageSaveUtils';
 import {
@@ -2784,6 +2785,16 @@ const App: React.FC = () => {
         [generatedImageStageProps, t],
     );
 
+    const rateLimitNotice = useRateLimitNotice();
+    const rateLimitModalProps =
+        rateLimitNotice && rateLimitNotice.active && !rateLimitNotice.isDismissed
+            ? {
+                  notice: rateLimitNotice,
+                  currentLanguage: currentLang,
+                  onCancelGeneration: handleCancelGeneration,
+              }
+            : null;
+
     return (
         <div className="relative min-h-screen w-full overflow-x-hidden bg-[linear-gradient(180deg,_#fffaf2_0%,_#f8fafc_38%,_#eef3f8_100%)] text-gray-900 transition-colors duration-500 dark:bg-[linear-gradient(180deg,_#111315_0%,_#090b10_46%,_#030405_100%)] dark:text-gray-100">
             <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -2810,6 +2821,7 @@ const App: React.FC = () => {
 
             <WorkspaceOverlayStack
                 notification={notification}
+                rateLimitModalProps={rateLimitModalProps}
                 surfaceSharedControlsProps={surfaceSharedControlsProps}
                 importReviewProps={importReviewProps}
                 advancedSettingsDialogProps={advancedSettingsDialogProps}

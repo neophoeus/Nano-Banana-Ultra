@@ -26,7 +26,10 @@ import {
 } from '../../utils/generationFailure';
 import { buildBrowserConversationHistory, buildBrowserGenerateParts } from '../../utils/browserGeminiParts';
 import { extractGeneratedContent } from '../../utils/geminiResponseExtraction';
-import { LiveProgressStreamTruthSummary, summarizeLiveProgressTruthfulness } from '../../utils/liveProgressCapabilities';
+import {
+    LiveProgressStreamTruthSummary,
+    summarizeLiveProgressTruthfulness,
+} from '../../utils/liveProgressCapabilities';
 import { hasConfiguredGeminiApiKey, promptForGeminiApiKey, resolveGeminiApiKey } from '../../utils/geminiCredentials';
 import { loadImageDimensions } from '../../utils/imageSaveUtils';
 import { buildStyleAwareImagePrompt } from '../../utils/stylePromptBuilder';
@@ -41,7 +44,11 @@ import {
     getModelDefault429BackoffMs,
     isProModel,
     getAiStudioTierPacingConfig,
+    getAdaptiveModelPacingDelayMs,
+    getTier429SafetyMarginMs,
+    type PacingWorkloadContext,
 } from '../../utils/aiStudioPlan';
+import { setRateLimitNotice, updateRateLimitRemainingMs, clearRateLimitNotice } from '../../utils/rateLimitNotice';
 import type { GenerationLiveProgressEvent, ProgressCallbacks, WorkspaceExecutionProvider } from './types';
 
 function isAbortLikeError(error: unknown): boolean {
@@ -814,10 +821,7 @@ const buildFailedGenerationResult = (
     };
 };
 
-const mergeRecoveredFailureResult = (
-    initialResult: any,
-    recoveryResult: any,
-) => ({
+const mergeRecoveredFailureResult = (initialResult: any, recoveryResult: any) => ({
     ...recoveryResult,
     slotIndex: initialResult.slotIndex,
     error: recoveryResult.error || initialResult.error,
@@ -853,15 +857,26 @@ export const setModelLastRequestCompletedAt = (model: string, timestamp: number 
     modelLastRequestCompletedAt.set(model, timestamp);
 };
 
+export const extractPacingWorkloadContext = (options: Partial<GenerateOptions>): PacingWorkloadContext => ({
+    imageSize: options.imageSize,
+    hasReferenceImages: Boolean(
+        (options.characterImageInputs && options.characterImageInputs.length > 0) ||
+        (options.objectImageInputs && options.objectImageInputs.length > 0) ||
+        options.editingInput,
+    ),
+    includeThoughts: Boolean(options.includeThoughts || options.thinkingLevel === 'high'),
+});
+
 export const parseRateLimitWaitMs = (msg: string, model?: string): number => {
     const tier = getStoredAiStudioSubscriptionTier();
     const defaultBackoff = getModelDefault429BackoffMs(model, tier);
+    const safetyMargin = getTier429SafetyMarginMs(tier);
     const jitter = Math.random() * 2000;
 
     // 1. retry-after: 25
     const retryAfterMatch = msg.match(/retry.?after[:\s]*(\d+)/i);
     if (retryAfterMatch) {
-        return Math.max(1500, parseInt(retryAfterMatch[1], 10) * 1000 + jitter);
+        return Math.max(1500, parseInt(retryAfterMatch[1], 10) * 1000 + safetyMargin + jitter);
     }
 
     // 2. Please retry in 27.67s / 500ms / 2 minutes
@@ -875,7 +890,7 @@ export const parseRateLimitWaitMs = (msg: string, model?: string): number => {
         } else if (unit === 'minutes' || unit === 'min') {
             ms = value * 60000;
         }
-        return Math.max(1500, Math.ceil(ms) + 600 + jitter);
+        return Math.max(1500, Math.ceil(ms) + safetyMargin + jitter);
     }
 
     // 3. wait 15s / wait 500ms
@@ -884,7 +899,7 @@ export const parseRateLimitWaitMs = (msg: string, model?: string): number => {
         const value = parseFloat(waitMatch[1]);
         const unit = (waitMatch[2] || 's').toLowerCase();
         const ms = unit === 'ms' ? value : value * 1000;
-        return Math.max(1500, Math.ceil(ms) + 600 + jitter);
+        return Math.max(1500, Math.ceil(ms) + safetyMargin + jitter);
     }
 
     // 4. Default tier-based cooldown with jitter
@@ -906,6 +921,7 @@ export const ensureModelPacingDelay = async (
     model: string,
     abortSignal?: AbortSignal,
     onLog?: (msg: string) => void,
+    workload?: PacingWorkloadContext,
 ): Promise<void> => {
     const isUnitTest = typeof process !== 'undefined' && process.env.NODE_ENV === 'test';
     if (isUnitTest) {
@@ -913,7 +929,7 @@ export const ensureModelPacingDelay = async (
     }
 
     const tier = getStoredAiStudioSubscriptionTier();
-    const pacingDelay = getModelPacingDelayMs(model, tier);
+    const pacingDelay = getAdaptiveModelPacingDelayMs(model, tier, workload);
     const lastCompleted = getModelLastRequestCompletedAt(model);
 
     if (lastCompleted > 0) {
@@ -929,6 +945,34 @@ export const ensureModelPacingDelay = async (
             }
         }
     }
+};
+
+export const countdownWithAbort = async (
+    totalMs: number,
+    abortSignal?: AbortSignal,
+    onTick?: (remainingMs: number) => void,
+): Promise<void> => {
+    const isUnitTest = typeof process !== 'undefined' && process.env.NODE_ENV === 'test';
+    if (isUnitTest) {
+        onTick?.(totalMs);
+        onTick?.(0);
+        return;
+    }
+
+    const startTime = Date.now();
+    const endTime = startTime + totalMs;
+
+    while (Date.now() < endTime) {
+        if (abortSignal?.aborted) {
+            throw new Error('ABORTED');
+        }
+        const remaining = Math.max(0, endTime - Date.now());
+        onTick?.(remaining);
+        const stepMs = Math.min(remaining, 500);
+        if (stepMs <= 0) break;
+        await delayWithAbort(stepMs, abortSignal);
+    }
+    onTick?.(0);
 };
 
 interface DirectRetryOptions {
@@ -955,7 +999,24 @@ const retryOperation = async <T>(
             const releaseJitter = Math.random() * 500;
             const totalWait = extraWait + releaseJitter;
             onLog?.(`⏳ Rate limit backoff active, stalling request for ${(totalWait / 1000).toFixed(1)}s...`);
-            await delayWithAbort(totalWait, abortSignal);
+
+            setRateLimitNotice({
+                active: true,
+                model: model || 'gemini',
+                totalWaitMs: totalWait,
+                remainingMs: totalWait,
+                retryCount: 1,
+                maxRetries: initialRetries,
+                isDismissed: false,
+            });
+
+            try {
+                await countdownWithAbort(totalWait, abortSignal, (remainingMs) => {
+                    updateRateLimitRemainingMs(remainingMs);
+                });
+            } finally {
+                clearRateLimitNotice();
+            }
         }
         return await operation();
     } catch (error: any) {
@@ -983,7 +1044,8 @@ const retryOperation = async <T>(
         }
 
         if (retries > 0) {
-            const isRateLimit = msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('Quota exceeded');
+            const isRateLimit =
+                msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('Quota exceeded');
             if (
                 msg.includes('EMPTY_RESPONSE') ||
                 msg.includes('500') ||
@@ -996,10 +1058,36 @@ const retryOperation = async <T>(
                         ? Math.max(delayMs, getModelRateLimitBackoffUntil(model) - Date.now())
                         : delayMs;
 
+                const retryAttempt = Math.max(1, initialRetries - retries + 1);
                 onLog?.(`⏳ Rate limit protection: retrying in ${(waitMs / 1000).toFixed(1)}s... (${retries} left)`);
-                await delayWithAbort(waitMs, abortSignal);
-                const effectiveMaxDelay = isRateLimit ? Math.max(maxDelay, 60000) : maxDelay;
-                const nextDelay = Math.min(waitMs * backoffMultiplier, effectiveMaxDelay);
+
+                if (isRateLimit && model) {
+                    setRateLimitNotice({
+                        active: true,
+                        model,
+                        totalWaitMs: waitMs,
+                        remainingMs: waitMs,
+                        retryCount: retryAttempt,
+                        maxRetries: initialRetries,
+                        isDismissed: false,
+                    });
+                }
+
+                try {
+                    await countdownWithAbort(waitMs, abortSignal, (remainingMs) => {
+                        if (isRateLimit && model) {
+                            updateRateLimitRemainingMs(remainingMs);
+                        }
+                    });
+                } finally {
+                    if (isRateLimit && model) {
+                        clearRateLimitNotice();
+                    }
+                }
+
+                const effectiveMaxDelay = isRateLimit ? Math.max(maxDelay, waitMs >= 40000 ? 80000 : 60000) : maxDelay;
+                const desyncOffset = isRateLimit && waitMs >= 40000 ? Math.random() * 5000 : 0;
+                const nextDelay = Math.min(waitMs * backoffMultiplier + desyncOffset, effectiveMaxDelay);
                 return retryOperation(operation, retries - 1, nextDelay, opts);
             }
         }
@@ -1014,7 +1102,8 @@ const generateSingleImage = async (
     abortSignal?: AbortSignal,
 ): Promise<GenerateResponse> => {
     if (options.model) {
-        await ensureModelPacingDelay(options.model, abortSignal, onLog);
+        const workload = extractPacingWorkloadContext(options);
+        await ensureModelPacingDelay(options.model, abortSignal, onLog, workload);
     }
 
     onLog?.(`Image #${imgIndex}: Sending request...`);
@@ -1073,6 +1162,7 @@ const generateSingleImage = async (
         }
 
         if (options.model) {
+            setModelLastRequestCompletedAt(options.model, Date.now());
             updateGlobalRateLimitBackoff(options.model, error.message || '');
         }
 
@@ -1094,7 +1184,10 @@ const generateSingleImage = async (
 const executeBlockingImageAttempt = async (
     options: GenerateOptions,
     slotIndex: number,
-    onImageReceived?: (url: string, slotIndex: number) => Promise<ImageReceivedResult | undefined> | ImageReceivedResult | undefined,
+    onImageReceived?: (
+        url: string,
+        slotIndex: number,
+    ) => Promise<ImageReceivedResult | undefined> | ImageReceivedResult | undefined,
     onLog?: (msg: string) => void,
     abortSignal?: AbortSignal,
 ) => {
@@ -1122,12 +1215,15 @@ const executeBlockingImageAttempt = async (
 const executeBlockingImageAttemptWithTransientRetry = async (
     options: GenerateOptions,
     slotIndex: number,
-    onImageReceived?: (url: string, slotIndex: number) => Promise<ImageReceivedResult | undefined> | ImageReceivedResult | undefined,
+    onImageReceived?: (
+        url: string,
+        slotIndex: number,
+    ) => Promise<ImageReceivedResult | undefined> | ImageReceivedResult | undefined,
     onLog?: (msg: string) => void,
     abortSignal?: AbortSignal,
 ) => {
     try {
-        const maxRetries = isProModel(options.model) ? 6 : 5;
+        const maxRetries = 6;
 
         const response = await retryOperation(
             () => generateSingleImage(options, slotIndex + 1, onLog, abortSignal),
@@ -1190,11 +1286,16 @@ export class BrowserDirectProvider implements WorkspaceExecutionProvider {
 
         const results: any[] = [];
         const isUnitTest = typeof process !== 'undefined' && process.env.NODE_ENV === 'test';
+        const workload = extractPacingWorkloadContext(options);
 
         for (let index = 0; index < batchSize; index++) {
             if (index > 0 && !isUnitTest) {
                 try {
-                    const staggerDelay = getModelPacingDelayMs(options.model, getStoredAiStudioSubscriptionTier());
+                    const staggerDelay = getAdaptiveModelPacingDelayMs(
+                        options.model,
+                        getStoredAiStudioSubscriptionTier(),
+                        workload,
+                    );
                     await delayWithAbort(staggerDelay, abortSignal);
                 } catch (error) {
                     results.push(
@@ -1241,7 +1342,11 @@ export class BrowserDirectProvider implements WorkspaceExecutionProvider {
 
                 if (!isUnitTest) {
                     try {
-                        const staggerDelay = getModelPacingDelayMs(options.model, getStoredAiStudioSubscriptionTier());
+                        const staggerDelay = getAdaptiveModelPacingDelayMs(
+                            options.model,
+                            getStoredAiStudioSubscriptionTier(),
+                            workload,
+                        );
                         await delayWithAbort(staggerDelay, abortSignal);
                     } catch (error) {
                         results.push(
@@ -1303,7 +1408,7 @@ export class BrowserDirectProvider implements WorkspaceExecutionProvider {
         const normalizedLanguage = normalizePromptToolLanguage(lang);
         const resolvedSafetySettings = buildSafetySettings(safetyThresholds ?? DEFAULT_SAFETY_THRESHOLDS);
         const requestPayload = {
-            model: 'gemini-3.7-flash',
+            model: 'gemini-3.8-flash',
             config: {
                 systemInstruction: buildPromptEnhancerInstruction(normalizedLanguage),
                 ...(resolvedSafetySettings ? { safetySettings: resolvedSafetySettings } : {}),
@@ -1314,18 +1419,13 @@ export class BrowserDirectProvider implements WorkspaceExecutionProvider {
             contents: `Original prompt to rewrite: "${currentPrompt || 'A creative image'}"`,
         };
 
-        await ensureModelPacingDelay('gemini-3.7-flash');
-        const response = await retryOperation(
-            () => getGeminiClient().models.generateContent(requestPayload),
-            3,
-            1500,
-            {
-                backoffMultiplier: 2,
-                maxDelay: 15000,
-                model: 'gemini-3.7-flash',
-            },
-        );
-        setModelLastRequestCompletedAt('gemini-3.7-flash', Date.now());
+        await ensureModelPacingDelay('gemini-3.8-flash');
+        const response = await retryOperation(() => getGeminiClient().models.generateContent(requestPayload), 3, 1500, {
+            backoffMultiplier: 2,
+            maxDelay: 15000,
+            model: 'gemini-3.8-flash',
+        });
+        setModelLastRequestCompletedAt('gemini-3.8-flash', Date.now());
 
         const promptText = cleanPromptToolResponseText(response.text, '');
         if (!promptText) {
@@ -1343,7 +1443,7 @@ export class BrowserDirectProvider implements WorkspaceExecutionProvider {
         const normalizedLanguage = normalizePromptToolLanguage(lang);
         const resolvedSafetySettings = buildSafetySettings(safetyThresholds ?? DEFAULT_SAFETY_THRESHOLDS);
         const requestPayload = {
-            model: 'gemini-3.7-flash',
+            model: 'gemini-3.8-flash',
             config: {
                 systemInstruction: buildRandomPromptInstruction(normalizedLanguage),
                 ...(resolvedSafetySettings ? { safetySettings: resolvedSafetySettings } : {}),
@@ -1354,18 +1454,13 @@ export class BrowserDirectProvider implements WorkspaceExecutionProvider {
             contents: buildRandomPromptRequest(),
         };
 
-        await ensureModelPacingDelay('gemini-3.7-flash');
-        const response = await retryOperation(
-            () => getGeminiClient().models.generateContent(requestPayload),
-            3,
-            1500,
-            {
-                backoffMultiplier: 2,
-                maxDelay: 15000,
-                model: 'gemini-3.7-flash',
-            },
-        );
-        setModelLastRequestCompletedAt('gemini-3.7-flash', Date.now());
+        await ensureModelPacingDelay('gemini-3.8-flash');
+        const response = await retryOperation(() => getGeminiClient().models.generateContent(requestPayload), 3, 1500, {
+            backoffMultiplier: 2,
+            maxDelay: 15000,
+            model: 'gemini-3.8-flash',
+        });
+        setModelLastRequestCompletedAt('gemini-3.8-flash', Date.now());
 
         const promptText = cleanPromptToolResponseText(response.text, '');
         if (!promptText) {
@@ -1389,7 +1484,7 @@ export class BrowserDirectProvider implements WorkspaceExecutionProvider {
 
         const resolvedSafetySettings = buildSafetySettings(safetyThresholds ?? DEFAULT_SAFETY_THRESHOLDS);
         const requestPayload = {
-            model: 'gemini-3.7-flash',
+            model: 'gemini-3.8-flash',
             config: {
                 systemInstruction: buildImageToPromptInstruction(normalizedLanguage),
                 ...(resolvedSafetySettings ? { safetySettings: resolvedSafetySettings } : {}),
@@ -1414,18 +1509,13 @@ export class BrowserDirectProvider implements WorkspaceExecutionProvider {
             ],
         };
 
-        await ensureModelPacingDelay('gemini-3.7-flash');
-        const response = await retryOperation(
-            () => getGeminiClient().models.generateContent(requestPayload),
-            3,
-            1500,
-            {
-                backoffMultiplier: 2,
-                maxDelay: 15000,
-                model: 'gemini-3.7-flash',
-            },
-        );
-        setModelLastRequestCompletedAt('gemini-3.7-flash', Date.now());
+        await ensureModelPacingDelay('gemini-3.8-flash');
+        const response = await retryOperation(() => getGeminiClient().models.generateContent(requestPayload), 3, 1500, {
+            backoffMultiplier: 2,
+            maxDelay: 15000,
+            model: 'gemini-3.8-flash',
+        });
+        setModelLastRequestCompletedAt('gemini-3.8-flash', Date.now());
 
         const promptText = cleanPromptToolResponseText(response.text, '');
         if (!promptText) {

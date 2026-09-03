@@ -71,7 +71,7 @@ export function registerPromptRoutes(server: any, { getAIClient }: RegisterPromp
                 promptLength: currentPrompt.trim().length,
             });
             const response = await ai.models.generateContent({
-                model: 'gemini-3.7-flash',
+                model: 'gemini-3.8-flash',
                 config: {
                     systemInstruction: buildPromptEnhancerInstruction(lang),
                     ...(resolvedSafetySettings ? { safetySettings: resolvedSafetySettings } : {}),
@@ -117,11 +117,7 @@ export function registerPromptRoutes(server: any, { getAIClient }: RegisterPromp
 
         try {
             const ai = getAIClient();
-            const {
-                lang: requestedLang,
-                thinkingLevel,
-                safetyThresholds,
-            } = await readJsonBody<PromptRequestBody>(req);
+            const { lang: requestedLang, thinkingLevel, safetyThresholds } = await readJsonBody<PromptRequestBody>(req);
             const lang = normalizePromptToolLanguage(requestedLang);
             const resolvedSafetySettings = buildSafetySettings(safetyThresholds ?? DEFAULT_SAFETY_THRESHOLDS);
             logApiRequest(requestContext, {
@@ -130,7 +126,7 @@ export function registerPromptRoutes(server: any, { getAIClient }: RegisterPromp
                 thinkingLevel: thinkingLevel || 'low',
             });
             const response = await ai.models.generateContent({
-                model: 'gemini-3.7-flash',
+                model: 'gemini-3.8-flash',
                 config: {
                     systemInstruction: buildRandomPromptInstruction(lang),
                     ...(resolvedSafetySettings ? { safetySettings: resolvedSafetySettings } : {}),
@@ -210,7 +206,7 @@ export function registerPromptRoutes(server: any, { getAIClient }: RegisterPromp
             }
 
             const response = await ai.models.generateContent({
-                model: 'gemini-3.7-flash',
+                model: 'gemini-3.8-flash',
                 config: {
                     systemInstruction: buildImageToPromptInstruction(lang),
                     ...(resolvedSafetySettings ? { safetySettings: resolvedSafetySettings } : {}),

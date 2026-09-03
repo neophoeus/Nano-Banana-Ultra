@@ -23,7 +23,7 @@ Nano Banana Ultra 是一個以 Google Gemini 影像模型為核心的影像創�
 
 - 支援文字生圖、圖生圖、與風格導向生成
 - 可在同一工作區內加入角色與物件參考圖
-- 內建 Smart Rewrite、Surprise Me、Image to Prompt 等提示工具
+- 內建 Smart Rewrite、Surprise Me、Image to Prompt 等提示工具（由 `gemini-3.8-flash` 驅動）
 - 可單張生成，也可用批次探索快速比較方向
 
 ### 延伸
@@ -112,13 +112,13 @@ Nano Banana Ultra 目前支援四條 Gemini 影像模型路徑。介面會依模
 
 ## 版本總覽
 
-### 最新版本：4.2.0
+### 最新版本：4.3.0
 
 版本細節請見 [CHANGELOG.md](CHANGELOG.md)。
 
 ### 4.x
 
-4.x 版本導入雙引擎統一架構，將本機後端引擎與 AI Studio 客戶端引擎無縫整合於同一套工作區。4.2.0 版本進一步加入 Google AI 訂閱體系（Pro / Ultra 5x / Ultra 20x）專屬節奏管理、全局模型調用節奏防護與 429 智能退避重試機制。具備即時環境偵測、一鍵切換執行引擎與訂閱方案、自適配本機磁碟與 IndexedDB 儲存，以及完整的 9 國語系診斷監控能力。
+4.x 版本導入雙引擎統一架構，將本機後端引擎與 AI Studio 客戶端引擎無縫整合於同一套工作區。4.3.0 版本針對 Google AI Pro（1x 基準配額，200k TPM）與 Ultra（5x / 20x）訂閱全面重構調用步調，導入針對 4K 解析度、參考圖與 High Thinking 思考圖的動態負載自適應間隔調速，將 429 退避安全裕度提升至 3.5 秒（Pro）/ 2 秒（Ultra），並打破 60 秒滑動窗口諧波共振鎖死與增加離線工作區快照斷路器。同時整合了 Gemini 3.8 Flash（`gemini-3.8-flash`）提示詞工程升級與 429 限流冷卻即時倒數互動彈窗。4.2.0 版本引進了 Google AI 訂閱體系（Pro / Ultra 5x / Ultra 20x）專屬節奏切換與基礎退避重試能力。
 
 ### 3.5.x+（3.x 系列）
 

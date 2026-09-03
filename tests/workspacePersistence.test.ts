@@ -14,6 +14,7 @@ import {
     saveSharedWorkspaceSnapshot,
     saveWorkspaceSnapshot,
     sanitizeWorkspaceSnapshot,
+    resetSharedSnapshotOfflineState,
     WORKSPACE_SNAPSHOT_STORAGE_KEY,
 } from '../utils/workspacePersistence';
 
@@ -712,6 +713,22 @@ describe('workspacePersistence', () => {
         expect(uploadedSnapshot.workspaceSession.activeResult).toBeNull();
     });
 
+    it('engages circuit breaker on network failure to avoid flooding offline endpoints', async () => {
+        resetSharedSnapshotOfflineState();
+        const fetchMock = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
+        vi.stubGlobal('fetch', fetchMock);
+
+        // First attempt fails and trips circuit breaker
+        await saveSharedWorkspaceSnapshot(baseSnapshot);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+
+        // Second attempt within cooldown is suppressed without making network calls
+        await saveSharedWorkspaceSnapshot(baseSnapshot);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+
+        resetSharedSnapshotOfflineState();
+    });
+
     it('does not revive unsaved inline generated payloads when loading legacy local snapshots', () => {
         const legacyHistoryUrl = 'data:image/png;base64,LEGACYUNSAVEDHISTORYPAYLOAD';
         const legacyGeneratedStageUrl = 'data:image/png;base64,LEGACYUNSAVEDSTAGEPAYLOAD';
@@ -1235,4 +1252,3 @@ describe('workspacePersistence', () => {
         expect((MODEL_CAPABILITIES as any)['gemini-3.1-flash-image-preview']?.supportsGoogleSearch).toBe(true);
     });
 });
-

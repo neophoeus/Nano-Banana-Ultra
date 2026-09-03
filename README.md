@@ -23,7 +23,7 @@ The workspace features a dual-engine architecture combining both the Local API (
 
 - text-to-image, image-to-image, and style-guided generation
 - character and object references inside the same workspace flow
-- prompt tools such as Smart Rewrite, Surprise Me, and Image to Prompt
+- prompt tools such as Smart Rewrite, Surprise Me, and Image to Prompt (powered by `gemini-3.8-flash`)
 - single-result generation or batch exploration when you want to compare directions
 
 ### Iterate
@@ -112,13 +112,13 @@ Nano Banana Ultra currently supports four Gemini image-model paths. The UI expos
 
 ## Version Overview
 
-### Latest Release: 4.2.0
+### Latest Release: 4.3.0
 
 See [CHANGELOG.md](CHANGELOG.md) for details.
 
 ### 4.x
 
-Version 4.x introduces the unified dual-engine architecture, merging the local backend engine and AI Studio client engine into one seamless workspace. Version 4.2.0 adds multi-tier Google AI Subscription Plan pacing (Pro / Ultra 5x / Ultra 20x) with persistent 429 adaptive backoff and global IPM rate protection. It also features auto-detection of runtime environments, an on-the-fly execution mode and plan selector, adaptive local disk and IndexedDB persistence, and full multilingual diagnostic capabilities.
+Version 4.x introduces the unified dual-engine architecture, merging the local backend engine and AI Studio client engine into one seamless workspace. Version 4.3.0 delivers comprehensive Google AI Pro (1x 200k TPM) and Ultra (5x / 20x) subscription pacing restructure, dynamic adaptive workload delay calculation for 4K resolution, multi-reference images, and High Thinking mode, tier-aware 429 safety margin buffers (3.5s for Pro, 2.0s for Ultra), anti-resonance backoff breaking 60s sliding window locks, and an offline workspace snapshot circuit breaker. It also integrates the Gemini 3.8 Flash (`gemini-3.8-flash`) prompt engineering upgrade and interactive 429 Cooldown Modal with live seconds countdown and user action control. Version 4.2.0 introduced the initial multi-tier Google AI Subscription Plan selector with persistent backoff and global IPM rate protection.
 
 ### 3.5.x+ (3.x Series)
 

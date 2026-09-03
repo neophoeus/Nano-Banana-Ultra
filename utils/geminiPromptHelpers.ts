@@ -42,7 +42,7 @@ Examples of the unexpected pairing concept (DO NOT copy these):
 - a samurai in a laundromat
 - a lighthouse made of books
 
-Return ONLY the final image prompt, no explanation.`
+Return ONLY the final image prompt, no explanation.`,
 ];
 
 export function normalizePromptToolLanguage(lang?: string): PromptToolLanguage {
@@ -143,7 +143,7 @@ export async function identifyBlockKeywords(
 ): Promise<string> {
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-3.7-flash',
+            model: 'gemini-3.8-flash',
             config: {
                 systemInstruction: `You are a content safety analyzer.
 Task: Analyze the input text which triggered a "${category}" safety filter.
