@@ -1,5 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { loadBrowserSavedImageDataUrl, BROWSER_SAVED_IMAGE_PATH_PREFIX } from '../utils/browserImageStore';
+import {
+    loadBrowserSavedImageDataUrl,
+    BROWSER_SAVED_IMAGE_PATH_PREFIX,
+    extractBrowserSavedImageFilename,
+} from '../utils/browserImageStore';
 import { buildSavedImageLoadUrl } from '../utils/imageSaveUtils';
 
 type LazyHistoryImageProps = {
@@ -37,7 +41,12 @@ function LazyHistoryImage({
     const [resolvedSrc, setResolvedSrc] = useState<string>('');
 
     const isDataUrl = Boolean(src && src.startsWith('data:'));
-    const isVirtual = Boolean(src && src.startsWith(BROWSER_SAVED_IMAGE_PATH_PREFIX));
+    const isVirtual = Boolean(
+        src &&
+            (src.startsWith(BROWSER_SAVED_IMAGE_PATH_PREFIX) ||
+                src.startsWith('browser-img://') ||
+                src.includes('filename=')),
+    );
     const isLocalResolutionNeeded = !isDataUrl && (isVirtual || Boolean(savedFilename));
     const displaySrc = resolvedSrc || src;
 
@@ -71,7 +80,13 @@ function LazyHistoryImage({
             return;
         }
 
-        const filename = savedFilename || (src && isVirtual ? src.slice(BROWSER_SAVED_IMAGE_PATH_PREFIX.length) : undefined);
+        const extractedFilename = src ? extractBrowserSavedImageFilename(src) : undefined;
+        const filename =
+            savedFilename ||
+            extractedFilename ||
+            (src && isVirtual && src.startsWith(BROWSER_SAVED_IMAGE_PATH_PREFIX)
+                ? src.slice(BROWSER_SAVED_IMAGE_PATH_PREFIX.length)
+                : undefined);
         if (!filename) {
             return;
         }

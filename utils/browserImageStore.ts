@@ -3,7 +3,9 @@ export const BROWSER_SAVED_IMAGE_STORAGE_KEY_PREFIX = 'nbu_browserSavedImage:';
 
 const BROWSER_IMAGE_DB_NAME = 'nbu-lite-browser-images';
 const BROWSER_IMAGE_DB_STORE = 'saved-images';
-const BROWSER_IMAGE_DB_VERSION = 1;
+const BROWSER_SNAPSHOT_DB_STORE = 'workspace-snapshots';
+const BROWSER_IMAGE_DB_VERSION = 2;
+const WORKSPACE_SNAPSHOT_RECORD_KEY = 'latest';
 
 export type BrowserSavedImageRecord = {
     dataUrl: string;
@@ -114,43 +116,57 @@ const readBrowserSavedImageRecordFromStorage = (
 const cacheBrowserSavedImageRecord = (savedFilename: string, record: BrowserSavedImageRecord): void => {
     browserSavedImageCache.set(savedFilename, record);
 
-    // Evict oldest full-resolution images if memory cache exceeds a limit (e.g. 10 full-res images)
     const fullResKeys: string[] = [];
+    const thoughtKeys: string[] = [];
     const thumbnailKeys: string[] = [];
+
     for (const key of browserSavedImageCache.keys()) {
         if (key.includes('-thumbnail')) {
             thumbnailKeys.push(key);
+        } else if (key.includes('-thought') || key.includes('-part-')) {
+            thoughtKeys.push(key);
         } else {
             fullResKeys.push(key);
         }
     }
 
-    if (fullResKeys.length > 10) {
-        // Sort by savedAt ascending (oldest first)
+    // Evict oldest full-resolution images if memory cache exceeds 25 images
+    if (fullResKeys.length > 25) {
         const sortedKeys = fullResKeys.sort((a, b) => {
             const recA = browserSavedImageCache.get(a);
             const recB = browserSavedImageCache.get(b);
             return (recA?.savedAt || 0) - (recB?.savedAt || 0);
         });
 
-        // Evict the oldest ones until we have at most 10
-        const toEvictCount = sortedKeys.length - 10;
+        const toEvictCount = sortedKeys.length - 25;
         for (let i = 0; i < toEvictCount; i++) {
             browserSavedImageCache.delete(sortedKeys[i]);
         }
     }
 
-    // Evict oldest thumbnails if thumbnail memory cache exceeds a limit (e.g. 40 thumbnails)
-    if (thumbnailKeys.length > 40) {
-        // Sort by savedAt ascending (oldest first)
+    // Evict oldest thought process images if memory cache exceeds 50 images
+    if (thoughtKeys.length > 50) {
+        const sortedThoughtKeys = thoughtKeys.sort((a, b) => {
+            const recA = browserSavedImageCache.get(a);
+            const recB = browserSavedImageCache.get(b);
+            return (recA?.savedAt || 0) - (recB?.savedAt || 0);
+        });
+
+        const toEvictCount = sortedThoughtKeys.length - 50;
+        for (let i = 0; i < toEvictCount; i++) {
+            browserSavedImageCache.delete(sortedThoughtKeys[i]);
+        }
+    }
+
+    // Evict oldest thumbnails if thumbnail memory cache exceeds 80 thumbnails
+    if (thumbnailKeys.length > 80) {
         const sortedThumbnailKeys = thumbnailKeys.sort((a, b) => {
             const recA = browserSavedImageCache.get(a);
             const recB = browserSavedImageCache.get(b);
             return (recA?.savedAt || 0) - (recB?.savedAt || 0);
         });
 
-        // Evict the oldest ones until we have at most 40
-        const toEvictCount = sortedThumbnailKeys.length - 40;
+        const toEvictCount = sortedThumbnailKeys.length - 80;
         for (let i = 0; i < toEvictCount; i++) {
             browserSavedImageCache.delete(sortedThumbnailKeys[i]);
         }
@@ -175,6 +191,9 @@ const openBrowserImageDb = async (): Promise<IDBDatabase | null> => {
                 const database = request.result;
                 if (!database.objectStoreNames.contains(BROWSER_IMAGE_DB_STORE)) {
                     database.createObjectStore(BROWSER_IMAGE_DB_STORE);
+                }
+                if (!database.objectStoreNames.contains(BROWSER_SNAPSHOT_DB_STORE)) {
+                    database.createObjectStore(BROWSER_SNAPSHOT_DB_STORE);
                 }
             };
 
@@ -202,6 +221,75 @@ const writeBrowserSavedImageRecordToDb = async (
             const transaction = database.transaction(BROWSER_IMAGE_DB_STORE, 'readwrite');
             const store = transaction.objectStore(BROWSER_IMAGE_DB_STORE);
             const request = store.put(record, savedFilename);
+            request.onsuccess = () => resolve();
+            request.onerror = () => resolve();
+            transaction.oncomplete = () => resolve();
+            transaction.onabort = () => resolve();
+        } catch {
+            resolve();
+        }
+    });
+};
+
+export const saveBrowserWorkspaceSnapshotToDb = async (snapshotJson: string): Promise<boolean> => {
+    const database = await openBrowserImageDb();
+    if (!database) {
+        return false;
+    }
+
+    return await new Promise<boolean>((resolve) => {
+        try {
+            const transaction = database.transaction(BROWSER_SNAPSHOT_DB_STORE, 'readwrite');
+            const store = transaction.objectStore(BROWSER_SNAPSHOT_DB_STORE);
+            const request = store.put({ json: snapshotJson, savedAt: Date.now() }, WORKSPACE_SNAPSHOT_RECORD_KEY);
+            request.onsuccess = () => resolve(true);
+            request.onerror = () => resolve(false);
+            transaction.oncomplete = () => resolve(true);
+            transaction.onabort = () => resolve(false);
+        } catch {
+            resolve(false);
+        }
+    });
+};
+
+export const loadBrowserWorkspaceSnapshotFromDb = async (): Promise<string | null> => {
+    const database = await openBrowserImageDb();
+    if (!database) {
+        return null;
+    }
+
+    return await new Promise<string | null>((resolve) => {
+        try {
+            const transaction = database.transaction(BROWSER_SNAPSHOT_DB_STORE, 'readonly');
+            const store = transaction.objectStore(BROWSER_SNAPSHOT_DB_STORE);
+            const request = store.get(WORKSPACE_SNAPSHOT_RECORD_KEY);
+            request.onsuccess = () => {
+                const result = request.result;
+                if (result && typeof result.json === 'string') {
+                    resolve(result.json);
+                } else {
+                    resolve(null);
+                }
+            };
+            request.onerror = () => resolve(null);
+            transaction.onabort = () => resolve(null);
+        } catch {
+            resolve(null);
+        }
+    });
+};
+
+export const clearBrowserWorkspaceSnapshotFromDb = async (): Promise<void> => {
+    const database = await openBrowserImageDb();
+    if (!database) {
+        return;
+    }
+
+    await new Promise<void>((resolve) => {
+        try {
+            const transaction = database.transaction(BROWSER_SNAPSHOT_DB_STORE, 'readwrite');
+            const store = transaction.objectStore(BROWSER_SNAPSHOT_DB_STORE);
+            const request = store.delete(WORKSPACE_SNAPSHOT_RECORD_KEY);
             request.onsuccess = () => resolve();
             request.onerror = () => resolve();
             transaction.oncomplete = () => resolve();
@@ -257,7 +345,7 @@ export const persistBrowserSavedImageRecord = async (
     };
 
     cacheBrowserSavedImageRecord(savedFilename, record);
-    void writeBrowserSavedImageRecordToDb(savedFilename, record);
+    await writeBrowserSavedImageRecordToDb(savedFilename, record);
 
     return `${BROWSER_SAVED_IMAGE_PATH_PREFIX}${savedFilename}`;
 };
@@ -459,7 +547,15 @@ export const loadBrowserSavedImageMetadata = async (
     savedFilename: string,
 ): Promise<Record<string, unknown> | undefined> => (await loadBrowserSavedImageRecord(savedFilename))?.metadata;
 
-export const calculateBrowserSavedImageDbSize = async (): Promise<number> => {
+let cachedDbSize = 0;
+let lastDbSizeCheck = 0;
+const DB_SIZE_CACHE_TTL_MS = 15000;
+
+export const calculateBrowserSavedImageDbSize = async (forceFresh = false): Promise<number> => {
+    if (!forceFresh && Date.now() - lastDbSizeCheck < DB_SIZE_CACHE_TTL_MS) {
+        return cachedDbSize;
+    }
+
     const database = await openBrowserImageDb();
     if (!database) {
         return 0;
@@ -479,12 +575,14 @@ export const calculateBrowserSavedImageDbSize = async (): Promise<number> => {
                     }
                     cursor.continue();
                 } else {
+                    cachedDbSize = totalSize;
+                    lastDbSizeCheck = Date.now();
                     resolve(totalSize);
                 }
             };
-            request.onerror = () => resolve(0);
+            request.onerror = () => resolve(cachedDbSize);
         } catch {
-            resolve(0);
+            resolve(cachedDbSize);
         }
     });
 };

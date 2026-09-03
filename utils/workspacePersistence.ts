@@ -34,12 +34,16 @@ import {
     collectBrowserSavedImageRecords,
     hydrateBrowserSavedImageRecords,
     loadBrowserSavedImageRecord,
+    loadBrowserWorkspaceSnapshotFromDb,
+    saveBrowserWorkspaceSnapshotToDb,
 } from './browserImageStore';
 import { normalizeGenerationFailureInfo, resolveDisplayGenerationFailureInfo } from './generationFailure';
+import { buildSavedImageLoadUrl } from './imageSaveUtils';
 import { sanitizeSessionHintsForStorage } from './inlineImageDisplay';
 import { buildLineagePresentation } from './lineage';
 import { normalizeImageStyle } from './styleRegistry';
 import { DEFAULT_TEMPERATURE, normalizeTemperature } from './temperature';
+import { getResolvedExecutionMode } from './workspaceExecutionMode';
 
 export const WORKSPACE_SNAPSHOT_STORAGE_KEY = 'nbu_workspaceSnapshot';
 export const SHARED_WORKSPACE_SNAPSHOT_ENDPOINT = '/api/workspace-snapshot';
@@ -345,8 +349,12 @@ const isFailureExtractionIssue = (value: unknown): value is NonNullable<QueuedBa
     typeof value === 'string' &&
     FAILURE_EXTRACTION_ISSUE_VALUES.has(value as NonNullable<QueuedBatchJobImportIssue['extractionIssue']>);
 
-const buildLoadImageUrl = (savedFilename: string): string =>
-    `${LOAD_IMAGE_ENDPOINT}?filename=${encodeURIComponent(savedFilename)}`;
+const buildLoadImageUrl = (savedFilename: string): string => {
+    if (getResolvedExecutionMode() === 'direct') {
+        return buildSavedImageLoadUrl(savedFilename);
+    }
+    return `${LOAD_IMAGE_ENDPOINT}?filename=${encodeURIComponent(savedFilename)}`;
+};
 
 const sanitizeResultParts = (value: unknown): ResultPart[] | undefined => {
     if (!Array.isArray(value)) {
@@ -687,15 +695,25 @@ const buildPersistableWorkspaceSnapshot = (
     return sanitizeWorkspaceSnapshot({
         ...normalized,
         history: options?.aggressive
-            ? historyWithLinkedAssets.map((item) =>
-                  isInlineAssetUrl(item.url)
-                      ? {
-                            ...item,
-                            url: '',
-                        }
-                      : item,
-              )
+            ? historyWithLinkedAssets.map((item, index) => {
+                  const isOldTurn = index > 15;
+                  const prunedResultParts = isOldTurn && item.resultParts
+                      ? item.resultParts.map((part) =>
+                            part.kind === 'thought-text' ? { ...part, text: '' } : part,
+                        )
+                      : item.resultParts;
+
+                  return {
+                      ...item,
+                      url: isInlineAssetUrl(item.url) ? '' : item.url,
+                      thoughts: isOldTurn ? '' : item.thoughts,
+                      resultParts: prunedResultParts,
+                  };
+              })
             : historyWithLinkedAssets,
+        workflowLogs: options?.aggressive
+            ? normalized.workflowLogs.slice(-100)
+            : normalized.workflowLogs,
         stagedAssets: options?.aggressive
             ? stagedAssetsWithLinkedAssets.map((asset) =>
                   isInlineAssetUrl(asset.url)
@@ -1445,6 +1463,11 @@ export const saveWorkspaceSnapshot = (snapshot: WorkspacePersistenceSnapshot): v
     const localSnapshot = buildPersistableWorkspaceSnapshot(normalized);
     const compactSnapshot = buildPersistableWorkspaceSnapshot(normalized, { aggressive: true });
 
+    // Always persist to IndexedDB in browser environment (especially direct mode) to avoid 5MB quota ceiling
+    if (getResolvedExecutionMode() === 'direct' || typeof indexedDB !== 'undefined') {
+        void saveBrowserWorkspaceSnapshotToDb(JSON.stringify(localSnapshot));
+    }
+
     emitWorkspaceSnapshotDebugEvent({
         kind: 'request',
         label: 'Local workspace snapshot save',
@@ -1523,7 +1546,21 @@ export const saveWorkspaceSnapshot = (snapshot: WorkspacePersistenceSnapshot): v
             correlationId,
             phase: 'compact-fallback',
         });
-        console.warn('[workspacePersistence] Failed to persist compact workspace snapshot.', error);
+        console.warn('[workspacePersistence] Failed to persist compact workspace snapshot to localStorage, backed up to IndexedDB.', error);
+    }
+};
+
+export const loadWorkspaceSnapshotFromDb = async (): Promise<WorkspacePersistenceSnapshot | null> => {
+    try {
+        const raw = await loadBrowserWorkspaceSnapshotFromDb();
+        if (!raw) {
+            return null;
+        }
+        const parsed = JSON.parse(raw);
+        return buildRuntimeWorkspaceSnapshot(parsed);
+    } catch (error) {
+        console.warn('[workspacePersistence] Failed to load workspace snapshot from IndexedDB.', error);
+        return null;
     }
 };
 

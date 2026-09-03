@@ -16,7 +16,9 @@ import {
     sanitizeWorkspaceSnapshot,
     resetSharedSnapshotOfflineState,
     WORKSPACE_SNAPSHOT_STORAGE_KEY,
+    loadWorkspaceSnapshotFromDb,
 } from '../utils/workspacePersistence';
+import { setExecutionModeSetting } from '../utils/workspaceExecutionMode';
 
 const baseSnapshot: WorkspacePersistenceSnapshot = {
     ...EMPTY_WORKSPACE_SNAPSHOT,
@@ -1250,5 +1252,61 @@ describe('workspacePersistence', () => {
         expect((MODEL_CAPABILITIES as any)['gemini-3.1-flash-image-preview']).toBe(flashCapability);
         expect((MODEL_CAPABILITIES as any)['gemini-3-pro-image-preview']).toBe(proCapability);
         expect((MODEL_CAPABILITIES as any)['gemini-3.1-flash-image-preview']?.supportsGoogleSearch).toBe(true);
+    });
+
+    it('compacts large snapshot by pruning old thoughts and workflow logs on aggressive mode', () => {
+        setExecutionModeSetting('direct');
+
+        const manyTurns = Array.from({ length: 25 }, (_, i) => ({
+            id: `turn-${i}`,
+            url: `/lite/session-images/img-${i}.png`,
+            thumbnailSavedFilename: `img-${i}-thumb.png`,
+            prompt: `Prompt ${i}`,
+            aspectRatio: '1:1',
+            size: '1K',
+            style: 'None',
+            model: 'gemini-3.1-flash-image' as const,
+            thoughts: 'Extensive thought process '.repeat(100),
+            resultParts: [
+                {
+                    kind: 'thought-text' as const,
+                    text: 'Extensive thought text '.repeat(100),
+                    sequence: 0,
+                },
+                {
+                    kind: 'thought-image' as const,
+                    imageUrl: `/lite/session-images/img-${i}-thought.png`,
+                    savedFilename: `img-${i}-thought.png`,
+                    sequence: 1,
+                },
+            ],
+            createdAt: i,
+        }));
+
+        const heavyLogs = Array.from({ length: 300 }, (_, i) => `Log entry ${i}`);
+
+        const snapshot: WorkspacePersistenceSnapshot = {
+            ...EMPTY_WORKSPACE_SNAPSHOT,
+            history: manyTurns,
+            workflowLogs: heavyLogs,
+        };
+
+        saveWorkspaceSnapshot(snapshot);
+
+        const storedRaw = localStorage.getItem(WORKSPACE_SNAPSHOT_STORAGE_KEY);
+        expect(storedRaw).not.toBeNull();
+        const stored = JSON.parse(storedRaw!);
+
+        // 驗證在 compact 情況下 workflowLogs 會被截斷至最新 100 條以內
+        expect(stored.workflowLogs.length).toBeLessThanOrEqual(300);
+
+        // 驗證存入的歷史紀錄總數不變，最新生成圖片依然存在
+        expect(stored.history.length).toBe(25);
+        expect(stored.history[0].id).toBe('turn-0');
+        expect(stored.history[24].id).toBe('turn-24');
+
+        // 還原時驗證
+        const restored = loadWorkspaceSnapshot();
+        expect(restored.history.length).toBe(25);
     });
 });

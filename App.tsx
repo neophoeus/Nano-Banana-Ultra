@@ -44,8 +44,10 @@ import {
     EMPTY_WORKSPACE_COMPOSER_STATE,
     EMPTY_WORKSPACE_SNAPSHOT,
     loadWorkspaceSnapshot,
+    loadWorkspaceSnapshotFromDb,
     saveWorkspaceSnapshot,
 } from './utils/workspacePersistence';
+import { clearBrowserWorkspaceSnapshotFromDb } from './utils/browserImageStore';
 import { loadQueuedBatchSpaceSnapshot } from './utils/queuedBatchSpacePersistence';
 import { hasRestorableWorkspaceContent } from './utils/workspaceSnapshotState';
 import { deriveGroundingMode, getAvailableGroundingModes } from './utils/groundingMode';
@@ -93,6 +95,7 @@ import { useWorkspaceSettingsSession } from './hooks/useWorkspaceSettingsSession
 import { useWorkspaceTransientUiState } from './hooks/useWorkspaceTransientUiState';
 import { useDebugTerminal } from './hooks/useDebugTerminal';
 import { useWorkspaceExecutionMode } from './hooks/useWorkspaceExecutionMode';
+import { getResolvedExecutionMode } from './utils/workspaceExecutionMode';
 import { useLegacyWorkspaceSnapshotMigration } from './hooks/useLegacyWorkspaceSnapshotMigration';
 import { useRateLimitNotice } from './utils/rateLimitNotice';
 import { resolveCurrentStageSelectionFirstSourceOverride } from './utils/generationSourceOverride';
@@ -1369,6 +1372,7 @@ const App: React.FC = () => {
     handleExportWorkspaceSnapshotRef.current = handleExportWorkspaceSnapshot;
     const applyEmptyWorkspaceSnapshot = useCallback(() => {
         saveWorkspaceSnapshot(EMPTY_WORKSPACE_SNAPSHOT);
+        void clearBrowserWorkspaceSnapshotFromDb();
         applyWorkspaceSnapshot(EMPTY_WORKSPACE_SNAPSHOT);
     }, [applyWorkspaceSnapshot]);
 
@@ -1377,6 +1381,28 @@ const App: React.FC = () => {
         applyWorkspaceSnapshot,
         addLog,
     });
+
+    useEffect(() => {
+        let isDisposed = false;
+        if (getResolvedExecutionMode() === 'direct') {
+            void loadWorkspaceSnapshotFromDb()
+                .then((dbSnapshot) => {
+                    if (isDisposed || !dbSnapshot) {
+                        return;
+                    }
+                    if (
+                        dbSnapshot.history.length > history.length ||
+                        (history.length === 0 && dbSnapshot.history.length > 0)
+                    ) {
+                        applyWorkspaceSnapshot(dbSnapshot);
+                    }
+                })
+                .catch(() => {});
+        }
+        return () => {
+            isDisposed = true;
+        };
+    }, [applyWorkspaceSnapshot, history.length]);
 
     const handleOpenWorkspaceImportPicker = useCallback(() => {
         workspaceImportInputRef.current?.click();

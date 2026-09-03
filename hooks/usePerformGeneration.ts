@@ -533,6 +533,7 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                         });
                     };
                     const committedSlotIndices = new Set<number>();
+                    const batchHistoryItems: GeneratedImageType[] = [];
                     const handleResultCallback = async (res: GenerationResult) => {
                         if (controller.signal.aborted && isCancelledGenerationResult(res)) {
                             return;
@@ -720,8 +721,6 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                             },
                         });
                     };
-
-                    const batchHistoryItems: GeneratedImageType[] = [];
 
                     const results = await generateImageWithGemini(
                         {
