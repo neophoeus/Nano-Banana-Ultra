@@ -1,5 +1,14 @@
 # Changelog
 
+## v4.4.1 - 2026-09-03
+
+- Release title: Nano Banana Ultra 4.4.1 - Image Editor Shared Settings Resolution Sync & Model Constraint Guard
+- Release summary:
+    - **Image Editor Shared Settings Resolution Synchronization (`hooks/useWorkspaceEditorActions.ts`)**: Resolved a synchronization issue where entering the Image Editor (`openEditorWithSource`) recalculated `editorInitialSize` using `findClosestImageSize` based on the loaded base image pixel dimensions, which immediately overwrote the user's active composer `imageSize` (e.g., `2K` or `4K`) with `1K` in the editor's floating Shared Controls (`SurfaceSharedControls`). Refactored `openEditorWithSource` to directly preserve and synchronize the homepage `imageSize` whenever supported by the active model (such as `gemini-3.1-flash-image` and `gemini-3-pro-image`), gracefully falling back to a supported size only if the model enforces stricter constraints (such as `gemini-3.1-flash-lite-image` which only supports 1K).
+    - **Model Constraint Dynamic Guard Fix (`components/ImageEditor.tsx`)**: Fixed a capability constraint evaluation bug where models without predefined size constraints (`caps.supportedSizes: []`, such as `gemini-2.5-flash-image`) inadvertently triggered `onSizeChange('1K')` on component mount because `!caps.supportedSizes.includes(size)` evaluated to `true`. Added a `caps.supportedSizes.length > 0` prerequisite guard to prevent wiping the user's resolution on unconstrained models.
+    - **Preserved Status Quo for Prompts and Exit Behavior**: Retained editor-dedicated prompt and reference isolation as documented in UI guidance, and preserved snapshot restoration behavior when closing the editor without generating.
+    - **Automated Test Coverage (`tests/useWorkspaceEditorActions.test.tsx`)**: Added dedicated unit tests verifying that user-selected homepage resolution (e.g. `2K`) is preserved when entering the editor with supported models, and that resolution falls back correctly when unsupported by the target model. 100% test pass rate maintained across all 116 test suites (961 tests).
+
 ## v4.4.0 - 2026-09-03
 
 - Release title: Nano Banana Ultra 4.4.0 - AI Studio Large Workspace Resilience, IndexedDB Snapshot Storage, Multi-Tier Memory Cache & Thought Image Persistence Fix

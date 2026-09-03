@@ -1,6 +1,6 @@
 import { ChangeEvent, Dispatch, MutableRefObject, SetStateAction, useCallback } from 'react';
 import type { PickerSheet } from '../components/WorkspacePickerSheet';
-import { ASPECT_RATIOS } from '../constants';
+import { ASPECT_RATIOS, MODEL_CAPABILITIES } from '../constants';
 import {
     EDITOR_IMAGE_MAX_DIMENSION,
     constrainImageDimensions,
@@ -10,7 +10,7 @@ import {
     type PreparedImageAsset,
 } from '../utils/imageSaveUtils';
 import { resolveCurrentStageSelectionFirstSourceOverride } from '../utils/generationSourceOverride';
-import { findClosestAspectRatio, findClosestImageSize } from '../utils/canvasWorkspace';
+import { findClosestAspectRatio } from '../utils/canvasWorkspace';
 import { resolveDisplayImageSourceAsync } from '../utils/browserImageStore';
 import {
     AspectRatio,
@@ -303,8 +303,14 @@ export function useWorkspaceEditorActions({
                         preparedSource.height,
                         ASPECT_RATIOS,
                     );
-                    editorInitialSize = findClosestImageSize(preparedSource.width, preparedSource.height);
                 }
+
+                // Preserve user-selected imageSize from homepage if supported by the model
+                const modelCap = MODEL_CAPABILITIES[imageModel];
+                const isSizeSupported =
+                    !modelCap || modelCap.supportedSizes.length === 0 || modelCap.supportedSizes.includes(imageSize);
+
+                editorInitialSize = isSizeSupported ? imageSize : modelCap.supportedSizes[0] || '1K';
             } catch (error) {
                 console.error('Failed to resolve editor entry settings.', error);
             }

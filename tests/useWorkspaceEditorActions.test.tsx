@@ -130,7 +130,9 @@ describe('useWorkspaceEditorActions', () => {
             setEditingImageSource: createStateSetter<string | null>(),
             setEditorContextSnapshot: createStateSetter<EditorContextSnapshot | null>(),
             setEditorPrompt: createStateSetter<string>(),
-            setAspectRatio: createStateSetter<'1:1' | '16:9' | '9:16' | '4:3' | '3:4' | '3:2' | '2:3' | '21:9'>() as any,
+            setAspectRatio: createStateSetter<
+                '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | '3:2' | '2:3' | '21:9'
+            >() as any,
             setImageSize: createStateSetter<'1K' | '2K' | '4K'>() as any,
             setActivePickerSheet: createStateSetter<PickerSheet>(),
             setError: createStateSetter<StageErrorState | null>(),
@@ -394,6 +396,7 @@ describe('useWorkspaceEditorActions', () => {
             wasResized: true,
             mimeType: 'image/png',
         });
+        props.imageSize = '4K';
         props.getActiveImageUrl = vi.fn(() => 'https://example.com/large-stage.png');
 
         renderHook();
@@ -418,6 +421,52 @@ describe('useWorkspaceEditorActions', () => {
         expect(props.setEditingImageSource).toHaveBeenCalledWith('data:image/png;base64,prepared-stage');
         expect(props.addLog).toHaveBeenCalledWith('msgImageResized');
         expect(props.showNotification).toHaveBeenCalledWith('msgImageResized', 'info');
+    });
+
+    it('synchronizes and preserves homepage imageSize when opening editor with a supported model', async () => {
+        loadImageDimensionsMock.mockResolvedValue({ width: 1024, height: 1024 });
+        constrainImageDimensionsMock.mockReturnValue({ width: 1024, height: 1024, wasResized: false });
+        props.getActiveImageUrl = vi.fn(() => 'https://example.com/standard-1k.png');
+        props.imageSize = '2K';
+        props.imageModel = 'gemini-3.1-flash-image';
+
+        renderHook();
+
+        await act(async () => {
+            latestHook?.handleOpenEditor();
+            await Promise.resolve();
+        });
+
+        expect(props.setEditorContextSnapshot).toHaveBeenCalledWith(
+            expect.objectContaining({
+                editorInitialSize: '2K',
+                size: '2K',
+            }),
+        );
+        expect(props.setImageSize).toHaveBeenCalledWith('2K');
+    });
+
+    it('falls back to model supported size when homepage imageSize is unsupported by model', async () => {
+        loadImageDimensionsMock.mockResolvedValue({ width: 1024, height: 1024 });
+        constrainImageDimensionsMock.mockReturnValue({ width: 1024, height: 1024, wasResized: false });
+        props.getActiveImageUrl = vi.fn(() => 'https://example.com/standard-1k.png');
+        props.imageSize = '4K';
+        props.imageModel = 'gemini-3.1-flash-lite-image'; // Only supports 1K
+
+        renderHook();
+
+        await act(async () => {
+            latestHook?.handleOpenEditor();
+            await Promise.resolve();
+        });
+
+        expect(props.setEditorContextSnapshot).toHaveBeenCalledWith(
+            expect.objectContaining({
+                editorInitialSize: '1K',
+                size: '4K',
+            }),
+        );
+        expect(props.setImageSize).toHaveBeenCalledWith('1K');
     });
 
     it('persists sketch ratio metadata when saving a sketch pad asset', () => {

@@ -166,7 +166,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                 console.error('Missing model capabilities for:', imageModel);
                 return;
             }
-            if (!caps.supportedSizes.includes(size)) {
+            if (caps.supportedSizes.length > 0 && !caps.supportedSizes.includes(size)) {
                 onSizeChange(caps.supportedSizes[0] || '1K');
             }
             if (!caps.supportedRatios.includes(ratio) && (!lockedAspectRatio || ratio !== lockedAspectRatio)) {
@@ -801,7 +801,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
             className="fixed inset-0 flex flex-row bg-gray-100 dark:bg-[#050505] animate-[fadeIn_0.2s_ease-out] select-none overflow-hidden text-gray-900 transition-colors duration-300 dark:text-gray-200"
             style={{ zIndex: WORKSPACE_EDITOR_Z_INDEX.root }}
         >
-
             {error && (
                 <div
                     className="fixed inset-0 bg-black/50 dark:bg-black/80 backdrop-blur-md flex items-center justify-center p-6 animate-[fadeIn_0.2s_ease-out]"
@@ -1423,7 +1422,11 @@ const ImageEditor: React.FC<ImageEditorProps> = ({
                                 className="relative shadow-2xl"
                                 style={{ width: originalDims.w, height: originalDims.h }}
                             >
-                                <img src={resolvedInitialImageUrl || initialImageUrl || undefined} className="w-full h-full block" alt="Source" />
+                                <img
+                                    src={resolvedInitialImageUrl || initialImageUrl || undefined}
+                                    className="w-full h-full block"
+                                    alt="Source"
+                                />
                                 <canvas
                                     ref={overlayCanvasRef}
                                     width={originalDims.w}
