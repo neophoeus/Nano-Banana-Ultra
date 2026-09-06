@@ -8,17 +8,18 @@ export default defineConfig(({ mode }) => {
     const devPort = Number.parseInt(env.APP_DEV_PORT || '22287', 10);
     const isTest = mode === 'test';
     const outputDir = isTest ? path.resolve(__dirname, 'output-test') : path.resolve(__dirname, 'output');
+    const resolvedApiKey = process.env.API_KEY || env.API_KEY || process.env.GEMINI_API_KEY || env.GEMINI_API_KEY || '';
 
     return {
         define: {
-            'process.env.API_KEY': JSON.stringify(process.env.GEMINI_API_KEY || env.GEMINI_API_KEY || ''),
-            'process.env.GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY || env.GEMINI_API_KEY || ''),
+            'process.env.API_KEY': JSON.stringify(resolvedApiKey),
+            'process.env.GEMINI_API_KEY': JSON.stringify(resolvedApiKey),
         },
         server: {
             port: Number.isNaN(devPort) ? 22287 : devPort,
             host: '0.0.0.0',
         },
-        plugins: [react(), imageSavePlugin({ geminiApiKey: env.GEMINI_API_KEY, outputDir })],
+        plugins: [react(), imageSavePlugin({ geminiApiKey: resolvedApiKey, outputDir })],
         resolve: {
             alias: {
                 '@': path.resolve(__dirname, '.'),

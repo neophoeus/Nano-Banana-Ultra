@@ -29,7 +29,7 @@ import {
 import { buildStyleAwareImagePrompt } from '../utils/stylePromptBuilder';
 import { Language } from '../utils/translations';
 import { getResolvedExecutionMode } from '../utils/workspaceExecutionMode';
-import { browserDirectProvider } from './providers/browserDirectProvider';
+import { browserDirectProvider, isTransientAiStudioAuthError } from './providers/browserDirectProvider';
 
 const jsonHeaders = {
     'Content-Type': 'application/json',
@@ -223,7 +223,11 @@ const buildQueuedBatchImportSummary = (payload: { results: QueuedBatchImportResu
     return `${payload.results.length} result(s) | ${successCount} success | ${failureCount} failure`;
 };
 
-async function fetchJson<T>(input: RequestInfo | URL, init?: RequestInit, debugContext?: DebugRequestContext<T>): Promise<T> {
+async function fetchJson<T>(
+    input: RequestInfo | URL,
+    init?: RequestInit,
+    debugContext?: DebugRequestContext<T>,
+): Promise<T> {
     const route = debugContext?.route || resolveRequestPath(input);
     const method = debugContext?.method || init?.method || 'GET';
     const correlationId = debugContext?.correlationId || createDebugTerminalCorrelationId('req');
@@ -317,7 +321,9 @@ async function fetchJson<T>(input: RequestInfo | URL, init?: RequestInit, debugC
                     method,
                     correlationId,
                 },
-                summary: buildErrorSummary(failure ? attachGenerationFailure(new Error(requestError.message), failure) : requestError),
+                summary: buildErrorSummary(
+                    failure ? attachGenerationFailure(new Error(requestError.message), failure) : requestError,
+                ),
                 status: response.status,
                 durationMs: Date.now() - startTime,
                 payload: {
@@ -354,7 +360,7 @@ async function fetchJson<T>(input: RequestInfo | URL, init?: RequestInit, debugC
             payload:
                 typeof debugContext.responsePayload === 'function'
                     ? debugContext.responsePayload(payload as T)
-                    : debugContext.responsePayload ?? payload,
+                    : (debugContext.responsePayload ?? payload),
         });
     }
 
@@ -459,7 +465,9 @@ async function fetchNdjson<T>(
                     method,
                     correlationId,
                 },
-                summary: buildErrorSummary(failure ? attachGenerationFailure(new Error(requestError.message), failure) : requestError),
+                summary: buildErrorSummary(
+                    failure ? attachGenerationFailure(new Error(requestError.message), failure) : requestError,
+                ),
                 status: response.status,
                 durationMs: Date.now() - startTime,
                 payload: {
@@ -586,10 +594,7 @@ type StreamRouteFailureEvent = {
 };
 
 type StreamRouteEvent =
-    | StreamRouteStartEvent
-    | StreamRouteResultPartEvent
-    | StreamRouteCompleteEvent
-    | StreamRouteFailureEvent;
+    StreamRouteStartEvent | StreamRouteResultPartEvent | StreamRouteCompleteEvent | StreamRouteFailureEvent;
 
 export type GenerationLiveProgressEvent =
     | {
@@ -751,8 +756,7 @@ const shouldUseLiveProgressStream = (options: GenerateOptions, batchSize: number
         model: options.model,
         executionMode: options.executionMode || 'single-turn',
         outputFormat: options.outputFormat || 'images-only',
-        thinkingLevel:
-            options.thinkingLevel || (options.model === 'gemini-3.1-flash-image' ? 'minimal' : 'disabled'),
+        thinkingLevel: options.thinkingLevel || (options.model === 'gemini-3.1-flash-image' ? 'minimal' : 'disabled'),
         includeThoughts: Boolean(options.includeThoughts),
         batchSize,
     });
@@ -763,8 +767,7 @@ const shouldUseLiveProgressFanOut = (options: GenerateOptions, batchSize: number
         model: options.model,
         executionMode: options.executionMode,
         outputFormat: options.outputFormat || 'images-only',
-        thinkingLevel:
-            options.thinkingLevel || (options.model === 'gemini-3.1-flash-image' ? 'minimal' : 'disabled'),
+        thinkingLevel: options.thinkingLevel || (options.model === 'gemini-3.1-flash-image' ? 'minimal' : 'disabled'),
         includeThoughts: Boolean(options.includeThoughts),
         batchSize,
     });
@@ -947,7 +950,8 @@ export const checkApiKey = async (): Promise<boolean> => {
             requestLabel: 'Runtime config request',
             requestSummary: 'Check API key availability',
             responseLabel: 'Runtime config response',
-            responseSummary: (result: { hasApiKey: boolean }) => (result.hasApiKey ? 'API key available' : 'API key missing'),
+            responseSummary: (result: { hasApiKey: boolean }) =>
+                result.hasApiKey ? 'API key available' : 'API key missing',
             responsePayload: (result: { hasApiKey: boolean }) => ({ hasApiKey: result.hasApiKey }),
             errorLabel: 'Runtime config request failed',
         });
@@ -1369,28 +1373,29 @@ export const enhancePromptWithGemini = async (
     const correlationId = createDebugTerminalCorrelationId('prompt');
     const requestPayload = { currentPrompt, lang, safetyThresholds, thinkingLevel };
     const response = await retryOperation(
-        () => fetchJson<{ text: string }>(
-            '/api/prompt/enhance',
-            {
-                method: 'POST',
-                headers: jsonHeaders,
-                body: JSON.stringify(requestPayload),
-            },
-            {
-                source: 'prompt-tools',
-                route: '/api/prompt/enhance',
-                method: 'POST',
-                operation: 'Prompt enhancer',
-                correlationId,
-                requestLabel: 'Prompt enhancer request',
-                requestSummary: `Prompt enhancer (${lang})`,
-                requestPayload,
-                responseLabel: 'Prompt enhancer response',
-                responseSummary: (result: { text: string }) => buildTextResponseSummary(result.text),
-                responsePayload: (result: { text: string }) => ({ text: result.text }),
-                errorLabel: 'Prompt enhancer failed',
-            },
-        ),
+        () =>
+            fetchJson<{ text: string }>(
+                '/api/prompt/enhance',
+                {
+                    method: 'POST',
+                    headers: jsonHeaders,
+                    body: JSON.stringify(requestPayload),
+                },
+                {
+                    source: 'prompt-tools',
+                    route: '/api/prompt/enhance',
+                    method: 'POST',
+                    operation: 'Prompt enhancer',
+                    correlationId,
+                    requestLabel: 'Prompt enhancer request',
+                    requestSummary: `Prompt enhancer (${lang})`,
+                    requestPayload,
+                    responseLabel: 'Prompt enhancer response',
+                    responseSummary: (result: { text: string }) => buildTextResponseSummary(result.text),
+                    responsePayload: (result: { text: string }) => ({ text: result.text }),
+                    errorLabel: 'Prompt enhancer failed',
+                },
+            ),
         2,
         1500,
         {
@@ -1437,28 +1442,29 @@ export const generateRandomPrompt = async (
     const correlationId = createDebugTerminalCorrelationId('prompt');
     const requestPayload = { lang, safetyThresholds, thinkingLevel };
     const response = await retryOperation(
-        () => fetchJson<{ text: string }>(
-            '/api/prompt/random',
-            {
-                method: 'POST',
-                headers: jsonHeaders,
-                body: JSON.stringify(requestPayload),
-            },
-            {
-                source: 'prompt-tools',
-                route: '/api/prompt/random',
-                method: 'POST',
-                operation: 'Random prompt',
-                correlationId,
-                requestLabel: 'Random prompt request',
-                requestSummary: `Random prompt (${lang})`,
-                requestPayload,
-                responseLabel: 'Random prompt response',
-                responseSummary: (result: { text: string }) => buildTextResponseSummary(result.text),
-                responsePayload: (result: { text: string }) => ({ text: result.text }),
-                errorLabel: 'Random prompt failed',
-            },
-        ),
+        () =>
+            fetchJson<{ text: string }>(
+                '/api/prompt/random',
+                {
+                    method: 'POST',
+                    headers: jsonHeaders,
+                    body: JSON.stringify(requestPayload),
+                },
+                {
+                    source: 'prompt-tools',
+                    route: '/api/prompt/random',
+                    method: 'POST',
+                    operation: 'Random prompt',
+                    correlationId,
+                    requestLabel: 'Random prompt request',
+                    requestSummary: `Random prompt (${lang})`,
+                    requestPayload,
+                    responseLabel: 'Random prompt response',
+                    responseSummary: (result: { text: string }) => buildTextResponseSummary(result.text),
+                    responsePayload: (result: { text: string }) => ({ text: result.text }),
+                    errorLabel: 'Random prompt failed',
+                },
+            ),
         2,
         1500,
         {
@@ -1506,28 +1512,29 @@ export const generatePromptFromImage = async (
     const correlationId = createDebugTerminalCorrelationId('prompt');
     const requestPayload = { imageDataUrl, lang, safetyThresholds, thinkingLevel };
     const response = await retryOperation(
-        () => fetchJson<{ text: string }>(
-            '/api/prompt/image-to-prompt',
-            {
-                method: 'POST',
-                headers: jsonHeaders,
-                body: JSON.stringify(requestPayload),
-            },
-            {
-                source: 'prompt-tools',
-                route: '/api/prompt/image-to-prompt',
-                method: 'POST',
-                operation: 'Image to prompt',
-                correlationId,
-                requestLabel: 'Image-to-prompt request',
-                requestSummary: `Image-to-prompt (${lang})`,
-                requestPayload,
-                responseLabel: 'Image-to-prompt response',
-                responseSummary: (result: { text: string }) => buildTextResponseSummary(result.text),
-                responsePayload: (result: { text: string }) => ({ text: result.text }),
-                errorLabel: 'Image-to-prompt failed',
-            },
-        ),
+        () =>
+            fetchJson<{ text: string }>(
+                '/api/prompt/image-to-prompt',
+                {
+                    method: 'POST',
+                    headers: jsonHeaders,
+                    body: JSON.stringify(requestPayload),
+                },
+                {
+                    source: 'prompt-tools',
+                    route: '/api/prompt/image-to-prompt',
+                    method: 'POST',
+                    operation: 'Image to prompt',
+                    correlationId,
+                    requestLabel: 'Image-to-prompt request',
+                    requestSummary: `Image-to-prompt (${lang})`,
+                    requestPayload,
+                    responseLabel: 'Image-to-prompt response',
+                    responseSummary: (result: { text: string }) => buildTextResponseSummary(result.text),
+                    responsePayload: (result: { text: string }) => ({ text: result.text }),
+                    errorLabel: 'Image-to-prompt failed',
+                },
+            ),
         2,
         1500,
         {
@@ -1783,7 +1790,8 @@ export const importQueuedBatchJobResults = async (
             requestSummary: name,
             requestPayload,
             responseLabel: 'Batch import response',
-            responseSummary: (result: { job: RemoteQueuedBatchJob; results: QueuedBatchImportResult[] }) => buildQueuedBatchImportSummary(result),
+            responseSummary: (result: { job: RemoteQueuedBatchJob; results: QueuedBatchImportResult[] }) =>
+                buildQueuedBatchImportSummary(result),
             responsePayload: (result: { job: RemoteQueuedBatchJob; results: QueuedBatchImportResult[] }) => ({
                 job: result.job,
                 resultsSummary: summarizeDebugTerminalPayload(result.results),
@@ -1803,6 +1811,7 @@ interface RetryOptions {
     route?: string;
     source?: DebugTerminalSource;
     operation?: string;
+    authRetriesRemaining?: number;
 }
 let globalRateLimitBackoffUntil = 0;
 const retryOperation = async <T>(
@@ -1820,6 +1829,7 @@ const retryOperation = async <T>(
         route,
         source,
         operation: operationLabel,
+        authRetriesRemaining = 1,
     } = opts || {};
     try {
         const now = Date.now();
@@ -1836,7 +1846,8 @@ const retryOperation = async <T>(
         // Never retry these deterministic errors
         const msg = error.message || '';
         // 429 and RESOURCE_EXHAUSTED represent transient rate limits/quotas that can be retried.
-        const isDeterministicQuota = msg.includes('quota') && !msg.includes('429') && !msg.includes('RESOURCE_EXHAUSTED');
+        const isDeterministicQuota =
+            msg.includes('quota') && !msg.includes('429') && !msg.includes('RESOURCE_EXHAUSTED');
         if (
             msg.includes('PROMPT_BLOCKED') ||
             msg.includes('SAFETY_BLOCK') ||
@@ -1848,6 +1859,15 @@ const retryOperation = async <T>(
         }
 
         if (abortSignal?.aborted) throw new Error('ABORTED');
+
+        if (authRetriesRemaining > 0 && isTransientAiStudioAuthError(error)) {
+            onLog?.('⏳ AI Studio 訂閱憑證同步中，等待 1.5 秒後自動重試... (1/1)');
+            await delayWithAbort(1500, abortSignal);
+            return retryOperation(operation, retries, delayMs, {
+                ...opts,
+                authRetriesRemaining: authRetriesRemaining - 1,
+            });
+        }
 
         const isRateLimit = msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED');
         let calculatedWaitMs = delayMs;
@@ -1886,7 +1906,7 @@ const retryOperation = async <T>(
                 isRateLimit ||
                 msg.includes('fetch')
             ) {
-                const waitMs = isRateLimit 
+                const waitMs = isRateLimit
                     ? Math.max(calculatedWaitMs, globalRateLimitBackoffUntil - Date.now())
                     : calculatedWaitMs;
 
@@ -1929,9 +1949,7 @@ const retryOperation = async <T>(
                     }
                 });
                 // Relax max delay to 60s for 429/RESOURCE_EXHAUSTED quota limits
-                const effectiveMaxDelay = isRateLimit
-                    ? Math.max(maxDelay, 60000)
-                    : maxDelay;
+                const effectiveMaxDelay = isRateLimit ? Math.max(maxDelay, 60000) : maxDelay;
                 const nextDelay = Math.min(waitMs * backoffMultiplier, effectiveMaxDelay);
                 return retryOperation(operation, retries - 1, nextDelay, opts);
             }

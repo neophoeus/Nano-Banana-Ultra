@@ -9,6 +9,8 @@ import {
     clearModelRateLimitBackoff,
     setModelLastRequestCompletedAt,
     getModelLastRequestCompletedAt,
+    isTransientAiStudioAuthError,
+    retryOperation,
 } from '../services/providers/browserDirectProvider';
 import {
     getStoredAiStudioSubscriptionTier,
@@ -182,5 +184,77 @@ describe('BrowserDirectProvider and AI Studio Subscription Tier Pacing', () => {
 
         clearRateLimitNotice();
         expect(getRateLimitNotice()).toBeNull();
+    });
+
+    it('identifies AI Studio transient 401 authentication and token refresh errors', () => {
+        const exactUserError =
+            '{"error":{"code":401,"message":"Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https://developers.google.com/identity/sign-in/web/devconsole-project.","status":"UNAUTHENTICATED"}}';
+        expect(isTransientAiStudioAuthError(exactUserError)).toBe(true);
+
+        expect(isTransientAiStudioAuthError(new Error(exactUserError))).toBe(true);
+        expect(
+            isTransientAiStudioAuthError({
+                status: 401,
+                message: 'Expected OAuth 2 access token or login cookie',
+            }),
+        ).toBe(true);
+        expect(
+            isTransientAiStudioAuthError({
+                error: {
+                    code: 401,
+                    status: 'UNAUTHENTICATED',
+                    message: 'Request had invalid authentication credentials.',
+                },
+            }),
+        ).toBe(true);
+
+        // Non-auth errors should not match
+        expect(isTransientAiStudioAuthError(new Error('404 Not Found'))).toBe(false);
+        expect(isTransientAiStudioAuthError(new Error('500 Internal Server Error'))).toBe(false);
+        expect(isTransientAiStudioAuthError(new Error('429 RESOURCE_EXHAUSTED'))).toBe(false);
+        expect(isTransientAiStudioAuthError(null)).toBe(false);
+    });
+
+    it('retries once and recovers when encountering transient AI Studio 401 auth error', async () => {
+        const logs: string[] = [];
+        let callCount = 0;
+        const fakeOperation = vi.fn(async () => {
+            callCount++;
+            if (callCount === 1) {
+                throw new Error(
+                    'Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential.',
+                );
+            }
+            return { imageUrl: 'data:image/png;base64,success' };
+        });
+
+        const result = await retryOperation(fakeOperation, 3, 10, {
+            onLog: (msg) => logs.push(msg),
+            authRetriesRemaining: 1,
+        });
+
+        expect(callCount).toBe(2);
+        expect(result.imageUrl).toBe('data:image/png;base64,success');
+        expect(logs.some((l) => l.includes('AI Studio 訂閱憑證同步中'))).toBe(true);
+    });
+
+    it('bounds transient auth retry to at most 1 attempt when 401 error persists', async () => {
+        let callCount = 0;
+        const persistentAuthError = new Error(
+            'Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential.',
+        );
+        const fakeOperation = vi.fn(async () => {
+            callCount++;
+            throw persistentAuthError;
+        });
+
+        await expect(
+            retryOperation(fakeOperation, 3, 10, {
+                authRetriesRemaining: 1,
+            }),
+        ).rejects.toThrow('Request had invalid authentication credentials');
+
+        // Initial call + exactly 1 auth retry = 2 calls total
+        expect(callCount).toBe(2);
     });
 });

@@ -30,8 +30,12 @@ import {
     LiveProgressStreamTruthSummary,
     summarizeLiveProgressTruthfulness,
 } from '../../utils/liveProgressCapabilities';
-import { hasConfiguredGeminiApiKey, promptForGeminiApiKey, resolveGeminiApiKey } from '../../utils/geminiCredentials';
-import { loadImageDimensions } from '../../utils/imageSaveUtils';
+import {
+    hasConfiguredGeminiApiKey,
+    isTransientAiStudioAuthError,
+    promptForGeminiApiKey,
+    resolveGeminiApiKey,
+} from '../../utils/geminiCredentials';
 import { buildStyleAwareImagePrompt } from '../../utils/stylePromptBuilder';
 import { DEFAULT_TEMPERATURE, normalizeTemperature } from '../../utils/temperature';
 import { Language } from '../../utils/translations';
@@ -982,15 +986,24 @@ interface DirectRetryOptions {
     onLog?: (msg: string) => void;
     model?: string;
     initialRetries?: number;
+    authRetriesRemaining?: number;
 }
 
-const retryOperation = async <T>(
+export const retryOperation = async <T>(
     operation: () => Promise<T>,
     retries: number,
     delayMs: number = 1500,
     opts?: DirectRetryOptions,
 ): Promise<T> => {
-    const { backoffMultiplier = 2, maxDelay = 8000, abortSignal, onLog, model, initialRetries = retries } = opts || {};
+    const {
+        backoffMultiplier = 2,
+        maxDelay = 8000,
+        abortSignal,
+        onLog,
+        model,
+        initialRetries = retries,
+        authRetriesRemaining = 1,
+    } = opts || {};
     try {
         const now = Date.now();
         const backoffUntil = model ? getModelRateLimitBackoffUntil(model) : 0;
@@ -1038,6 +1051,15 @@ const retryOperation = async <T>(
         }
 
         if (abortSignal?.aborted) throw new Error('ABORTED');
+
+        if (authRetriesRemaining > 0 && isTransientAiStudioAuthError(error)) {
+            onLog?.('⏳ AI Studio 訂閱憑證同步中，等待 1.5 秒後自動重試... (1/1)');
+            await delayWithAbort(1500, abortSignal);
+            return retryOperation(operation, retries, delayMs, {
+                ...opts,
+                authRetriesRemaining: authRetriesRemaining - 1,
+            });
+        }
 
         if (model) {
             updateGlobalRateLimitBackoff(model, msg);
@@ -1527,3 +1549,4 @@ export class BrowserDirectProvider implements WorkspaceExecutionProvider {
 }
 
 export const browserDirectProvider = new BrowserDirectProvider();
+export { isTransientAiStudioAuthError };

@@ -1,5 +1,14 @@
 # Changelog
 
+## v4.4.2 - 2026-09-06
+
+- Release title: Nano Banana Ultra 4.4.2 - AI Studio Direct Mode Transient 401 Token Refresh Resilience & Subscription Quota Protection
+- Release summary:
+    - **AI Studio Direct Mode Transient 401 OAuth 2 / Session Token Refresh Resilience (`services/providers/browserDirectProvider.ts`, `services/geminiService.ts`, `utils/geminiCredentials.ts`)**: Resolved an issue where running in Google AI Studio Direct Mode with a Google AI Pro / Ultra subscription encountered transient `401 UNAUTHENTICATED` errors (`Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential`) on cold starts or after idle periods due to background OAuth token refresh latency. Implemented `isTransientAiStudioAuthError` to detect session token refresh patterns and added a bounded 1.5s delay automatic retry (max 1 attempt) to `retryOperation`, allowing background token refresh to complete and successfully recovering generation without sacrificing slots.
+    - **Subscription-First Error Guidance (`hooks/usePerformGeneration.ts`)**: Updated UI error handling so that if repeated auth failures persist in Direct mode, the system guides users that the AI Studio subscription session has expired and advises refreshing the page, rather than erroneously prompting for paid API keys.
+    - **Environment Variable Penetration Compatibility (`vite.config.ts`)**: Resolved `process.env.API_KEY` mapping in `vite.config.ts` to check `process.env.API_KEY || env.API_KEY || process.env.GEMINI_API_KEY || env.GEMINI_API_KEY || ''`, ensuring AI Studio natively injected environment variables are accurately propagated.
+    - **Automated Test Coverage (`tests/browserDirectProvider.test.ts`)**: Added dedicated unit tests verifying accurate detection of Google 401/OAuth/cookie error strings, successful 1-shot recovery on transient auth errors, and strict 1-retry bounding. 100% test pass rate maintained across all 116 test suites (964 tests).
+
 ## v4.4.1 - 2026-09-03
 
 - Release title: Nano Banana Ultra 4.4.1 - Image Editor Shared Settings Resolution Sync & Model Constraint Guard

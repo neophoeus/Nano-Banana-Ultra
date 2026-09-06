@@ -25,6 +25,7 @@ import {
     checkApiKey,
     promptForApiKey,
 } from '../services/geminiService';
+import { isTransientAiStudioAuthError } from '../utils/geminiCredentials';
 import { emitDebugTerminalEvent } from '../utils/debugTerminalEvents';
 import { buildStageErrorState, getGenerationFailure } from '../utils/generationFailure';
 import {
@@ -453,7 +454,10 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                     const requestCreatedAt = new Date();
                     const requestId = crypto.randomUUID();
 
-                    const handleImageReceived = async (url: string, slotIndex: number): Promise<ImageReceivedResult> => {
+                    const handleImageReceived = async (
+                        url: string,
+                        slotIndex: number,
+                    ): Promise<ImageReceivedResult> => {
                         if (controller.signal.aborted) {
                             throw new Error('ABORTED');
                         }
@@ -673,7 +677,7 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                                 normalizeImageSidecarMetadata({
                                     ...sidecarMetadata,
                                     ...(res.metadata || {}),
-                                raid: res.metadata?.raid,
+                                    raid: res.metadata?.raid,
                                 }) || sidecarMetadata,
                             grounding: res.grounding,
                             sessionHints: sanitizedSessionHints || undefined,
@@ -746,8 +750,7 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                         handleImageReceived,
                         handleLogCallback,
                         controller.signal,
-                        (completed, total) =>
-                            setBatchProgress({ completed, total, currentRound, totalRounds }),
+                        (completed, total) => setBatchProgress({ completed, total, currentRound, totalRounds }),
                         handleResultCallback,
                         onLiveProgressEvent,
                         handleSlotStart,
@@ -803,7 +806,20 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                 console.error(err);
                 const errorMessage = err.message || 'Unknown error';
 
-                if (errorMessage === 'API_KEY_INVALID' || errorMessage.includes('API key')) {
+                if (isTransientAiStudioAuthError(err)) {
+                    const isAiStudio = typeof window !== 'undefined' && Boolean((window as any).aistudio);
+                    const summary = isAiStudio
+                        ? 'AI Studio 訂閱登入憑證已過期，請重新整理網頁以刷新 Google 帳號授權'
+                        : t('errorApiKey');
+                    addLog(t('logFatalError').replace('{0}', errorMessage));
+                    setError({
+                        summary,
+                        detail: errorMessage,
+                        failure: null,
+                    });
+                    setApiKeyReady(false);
+                    showNotification(summary, 'error');
+                } else if (errorMessage === 'API_KEY_INVALID' || errorMessage.includes('API key')) {
                     addLog(t('logFatalError').replace('{0}', errorMessage));
                     setError({
                         summary: t('errorApiKey'),
