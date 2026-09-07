@@ -42,6 +42,7 @@ import { Language } from '../../utils/translations';
 import { extractGroundingDetails } from '../../utils/geminiGroundingExtraction';
 import { buildImageRequestConfig, validateCapabilityRequest } from '../../utils/geminiRequestConfig';
 import { emitDebugTerminalEvent } from '../../utils/debugTerminalEvents';
+import { loadImageDimensions } from '../../utils/imageSaveUtils';
 import {
     getStoredAiStudioSubscriptionTier,
     getModelPacingDelayMs,
@@ -594,7 +595,7 @@ const prepareBrowserGenerateRequest = async (
     };
 };
 
-const buildGenerateResponseFromSdkResponse = async ({
+export const buildGenerateResponseFromSdkResponse = async ({
     options,
     prepared,
     sdkResponse,

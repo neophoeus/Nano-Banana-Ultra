@@ -11,7 +11,9 @@ import {
     getModelLastRequestCompletedAt,
     isTransientAiStudioAuthError,
     retryOperation,
+    buildGenerateResponseFromSdkResponse,
 } from '../services/providers/browserDirectProvider';
+import * as imageSaveUtils from '../utils/imageSaveUtils';
 import {
     getStoredAiStudioSubscriptionTier,
     setStoredAiStudioSubscriptionTier,
@@ -256,5 +258,98 @@ describe('BrowserDirectProvider and AI Studio Subscription Tier Pacing', () => {
 
         // Initial call + exactly 1 auth retry = 2 calls total
         expect(callCount).toBe(2);
+    });
+
+    it('resolves actualOutput dimensions via loadImageDimensions when extracted has imageUrl', async () => {
+        const spy = vi.spyOn(imageSaveUtils, 'loadImageDimensions').mockResolvedValue({
+            width: 1920,
+            height: 1080,
+        });
+
+        const response = await buildGenerateResponseFromSdkResponse({
+            options: {
+                prompt: 'test prompt',
+                model: 'gemini-3.1-flash-image',
+                imageSize: '2K',
+                style: 'none',
+                outputFormat: 'images-only',
+            } as any,
+            prepared: {
+                requestBody: { imageSize: '2K' },
+                resolvedResponseModalities: ['IMAGE'],
+                effectiveThinkingLevel: 'high',
+                shouldIncludeThoughts: false,
+                groundingMode: 'off',
+                conversationHistoryResult: { usable: false, history: [] },
+                useOfficialConversation: false,
+            } as any,
+            sdkResponse: {},
+            extracted: {
+                imageUrl: 'data:image/png;base64,mockImage',
+                imageMimeType: 'image/png',
+                text: 'test',
+                thoughts: '',
+                resultParts: [],
+                thoughtSignaturePresent: false,
+                promptBlockReason: undefined,
+                finishReason: undefined,
+                safetyRatings: [],
+                extractionIssue: undefined,
+            },
+            imgIndex: 1,
+        });
+
+        expect(spy).toHaveBeenCalledWith('data:image/png;base64,mockImage');
+        expect(response.metadata?.actualOutput).toEqual({
+            width: 1920,
+            height: 1080,
+            mimeType: 'image/png',
+        });
+        expect((response.sessionHints as any)?.actualImageDimensions).toBe('1920x1080');
+
+        spy.mockRestore();
+    });
+
+    it('gracefully handles loadImageDimensions failure by setting actualOutput to null without throwing ReferenceError', async () => {
+        const spy = vi.spyOn(imageSaveUtils, 'loadImageDimensions').mockRejectedValue(new Error('Load failed'));
+
+        const response = await buildGenerateResponseFromSdkResponse({
+            options: {
+                prompt: 'test prompt',
+                model: 'gemini-3-pro-image',
+                imageSize: '4K',
+                style: 'none',
+                outputFormat: 'images-only',
+            } as any,
+            prepared: {
+                requestBody: { imageSize: '4K' },
+                resolvedResponseModalities: ['IMAGE'],
+                effectiveThinkingLevel: 'high',
+                shouldIncludeThoughts: true,
+                groundingMode: 'off',
+                conversationHistoryResult: { usable: false, history: [] },
+                useOfficialConversation: false,
+            } as any,
+            sdkResponse: {},
+            extracted: {
+                imageUrl: 'data:image/png;base64,corruptImage',
+                imageMimeType: 'image/png',
+                text: 'test',
+                thoughts: '',
+                resultParts: [],
+                thoughtSignaturePresent: false,
+                promptBlockReason: undefined,
+                finishReason: undefined,
+                safetyRatings: [],
+                extractionIssue: undefined,
+            },
+            imgIndex: 1,
+        });
+
+        expect(spy).toHaveBeenCalledWith('data:image/png;base64,corruptImage');
+        expect(response.metadata?.actualOutput).toBeNull();
+        expect((response.sessionHints as any)?.actualImageDimensions).toBeUndefined();
+
+        spy.mockRestore();
     });
 });

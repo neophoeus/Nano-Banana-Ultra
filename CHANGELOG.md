@@ -1,5 +1,12 @@
 # Changelog
 
+## v4.4.3 - 2026-09-07
+
+- Release title: Nano Banana Ultra 4.4.3 - Direct Mode Image Dimensions Measurement & Missing Import Fix
+- Release summary:
+    - **Direct Mode Image Dimensions Measurement & Missing Import Fix (`services/providers/browserDirectProvider.ts`)**: Resolved a critical `ReferenceError: loadImageDimensions is not defined` runtime exception encountered when finalizing image generation responses in browser direct mode (`buildGenerateResponseFromSdkResponse`). Added the missing module import `import { loadImageDimensions } from '../../utils/imageSaveUtils';` to ensure actual output dimensions (`actualOutput: { width, height, mimeType }`) and `sessionHints.actualImageDimensions` are properly measured and persisted across all supported image models (`gemini-3.1-flash-image`, `gemini-3.1-flash-lite-image`, `gemini-3-pro-image`, `gemini-2.5-flash-image`). Prevents successfully generated API images from falsely failing during client response construction and recording `historySourceFailedLog` errors.
+    - **Automated Unit Test Coverage (`tests/browserDirectProvider.test.ts`)**: Added dedicated unit tests verifying that `buildGenerateResponseFromSdkResponse` correctly resolves `actualOutput` dimensions via `loadImageDimensions` on successful image payloads, and gracefully falls back to `null` on image load failure without throwing any unhandled `ReferenceError`. Maintained 100% test pass rate across all 116 test suites (966 tests).
+
 ## v4.4.2 - 2026-09-06
 
 - Release title: Nano Banana Ultra 4.4.2 - AI Studio Direct Mode Transient 401 Token Refresh Resilience & Subscription Quota Protection
