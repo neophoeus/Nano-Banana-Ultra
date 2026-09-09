@@ -10,6 +10,8 @@ const translations: Record<string, string> = {
     generationFailureSummaryNoImage: 'No-image failure summary',
     generationFailureSummaryThinkingLoop: 'Thinking loop failure summary',
     generationFailureDetailThinkingLoop: 'Thinking loop details.',
+    generationFailureSummaryQuota: 'Quota failure summary',
+    generationFailureDetailQuota: 'Quota details.',
     generationFailureDetailRetry: 'Retry detail',
     generationFailureDetailPromptBlockReason: 'Policy block reason: {0}.',
     generationFailureDetailSafetyCategories: 'Safety categories: {0}.',
@@ -257,5 +259,18 @@ describe('generationFailure helpers', () => {
         const stageError = buildStageErrorState(t, failure, null);
         expect(stageError.summary).toBe('Thinking loop failure summary');
         expect(stageError.detail).toContain('Thinking loop details.');
+    });
+
+    it('classifies quota exceeded / rate limit errors into quota-exceeded code', () => {
+        const failure = resolveGenerationFailureInfo({
+            explicitError: 'Resource has been exhausted (e.g. check quota). [429 RESOURCE_EXHAUSTED]',
+        });
+
+        expect(failure.code).toBe('quota-exceeded');
+        expect(failure.message).toBe('Resource has been exhausted (e.g. check quota). [429 RESOURCE_EXHAUSTED]');
+
+        const stageError = buildStageErrorState(t, failure, null);
+        expect(stageError.summary).toBe('Quota failure summary');
+        expect(stageError.detail).toContain('Quota details.');
     });
 });

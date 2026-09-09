@@ -1059,4 +1059,7 @@ export const ja = {
     generationFailureSummaryThinkingLoop: 'Thinking Loop Detected',
     generationFailureDetailThinkingLoop:
         'The model exceeded thinking limits. Generation was aborted to prevent freezing. Try resetting the temperature to 1.0 or reducing the thinking level.',
+    generationFailureSummaryQuota: 'Gemini API のレート制限またはクォータ上限に達しました。',
+    generationFailureDetailQuota:
+        'リクエストがレート制限されたか、一時的にクォータが枯渇しました。リクエストの間隔を空けるか、ローリングウィンドウのリセットをお待ちください。',
 } as const;

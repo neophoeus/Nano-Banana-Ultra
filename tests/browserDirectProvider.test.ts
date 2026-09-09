@@ -12,6 +12,7 @@ import {
     isTransientAiStudioAuthError,
     retryOperation,
     buildGenerateResponseFromSdkResponse,
+    detectThinkingLoop,
 } from '../services/providers/browserDirectProvider';
 import * as imageSaveUtils from '../utils/imageSaveUtils';
 import {
@@ -351,5 +352,56 @@ describe('BrowserDirectProvider and AI Studio Subscription Tier Pacing', () => {
         expect((response.sessionHints as any)?.actualImageDimensions).toBeUndefined();
 
         spy.mockRestore();
+    });
+
+    describe('detectThinkingLoop', () => {
+        it('returns false for empty or short thought strings', () => {
+            expect(detectThinkingLoop('')).toBe(false);
+            expect(detectThinkingLoop('thinking about this.')).toBe(false);
+        });
+
+        it('returns false for varied, non-repetitive reasoning', () => {
+            const variedThoughts = [
+                'First we analyze the composition of the image.',
+                'Next we consider the lighting and color balance.',
+                'Then we evaluate the subject placement and depth of field.',
+                'Finally we synthesize the final visual rendering.',
+            ].join(' ');
+            expect(detectThinkingLoop(variedThoughts)).toBe(false);
+        });
+
+        it('detects repetitive reasoning loops exceeding threshold', () => {
+            const repeatedClause = 'Let me reconsider the precise shade of blue here.';
+            const loopThoughts = Array(6).fill(repeatedClause).join(' ');
+            expect(detectThinkingLoop(loopThoughts)).toBe(true);
+        });
+    });
+
+    describe('localStorage persistent rate limit backoff', () => {
+        it('persists rate limit backoff to localStorage and restores it', () => {
+            updateGlobalRateLimitBackoff('gemini-3.1-flash-image', '429 RESOURCE_EXHAUSTED: retry in 15s');
+
+            const backoff = getModelRateLimitBackoffUntil('gemini-3.1-flash-image');
+            expect(backoff).toBeGreaterThan(Date.now());
+            expect(localStorage.getItem('nbu_model_rate_limit_backoff_until_gemini-3.1-flash-image')).toBe(
+                String(backoff),
+            );
+
+            clearModelRateLimitBackoff('gemini-3.1-flash-image');
+            expect(localStorage.getItem('nbu_model_rate_limit_backoff_until_gemini-3.1-flash-image')).toBeNull();
+            expect(getModelRateLimitBackoffUntil('gemini-3.1-flash-image')).toBe(0);
+        });
+
+        it('self-heals and ignores corrupted distant-future backoff timestamps (>120s)', () => {
+            const corruptedFutureTime = Date.now() + 500000; // > 120s
+            localStorage.setItem(
+                'nbu_model_rate_limit_backoff_until_gemini-3-pro-image',
+                String(corruptedFutureTime),
+            );
+
+            // Memory is cleared in beforeEach, so it queries localStorage and should self-heal
+            expect(getModelRateLimitBackoffUntil('gemini-3-pro-image')).toBe(0);
+            expect(localStorage.getItem('nbu_model_rate_limit_backoff_until_gemini-3-pro-image')).toBeNull();
+        });
     });
 });

@@ -169,6 +169,8 @@ export const zh_TW = {
     generationFailureSummaryThinkingLoop: '偵測到思考無限循環',
     generationFailureDetailThinkingLoop:
         '模型思考字數或時間超出上限，已自動中斷生成以防卡死。建議調整溫度（如降低至 1.0）或降低思考等級後重試。',
+    generationFailureSummaryQuota: '已超出 Gemini API 頻率或額度限制。',
+    generationFailureDetailQuota: '請求因頻率限制或額度暫時耗盡而失敗。建議拉長請求間隔，或等待滾動視窗重置後再試。',
     generationFailureDetailRetry: '請調整提示詞後重試，或稍後再試一次。',
     generationFailureDetailPromptBlockReason: '政策攔截原因：{0}。',
     generationFailureDetailSafetyCategories: '安全分類：{0}。',

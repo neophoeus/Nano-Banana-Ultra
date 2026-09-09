@@ -17,6 +17,8 @@ import {
     resetSharedSnapshotOfflineState,
     WORKSPACE_SNAPSHOT_STORAGE_KEY,
     loadWorkspaceSnapshotFromDb,
+    clearStoredWorkspaceSnapshot,
+    preloadWorkspaceImagesToMemory,
 } from '../utils/workspacePersistence';
 import { setExecutionModeSetting } from '../utils/workspaceExecutionMode';
 
@@ -1308,5 +1310,18 @@ describe('workspacePersistence', () => {
         // 還原時驗證
         const restored = loadWorkspaceSnapshot();
         expect(restored.history.length).toBe(25);
+    });
+
+    it('clears stored workspace snapshot from both localStorage and sessionStorage', () => {
+        saveWorkspaceSnapshot(baseSnapshot);
+        expect(localStorage.getItem(WORKSPACE_SNAPSHOT_STORAGE_KEY)).not.toBeNull();
+
+        clearStoredWorkspaceSnapshot();
+        expect(localStorage.getItem(WORKSPACE_SNAPSHOT_STORAGE_KEY)).toBeNull();
+        expect(sessionStorage.getItem(WORKSPACE_SNAPSHOT_STORAGE_KEY)).toBeNull();
+    });
+
+    it('preloads workspace images to memory without error', async () => {
+        await expect(preloadWorkspaceImagesToMemory(baseSnapshot)).resolves.not.toThrow();
     });
 });

@@ -843,14 +843,59 @@ const mergeRecoveredFailureResult = (initialResult: any, recoveryResult: any) =>
     conversation: recoveryResult.conversation ?? initialResult.conversation,
 });
 
+export function detectThinkingLoop(thoughts: string | undefined | null): boolean {
+    if (!thoughts) return false;
+    const sentences = thoughts
+        .split(/[.\n!?，。！；？,]+/)
+        .map((s) => s.trim())
+        .filter((s) => s.length >= 10);
+    const counts = new Map<string, number>();
+    for (const sentence of sentences) {
+        const count = (counts.get(sentence) || 0) + 1;
+        if (count >= 5) {
+            return true;
+        }
+        counts.set(sentence, count);
+    }
+    return false;
+}
+
+const RATE_LIMIT_STORAGE_PREFIX = 'nbu_model_rate_limit_backoff_until_';
 const modelRateLimitBackoffs = new Map<string, number>();
 const modelLastRequestCompletedAt = new Map<string, number>();
 
 export const getModelRateLimitBackoffUntil = (model: string): number => {
+    const maxFutureAllowanceMs = 120000;
+    const now = Date.now();
+    try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            const val = window.localStorage.getItem(RATE_LIMIT_STORAGE_PREFIX + model);
+            if (val) {
+                const parsed = parseInt(val, 10) || 0;
+                if (parsed > now + maxFutureAllowanceMs) {
+                    window.localStorage.removeItem(RATE_LIMIT_STORAGE_PREFIX + model);
+                    modelRateLimitBackoffs.delete(model);
+                    return 0;
+                }
+                if (parsed > now) {
+                    return Math.max(parsed, modelRateLimitBackoffs.get(model) || 0);
+                }
+            }
+        }
+    } catch {
+        // Ignore storage access errors
+    }
     return modelRateLimitBackoffs.get(model) || 0;
 };
 
 export const clearModelRateLimitBackoff = (model: string): void => {
+    try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            window.localStorage.removeItem(RATE_LIMIT_STORAGE_PREFIX + model);
+        }
+    } catch {
+        // Ignore storage cleanup errors
+    }
     modelRateLimitBackoffs.delete(model);
 };
 
@@ -919,7 +964,15 @@ export const updateGlobalRateLimitBackoff = (model: string, msg: string): void =
 
     const calculatedWaitMs = parseRateLimitWaitMs(msg, model);
     const nextBackoff = Date.now() + calculatedWaitMs;
-    modelRateLimitBackoffs.set(model, Math.max(getModelRateLimitBackoffUntil(model), nextBackoff));
+    const effectiveBackoff = Math.max(getModelRateLimitBackoffUntil(model), nextBackoff);
+    modelRateLimitBackoffs.set(model, effectiveBackoff);
+    try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            window.localStorage.setItem(RATE_LIMIT_STORAGE_PREFIX + model, String(effectiveBackoff));
+        }
+    } catch {
+        // Ignore localStorage write errors
+    }
 };
 
 export const ensureModelPacingDelay = async (
@@ -1045,6 +1098,7 @@ export const retryOperation = async <T>(
             msg.includes('PROMPT_BLOCKED') ||
             msg.includes('SAFETY_BLOCK') ||
             msg.includes('policy') ||
+            msg.includes('Thinking loop detected') ||
             isDeterministicQuota ||
             msg === 'ABORTED'
         ) {
@@ -1154,6 +1208,12 @@ const generateSingleImage = async (
 
         throwIfAborted(abortSignal);
         const extracted = extractGeneratedContent(response);
+        if (detectThinkingLoop(extracted.thoughts)) {
+            throw new Error('Thinking loop detected: repetitive reasoning clauses observed 5 or more times.');
+        }
+        if ((extracted.thoughts?.length || 0) > 12000) {
+            throw new Error('Thinking loop detected: reasoning character limit exceeded 12000 characters.');
+        }
         const generateResponse = await buildGenerateResponseFromSdkResponse({
             options,
             prepared,

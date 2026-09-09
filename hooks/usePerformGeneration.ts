@@ -416,7 +416,7 @@ export function usePerformGeneration(options: UsePerformGenerationProps) {
                     const notificationMsg = t('autoExportNotificationText')
                         .replace('{0}', String(countSinceExport))
                         .replace('{1}', sizeGrowthMb.toFixed(1));
-                    showNotification(notificationMsg, 'info');
+                    showNotification(notificationMsg, 'info', 8000);
 
                     if (handleExportWorkspaceSnapshot) {
                         setTimeout(() => {

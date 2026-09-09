@@ -1048,4 +1048,7 @@ export const ko = {
     generationFailureSummaryThinkingLoop: 'Thinking Loop Detected',
     generationFailureDetailThinkingLoop:
         'The model exceeded thinking limits. Generation was aborted to prevent freezing. Try resetting the temperature to 1.0 or reducing the thinking level.',
+    generationFailureSummaryQuota: 'Gemini API 속도 제한 또는 할당량 초과.',
+    generationFailureDetailQuota:
+        '요청 속도가 제한되었거나 할당량이 일시적으로 소진되었습니다. 요청 간격을 늘리거나 롤링 윈도우가 재설정될 때까지 기다려 보십시오.',
 } as const;

@@ -53,6 +53,7 @@ const generationFailureCodes = new Set<GenerationFailureCode>([
     'no-image-data',
     'empty-response',
     'thinking-loop',
+    'quota-exceeded',
     'unknown',
 ]);
 
@@ -221,6 +222,14 @@ const missingPartsSnippets = [
     'le modele a renvoye un resultat candidat, mais sans bloc de contenu',
     'das modell hat einen ausgabekandidaten zuruckgegeben, aber ohne inhaltsblocke',
     'модель вернула вариант ответа, но в нем не было блоков содержимого',
+];
+
+const quotaFailureSnippets = [
+    'quota exceeded',
+    'exceeded your current quota',
+    'resource_exhausted',
+    '429',
+    'rate limit',
 ];
 
 const normalizeOptionalString = (value: unknown): string | null => {
@@ -441,6 +450,17 @@ const inferGenerationFailureInfoFromErrorText = (value: string): GenerationFailu
           ? 'missing-parts'
           : null;
 
+    if (includesAnySnippet(comparisonText, quotaFailureSnippets)) {
+        return {
+            code: 'quota-exceeded',
+            message: normalizedValue,
+            finishReason,
+            extractionIssue,
+            returnedTextContent,
+            returnedThoughtContent,
+        };
+    }
+
     if (promptBlockReason || includesAnySnippet(comparisonText, policyFailureSnippets)) {
         return {
             code: 'policy-blocked',
@@ -553,6 +573,8 @@ const getFailureSpecificity = (failure: GenerationFailureInfo | null): number =>
     }
 
     switch (failure.code) {
+        case 'quota-exceeded':
+            return 6;
         case 'policy-blocked':
         case 'safety-blocked':
             return 5;
@@ -561,6 +583,7 @@ const getFailureSpecificity = (failure: GenerationFailureInfo | null): number =>
         case 'no-image-data':
             return 3;
         case 'empty-response':
+        case 'thinking-loop':
             return 2;
         case 'unknown':
         default:
@@ -699,6 +722,16 @@ export function resolveGenerationFailureInfo(source: GenerationFailureSourceStat
                 extractionIssue: source.extractionIssue ?? null,
                 returnedTextContent,
                 returnedThoughtContent,
+            };
+        }
+        const inferred = inferGenerationFailureInfoFromErrorText(explicitError);
+        if (inferred) {
+            return {
+                ...inferred,
+                finishReason: finishReason || inferred.finishReason,
+                extractionIssue: source.extractionIssue ?? inferred.extractionIssue,
+                returnedTextContent: returnedTextContent || inferred.returnedTextContent,
+                returnedThoughtContent: returnedThoughtContent || inferred.returnedThoughtContent,
             };
         }
         return {
@@ -923,6 +956,14 @@ export function buildStageErrorState(
             return {
                 summary: t('generationFailureSummaryThinkingLoop'),
                 detail: joinDisplayDetails([t('generationFailureDetailThinkingLoop'), retryDetail]),
+                failure: resolvedFailure,
+                rawError: fallbackError || null,
+                displayContext: displayContext ?? null,
+            };
+        case 'quota-exceeded':
+            return {
+                summary: t('generationFailureSummaryQuota'),
+                detail: joinDisplayDetails([t('generationFailureDetailQuota'), retryDetail]),
                 failure: resolvedFailure,
                 rawError: fallbackError || null,
                 displayContext: displayContext ?? null,

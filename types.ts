@@ -132,6 +132,7 @@ export type GenerationFailureCode =
     | 'no-image-data'
     | 'empty-response'
     | 'thinking-loop'
+    | 'quota-exceeded'
     | 'unknown';
 export type GenerationFailureExtractionIssue = 'missing-candidates' | 'missing-parts' | 'no-image-data';
 

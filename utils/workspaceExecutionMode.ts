@@ -94,9 +94,11 @@ export const setStoredExecutionModeSetting = (setting: WorkspaceExecutionModeSet
 
     if (setting === 'local') {
         resolvedMode = 'local';
+        hasDetectedOnce = true;
         notifyListeners();
     } else if (setting === 'direct') {
         resolvedMode = 'direct';
+        hasDetectedOnce = true;
         notifyListeners();
     } else {
         void detectExecutionMode();

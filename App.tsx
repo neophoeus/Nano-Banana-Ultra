@@ -41,13 +41,15 @@ import {
 } from './utils/workspaceTopLauncherStyles';
 import {
     clearSharedWorkspaceSnapshot,
+    clearStoredWorkspaceSnapshot,
     EMPTY_WORKSPACE_COMPOSER_STATE,
     EMPTY_WORKSPACE_SNAPSHOT,
     loadWorkspaceSnapshot,
     loadWorkspaceSnapshotFromDb,
+    preloadWorkspaceImagesToMemory,
     saveWorkspaceSnapshot,
 } from './utils/workspacePersistence';
-import { clearBrowserWorkspaceSnapshotFromDb } from './utils/browserImageStore';
+import { clearBrowserSavedImageRecords, clearBrowserWorkspaceSnapshotFromDb } from './utils/browserImageStore';
 import { loadQueuedBatchSpaceSnapshot } from './utils/queuedBatchSpacePersistence';
 import { hasRestorableWorkspaceContent } from './utils/workspaceSnapshotState';
 import { deriveGroundingMode, getAvailableGroundingModes } from './utils/groundingMode';
@@ -1386,8 +1388,10 @@ const App: React.FC = () => {
     });
     handleExportWorkspaceSnapshotRef.current = handleExportWorkspaceSnapshot;
     const applyEmptyWorkspaceSnapshot = useCallback(() => {
+        clearStoredWorkspaceSnapshot();
         saveWorkspaceSnapshot(EMPTY_WORKSPACE_SNAPSHOT);
         void clearBrowserWorkspaceSnapshotFromDb();
+        void clearBrowserSavedImageRecords();
         applyWorkspaceSnapshot(EMPTY_WORKSPACE_SNAPSHOT);
     }, [applyWorkspaceSnapshot]);
 
@@ -1401,7 +1405,7 @@ const App: React.FC = () => {
         let isDisposed = false;
         if (getResolvedExecutionMode() === 'direct') {
             void loadWorkspaceSnapshotFromDb()
-                .then((dbSnapshot) => {
+                .then(async (dbSnapshot) => {
                     if (isDisposed || !dbSnapshot) {
                         return;
                     }
@@ -1414,7 +1418,10 @@ const App: React.FC = () => {
                             return currentItem && !currentItem.url && Boolean(dbItem.url);
                         });
                     if (hasMoreHistory || hasEmptyHistory || hasRicherHistory) {
-                        applyWorkspaceSnapshot(dbSnapshot);
+                        await preloadWorkspaceImagesToMemory(dbSnapshot).catch(() => {});
+                        if (!isDisposed) {
+                            applyWorkspaceSnapshot(dbSnapshot);
+                        }
                     }
                 })
                 .catch(() => {});

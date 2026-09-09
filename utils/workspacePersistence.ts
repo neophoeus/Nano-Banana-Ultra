@@ -8,6 +8,7 @@ import {
     QueuedBatchJob,
     QueuedBatchJobImportIssue,
     ResultPart,
+    ResultImagePart,
     SAFETY_CATEGORY_KEYS,
     SAFETY_THRESHOLD_KEYS,
     SafetyThresholdKey,
@@ -1547,6 +1548,63 @@ export const saveWorkspaceSnapshot = (snapshot: WorkspacePersistenceSnapshot): v
             phase: 'compact-fallback',
         });
         console.warn('[workspacePersistence] Failed to persist compact workspace snapshot to localStorage, backed up to IndexedDB.', error);
+    }
+};
+
+export const preloadWorkspaceImagesToMemory = async (
+    snapshot: WorkspacePersistenceSnapshot | null | undefined,
+): Promise<void> => {
+    if (!snapshot) return;
+    const filenames = new Set<string>();
+
+    // 1. Only preload thumbnails for history items to keep memory footprint low at startup
+    snapshot.history.forEach((item) => {
+        if (item.thumbnailSavedFilename) {
+            filenames.add(item.thumbnailSavedFilename);
+        } else if (item.savedFilename) {
+            // Fallback: preload the full image only if there's no thumbnail available
+            filenames.add(item.savedFilename);
+        }
+    });
+
+    // 2. Preload the currently selected history item's full resolution image so it displays immediately on stage
+    const selectedId = snapshot.viewState.selectedHistoryId;
+    if (selectedId) {
+        const selectedItem = snapshot.history.find((item) => item.id === selectedId);
+        if (selectedItem?.savedFilename) {
+            filenames.add(selectedItem.savedFilename);
+        }
+    }
+
+    // 3. Preload reference assets (objects, characters)
+    snapshot.stagedAssets.forEach((asset) => {
+        if (asset.savedFilename) filenames.add(asset.savedFilename);
+    });
+
+    // 4. Preload active result parts
+    snapshot.workspaceSession.activeResult?.resultParts?.forEach((part) => {
+        if (part && (part.kind === 'thought-image' || part.kind === 'output-image')) {
+            const imagePart = part as ResultImagePart;
+            if (imagePart.savedFilename) {
+                filenames.add(imagePart.savedFilename);
+            }
+        }
+    });
+
+    // 非同步載入所有圖片至記憶體快取
+    await Promise.all(
+        Array.from(filenames).map((name) => loadBrowserSavedImageRecord(name).catch(() => null)),
+    );
+};
+
+export const clearStoredWorkspaceSnapshot = (): void => {
+    try {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            window.localStorage.removeItem(WORKSPACE_SNAPSHOT_STORAGE_KEY);
+            window.localStorage.removeItem(LEGACY_BRANCH_NAME_OVERRIDES_STORAGE_KEY);
+        }
+    } catch {
+        // Ignore storage cleanup failures; runtime state is still reset in memory.
     }
 };
 

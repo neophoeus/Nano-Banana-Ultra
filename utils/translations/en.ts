@@ -173,6 +173,9 @@ export const en = {
     generationFailureSummaryThinkingLoop: 'Thinking Loop Detected',
     generationFailureDetailThinkingLoop:
         'The model exceeded thinking limits. Generation was aborted to prevent freezing. Try resetting the temperature to 1.0 or reducing the thinking level.',
+    generationFailureSummaryQuota: 'Gemini API rate limit or quota exceeded.',
+    generationFailureDetailQuota:
+        'The request was rate-limited or your quota has been temporarily exhausted. Spacing out requests or waiting for the rolling window to reset may help.',
     generationFailureDetailRetry: 'Try revising the prompt or retrying later.',
     generationFailureDetailPromptBlockReason: 'Policy block reason: {0}.',
     generationFailureDetailSafetyCategories: 'Safety categories: {0}.',

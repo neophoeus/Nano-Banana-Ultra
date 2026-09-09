@@ -1075,4 +1075,7 @@ export const ru = {
     generationFailureSummaryThinkingLoop: 'Thinking Loop Detected',
     generationFailureDetailThinkingLoop:
         'The model exceeded thinking limits. Generation was aborted to prevent freezing. Try resetting the temperature to 1.0 or reducing the thinking level.',
+    generationFailureSummaryQuota: 'Превышен лимит запросов или квота Gemini API.',
+    generationFailureDetailQuota:
+        'Запрос ограничен по частоте или ваша квота временно исчерпана. Попробуйте увеличить интервал между запросами или подождать сброса скользящего окна.',
 } as const;
