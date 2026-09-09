@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
     loadBrowserSavedImageDataUrl,
+    readBrowserSavedImageRecordSync,
     BROWSER_SAVED_IMAGE_PATH_PREFIX,
     extractBrowserSavedImageFilename,
 } from '../utils/browserImageStore';
@@ -47,8 +48,13 @@ function LazyHistoryImage({
                 src.startsWith('browser-img://') ||
                 src.includes('filename=')),
     );
+    const isVirtualScheme = Boolean(
+        src &&
+            (src.startsWith(BROWSER_SAVED_IMAGE_PATH_PREFIX) ||
+                src.startsWith('browser-img://')),
+    );
     const isLocalResolutionNeeded = !isDataUrl && (isVirtual || Boolean(savedFilename));
-    const displaySrc = resolvedSrc || src;
+    const displaySrc = resolvedSrc || (isVirtualScheme ? '' : src);
 
     useEffect(() => {
         if (typeof window === 'undefined' || typeof window.IntersectionObserver === 'undefined') {
@@ -92,6 +98,12 @@ function LazyHistoryImage({
         }
 
         // Check sync cache first
+        const syncRecord = readBrowserSavedImageRecordSync(filename);
+        if (syncRecord?.dataUrl) {
+            setResolvedSrc(syncRecord.dataUrl);
+            return;
+        }
+
         const syncUrl = buildSavedImageLoadUrl(filename);
         if (syncUrl && syncUrl.startsWith('data:')) {
             setResolvedSrc(syncUrl);

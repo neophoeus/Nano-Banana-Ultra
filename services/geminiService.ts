@@ -2077,9 +2077,10 @@ export const generateImageWithGemini = async (
         return results;
     }
 
-    // PARALLEL EXECUTION WITH STAGGER
+    // SEQUENTIAL EXECUTION
     const STAGGER_DELAY_MS = 1000;
     let completedCount = 0;
+    const isUnitTest = typeof process !== 'undefined' && process.env.NODE_ENV === 'test';
 
     const finalizeBatchResult = (result: GenerationResult): GenerationResult => {
         completedCount++;
@@ -2088,20 +2089,38 @@ export const generateImageWithGemini = async (
         return result;
     };
 
-    const promises = Array.from({ length: batchSize }).map(async (_, index): Promise<InitialBatchAttemptOutcome> => {
+    const results: GenerationResult[] = [];
+
+    for (let index = 0; index < batchSize; index++) {
         // Stagger delay
-        if (index > 0) await new Promise((resolve) => setTimeout(resolve, index * STAGGER_DELAY_MS));
+        if (index > 0 && !isUnitTest) {
+            try {
+                await delayWithAbort(STAGGER_DELAY_MS, abortSignal);
+            } catch (error) {
+                results.push(
+                    finalizeBatchResult({
+                        slotIndex: index,
+                        status: 'failed',
+                        error:
+                            error instanceof Error && error.message === 'ABORTED'
+                                ? 'Generation cancelled'
+                                : String(error),
+                    }),
+                );
+                continue;
+            }
+        }
 
         // F1: Check abort before starting each image
         if (abortSignal?.aborted) {
-            return {
-                result: finalizeBatchResult({
+            results.push(
+                finalizeBatchResult({
                     slotIndex: index,
                     status: 'failed',
                     error: 'Generation cancelled',
                 }),
-                needsRecovery: false,
-            };
+            );
+            continue;
         }
 
         onSlotStart?.(index);
@@ -2113,62 +2132,35 @@ export const generateImageWithGemini = async (
             abortSignal,
         );
 
-        if (initialResult.status === 'success') {
-            return {
-                result: finalizeBatchResult(initialResult),
-                needsRecovery: false,
-            };
-        }
-
-        if (initialResult.error === 'Generation cancelled') {
-            return {
-                result: finalizeBatchResult(initialResult),
-                needsRecovery: false,
-            };
+        if (initialResult.status === 'success' || initialResult.error === 'Generation cancelled') {
+            results.push(finalizeBatchResult(initialResult));
+            continue;
         }
 
         if (shouldAttemptImageAbsenceRecovery(initialResult)) {
             onLog?.(`Image #${index + 1}: No final image returned. Scheduling one recovery attempt.`);
-            return {
-                result: initialResult,
-                needsRecovery: true,
-            };
-        }
+            const recoveredResult = await executeBlockingImageAttempt(
+                options,
+                index,
+                onImageReceived,
+                onLog,
+                abortSignal,
+            );
+            const finalizedResult =
+                recoveredResult.status === 'success'
+                    ? recoveredResult
+                    : mergeRecoveredFailureResult(initialResult, recoveredResult);
 
-        onLog?.(`Image #${index + 1} Failed: ${initialResult.error}`);
-        return {
-            result: finalizeBatchResult(initialResult),
-            needsRecovery: false,
-        };
-    });
+            if (finalizedResult.status === 'failed') {
+                onLog?.(`Image #${index + 1} Failed: ${finalizedResult.error}`);
+            }
 
-    const initialOutcomes = await Promise.all(promises);
-    const results = initialOutcomes.map((outcome) => outcome.result);
-
-    for (const outcome of initialOutcomes) {
-        if (!outcome.needsRecovery) {
+            results.push(finalizeBatchResult(finalizedResult));
             continue;
         }
 
-        const slotIndex = outcome.result.slotIndex;
-        onLog?.(`Image #${slotIndex + 1}: Retrying once after image-absence failure.`);
-        const recoveredResult = await executeBlockingImageAttempt(
-            options,
-            slotIndex,
-            onImageReceived,
-            onLog,
-            abortSignal,
-        );
-        const finalizedResult =
-            recoveredResult.status === 'success'
-                ? recoveredResult
-                : mergeRecoveredFailureResult(outcome.result, recoveredResult);
-
-        if (finalizedResult.status === 'failed') {
-            onLog?.(`Image #${slotIndex + 1} Failed: ${finalizedResult.error}`);
-        }
-
-        results[slotIndex] = finalizeBatchResult(finalizedResult);
+        onLog?.(`Image #${index + 1} Failed: ${initialResult.error}`);
+        results.push(finalizeBatchResult(initialResult));
     }
 
     return results;

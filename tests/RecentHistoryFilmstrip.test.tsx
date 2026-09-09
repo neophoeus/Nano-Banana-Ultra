@@ -167,4 +167,38 @@ describe('RecentHistoryFilmstrip', () => {
         expect(markup).toContain('filmstrip-card-turn-1-missing-media');
         expect(markup).not.toContain('src=""');
     });
+
+    it('renders preview image for compacted history items with savedFilename even when url is empty', () => {
+        const markup = renderToStaticMarkup(
+            <RecentHistoryFilmstrip
+                recentHistory={[
+                    buildTurn({
+                        id: 'turn-compact',
+                        url: '',
+                        savedFilename: 'nbu_filmstrip_thumb.png',
+                    }),
+                ]}
+                branchCount={1}
+                activeStageImageUrl={null}
+                selectedHistoryId={null}
+                currentStageSourceHistoryId={null}
+                currentSourceHistoryId={null}
+                branchOriginIdByTurnId={{ 'turn-compact': 'root' }}
+                branchLabelByTurnId={{ 'turn-compact': 'Main' }}
+                branchSummaryByOriginId={{}}
+                activeBranchOriginId="root"
+                onClear={vi.fn()}
+                onHistorySelect={vi.fn()}
+                onContinueFromHistoryTurn={vi.fn()}
+                onBranchFromHistoryTurn={vi.fn()}
+                getContinueActionLabel={() => 'Continue'}
+                getBranchAccentClassName={() => 'border-gray-200 bg-white text-gray-700'}
+                getLineageActionLabel={() => 'Continue'}
+                getQueuedBatchPositionLabel={() => null}
+                currentLanguage="en"
+            />,
+        );
+
+        expect(markup).not.toContain('filmstrip-card-turn-compact-missing-media');
+    });
 });

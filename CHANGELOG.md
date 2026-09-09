@@ -1,5 +1,13 @@
 # Changelog
 
+## v4.4.4 - 2026-09-09
+
+- Release title: Nano Banana Ultra 4.4.4 - Sequential Batch Generation Progressive Preview & Direct Mode Large Workspace Thumbnail Resilience
+- Release summary:
+    - **Sequential Batch Generation Progressive Preview (`services/providers/localBackendProvider.ts`, `services/geminiService.ts`, `App.tsx`)**: Realigned multi-image batch generation (`quantity > 1`) from parallel execution back to a sequential loop (`for (let index = 0; index < batchSize; index++)`), aligning behavior with `App-Nano_Banana_Ultra_lite` and `browserDirectProvider`. Enhanced `App.tsx`'s `handleBatchPreviewTileUpdate` so that as each slot completes (`tile.status === 'ready'`), the main stage immediately previews the freshly generated image and clears full-screen loading spinners if the user has not manually pinned another view. Successive slots process smoothly in sequence and append to the history filmstrip progressively, restoring the "generate one, preview one" workflow without waiting for the entire batch to finish.
+    - **Direct Mode Large Workspace Thumbnail Resilience (`components/HistoryPanel.tsx`, `components/RecentHistoryFilmstrip.tsx`, `components/LazyHistoryImage.tsx`, `App.tsx`)**: Resolved an issue in AI Studio / Direct Mode where large workspaces with high turn counts triggered snapshot compaction that cleared `item.url` to stay within localStorage quotas, causing `HistoryPanel` and `RecentHistoryFilmstrip` to misidentify turns as missing media and render gray fallback placeholders until clicked. Updated media preview detection to check `hasPreviewImage = Boolean(item.url || item.thumbnailSavedFilename || item.savedFilename)` and fallback `previewSrc` to `buildSavedImageLoadUrl(...)`. Enhanced `LazyHistoryImage.tsx` with synchronous memory cache lookup (`readBrowserSavedImageRecordSync`) to prevent direct-mode asynchronous flicker and guarded `displaySrc` against unresolved virtual paths. Improved `App.tsx` initial workspace hydration to apply IndexedDB snapshots with higher-fidelity URLs when turn counts match compacted local storage.
+    - **Automated Unit Test Coverage (`tests/localBackendProvider.test.ts`, `tests/HistoryPanel.test.tsx`, `tests/RecentHistoryFilmstrip.test.tsx`)**: Added dedicated unit tests verifying sequential slot execution order and lifecycle callbacks in `localBackendProvider`, as well as preview rendering for compacted turns with empty `url` and valid `savedFilename` in both `HistoryPanel` and `RecentHistoryFilmstrip`. Maintained 100% test pass rate across all 116 test suites (969 tests).
+
 ## v4.4.3 - 2026-09-07
 
 - Release title: Nano Banana Ultra 4.4.3 - Direct Mode Image Dimensions Measurement & Missing Import Fix

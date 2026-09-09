@@ -647,6 +647,10 @@ const App: React.FC = () => {
         [],
     );
 
+    useEffect(() => {
+        activeBatchPreviewSessionRef.current = activeBatchPreviewSession;
+    }, [activeBatchPreviewSession]);
+
     const handleBatchPreviewTileUpdate = useCallback(
         ({ sessionId, tile }: { sessionId: string; tile: BatchPreviewSession['tiles'][number] }) => {
             setActiveBatchPreviewSession((previousSession) => {
@@ -654,15 +658,26 @@ const App: React.FC = () => {
                     return previousSession;
                 }
 
-                return {
+                const nextSession = {
                     ...previousSession,
                     tiles: previousSession.tiles.map((candidateTile) =>
                         candidateTile.slotIndex === tile.slotIndex ? { ...candidateTile, ...tile } : candidateTile,
                     ),
                 };
+                activeBatchPreviewSessionRef.current = nextSession;
+                return nextSession;
             });
+
+            if (tile.status === 'ready') {
+                const stagePreviewUrl = tile.stagePreviewUrl || tile.previewUrl;
+                const currentSession = activeBatchPreviewSessionRef.current;
+                if (stagePreviewUrl && currentSession?.id === sessionId && !currentSession.didUserInspectExistingImage) {
+                    setGeneratedImageUrls([stagePreviewUrl]);
+                    setSelectedImageIndex(0);
+                }
+            }
         },
-        [],
+        [setGeneratedImageUrls, setSelectedImageIndex],
     );
 
     const handleBatchPreviewComplete = useCallback(
@@ -1390,10 +1405,15 @@ const App: React.FC = () => {
                     if (isDisposed || !dbSnapshot) {
                         return;
                     }
-                    if (
-                        dbSnapshot.history.length > history.length ||
-                        (history.length === 0 && dbSnapshot.history.length > 0)
-                    ) {
+                    const hasMoreHistory = dbSnapshot.history.length > history.length;
+                    const hasEmptyHistory = history.length === 0 && dbSnapshot.history.length > 0;
+                    const hasRicherHistory =
+                        dbSnapshot.history.length === history.length &&
+                        dbSnapshot.history.some((dbItem, idx) => {
+                            const currentItem = history[idx];
+                            return currentItem && !currentItem.url && Boolean(dbItem.url);
+                        });
+                    if (hasMoreHistory || hasEmptyHistory || hasRicherHistory) {
                         applyWorkspaceSnapshot(dbSnapshot);
                     }
                 })
@@ -1402,7 +1422,7 @@ const App: React.FC = () => {
         return () => {
             isDisposed = true;
         };
-    }, [applyWorkspaceSnapshot, history.length]);
+    }, [applyWorkspaceSnapshot, history]);
 
     const handleOpenWorkspaceImportPicker = useCallback(() => {
         workspaceImportInputRef.current?.click();

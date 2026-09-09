@@ -108,6 +108,20 @@ describe('HistoryPanel', () => {
         expect(markup).not.toContain('src=""');
     });
 
+    it('renders preview image for compacted history items with savedFilename even when url is empty', () => {
+        const markup = renderToStaticMarkup(
+            <HistoryPanel
+                history={[buildTurn({ url: '', savedFilename: 'nbu_image_123.png' })]}
+                onSelect={vi.fn()}
+                onContinueFromTurn={vi.fn()}
+                onBranchFromTurn={vi.fn()}
+                currentLanguage="en"
+            />,
+        );
+
+        expect(markup).not.toContain('history-card-turn-1-missing-media');
+    });
+
     it('renders transient preview tiles inline ahead of completed history cards with descending slot order', () => {
         const markup = renderToStaticMarkup(
             <HistoryPanel

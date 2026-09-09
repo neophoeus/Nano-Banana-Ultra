@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { WORKSPACE_OVERLAY_Z_INDEX } from '../constants/workspaceOverlays';
 import { BatchPreviewTile, BranchNameOverrides, GeneratedImage } from '../types';
 import { Language, getTranslation } from '../utils/translations';
+import { buildSavedImageLoadUrl } from '../utils/imageSaveUtils';
 import LazyHistoryImage from './LazyHistoryImage';
 
 interface HistoryPanelProps {
@@ -319,7 +320,9 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
                     const isFailed = item.status === 'failed';
                     const isSelected = selectedId ? selectedId === item.id : selectedUrl === item.url;
                     const isCurrentSource = currentSourceHistoryId === item.id;
-                    const hasPreviewImage = Boolean(item.url);
+                    const previewFilename = item.thumbnailSavedFilename || item.savedFilename;
+                    const hasPreviewImage = Boolean(item.url || previewFilename);
+                    const previewSrc = item.url || (previewFilename ? buildSavedImageLoadUrl(previewFilename) : '');
                     const isFresh = item.status === 'success' && item.openedAt == null;
 
                     return (
@@ -364,8 +367,8 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
                                 </div>
                             ) : (
                                 <LazyHistoryImage
-                                    src={item.url}
-                                    savedFilename={item.thumbnailSavedFilename || item.savedFilename}
+                                    src={previewSrc}
+                                    savedFilename={previewFilename}
                                     alt={t('stageGeneratedImageAlt')}
                                     dataTestId={`history-card-${item.id}-image`}
                                     placeholderTestId={`history-card-${item.id}-deferred-media`}

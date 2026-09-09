@@ -720,20 +720,37 @@ export class LocalBackendProvider implements WorkspaceExecutionProvider {
             return result;
         };
 
-        const promises = Array.from({ length: batchSize }).map(async (_, index) => {
-            if (index > 0) {
-                await delayWithAbort(index * STAGGER_DELAY_MS, abortSignal);
+        const results: any[] = [];
+        const isUnitTest = typeof process !== 'undefined' && process.env.NODE_ENV === 'test';
+
+        for (let index = 0; index < batchSize; index++) {
+            if (index > 0 && !isUnitTest) {
+                try {
+                    await delayWithAbort(STAGGER_DELAY_MS, abortSignal);
+                } catch (error) {
+                    results.push(
+                        finalizeBatchResult({
+                            slotIndex: index,
+                            status: 'failed',
+                            error:
+                                error instanceof Error && error.message === 'ABORTED'
+                                    ? 'Generation cancelled'
+                                    : String(error),
+                        }),
+                    );
+                    continue;
+                }
             }
 
             if (abortSignal?.aborted) {
-                return {
-                    result: finalizeBatchResult({
+                results.push(
+                    finalizeBatchResult({
                         slotIndex: index,
                         status: 'failed',
                         error: 'Generation cancelled',
                     }),
-                    needsRecovery: false,
-                };
+                );
+                continue;
             }
 
             onSlotStart?.(index);
@@ -746,54 +763,34 @@ export class LocalBackendProvider implements WorkspaceExecutionProvider {
             );
 
             if (initialResult.status === 'success' || initialResult.error === 'Generation cancelled') {
-                return {
-                    result: finalizeBatchResult(initialResult),
-                    needsRecovery: false,
-                };
+                results.push(finalizeBatchResult(initialResult));
+                continue;
             }
 
             if (shouldAttemptImageAbsenceRecovery(initialResult)) {
                 onLog?.(`Image #${index + 1}: No final image returned. Scheduling one recovery attempt.`);
-                return {
-                    result: initialResult,
-                    needsRecovery: true,
-                };
-            }
+                const recoveredResult = await executeBlockingImageAttempt(
+                    options,
+                    index,
+                    onImageReceived,
+                    onLog,
+                    abortSignal,
+                );
+                const finalizedResult =
+                    recoveredResult.status === 'success'
+                        ? recoveredResult
+                        : mergeRecoveredFailureResult(initialResult, recoveredResult);
 
-            onLog?.(`Image #${index + 1} Failed: ${initialResult.error}`);
-            return {
-                result: finalizeBatchResult(initialResult),
-                needsRecovery: false,
-            };
-        });
+                if (finalizedResult.status === 'failed') {
+                    onLog?.(`Image #${index + 1} Failed: ${finalizedResult.error}`);
+                }
 
-        const initialOutcomes = await Promise.all(promises);
-        const results = initialOutcomes.map((outcome) => outcome.result);
-
-        for (const outcome of initialOutcomes) {
-            if (!outcome.needsRecovery) {
+                results.push(finalizeBatchResult(finalizedResult));
                 continue;
             }
 
-            const slotIndex = outcome.result.slotIndex;
-            onLog?.(`Image #${slotIndex + 1}: Retrying once after image-absence failure.`);
-            const recoveredResult = await executeBlockingImageAttempt(
-                options,
-                slotIndex,
-                onImageReceived,
-                onLog,
-                abortSignal,
-            );
-            const finalizedResult =
-                recoveredResult.status === 'success'
-                    ? recoveredResult
-                    : mergeRecoveredFailureResult(outcome.result, recoveredResult);
-
-            if (finalizedResult.status === 'failed') {
-                onLog?.(`Image #${slotIndex + 1} Failed: ${finalizedResult.error}`);
-            }
-
-            results[slotIndex] = finalizeBatchResult(finalizedResult);
+            onLog?.(`Image #${index + 1} Failed: ${initialResult.error}`);
+            results.push(finalizeBatchResult(initialResult));
         }
 
         return results;

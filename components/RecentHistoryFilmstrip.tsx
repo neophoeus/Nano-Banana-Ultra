@@ -1,6 +1,7 @@
 import React from 'react';
 import { getTranslation, Language } from '../utils/translations';
 import { GeneratedImage } from '../types';
+import { buildSavedImageLoadUrl } from '../utils/imageSaveUtils';
 import InfoTooltip from './InfoTooltip';
 import LazyHistoryImage from './LazyHistoryImage';
 
@@ -127,7 +128,9 @@ function RecentHistoryFilmstrip({
                                         ? selectedHistoryOwnerId === item.id
                                         : activeStageImageUrl === item.url);
                                 const isCurrentSource = currentSourceHistoryId === item.id;
-                                const hasPreviewImage = Boolean(item.url);
+                                const previewFilename = item.thumbnailSavedFilename || item.savedFilename;
+                                const hasPreviewImage = Boolean(item.url || previewFilename);
+                                const previewSrc = item.url || (previewFilename ? buildSavedImageLoadUrl(previewFilename) : '');
 
                                 return (
                                     <div
@@ -157,8 +160,8 @@ function RecentHistoryFilmstrip({
                                             </div>
                                         ) : (
                                             <LazyHistoryImage
-                                                src={item.url}
-                                                savedFilename={item.thumbnailSavedFilename || item.savedFilename}
+                                                src={previewSrc}
+                                                savedFilename={previewFilename}
                                                 alt={t('stageGeneratedImageAlt')}
                                                 className="h-full w-full object-cover"
                                                 wrapperClassName="h-full w-full"
